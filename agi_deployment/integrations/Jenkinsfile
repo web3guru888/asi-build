@@ -1,0 +1,933 @@
+#!/usr/bin/env groovy
+
+/**
+ * AGI Model Deployment Pipeline for Jenkins
+ * Comprehensive CI/CD pipeline for AGI model validation, testing, and deployment
+ */
+
+pipeline {
+    agent {
+        kubernetes {
+            yaml """
+            apiVersion: v1
+            kind: Pod
+            spec:
+              containers:
+              - name: python
+                image: python:3.11-slim
+                command:
+                - sleep
+                args:
+                - 99d
+                resources:
+                  requests:
+                    memory: "2Gi"
+                    cpu: "1000m"
+                  limits:
+                    memory: "4Gi"
+                    cpu: "2000m"
+              - name: docker
+                image: docker:24-dind
+                securityContext:
+                  privileged: true
+                volumeMounts:
+                - name: docker-sock
+                  mountPath: /var/run/docker.sock
+              - name: kubectl
+                image: bitnami/kubectl:1.28
+                command:
+                - sleep
+                args:
+                - 99d
+              volumes:
+              - name: docker-sock
+                hostPath:
+                  path: /var/run/docker.sock
+            """
+        }
+    }
+    
+    parameters {
+        choice(
+            name: 'DEPLOYMENT_ENVIRONMENT',
+            choices: ['staging', 'production'],
+            description: 'Target deployment environment'
+        )
+        choice(
+            name: 'DEPLOYMENT_STRATEGY',
+            choices: ['canary', 'blue-green', 'shadow'],
+            description: 'Deployment strategy to use'
+        )
+        string(
+            name: 'MODEL_VERSION',
+            defaultValue: '',
+            description: 'Model version (leave empty to use commit SHA)'
+        )
+        booleanParam(
+            name: 'SKIP_TESTS',
+            defaultValue: false,
+            description: 'Skip comprehensive testing phase'
+        )
+        booleanParam(
+            name: 'DRY_RUN',
+            defaultValue: false,
+            description: 'Perform dry run without actual deployment'
+        )
+        booleanParam(
+            name: 'ENABLE_MONITORING',
+            defaultValue: true,
+            description: 'Enable post-deployment monitoring'
+        )
+    }
+    
+    environment {
+        // Global environment variables
+        PYTHON_VERSION = '3.11'
+        MODEL_ID = 'kenny-agi'
+        ACTUAL_MODEL_VERSION = "${params.MODEL_VERSION ?: env.GIT_COMMIT?.take(8)}"
+        
+        // Registry and infrastructure
+        MODEL_REGISTRY_URL = credentials('model-registry-url')
+        CONTAINER_REGISTRY = credentials('container-registry')
+        KUBECONFIG = credentials('kubeconfig-file')
+        
+        // Notification channels
+        SLACK_WEBHOOK = credentials('slack-webhook-url')
+        EMAIL_RECIPIENTS = 'agi-team@example.com,ops@example.com'
+        
+        // Pipeline configuration
+        DEPLOYMENT_TIMEOUT = '3600'
+        MONITOR_DURATION = '1800'
+        
+        // Feature flags
+        ENABLE_SECURITY_SCANNING = 'true'
+        ENABLE_COMPLIANCE_CHECKS = 'true'
+        ENABLE_SHADOW_TESTING = "${params.DEPLOYMENT_ENVIRONMENT == 'production' ? 'true' : 'false'}"
+    }
+    
+    options {
+        buildDiscarder(logRotator(
+            numToKeepStr: '50',
+            daysToKeepStr: '30',
+            artifactNumToKeepStr: '20',
+            artifactDaysToKeepStr: '30'
+        ))
+        timeout(time: 2, unit: 'HOURS')
+        timestamps()
+        ansiColor('xterm')
+        parallelsAlwaysFailFast()
+    }
+    
+    triggers {
+        // Trigger on main branch changes
+        pollSCM('H/5 * * * *')
+        
+        // Nightly deployment to staging
+        cron(env.BRANCH_NAME == 'main' ? 'H 2 * * *' : '')
+    }
+    
+    stages {
+        stage('Pipeline Initialization') {
+            steps {
+                script {
+                    // Set dynamic environment variables
+                    env.BUILD_TIMESTAMP = sh(
+                        script: "date -u +%Y%m%d-%H%M%S", 
+                        returnStdout: true
+                    ).trim()
+                    
+                    env.PIPELINE_ID = "${env.BUILD_NUMBER}-${env.BUILD_TIMESTAMP}"
+                    
+                    // Display pipeline information
+                    echo """
+                    🚀 AGI Model Deployment Pipeline Started
+                    ==========================================
+                    Model ID: ${env.MODEL_ID}
+                    Model Version: ${env.ACTUAL_MODEL_VERSION}
+                    Environment: ${params.DEPLOYMENT_ENVIRONMENT}
+                    Strategy: ${params.DEPLOYMENT_STRATEGY}
+                    Pipeline ID: ${env.PIPELINE_ID}
+                    Branch: ${env.BRANCH_NAME}
+                    Commit: ${env.GIT_COMMIT}
+                    ==========================================
+                    """
+                    
+                    // Send start notification
+                    slackSend(
+                        channel: '#agi-deployments',
+                        color: 'good',
+                        message: ":rocket: AGI Deployment Pipeline Started\n" +
+                                "Model: ${env.MODEL_ID} v${env.ACTUAL_MODEL_VERSION}\n" +
+                                "Environment: ${params.DEPLOYMENT_ENVIRONMENT}\n" +
+                                "Strategy: ${params.DEPLOYMENT_STRATEGY}"
+                    )
+                }
+            }
+        }
+        
+        stage('Validation and Testing') {
+            parallel {
+                stage('Model Validation') {
+                    steps {
+                        container('python') {
+                            script {
+                                echo "🔍 Starting model validation..."
+                                
+                                // Setup Python environment
+                                sh '''
+                                    pip install --upgrade pip
+                                    pip install -r pipelines/agi_deployment/requirements.txt
+                                    pip install -r requirements.txt
+                                '''
+                                
+                                // Download model artifacts
+                                sh '''
+                                    mkdir -p ./model_artifacts
+                                    python pipelines/agi_deployment/scripts/download_model.py \\
+                                        --model-id ${MODEL_ID} \\
+                                        --version ${ACTUAL_MODEL_VERSION} \\
+                                        --registry-url ${MODEL_REGISTRY_URL} \\
+                                        --output ./model_artifacts/
+                                '''
+                                
+                                // Run comprehensive validation
+                                sh '''
+                                    python pipelines/agi_deployment/ci_cd/model_validator.py \\
+                                        --model-path ./model_artifacts \\
+                                        --config pipelines/agi_deployment/configs/validation_config.yaml \\
+                                        --output-file validation_results.json
+                                '''
+                                
+                                // Parse and check validation results
+                                script {
+                                    def validationResults = readJSON file: 'validation_results.json'
+                                    def allPassed = validationResults.every { it.passed }
+                                    
+                                    if (!allPassed) {
+                                        error("❌ Model validation failed. Check validation_results.json for details.")
+                                    } else {
+                                        echo "✅ Model validation passed successfully"
+                                        
+                                        // Set validation metrics as build properties
+                                        def overallScore = validationResults.collect { it.score }.sum() / validationResults.size()
+                                        currentBuild.description = "Validation Score: ${String.format('%.2f', overallScore)}"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: 'validation_results.json', fingerprint: true
+                            publishHTML([
+                                allowMissing: false,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: '.',
+                                reportFiles: 'validation_results.json',
+                                reportName: 'Model Validation Report'
+                            ])
+                        }
+                    }
+                }
+                
+                stage('Comprehensive Testing') {
+                    when {
+                        not { params.SKIP_TESTS }
+                    }
+                    steps {
+                        container('python') {
+                            script {
+                                echo "🧪 Running comprehensive model tests..."
+                                
+                                // Setup testing environment
+                                sh '''
+                                    pip install -r pipelines/agi_deployment/requirements.txt
+                                '''
+                                
+                                // Start model server for testing
+                                sh '''
+                                    python -m pipelines.agi_deployment.services.model_server \\
+                                        --model-path ./model_artifacts/ \\
+                                        --port 8000 &
+                                    MODEL_SERVER_PID=$!
+                                    echo $MODEL_SERVER_PID > model_server.pid
+                                    
+                                    # Wait for server to be ready
+                                    timeout 60 bash -c 'until curl -f http://localhost:8000/health; do sleep 2; done'
+                                '''
+                                
+                                // Run test suites
+                                sh '''
+                                    python pipelines/agi_deployment/ci_cd/testing_framework.py \\
+                                        --model-endpoint http://localhost:8000 \\
+                                        --config pipelines/agi_deployment/configs/test_config.yaml \\
+                                        --output test_results.json \\
+                                        --junit-output test_results.xml
+                                '''
+                                
+                                // Generate coverage report
+                                sh '''
+                                    coverage run -m pytest tests/
+                                    coverage report --format=json --output-file=coverage.json
+                                    coverage html -d coverage_html/
+                                    coverage xml -o coverage.xml
+                                '''
+                                
+                                // Parse test results
+                                script {
+                                    def testResults = readJSON file: 'test_results.json'
+                                    def overallPassRate = testResults.summary?.overall?.pass_rate ?: 0
+                                    
+                                    if (overallPassRate < 0.8) {
+                                        error("❌ Test pass rate (${String.format('%.1f', overallPassRate * 100)}%) below threshold (80%)")
+                                    } else {
+                                        echo "✅ Tests passed with ${String.format('%.1f', overallPassRate * 100)}% success rate"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            // Cleanup model server
+                            sh 'kill $(cat model_server.pid) || true'
+                            
+                            // Archive test results
+                            archiveArtifacts artifacts: 'test_results.json,coverage.json', fingerprint: true
+                            publishHTML([
+                                allowMissing: false,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: 'coverage_html',
+                                reportFiles: 'index.html',
+                                reportName: 'Coverage Report'
+                            ])
+                            
+                            // Publish test results
+                            publishTestResults testResultsPattern: 'test_results.xml'
+                            
+                            // Publish coverage
+                            publishCoverage adapters: [
+                                coberturaAdapter('coverage.xml')
+                            ], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Security and Compliance') {
+            parallel {
+                stage('Security Scanning') {
+                    when {
+                        environment name: 'ENABLE_SECURITY_SCANNING', value: 'true'
+                    }
+                    steps {
+                        container('python') {
+                            script {
+                                echo "🔒 Running security scans..."
+                                
+                                // Install security tools
+                                sh '''
+                                    pip install bandit safety semgrep
+                                '''
+                                
+                                // Code security scan with bandit
+                                sh '''
+                                    bandit -r . -f json -o bandit_results.json || true
+                                '''
+                                
+                                // Dependency vulnerability scan
+                                sh '''
+                                    safety check --json --output safety_results.json || true
+                                '''
+                                
+                                // SAST with semgrep
+                                sh '''
+                                    semgrep --config=auto --json --output=semgrep_results.json . || true
+                                '''
+                                
+                                // Model-specific security scan
+                                sh '''
+                                    python pipelines/agi_deployment/security/model_security_scanner.py \\
+                                        --model-path ./model_artifacts/ \\
+                                        --output model_security_results.json
+                                '''
+                                
+                                // Generate security report
+                                sh '''
+                                    python pipelines/agi_deployment/security/generate_security_report.py \\
+                                        --bandit bandit_results.json \\
+                                        --safety safety_results.json \\
+                                        --semgrep semgrep_results.json \\
+                                        --model-security model_security_results.json \\
+                                        --output security_report.html
+                                '''
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: '*_results.json,security_report.html', fingerprint: true
+                            publishHTML([
+                                allowMissing: false,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: '.',
+                                reportFiles: 'security_report.html',
+                                reportName: 'Security Scan Report'
+                            ])
+                        }
+                    }
+                }
+                
+                stage('Compliance Checking') {
+                    when {
+                        environment name: 'ENABLE_COMPLIANCE_CHECKS', value: 'true'
+                    }
+                    steps {
+                        container('python') {
+                            script {
+                                echo "📋 Running compliance checks..."
+                                
+                                sh '''
+                                    python pipelines/agi_deployment/gitops/compliance_checker.py \\
+                                        --policies ./policies/ \\
+                                        --model-config ./models/config.yaml \\
+                                        --environment ${DEPLOYMENT_ENVIRONMENT} \\
+                                        --output compliance_results.json
+                                '''
+                                
+                                // Parse compliance results
+                                script {
+                                    def complianceResults = readJSON file: 'compliance_results.json'
+                                    def violations = complianceResults.findAll { it.level == 'violation' }
+                                    
+                                    if (violations.size() > 0) {
+                                        echo "⚠️ Compliance violations found: ${violations.size()}"
+                                        // Don't fail for compliance warnings, but notify
+                                    } else {
+                                        echo "✅ All compliance checks passed"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: 'compliance_results.json', fingerprint: true
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Build and Package') {
+            steps {
+                container('docker') {
+                    script {
+                        echo "🏗️ Building Docker image..."
+                        
+                        // Login to container registry
+                        withCredentials([usernamePassword(
+                            credentialsId: 'container-registry-creds',
+                            usernameVariable: 'REGISTRY_USER',
+                            passwordVariable: 'REGISTRY_PASS'
+                        )]) {
+                            sh 'docker login -u ${REGISTRY_USER} -p ${REGISTRY_PASS} ${CONTAINER_REGISTRY}'
+                        }
+                        
+                        // Build Docker image
+                        def imageName = "${env.CONTAINER_REGISTRY}/${env.MODEL_ID}"
+                        def imageTag = env.ACTUAL_MODEL_VERSION
+                        
+                        sh """
+                            docker build \\
+                                -f pipelines/agi_deployment/docker/Dockerfile \\
+                                --build-arg MODEL_VERSION=${imageTag} \\
+                                --build-arg BUILD_DATE=\$(date -u +"%Y-%m-%dT%H:%M:%SZ") \\
+                                --build-arg VCS_REF=${env.GIT_COMMIT} \\
+                                --build-arg PIPELINE_ID=${env.PIPELINE_ID} \\
+                                -t ${imageName}:${imageTag} \\
+                                -t ${imageName}:latest \\
+                                .
+                        """
+                        
+                        // Push images
+                        sh """
+                            docker push ${imageName}:${imageTag}
+                            docker push ${imageName}:latest
+                        """
+                        
+                        // Generate SBOM
+                        sh """
+                            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \\
+                                anchore/syft:latest \\
+                                ${imageName}:${imageTag} -o spdx-json > sbom.spdx.json
+                        """
+                        
+                        // Vulnerability scanning
+                        sh """
+                            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \\
+                                aquasec/trivy:latest image \\
+                                --format json --output trivy_results.json \\
+                                ${imageName}:${imageTag}
+                        """
+                        
+                        // Set image reference for downstream stages
+                        env.BUILT_IMAGE = "${imageName}:${imageTag}"
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'sbom.spdx.json,trivy_results.json', fingerprint: true
+                }
+            }
+        }
+        
+        stage('Shadow Testing') {
+            when {
+                allOf {
+                    environment name: 'ENABLE_SHADOW_TESTING', value: 'true'
+                    not { params.DRY_RUN }
+                }
+            }
+            steps {
+                container('python') {
+                    script {
+                        echo "🌑 Executing shadow deployment for testing..."
+                        
+                        // Create shadow deployment configuration
+                        writeJSON file: 'shadow_config.json', json: [
+                            model_id: env.MODEL_ID,
+                            model_version: env.ACTUAL_MODEL_VERSION,
+                            shadow_target: [
+                                endpoint: "http://shadow-lb.internal",
+                                instances: ["shadow-1", "shadow-2"],
+                                capacity: 2,
+                                resource_limits: [
+                                    cpu_limit: "2000m",
+                                    memory_limit: "4Gi"
+                                ]
+                            ],
+                            production_target: [
+                                endpoint: "http://prod-lb.internal",
+                                instances: ["prod-1", "prod-2", "prod-3"],
+                                capacity: 3
+                            ],
+                            traffic_mirror_percentage: 100.0,
+                            comparison_sample_rate: 15.0,
+                            test_duration_minutes: 30,
+                            evaluation_criteria: [
+                                min_success_rate: 0.99,
+                                max_latency_increase_pct: 25.0,
+                                min_avg_similarity: 0.75
+                            ]
+                        ]
+                        
+                        // Execute shadow deployment
+                        sh '''
+                            python pipelines/agi_deployment/deployment_strategies/shadow_deployment.py \\
+                                --config shadow_config.json \\
+                                --output shadow_results.json
+                        '''
+                        
+                        // Evaluate results
+                        script {
+                            def shadowResults = readJSON file: 'shadow_results.json'
+                            def recommendation = shadowResults.analysis_result?.recommendation?.recommendation ?: 'REJECT'
+                            
+                            if (recommendation in ['APPROVE', 'APPROVE_WITH_CAUTION']) {
+                                echo "✅ Shadow deployment validation passed: ${recommendation}"
+                                env.SHADOW_APPROVED = 'true'
+                            } else {
+                                error("❌ Shadow deployment failed validation: ${recommendation}")
+                            }
+                        }
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'shadow_config.json,shadow_results.json', fingerprint: true
+                }
+            }
+        }
+        
+        stage('Deployment') {
+            steps {
+                container('kubectl') {
+                    script {
+                        if (params.DRY_RUN) {
+                            echo "🔍 DRY RUN: Simulating deployment to ${params.DEPLOYMENT_ENVIRONMENT}"
+                            
+                            // Generate deployment manifests without applying
+                            sh '''
+                                python pipelines/agi_deployment/k8s/generate_manifests.py \\
+                                    --model-id ${MODEL_ID} \\
+                                    --model-version ${ACTUAL_MODEL_VERSION} \\
+                                    --environment ${DEPLOYMENT_ENVIRONMENT} \\
+                                    --image ${BUILT_IMAGE} \\
+                                    --dry-run \\
+                                    --output deployment_manifests/
+                            '''
+                            
+                            // Validate manifests
+                            sh '''
+                                kubectl apply --dry-run=client --recursive -f deployment_manifests/
+                            '''
+                            
+                            echo "✅ DRY RUN: Deployment manifests validated successfully"
+                            
+                        } else {
+                            echo "🚀 Deploying to ${params.DEPLOYMENT_ENVIRONMENT} using ${params.DEPLOYMENT_STRATEGY} strategy"
+                            
+                            // Setup kubectl access
+                            withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KUBECONFIG_FILE')]) {
+                                sh 'cp ${KUBECONFIG_FILE} ~/.kube/config'
+                                sh 'kubectl config current-context'
+                            }
+                            
+                            // Execute deployment based on strategy
+                            switch (params.DEPLOYMENT_STRATEGY) {
+                                case 'canary':
+                                    deployCanary()
+                                    break
+                                case 'blue-green':
+                                    deployBlueGreen()
+                                    break
+                                case 'shadow':
+                                    deployRegular() // Shadow already tested, deploy normally
+                                    break
+                                default:
+                                    error("Unknown deployment strategy: ${params.DEPLOYMENT_STRATEGY}")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Post-Deployment Monitoring') {
+            when {
+                allOf {
+                    params.ENABLE_MONITORING
+                    not { params.DRY_RUN }
+                }
+            }
+            steps {
+                container('python') {
+                    script {
+                        echo "📊 Starting post-deployment monitoring..."
+                        
+                        // Start monitoring
+                        sh '''
+                            python pipelines/agi_deployment/monitoring/agi_observability.py \\
+                                --environment ${DEPLOYMENT_ENVIRONMENT} \\
+                                --model-version ${ACTUAL_MODEL_VERSION} \\
+                                --duration ${MONITOR_DURATION} \\
+                                --config pipelines/agi_deployment/configs/monitoring_config.yaml \\
+                                --output monitoring_results.json &
+                            
+                            MONITOR_PID=$!
+                            echo $MONITOR_PID > monitor.pid
+                        '''
+                        
+                        // Run integration tests
+                        sh '''
+                            python pipelines/agi_deployment/tests/integration_tests.py \\
+                                --environment ${DEPLOYMENT_ENVIRONMENT} \\
+                                --test-suite comprehensive \\
+                                --duration 900 \\
+                                --output integration_results.json
+                        '''
+                        
+                        // Wait for monitoring to complete
+                        sh '''
+                            wait $(cat monitor.pid)
+                        '''
+                        
+                        // Generate deployment report
+                        sh '''
+                            python pipelines/agi_deployment/reporting/deployment_report.py \\
+                                --deployment-id ${PIPELINE_ID} \\
+                                --model-id ${MODEL_ID} \\
+                                --model-version ${ACTUAL_MODEL_VERSION} \\
+                                --environment ${DEPLOYMENT_ENVIRONMENT} \\
+                                --artifacts-path ./ \\
+                                --template comprehensive \\
+                                --output deployment_report.html
+                        '''
+                        
+                        // Check for critical issues
+                        script {
+                            def monitoringResults = readJSON file: 'monitoring_results.json'
+                            def criticalAlerts = monitoringResults.active_alerts?.findAll { it.severity == 'critical' }
+                            
+                            if (criticalAlerts?.size() > 0) {
+                                echo "⚠️ Critical alerts detected: ${criticalAlerts.size()}"
+                                unstable("Critical issues detected during monitoring")
+                            } else {
+                                echo "✅ No critical issues detected during monitoring"
+                            }
+                        }
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'monitoring_results.json,integration_results.json,deployment_report.html', fingerprint: true
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: '.',
+                        reportFiles: 'deployment_report.html',
+                        reportName: 'Deployment Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Update Registry') {
+            when {
+                not { params.DRY_RUN }
+            }
+            steps {
+                container('python') {
+                    script {
+                        echo "📝 Updating model registry with deployment information..."
+                        
+                        sh """
+                            python pipelines/agi_deployment/model_registries/update_deployment_status.py \\
+                                --model-id ${env.MODEL_ID} \\
+                                --version ${env.ACTUAL_MODEL_VERSION} \\
+                                --environment ${params.DEPLOYMENT_ENVIRONMENT} \\
+                                --status deployed \\
+                                --endpoint https://${params.DEPLOYMENT_ENVIRONMENT}.kenny-agi.example.com \\
+                                --deployment-id ${env.PIPELINE_ID} \\
+                                --build-number ${env.BUILD_NUMBER} \\
+                                --commit-sha ${env.GIT_COMMIT}
+                        """
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            script {
+                // Calculate pipeline duration
+                def duration = currentBuild.duration ? "${currentBuild.duration / 1000}s" : "unknown"
+                
+                // Determine notification color and emoji
+                def (color, emoji, statusText) = currentBuild.result == 'SUCCESS' ? 
+                    ['good', '✅', 'SUCCESS'] :
+                    currentBuild.result == 'UNSTABLE' ?
+                    ['warning', '⚠️', 'UNSTABLE'] :
+                    ['danger', '❌', 'FAILED']
+                
+                // Send comprehensive notification
+                slackSend(
+                    channel: '#agi-deployments',
+                    color: color,
+                    message: """
+${emoji} AGI Deployment Pipeline ${statusText}
+
+*Model:* ${env.MODEL_ID} v${env.ACTUAL_MODEL_VERSION}
+*Environment:* ${params.DEPLOYMENT_ENVIRONMENT}
+*Strategy:* ${params.DEPLOYMENT_STRATEGY}
+*Duration:* ${duration}
+*Branch:* ${env.BRANCH_NAME}
+*Pipeline:* <${env.BUILD_URL}|#${env.BUILD_NUMBER}>
+
+${currentBuild.description ?: ''}
+                    """.trim()
+                )
+                
+                // Email notification for production deployments
+                if (params.DEPLOYMENT_ENVIRONMENT == 'production') {
+                    emailext(
+                        to: env.EMAIL_RECIPIENTS,
+                        subject: "${emoji} AGI Production Deployment ${statusText} - ${env.MODEL_ID} v${env.ACTUAL_MODEL_VERSION}",
+                        body: """
+AGI Model Deployment Pipeline ${statusText}
+
+Model: ${env.MODEL_ID} v${env.ACTUAL_MODEL_VERSION}
+Environment: ${params.DEPLOYMENT_ENVIRONMENT}
+Strategy: ${params.DEPLOYMENT_STRATEGY}
+Duration: ${duration}
+Build: ${env.BUILD_URL}
+
+${currentBuild.description ?: ''}
+                        """,
+                        attachmentsPattern: 'deployment_report.html'
+                    )
+                }
+            }
+        }
+        
+        success {
+            script {
+                echo "✅ Pipeline completed successfully!"
+                
+                // Tag successful production deployments
+                if (params.DEPLOYMENT_ENVIRONMENT == 'production' && !params.DRY_RUN) {
+                    sh """
+                        git tag -a "production-${env.ACTUAL_MODEL_VERSION}-${env.BUILD_NUMBER}" \\
+                            -m "Production deployment of ${env.MODEL_ID} v${env.ACTUAL_MODEL_VERSION}"
+                        git push origin --tags
+                    """
+                }
+            }
+        }
+        
+        failure {
+            script {
+                echo "❌ Pipeline failed!"
+                
+                // Create incident if production deployment fails
+                if (params.DEPLOYMENT_ENVIRONMENT == 'production') {
+                    echo "🚨 Production deployment failed - creating incident"
+                    
+                    // In a real environment, this would integrate with incident management
+                    sh """
+                        python pipelines/agi_deployment/incidents/create_incident.py \\
+                            --title "AGI Production Deployment Failed" \\
+                            --description "Deployment of ${env.MODEL_ID} v${env.ACTUAL_MODEL_VERSION} failed" \\
+                            --severity high \\
+                            --pipeline-url ${env.BUILD_URL}
+                    """
+                }
+            }
+        }
+        
+        unstable {
+            script {
+                echo "⚠️ Pipeline completed with warnings"
+            }
+        }
+        
+        cleanup {
+            script {
+                // Cleanup workspace
+                cleanWs(
+                    deleteDirs: true,
+                    notFailBuild: true,
+                    patterns: [
+                        [pattern: 'model_artifacts/**', type: 'INCLUDE'],
+                        [pattern: 'coverage_html/**', type: 'INCLUDE'],
+                        [pattern: '*.log', type: 'INCLUDE']
+                    ]
+                )
+            }
+        }
+    }
+}
+
+// Helper functions for deployment strategies
+def deployCanary() {
+    echo "🕯️ Executing canary deployment..."
+    
+    // Create canary configuration
+    def canaryConfig = [
+        model_id: env.MODEL_ID,
+        model_version: env.ACTUAL_MODEL_VERSION,
+        canary_target: [
+            endpoint: "http://canary-lb.${params.DEPLOYMENT_ENVIRONMENT}",
+            instances: ["canary-1", "canary-2"],
+            capacity: 2
+        ],
+        stable_target: [
+            endpoint: "http://stable-lb.${params.DEPLOYMENT_ENVIRONMENT}",
+            instances: ["stable-1", "stable-2", "stable-3"],
+            capacity: 3
+        ],
+        load_balancer_endpoint: "http://lb.${params.DEPLOYMENT_ENVIRONMENT}",
+        rollback_config: [
+            auto_rollback: true,
+            rollback_on_critical_failure: true
+        ]
+    ]
+    
+    writeJSON file: 'canary_config.json', json: canaryConfig
+    
+    sh '''
+        python pipelines/agi_deployment/deployment_strategies/canary_deployment.py \\
+            --config canary_config.json \\
+            --stages-config pipelines/agi_deployment/configs/canary_stages.yaml \\
+            --output canary_results.json
+    '''
+    
+    // Validate deployment
+    def canaryResults = readJSON file: 'canary_results.json'
+    if (canaryResults.status != 'success') {
+        error("❌ Canary deployment failed: ${canaryResults.message}")
+    }
+    
+    archiveArtifacts artifacts: 'canary_config.json,canary_results.json', fingerprint: true
+}
+
+def deployBlueGreen() {
+    echo "🔵🟢 Executing blue-green deployment..."
+    
+    def blueGreenConfig = [
+        model_id: env.MODEL_ID,
+        model_version: env.ACTUAL_MODEL_VERSION,
+        blue_target: [
+            environment: "blue",
+            endpoint: "http://blue-lb.${params.DEPLOYMENT_ENVIRONMENT}",
+            instances: ["blue-1", "blue-2", "blue-3"],
+            capacity: 3
+        ],
+        green_target: [
+            environment: "green", 
+            endpoint: "http://green-lb.${params.DEPLOYMENT_ENVIRONMENT}",
+            instances: ["green-1", "green-2", "green-3"],
+            capacity: 3
+        ],
+        load_balancer_endpoint: "http://lb.${params.DEPLOYMENT_ENVIRONMENT}",
+        rollback_config: [
+            auto_rollback: true,
+            cleanup: [immediate_cleanup: false]
+        ]
+    ]
+    
+    writeJSON file: 'blue_green_config.json', json: blueGreenConfig
+    
+    sh '''
+        python pipelines/agi_deployment/deployment_strategies/blue_green_deployment.py \\
+            --config blue_green_config.json \\
+            --output blue_green_results.json
+    '''
+    
+    def bgResults = readJSON file: 'blue_green_results.json'
+    if (bgResults.status != 'success') {
+        error("❌ Blue-green deployment failed: ${bgResults.message}")
+    }
+    
+    archiveArtifacts artifacts: 'blue_green_config.json,blue_green_results.json', fingerprint: true
+}
+
+def deployRegular() {
+    echo "🚀 Executing standard rolling deployment..."
+    
+    sh '''
+        python pipelines/agi_deployment/deployment_strategies/rolling_deployment.py \\
+            --model-id ${MODEL_ID} \\
+            --model-version ${ACTUAL_MODEL_VERSION} \\
+            --environment ${DEPLOYMENT_ENVIRONMENT} \\
+            --image ${BUILT_IMAGE} \\
+            --output rolling_results.json
+    '''
+    
+    def rollingResults = readJSON file: 'rolling_results.json'
+    if (rollingResults.status != 'success') {
+        error("❌ Rolling deployment failed: ${rollingResults.message}")
+    }
+    
+    archiveArtifacts artifacts: 'rolling_results.json', fingerprint: true
+}

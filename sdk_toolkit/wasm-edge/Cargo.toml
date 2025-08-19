@@ -1,0 +1,204 @@
+[workspace]
+members = [
+    "src/components/ingress",
+    "src/components/preprocess", 
+    "src/components/inference",
+    "src/components/postprocess",
+    "src/components/control",
+    "src/components/egress",
+    "orchestrator",
+    "examples/autonomous_vehicle",
+    "examples/humanoid_robot",
+    "examples/satellite_imaging",
+    "examples/mars_habitat",
+    "examples/farm_automation",
+    "examples/mining_safety",
+    "examples/home_assistant",
+]
+resolver = "2"
+
+[workspace.package]
+version = "1.0.0"
+authors = ["Kenny AGI RDK Team <kenny@agi.dev>"]
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/kenny888ag/kenny-rdk"
+description = "Kenny AGI RDK - Production-ready WASM Edge AI SDK for autonomous systems"
+keywords = ["ai", "edge", "wasm", "robotics", "autonomous"]
+categories = ["embedded", "wasm", "science::robotics", "computer-vision"]
+
+[workspace.dependencies]
+# Core dependencies
+tokio = { version = "1.35", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# WASM and WIT
+wit-bindgen = "0.15"
+wasmtime = "15.0"
+wasmtime-wasi = "15.0"
+wasi-common = "15.0"
+
+# Async runtime
+async-trait = "0.1"
+futures = "0.3"
+tokio-util = "0.7"
+
+# Numerical computing
+ndarray = "0.15"
+nalgebra = "0.32"
+num-traits = "0.2"
+
+# Computer vision and AI
+opencv = { version = "0.88", optional = true }
+candle-core = { version = "0.3", optional = true }
+ort = { version = "1.16", optional = true }
+tch = { version = "0.13", optional = true }
+
+# Networking and communication
+reqwest = { version = "0.11", features = ["json"] }
+tonic = "0.10"
+prost = "0.12"
+
+# Robotics and control
+nalgebra-glm = "0.18"
+simba = "0.8"
+
+# Edge computing
+edge-executor = "0.2"
+embedded-hal = "0.2"
+
+# Telemetry and monitoring
+prometheus = "0.13"
+metrics = "0.21"
+tracing-opentelemetry = "0.22"
+
+# Security
+ring = "0.16"
+webpki = "0.22"
+rustls = "0.21"
+
+# Utilities
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+config = "0.13"
+clap = { version = "4.4", features = ["derive"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true
+split-debuginfo = "unpacked"
+
+[profile.bench]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+
+# Edge-optimized profile for resource-constrained devices
+[profile.edge]
+inherits = "release"
+opt-level = "s"  # Optimize for size
+lto = "fat"
+panic = "abort"
+overflow-checks = false
+
+# Real-time profile for time-critical applications
+[profile.realtime]
+inherits = "release" 
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false
+lto = "fat"
+codegen-units = 1
+incremental = false
+
+# Features for different deployment scenarios
+[workspace.metadata.features]
+default = ["tokio-runtime", "std", "serde-support"]
+
+# Core features
+std = []
+no-std = []
+alloc = []
+
+# Runtime features  
+tokio-runtime = ["tokio"]
+async-std-runtime = ["async-std"]
+smol-runtime = ["smol"]
+
+# AI framework support
+tensorflow = ["ort"]
+pytorch = ["tch"] 
+onnx = ["ort"]
+candle = ["candle-core"]
+
+# Computer vision
+opencv-support = ["opencv"]
+image-processing = []
+
+# Hardware acceleration
+cuda = ["tch/cuda"]
+rocm = ["tch/rocm"]
+intel-mkl = []
+apple-accelerate = []
+
+# Edge deployment
+embedded = ["no-std", "embedded-hal"]
+raspberry-pi = ["std"]
+jetson = ["std", "cuda"]
+esp32 = ["no-std", "embedded"]
+stm32 = ["no-std", "embedded"]
+
+# Platform support
+x86_64 = []
+aarch64 = []
+riscv64 = []
+wasm32 = []
+
+# Communication protocols
+modbus = []
+ethercat = []
+canopen = []
+mqtt = []
+ros2 = []
+
+# Telemetry backends
+prometheus-export = ["prometheus"]
+influxdb-export = []
+cloudwatch-export = []
+datadog-export = []
+
+# Security features
+tls-support = ["rustls"]
+hardware-security = []
+attestation = []
+
+# Development features
+dev-tools = []
+debugging = []
+profiling = []
+testing = []
+
+# Serde support
+serde-support = ["serde", "serde_json"]
+bincode-support = ["bincode"]
+msgpack-support = ["rmp-serde"]
+
+[workspace.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

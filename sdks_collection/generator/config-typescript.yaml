@@ -1,0 +1,18 @@
+npmName: "@kenny-agi/typescript-sdk"
+npmRepository: https://github.com/kenny-agi/rdk
+npmVersion: 0.1.0
+snapshot: false
+gitUserId: kenny-agi
+gitRepoId: rdk
+authorName: Kenny AGI Team
+authorEmail: sdk@kenny-agi.dev
+authorURL: https://kenny-agi.dev
+description: Official TypeScript/JavaScript SDK for Kenny AGI RDK (Reality Development Kit)
+keywords: agi,ai,consciousness,reality,quantum,kenny,typescript,javascript
+license: MIT
+hideGenerationTimestamp: true
+supportsES6: true
+withInterfaces: true
+npmPublishRegistry: https://registry.npmjs.org
+stringEnums: true
+enumPropertyNaming: original

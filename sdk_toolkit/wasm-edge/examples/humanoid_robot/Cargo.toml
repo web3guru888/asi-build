@@ -1,0 +1,103 @@
+[package]
+name = "humanoid_robot"
+version = "0.1.0"
+edition = "2021"
+description = "Humanoid Robot AI System with WASM Edge Integration"
+authors = ["Kenny AI Development Team"]
+license = "MIT"
+
+[dependencies]
+# Core async runtime
+tokio = { version = "1.0", features = ["full"] }
+anyhow = "1.0"
+thiserror = "1.0"
+log = "0.4"
+env_logger = "0.11"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+
+# WASM and Edge AI
+wasmtime = "15.0"
+wasmtime-wasi = "15.0"
+wasm-edge-ai-sdk = { path = "../../" }
+
+# Computer Vision and AI
+opencv = { version = "0.88", features = ["contrib"] }
+candle-core = "0.3"
+candle-nn = "0.3"
+candle-transformers = "0.3"
+tch = "0.13"  # PyTorch bindings
+
+# Linear algebra and math
+nalgebra = "0.32"
+ndarray = "0.15"
+num-traits = "0.2"
+
+# Robotics and motion
+kdl = "0.4"  # Kinematics and Dynamics Library
+rbdl = "0.2" # Rigid Body Dynamics Library
+
+# Hardware interfaces
+rppal = { version = "0.14", optional = true }  # Raspberry Pi
+serialport = "4.2"
+gilrs = "0.10"  # Gamepad input
+
+# Audio processing
+cpal = "0.15"
+hound = "3.5"
+
+# Speech recognition and synthesis
+whisper-rs = "0.1"
+espeak-ng-sys = { version = "0.1", optional = true }
+
+# Body pose estimation
+mediapipe = { version = "0.1", optional = true }
+
+# Safety and real-time
+signal-hook = "0.3"
+libc = "0.2"
+
+# Networking and communication
+reqwest = { version = "0.11", features = ["json"] }
+tokio-serial = "5.4"
+
+# Configuration
+config = "0.13"
+clap = { version = "4.0", features = ["derive"] }
+
+# Time and scheduling
+chrono = { version = "0.4", features = ["serde"] }
+cron = "0.12"
+
+# Data structures
+dashmap = "5.5"
+arc-swap = "1.6"
+
+[features]
+default = ["raspberry-pi", "speech", "pose-estimation"]
+raspberry-pi = ["rppal"]
+speech = ["espeak-ng-sys"]
+pose-estimation = ["mediapipe"]
+simulation = []
+hardware = ["raspberry-pi"]
+
+[dev-dependencies]
+tempfile = "3.8"
+serial_test = "3.0"
+
+[[bin]]
+name = "humanoid_robot"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 1
+
+[build-dependencies]
+cc = "1.0"

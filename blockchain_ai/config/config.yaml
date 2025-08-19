@@ -1,0 +1,225 @@
+# Kenny AGI Blockchain Audit Trail Configuration
+
+# Application settings
+app:
+  name: "Kenny AGI Blockchain Audit Trail"
+  version: "1.0.0"
+  environment: "development"  # development, staging, production
+  debug: true
+  log_level: "INFO"
+  timezone: "UTC"
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1
+  enable_docs: true
+  enable_cors: true
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 100
+    burst_size: 20
+
+# Authentication and Security
+security:
+  jwt:
+    secret_key: "${JWT_SECRET_KEY:-change-me-in-production}"
+    algorithm: "HS256"
+    access_token_expire_hours: 24
+    refresh_token_expire_days: 30
+  api_keys:
+    enabled: true
+    default_rate_limit: 1000
+  encryption:
+    enabled: true
+    algorithm: "AES-256-GCM"
+
+# Blockchain Configuration
+blockchain:
+  networks:
+    ethereum:
+      name: "Ethereum Mainnet"
+      chain_id: 1
+      rpc_urls:
+        - "${ETHEREUM_RPC_URL:-https://mainnet.infura.io/v3/YOUR_PROJECT_ID}"
+      private_key: "${ETHEREUM_PRIVATE_KEY}"
+      gas_limit: 500000
+      gas_price_gwei: 20
+      confirmation_blocks: 12
+    
+    polygon:
+      name: "Polygon Mainnet"
+      chain_id: 137
+      rpc_urls:
+        - "${POLYGON_RPC_URL:-https://polygon-rpc.com/}"
+      private_key: "${POLYGON_PRIVATE_KEY}"
+      gas_limit: 300000
+      gas_price_gwei: 30
+      confirmation_blocks: 5
+    
+    goerli:
+      name: "Ethereum Goerli Testnet"
+      chain_id: 5
+      rpc_urls:
+        - "${GOERLI_RPC_URL:-https://goerli.infura.io/v3/YOUR_PROJECT_ID}"
+      private_key: "${GOERLI_PRIVATE_KEY}"
+      gas_limit: 500000
+      gas_price_gwei: 1
+      confirmation_blocks: 3
+    
+    mumbai:
+      name: "Polygon Mumbai Testnet"
+      chain_id: 80001
+      rpc_urls:
+        - "${MUMBAI_RPC_URL:-https://rpc-mumbai.maticvigil.com/}"
+      private_key: "${MUMBAI_PRIVATE_KEY}"
+      gas_limit: 300000
+      gas_price_gwei: 1
+      confirmation_blocks: 2
+  
+  # Smart Contract Configuration
+  contracts:
+    audit_trail:
+      name: "AuditTrail"
+      deploy_on_networks: ["goerli", "mumbai"]  # Default test networks
+      constructor_args: []
+    
+    audit_factory:
+      name: "AuditFactory"
+      deploy_on_networks: ["goerli", "mumbai"]
+      constructor_args: []
+
+# IPFS Configuration
+ipfs:
+  api_url: "${IPFS_API_URL:-/dns/localhost/tcp/5001/http}"
+  gateway_url: "${IPFS_GATEWAY_URL:-https://gateway.pinata.cloud}"
+  timeout: 30
+  max_retries: 3
+  chunk_size: 1048576  # 1MB
+  
+  # Pinning Services
+  pinning:
+    enabled: true
+    services:
+      pinata:
+        enabled: "${PINATA_ENABLED:-false}"
+        api_key: "${PINATA_API_KEY}"
+        secret_key: "${PINATA_SECRET_KEY}"
+      
+      infura:
+        enabled: "${INFURA_IPFS_ENABLED:-false}"
+        project_id: "${INFURA_PROJECT_ID}"
+        project_secret: "${INFURA_PROJECT_SECRET}"
+
+# Database Configuration (optional for indexing and caching)
+database:
+  # PostgreSQL for audit record indexing
+  postgres:
+    enabled: "${POSTGRES_ENABLED:-false}"
+    host: "${POSTGRES_HOST:-localhost}"
+    port: "${POSTGRES_PORT:-5432}"
+    database: "${POSTGRES_DB:-kenny_audit_trail}"
+    username: "${POSTGRES_USER:-postgres}"
+    password: "${POSTGRES_PASSWORD}"
+    pool_size: 10
+    max_overflow: 20
+  
+  # Redis for caching and rate limiting
+  redis:
+    enabled: "${REDIS_ENABLED:-false}"
+    host: "${REDIS_HOST:-localhost}"
+    port: "${REDIS_PORT:-6379}"
+    password: "${REDIS_PASSWORD}"
+    database: 0
+    max_connections: 10
+
+# Monitoring and Logging
+monitoring:
+  prometheus:
+    enabled: "${PROMETHEUS_ENABLED:-false}"
+    port: 9090
+    path: "/metrics"
+  
+  sentry:
+    enabled: "${SENTRY_ENABLED:-false}"
+    dsn: "${SENTRY_DSN}"
+    traces_sample_rate: 0.1
+  
+  logging:
+    level: "${LOG_LEVEL:-INFO}"
+    format: "json"  # json or text
+    file: "${LOG_FILE:-logs/audit_trail.log}"
+    max_size_mb: 100
+    backup_count: 5
+
+# Feature Flags
+features:
+  encryption_by_default: false
+  batch_operations: true
+  graphql_api: false
+  websocket_subscriptions: false
+  advanced_querying: true
+  merkle_proofs: true
+  zero_knowledge_proofs: false
+
+# Performance Settings
+performance:
+  # Connection pools
+  web3_pool_size: 5
+  ipfs_pool_size: 3
+  
+  # Caching
+  cache_ttl_seconds: 300
+  cache_max_size: 1000
+  
+  # Batch processing
+  max_batch_size: 100
+  batch_timeout_seconds: 30
+  
+  # Rate limiting
+  rate_limit_window_seconds: 60
+  rate_limit_storage: "memory"  # memory or redis
+
+# Development Settings
+development:
+  auto_reload: true
+  debug_queries: true
+  mock_blockchain: false
+  mock_ipfs: false
+  seed_data: true
+
+# Testing Configuration
+testing:
+  test_network: "hardhat"
+  test_private_key: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+  test_ipfs_node: "localhost:5001"
+  parallel_tests: true
+  coverage_threshold: 80
+
+# Deployment Settings
+deployment:
+  container:
+    image_name: "kenny-agi/blockchain-audit-trail"
+    tag: "latest"
+    port: 8000
+    health_check_path: "/health"
+  
+  kubernetes:
+    namespace: "kenny-agi"
+    replicas: 3
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+  
+  docker_compose:
+    version: "3.8"
+    networks:
+      - kenny-agi-network

@@ -1,0 +1,15 @@
+packageName: kennyagi
+moduleName: github.com/kenny-agi/go-sdk
+packageVersion: 0.1.0
+hideGenerationTimestamp: true
+withGoCodegenComment: true
+generateInterfaces: true
+structPrefix: true
+enumClassPrefix: true
+packageUrl: https://github.com/kenny-agi/go-sdk
+packageCompany: Kenny AGI
+packageAuthor: Kenny AGI Team
+packageEmail: sdk@kenny-agi.dev
+packageDescription: Official Go SDK for Kenny AGI RDK (Reality Development Kit)
+isGoSubmodule: false
+packageKeywords: agi,ai,consciousness,reality,quantum,kenny,go

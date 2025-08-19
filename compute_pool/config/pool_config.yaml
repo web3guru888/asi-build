@@ -1,0 +1,297 @@
+# Kenny AGI Compute Pool Configuration
+# Comprehensive configuration for the compute resource pooling system
+
+pool:
+  name: "kenny_compute_pool"
+  max_concurrent_jobs: 1000
+  resource_timeout: 300.0  # 5 minutes
+  preemption_enabled: true
+  fair_share_enabled: true
+  checkpoint_interval: 60.0  # 1 minute
+  monitoring_interval: 10.0  # 10 seconds
+  auto_scaling_enabled: true
+  providers:
+    - local
+    - kubernetes
+    - slurm
+  priority_levels: 10
+
+# Scheduling Configuration
+scheduling:
+  algorithm: "fair_share"  # fifo, priority, fair_share, backfill, gang, elastic, deadline_aware
+  max_jobs_per_user: 100
+  backfill_enabled: true
+  gang_scheduling_enabled: true
+  elastic_scaling_enabled: true
+  deadline_enforcement: true
+  aging_enabled: true
+  aging_factor: 0.1  # Priority increase per hour
+  
+  # Algorithm-specific settings
+  algorithms:
+    fair_share:
+      decay_rate: 0.9
+      min_shares: 0.01
+      max_shares: 100.0
+      priority_boost_max: 10.0
+    
+    backfill:
+      max_backfill_jobs: 50
+      conservative_backfill: false
+    
+    gang:
+      max_gang_size: 64
+      gang_timeout: 300.0
+    
+    elastic:
+      min_resources: 1
+      max_resources: 1000
+      scaling_factor: 1.5
+
+# Resource Management
+resources:
+  gpu:
+    vendors:
+      - nvidia
+      - amd
+      - intel
+    monitoring_interval: 30.0
+    memory_check_enabled: true
+    temperature_monitoring: true
+    
+  cpu:
+    architecture_support:
+      - x86_64
+      - arm64
+      - riscv
+    numa_awareness: true
+    frequency_scaling: true
+    monitoring_interval: 10.0
+    
+  memory:
+    numa_balancing: true
+    huge_pages_enabled: true
+    swap_management: true
+    compression_enabled: true
+    monitoring_interval: 5.0
+    
+  storage:
+    tiered_storage: true
+    storage_classes:
+      hot: ["nvme_ssd"]
+      warm: ["sata_ssd"]
+      cold: ["hdd"]
+      archive: ["network"]
+    monitoring_interval: 30.0
+    
+  network:
+    bandwidth_management: true
+    qos_enabled: true
+    traffic_shaping: true
+    monitoring_interval: 10.0
+
+# Fair Share Configuration
+fair_share:
+  model: "proportional"  # proportional, lottery, wfq, drr
+  decay_rate: 0.9
+  update_interval: 60.0
+  default_shares: 1.0
+  
+  # User groups and shares
+  groups:
+    admin:
+      shares: 10.0
+      members: []
+    
+    research:
+      shares: 5.0
+      members: []
+    
+    production:
+      shares: 3.0
+      members: []
+    
+    batch:
+      shares: 1.0
+      members: []
+
+# Preemption and Migration
+preemption:
+  enabled: true
+  policy: "hybrid"  # priority, fair_share, deadline, resource, cost, hybrid
+  min_runtime_threshold: 60.0  # seconds
+  cooldown_period: 300.0  # 5 minutes
+  max_preemption_count: 3
+  
+  migration:
+    enabled: true
+    types:
+      - checkpoint_restart
+      - live_migration
+      - container_migration
+    success_threshold: 0.7
+    max_migration_time: 600.0  # 10 minutes
+
+# Monitoring and Analytics
+monitoring:
+  metrics_collection: true
+  collection_interval: 10.0
+  retention_days: 7
+  storage_backend: "sqlite"  # sqlite, prometheus, influxdb
+  
+  # Metrics to collect
+  metrics:
+    - resource_utilization
+    - job_throughput
+    - queue_depth
+    - response_time
+    - failure_rates
+    - energy_consumption
+  
+  # Alerting
+  alerts:
+    enabled: true
+    thresholds:
+      cpu_utilization: 90.0
+      memory_utilization: 85.0
+      gpu_utilization: 95.0
+      queue_depth: 100
+      failure_rate: 10.0  # percent
+  
+  # Dashboards
+  dashboards:
+    enabled: true
+    refresh_interval: 30.0
+    
+# Fault Tolerance
+fault_tolerance:
+  checkpointing:
+    enabled: true
+    interval_seconds: 300.0  # 5 minutes
+    max_checkpoints_per_job: 5
+    compression_enabled: true
+    encryption_enabled: false
+    retention_days: 7
+    storage_path: "/tmp/checkpoints"
+    
+  recovery:
+    enabled: true
+    max_recovery_attempts: 3
+    recovery_timeout: 600.0  # 10 minutes
+    
+    # Recovery strategies by failure type
+    strategies:
+      node_failure: ["migrate", "reschedule"]
+      service_crash: ["restart", "migrate"]
+      resource_exhaustion: ["scale_up", "migrate"]
+      network_partition: ["migrate", "reschedule"]
+      hardware_failure: ["migrate", "reschedule"]
+      software_error: ["restart", "rollback"]
+      timeout: ["restart", "reschedule"]
+  
+  health_checks:
+    enabled: true
+    interval: 30.0
+    timeout: 10.0
+    failure_threshold: 3
+
+# Integration Settings
+integrations:
+  kubernetes:
+    enabled: false
+    namespace: "kenny-compute-pool"
+    config_path: null  # null = auto-detect
+    resource_quotas: true
+    custom_resources: true
+    
+  slurm:
+    enabled: false
+    bin_path: "/usr/bin"
+    default_partition: "compute"
+    account: null
+    qos: null
+    
+  custom:
+    enabled: false
+    endpoint: "http://localhost:8080"
+    authentication: null
+
+# Security
+security:
+  authentication:
+    enabled: true
+    method: "token"  # token, cert, ldap, oauth
+    
+  authorization:
+    enabled: true
+    model: "rbac"  # rbac, abac
+    
+  encryption:
+    data_at_rest: false
+    data_in_transit: true
+    key_management: "local"  # local, vault, kms
+  
+  auditing:
+    enabled: true
+    log_level: "info"
+    retention_days: 30
+
+# Performance Tuning
+performance:
+  # Job execution
+  max_parallel_jobs: 1000
+  job_timeout: 3600.0  # 1 hour default
+  
+  # Resource allocation
+  allocation_timeout: 30.0
+  deallocation_timeout: 10.0
+  
+  # Networking
+  connection_pool_size: 100
+  request_timeout: 30.0
+  
+  # Database
+  connection_timeout: 5.0
+  query_timeout: 30.0
+  
+  # Caching
+  cache_enabled: true
+  cache_size: 1000
+  cache_ttl: 300.0  # 5 minutes
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  handlers:
+    console:
+      enabled: true
+      level: "INFO"
+    
+    file:
+      enabled: true
+      level: "DEBUG"
+      path: "/var/log/kenny-compute-pool.log"
+      max_size: "100MB"
+      backup_count: 5
+    
+    syslog:
+      enabled: false
+      facility: "daemon"
+      address: ["localhost", 514]
+
+# Development and Testing
+development:
+  debug_mode: false
+  mock_resources: false
+  test_mode: false
+  profiling: false
+  
+  # Simulation settings
+  simulation:
+    enabled: false
+    job_arrival_rate: 10.0  # jobs per minute
+    job_duration_mean: 300.0  # seconds
+    job_duration_stddev: 60.0
+    resource_failure_rate: 0.01  # failures per hour

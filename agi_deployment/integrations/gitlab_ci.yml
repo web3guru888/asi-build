@@ -1,0 +1,937 @@
+# AGI Model Deployment Pipeline for GitLab CI/CD
+
+stages:
+  - validate
+  - security
+  - build
+  - test-deploy
+  - deploy
+  - monitor
+  - cleanup
+
+variables:
+  PYTHON_VERSION: "3.11"
+  MODEL_REGISTRY_URL: "https://mlflow.example.com"
+  CONTAINER_REGISTRY: "$CI_REGISTRY"
+  KUBECONFIG_PATH: "$CI_PROJECT_DIR/.kube/config"
+  DEPLOYMENT_TIMEOUT: "3600"
+  
+  # Feature flags
+  ENABLE_SECURITY_SCANNING: "true"
+  ENABLE_SHADOW_DEPLOYMENT: "true"
+  ENABLE_CANARY_DEPLOYMENT: "true"
+  
+  # Model configuration
+  MODEL_ID: "kenny-agi"
+  MODEL_VERSION: "$CI_COMMIT_SHORT_SHA"
+  DEPLOYMENT_ENVIRONMENT: "staging"
+
+# Include common templates
+include:
+  - project: 'devops/ci-templates'
+    file: '/templates/docker.yml'
+  - project: 'devops/ci-templates'  
+    file: '/templates/kubernetes.yml'
+
+# Cache configuration
+.cache_template: &cache_template
+  cache:
+    key:
+      files:
+        - requirements*.txt
+        - pipelines/agi_deployment/requirements.txt
+    paths:
+      - .cache/pip
+      - venv/
+
+# Model Validation Stage
+model_validation:
+  stage: validate
+  image: python:$PYTHON_VERSION
+  <<: *cache_template
+  
+  variables:
+    MODEL_PATH: "./model_artifacts"
+    
+  before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --cache-dir .cache/pip -r pipelines/agi_deployment/requirements.txt
+    - pip install --cache-dir .cache/pip -r requirements.txt
+    
+  script:
+    - echo "🔍 Starting model validation for $MODEL_ID version $MODEL_VERSION"
+    
+    # Create model artifacts directory
+    - mkdir -p $MODEL_PATH
+    
+    # Download model from registry
+    - |
+      python pipelines/agi_deployment/scripts/download_model.py \
+        --model-id $MODEL_ID \
+        --version $MODEL_VERSION \
+        --registry-url $MODEL_REGISTRY_URL \
+        --output $MODEL_PATH/
+        
+    # Run comprehensive validation
+    - |
+      python pipelines/agi_deployment/ci_cd/model_validator.py \
+        --model-path $MODEL_PATH \
+        --config pipelines/agi_deployment/configs/validation_config.yaml \
+        --output-file validation_results.json
+        
+    # Parse validation results
+    - |
+      VALIDATION_PASSED=$(python -c "
+      import json
+      with open('validation_results.json') as f:
+          results = json.load(f)
+      passed = all(r['passed'] for r in results)
+      print('1' if passed else '0')
+      ")
+      
+      if [ "$VALIDATION_PASSED" = "0" ]; then
+        echo "❌ Model validation failed"
+        cat validation_results.json
+        exit 1
+      else
+        echo "✅ Model validation passed"
+      fi
+      
+  artifacts:
+    reports:
+      junit: validation_results.xml
+    paths:
+      - validation_results.json
+      - model_artifacts/
+    expire_in: 1 week
+    when: always
+    
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop" 
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+# Comprehensive Testing
+model_testing:
+  stage: validate
+  image: python:$PYTHON_VERSION
+  <<: *cache_template
+  
+  needs:
+    - model_validation
+    
+  services:
+    - name: redis:7-alpine
+      alias: redis
+    - name: postgres:15-alpine
+      alias: postgres
+      variables:
+        POSTGRES_DB: test_db
+        POSTGRES_USER: test_user
+        POSTGRES_PASSWORD: test_pass
+        
+  variables:
+    REDIS_URL: "redis://redis:6379/0"
+    DATABASE_URL: "postgresql://test_user:test_pass@postgres:5432/test_db"
+    
+  before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --cache-dir .cache/pip -r pipelines/agi_deployment/requirements.txt
+    
+  script:
+    - echo "🧪 Running comprehensive model tests"
+    
+    # Start model service for testing
+    - |
+      python -m pipelines.agi_deployment.services.model_server \
+        --model-path ./model_artifacts/ \
+        --port 8000 &
+      MODEL_SERVER_PID=$!
+      
+      # Wait for model server to be ready
+      sleep 30
+      
+    # Run test suites
+    - |
+      python pipelines/agi_deployment/ci_cd/testing_framework.py \
+        --model-endpoint http://localhost:8000 \
+        --config pipelines/agi_deployment/configs/test_config.yaml \
+        --output test_results.json \
+        --junit-output test_results.xml
+        
+    # Generate test coverage report
+    - coverage run -m pytest tests/
+    - coverage report --format=json --output=coverage.json
+    - coverage html -d coverage_html/
+    
+  after_script:
+    # Cleanup model server
+    - kill $MODEL_SERVER_PID || true
+    
+  artifacts:
+    reports:
+      junit: test_results.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - test_results.json
+      - coverage.json
+      - coverage_html/
+    expire_in: 1 week
+    when: always
+    
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  
+# Security and Compliance Scanning
+security_scan:
+  stage: security
+  image: python:$PYTHON_VERSION
+  
+  needs:
+    - model_validation
+    
+  variables:
+    SAST_EXCLUDED_ANALYZERS: "nodejs-scan"
+    
+  before_script:
+    - pip install bandit safety semgrep
+    
+  script:
+    - echo "🔒 Running security and compliance scans"
+    
+    # Code security scan
+    - bandit -r . -f json -o bandit_results.json || true
+    
+    # Dependency vulnerability scan
+    - safety check --json --output safety_results.json || true
+    
+    # SAST scanning with semgrep
+    - semgrep --config=auto --json --output=semgrep_results.json . || true
+    
+    # Model-specific security scan
+    - |
+      python pipelines/agi_deployment/security/model_security_scanner.py \
+        --model-path ./model_artifacts/ \
+        --output model_security_results.json
+        
+    # Compliance checking
+    - |
+      python pipelines/agi_deployment/gitops/compliance_checker.py \
+        --policies ./policies/ \
+        --model-config ./models/config.yaml \
+        --environment $DEPLOYMENT_ENVIRONMENT \
+        --output compliance_results.json
+        
+    # Generate security report
+    - |
+      python pipelines/agi_deployment/security/generate_security_report.py \
+        --bandit bandit_results.json \
+        --safety safety_results.json \
+        --semgrep semgrep_results.json \
+        --model-security model_security_results.json \
+        --compliance compliance_results.json \
+        --output security_report.html
+        
+  artifacts:
+    reports:
+      sast: 
+        - bandit_results.json
+        - semgrep_results.json
+    paths:
+      - "*_results.json"
+      - security_report.html
+    expire_in: 1 month
+    when: always
+    
+  rules:
+    - if: $ENABLE_SECURITY_SCANNING == "true"
+
+# Build and Package Model
+build_model:
+  stage: build
+  image: docker:24-dind
+  
+  services:
+    - docker:24-dind
+    
+  needs:
+    - model_validation
+    - model_testing
+    - security_scan
+    
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: "/certs"
+    IMAGE_NAME: "$CONTAINER_REGISTRY/$MODEL_ID"
+    IMAGE_TAG: "$MODEL_VERSION"
+    
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    
+  script:
+    - echo "🏗️ Building Docker image for $MODEL_ID:$MODEL_VERSION"
+    
+    # Build multi-architecture image
+    - |
+      docker buildx create --use --name agi-builder
+      docker buildx build \
+        --platform linux/amd64,linux/arm64 \
+        --file pipelines/agi_deployment/docker/Dockerfile \
+        --build-arg MODEL_VERSION=$MODEL_VERSION \
+        --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+        --build-arg VCS_REF=$CI_COMMIT_SHA \
+        --tag $IMAGE_NAME:$IMAGE_TAG \
+        --tag $IMAGE_NAME:latest \
+        --push .
+        
+    # Generate Software Bill of Materials (SBOM)
+    - |
+      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+        anchore/syft:latest \
+        $IMAGE_NAME:$IMAGE_TAG -o spdx-json > sbom.spdx.json
+        
+    # Scan image for vulnerabilities
+    - |
+      docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+        aquasec/trivy:latest image \
+        --format json --output trivy_results.json \
+        $IMAGE_NAME:$IMAGE_TAG
+        
+    # Sign image with cosign (if keys are available)
+    - |
+      if [ -n "$COSIGN_PRIVATE_KEY" ]; then
+        echo "🔑 Signing container image"
+        echo "$COSIGN_PRIVATE_KEY" > cosign.key
+        cosign sign --key cosign.key $IMAGE_NAME:$IMAGE_TAG
+        rm cosign.key
+      fi
+      
+  artifacts:
+    paths:
+      - sbom.spdx.json
+      - trivy_results.json
+    expire_in: 1 month
+    
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+# Shadow Deployment Testing
+shadow_deployment:
+  stage: test-deploy
+  image: python:$PYTHON_VERSION
+  
+  needs:
+    - build_model
+    
+  environment:
+    name: shadow-testing
+    url: https://shadow.kenny-agi.example.com
+    
+  variables:
+    DEPLOYMENT_STRATEGY: "shadow"
+    SHADOW_ENVIRONMENT: "shadow-testing"
+    
+  before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install -r pipelines/agi_deployment/requirements.txt
+    
+    # Setup kubectl
+    - curl -LO "https://dl.k8s.io/release/v1.28.0/bin/linux/amd64/kubectl"
+    - chmod +x kubectl
+    - mv kubectl /usr/local/bin/
+    - echo "$KUBECONFIG_SHADOW" | base64 -d > $KUBECONFIG_PATH
+    - export KUBECONFIG=$KUBECONFIG_PATH
+    
+  script:
+    - echo "🌑 Executing shadow deployment for traffic mirroring"
+    
+    # Create shadow deployment configuration
+    - |
+      cat > shadow_config.json << EOF
+      {
+        "model_id": "$MODEL_ID",
+        "model_version": "$MODEL_VERSION",
+        "shadow_target": {
+          "endpoint": "http://shadow-lb.internal",
+          "instances": ["shadow-1", "shadow-2"],
+          "capacity": 2,
+          "resource_limits": {
+            "cpu_limit": "2000m",
+            "memory_limit": "4Gi"
+          }
+        },
+        "production_target": {
+          "endpoint": "http://prod-lb.internal", 
+          "instances": ["prod-1", "prod-2", "prod-3"],
+          "capacity": 3
+        },
+        "traffic_mirror_percentage": 100.0,
+        "comparison_sample_rate": 15.0,
+        "test_duration_minutes": 45,
+        "evaluation_criteria": {
+          "min_success_rate": 0.99,
+          "max_latency_increase_pct": 25.0,
+          "min_avg_similarity": 0.75
+        }
+      }
+      EOF
+      
+    # Execute shadow deployment
+    - |
+      python pipelines/agi_deployment/deployment_strategies/shadow_deployment.py \
+        --config shadow_config.json \
+        --output shadow_results.json
+        
+    # Evaluate shadow results
+    - |
+      SHADOW_RECOMMENDATION=$(python -c "
+      import json
+      with open('shadow_results.json') as f:
+          results = json.load(f)
+      recommendation = results.get('analysis_result', {}).get('recommendation', {}).get('recommendation', 'REJECT')
+      print(recommendation)
+      ")
+      
+      echo "Shadow deployment recommendation: $SHADOW_RECOMMENDATION"
+      
+      if [ "$SHADOW_RECOMMENDATION" != "APPROVE" ] && [ "$SHADOW_RECOMMENDATION" != "APPROVE_WITH_CAUTION" ]; then
+        echo "❌ Shadow deployment failed validation"
+        exit 1
+      else
+        echo "✅ Shadow deployment passed validation"
+      fi
+      
+  artifacts:
+    paths:
+      - shadow_config.json
+      - shadow_results.json
+    expire_in: 1 month
+    when: always
+    
+  rules:
+    - if: $ENABLE_SHADOW_DEPLOYMENT == "true" && $CI_COMMIT_BRANCH == "main"
+    - if: $ENABLE_SHADOW_DEPLOYMENT == "true" && $CI_PIPELINE_SOURCE == "web"
+
+# Canary Deployment to Staging
+canary_staging:
+  stage: deploy
+  image: python:$PYTHON_VERSION
+  
+  needs:
+    - build_model
+    - shadow_deployment
+    
+  environment:
+    name: staging
+    url: https://staging.kenny-agi.example.com
+    deployment_tier: staging
+    
+  variables:
+    DEPLOYMENT_STRATEGY: "canary"
+    TARGET_ENVIRONMENT: "staging"
+    
+  before_script:
+    - python -m venv venv
+    - source venv/bin/activate 
+    - pip install -r pipelines/agi_deployment/requirements.txt
+    
+    # Setup kubectl and helm
+    - curl -LO "https://dl.k8s.io/release/v1.28.0/bin/linux/amd64/kubectl"
+    - chmod +x kubectl && mv kubectl /usr/local/bin/
+    - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    - echo "$KUBECONFIG_STAGING" | base64 -d > $KUBECONFIG_PATH
+    - export KUBECONFIG=$KUBECONFIG_PATH
+    
+  script:
+    - echo "🕯️ Executing canary deployment to staging"
+    
+    # Define canary stages configuration
+    - |
+      cat > canary_stages.yaml << EOF
+      stages:
+        - stage_name: "Initial Validation"
+          traffic_percentage: 5.0
+          duration_minutes: 10
+          success_criteria:
+            model_accuracy: 0.85
+          max_error_rate: 0.005
+          
+        - stage_name: "Low Traffic"
+          traffic_percentage: 20.0
+          duration_minutes: 15
+          success_criteria:
+            model_accuracy: 0.87
+          max_error_rate: 0.003
+          
+        - stage_name: "Medium Traffic"
+          traffic_percentage: 50.0
+          duration_minutes: 20
+          success_criteria:
+            model_accuracy: 0.88
+          max_error_rate: 0.002
+          
+        - stage_name: "High Traffic"
+          traffic_percentage: 80.0
+          duration_minutes: 15
+          success_criteria:
+            model_accuracy: 0.89
+          max_error_rate: 0.001
+      EOF
+      
+    # Create canary deployment configuration
+    - |
+      cat > canary_config.json << EOF
+      {
+        "model_id": "$MODEL_ID",
+        "model_version": "$MODEL_VERSION",
+        "canary_target": {
+          "endpoint": "http://canary-lb.$TARGET_ENVIRONMENT",
+          "instances": ["canary-1", "canary-2"],
+          "capacity": 2
+        },
+        "stable_target": {
+          "endpoint": "http://stable-lb.$TARGET_ENVIRONMENT",
+          "instances": ["stable-1", "stable-2", "stable-3"],
+          "capacity": 3
+        },
+        "load_balancer_endpoint": "http://lb.$TARGET_ENVIRONMENT",
+        "rollback_config": {
+          "auto_rollback": true,
+          "rollback_on_critical_failure": true
+        }
+      }
+      EOF
+      
+    # Execute canary deployment
+    - |
+      python pipelines/agi_deployment/deployment_strategies/canary_deployment.py \
+        --config canary_config.json \
+        --stages-config canary_stages.yaml \
+        --output canary_results.json
+        
+    # Validate deployment success
+    - |
+      CANARY_STATUS=$(python -c "
+      import json
+      with open('canary_results.json') as f:
+          results = json.load(f)
+      status = results.get('status', 'failed')
+      print(status)
+      ")
+      
+      if [ "$CANARY_STATUS" != "success" ]; then
+        echo "❌ Canary deployment failed"
+        exit 1
+      else
+        echo "✅ Canary deployment completed successfully"
+      fi
+      
+    # Setup monitoring and alerting
+    - |
+      helm upgrade --install kenny-agi-monitoring \
+        ./helm/monitoring \
+        --namespace monitoring \
+        --create-namespace \
+        --set model.version=$MODEL_VERSION \
+        --set environment=$TARGET_ENVIRONMENT \
+        --wait --timeout=10m
+        
+  after_script:
+    # Update deployment status in model registry
+    - |
+      python pipelines/agi_deployment/model_registries/update_deployment_status.py \
+        --model-id $MODEL_ID \
+        --version $MODEL_VERSION \
+        --environment $TARGET_ENVIRONMENT \
+        --status deployed \
+        --endpoint "https://$TARGET_ENVIRONMENT.kenny-agi.example.com" \
+        --deployment-id $CI_PIPELINE_ID
+        
+  artifacts:
+    paths:
+      - canary_config.json
+      - canary_stages.yaml
+      - canary_results.json
+    expire_in: 3 months
+    when: always
+    
+  rules:
+    - if: $ENABLE_CANARY_DEPLOYMENT == "true" && $CI_COMMIT_BRANCH == "main"
+    - if: $ENABLE_CANARY_DEPLOYMENT == "true" && $CI_PIPELINE_SOURCE == "web"
+
+# Production Deployment (Manual approval required)
+production_deployment:
+  stage: deploy
+  image: python:$PYTHON_VERSION
+  
+  needs:
+    - canary_staging
+    
+  environment:
+    name: production
+    url: https://kenny-agi.example.com
+    deployment_tier: production
+    
+  variables:
+    DEPLOYMENT_STRATEGY: "blue-green"
+    TARGET_ENVIRONMENT: "production"
+    
+  before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install -r pipelines/agi_deployment/requirements.txt
+    
+    # Setup tools
+    - curl -LO "https://dl.k8s.io/release/v1.28.0/bin/linux/amd64/kubectl"
+    - chmod +x kubectl && mv kubectl /usr/local/bin/
+    - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    - echo "$KUBECONFIG_PRODUCTION" | base64 -d > $KUBECONFIG_PATH
+    - export KUBECONFIG=$KUBECONFIG_PATH
+    
+  script:
+    - echo "🚀 Executing production deployment with blue-green strategy"
+    
+    # Create blue-green deployment configuration
+    - |
+      cat > production_config.json << EOF
+      {
+        "model_id": "$MODEL_ID", 
+        "model_version": "$MODEL_VERSION",
+        "blue_target": {
+          "environment": "blue",
+          "endpoint": "http://blue-lb.production",
+          "instances": ["blue-1", "blue-2", "blue-3"],
+          "health_check_url": "http://blue-lb.production/health",
+          "capacity": 3
+        },
+        "green_target": {
+          "environment": "green",
+          "endpoint": "http://green-lb.production",
+          "instances": ["green-1", "green-2", "green-3"], 
+          "health_check_url": "http://green-lb.production/health",
+          "capacity": 3
+        },
+        "load_balancer_endpoint": "http://lb.production",
+        "rollback_config": {
+          "auto_rollback": true,
+          "rollback_threshold": 0.05,
+          "cleanup": {"immediate_cleanup": false}
+        }
+      }
+      EOF
+      
+    # Execute blue-green deployment
+    - |
+      python pipelines/agi_deployment/deployment_strategies/blue_green_deployment.py \
+        --config production_config.json \
+        --output production_results.json
+        
+    # Validate production deployment
+    - |
+      PROD_STATUS=$(python -c "
+      import json
+      with open('production_results.json') as f:
+          results = json.load(f)
+      status = results.get('status', 'failed')
+      print(status)
+      ")
+      
+      if [ "$PROD_STATUS" != "success" ]; then
+        echo "❌ Production deployment failed"
+        exit 1
+      else
+        echo "✅ Production deployment completed successfully"
+      fi
+      
+    # Run production smoke tests
+    - |
+      sleep 60  # Wait for services to stabilize
+      curl -f "https://kenny-agi.example.com/health" || exit 1
+      curl -X POST "https://kenny-agi.example.com/generate" \
+        -H "Content-Type: application/json" \
+        -d '{"input": "Production deployment test", "max_length": 50}' || exit 1
+      echo "✅ Production smoke tests passed"
+      
+  after_script:
+    # Update production status
+    - |
+      python pipelines/agi_deployment/model_registries/update_deployment_status.py \
+        --model-id $MODEL_ID \
+        --version $MODEL_VERSION \
+        --environment production \
+        --status deployed \
+        --endpoint "https://kenny-agi.example.com" \
+        --deployment-id $CI_PIPELINE_ID
+        
+  artifacts:
+    paths:
+      - production_config.json
+      - production_results.json
+    expire_in: 1 year
+    when: always
+    
+  when: manual
+  allow_failure: false
+  
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+# Post-Deployment Monitoring
+post_deployment_monitor:
+  stage: monitor
+  image: python:$PYTHON_VERSION
+  
+  needs:
+    - production_deployment
+    
+  variables:
+    MONITOR_DURATION: "1800"  # 30 minutes
+    
+  before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install -r pipelines/agi_deployment/requirements.txt
+    
+  script:
+    - echo "📊 Starting post-deployment monitoring"
+    
+    # Start comprehensive monitoring
+    - |
+      python pipelines/agi_deployment/monitoring/agi_observability.py \
+        --environment production \
+        --model-version $MODEL_VERSION \
+        --duration $MONITOR_DURATION \
+        --config pipelines/agi_deployment/configs/monitoring_config.yaml \
+        --output monitoring_results.json &
+        
+      MONITOR_PID=$!
+      
+      # Run integration tests while monitoring
+      python pipelines/agi_deployment/tests/integration_tests.py \
+        --environment production \
+        --test-suite comprehensive \
+        --duration 900 \
+        --output integration_results.json
+        
+      # Wait for monitoring to complete
+      wait $MONITOR_PID
+      
+    # Generate comprehensive deployment report
+    - |
+      python pipelines/agi_deployment/reporting/deployment_report.py \
+        --deployment-id $CI_PIPELINE_ID \
+        --model-id $MODEL_ID \
+        --model-version $MODEL_VERSION \
+        --environment production \
+        --artifacts-path ./ \
+        --template comprehensive \
+        --output deployment_report.html
+        
+    # Check for any critical issues
+    - |
+      CRITICAL_ISSUES=$(python -c "
+      import json
+      with open('monitoring_results.json') as f:
+          results = json.load(f)
+      critical_alerts = [a for a in results.get('active_alerts', []) if a.get('severity') == 'critical']
+      print(len(critical_alerts))
+      ")
+      
+      if [ "$CRITICAL_ISSUES" -gt "0" ]; then
+        echo "⚠️ Critical issues detected during monitoring"
+        # Don't fail the pipeline, but warn
+      else
+        echo "✅ No critical issues detected"
+      fi
+      
+  artifacts:
+    paths:
+      - monitoring_results.json
+      - integration_results.json
+      - deployment_report.html
+    expire_in: 6 months
+    when: always
+    
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+# Cleanup Old Deployments
+cleanup_old_versions:
+  stage: cleanup
+  image: python:$PYTHON_VERSION
+  
+  needs:
+    - post_deployment_monitor
+    
+  variables:
+    RETENTION_DAYS: "30"
+    KEEP_VERSIONS: "5"
+    
+  before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install -r pipelines/agi_deployment/requirements.txt
+    
+  script:
+    - echo "🧹 Cleaning up old model versions and deployments"
+    
+    # Cleanup old container images
+    - |
+      python pipelines/agi_deployment/cleanup/image_cleanup.py \
+        --registry $CONTAINER_REGISTRY \
+        --model-id $MODEL_ID \
+        --retention-days $RETENTION_DAYS \
+        --keep-versions $KEEP_VERSIONS \
+        --dry-run false
+        
+    # Cleanup old model artifacts
+    - |
+      python pipelines/agi_deployment/cleanup/artifact_cleanup.py \
+        --model-registry-url $MODEL_REGISTRY_URL \
+        --model-id $MODEL_ID \
+        --retention-days $RETENTION_DAYS \
+        --keep-versions $KEEP_VERSIONS
+        
+    # Archive old logs and metrics
+    - |
+      python pipelines/agi_deployment/cleanup/logs_archive.py \
+        --environment production \
+        --retention-days $RETENTION_DAYS \
+        --archive-bucket $LOGS_ARCHIVE_BUCKET
+        
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: delayed
+      start_in: 1 hour  # Run cleanup after successful deployment
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+# Emergency Rollback Job (Manual only)
+.emergency_rollback:
+  stage: cleanup
+  image: python:$PYTHON_VERSION
+  
+  variables:
+    TARGET_ENVIRONMENT: "production"
+    ROLLBACK_REASON: "manual_trigger"
+    
+  before_script:
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install -r pipelines/agi_deployment/requirements.txt
+    - echo "$KUBECONFIG_PRODUCTION" | base64 -d > $KUBECONFIG_PATH
+    - export KUBECONFIG=$KUBECONFIG_PATH
+    
+  script:
+    - echo "🚨 Executing emergency rollback"
+    
+    # Execute emergency rollback
+    - |
+      python pipelines/agi_deployment/rollback/emergency_rollback.py \
+        --environment $TARGET_ENVIRONMENT \
+        --model-id $MODEL_ID \
+        --reason $ROLLBACK_REASON \
+        --output rollback_results.json
+        
+    # Notify teams
+    - |
+      python pipelines/agi_deployment/notifications/send_alert.py \
+        --type emergency_rollback \
+        --environment $TARGET_ENVIRONMENT \
+        --model-id $MODEL_ID \
+        --details rollback_results.json \
+        --channels slack,email,pagerduty
+        
+  artifacts:
+    paths:
+      - rollback_results.json
+    expire_in: 1 year
+    when: always
+    
+  when: manual
+  allow_failure: false
+
+# Notification and Reporting
+deployment_notification:
+  stage: .post
+  image: alpine:latest
+  
+  variables:
+    SLACK_WEBHOOK: $SLACK_WEBHOOK_URL
+    
+  before_script:
+    - apk add --no-cache curl jq
+    
+  script:
+    - echo "📢 Sending deployment notifications"
+    
+    # Determine overall pipeline status
+    - |
+      if [ "$CI_PIPELINE_STATUS" = "success" ]; then
+        STATUS_EMOJI="✅"
+        STATUS_COLOR="good"
+        STATUS_TEXT="SUCCESS"
+      elif [ "$CI_PIPELINE_STATUS" = "failed" ]; then
+        STATUS_EMOJI="❌" 
+        STATUS_COLOR="danger"
+        STATUS_TEXT="FAILED"
+      else
+        STATUS_EMOJI="⚠️"
+        STATUS_COLOR="warning" 
+        STATUS_TEXT="PARTIAL"
+      fi
+      
+    # Send Slack notification
+    - |
+      curl -X POST -H 'Content-type: application/json' \
+        --data '{
+          "channel": "#agi-deployments",
+          "attachments": [{
+            "color": "'$STATUS_COLOR'",
+            "title": "'$STATUS_EMOJI' AGI Model Deployment Pipeline",
+            "fields": [
+              {
+                "title": "Repository",
+                "value": "'$CI_PROJECT_PATH'",
+                "short": true
+              },
+              {
+                "title": "Model Version",
+                "value": "'$MODEL_VERSION'", 
+                "short": true
+              },
+              {
+                "title": "Environment",
+                "value": "'$DEPLOYMENT_ENVIRONMENT'",
+                "short": true
+              },
+              {
+                "title": "Status",
+                "value": "'$STATUS_TEXT'",
+                "short": true
+              },
+              {
+                "title": "Pipeline",
+                "value": "<'$CI_PIPELINE_URL'|View Details>",
+                "short": false
+              }
+            ],
+            "footer": "GitLab CI/CD",
+            "ts": '$CI_PIPELINE_CREATED_AT'
+          }]
+        }' \
+        $SLACK_WEBHOOK
+        
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: always

@@ -1,0 +1,113 @@
+[package]
+name = "autonomous_vehicle"
+version = "0.1.0"
+edition = "2021"
+authors = ["WASM Edge AI Team <contact@wasmcloud.io>"]
+description = "Complete autonomous vehicle system with multi-camera sensor fusion, LiDAR processing, path planning, and vehicle control"
+license = "Apache-2.0"
+repository = "https://github.com/wasmcloud/wasm-edge-ai-sdk"
+
+[dependencies]
+# Core WASM Edge AI SDK
+wasm-edge-ai-sdk = { path = "../../", features = ["inference", "control", "telemetry"] }
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# AI and ML
+ort = "1.16"  # ONNX Runtime
+ndarray = "0.15"
+candle-core = "0.3"
+candle-nn = "0.3"
+
+# Computer vision
+opencv = { version = "0.88", features = ["opencv-4"] }
+image = "0.24"
+
+# Point cloud processing  
+pcl-rs = "0.2"
+
+# Linear algebra and math
+nalgebra = "0.32"
+nalgebra-glm = "0.18"
+
+# Networking and communication
+reqwest = { version = "0.11", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Configuration
+config = "0.13"
+toml = "0.8"
+
+# Logging and monitoring
+log = "0.4"
+env_logger = "0.10"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+prometheus = "0.13"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Utilities
+uuid = { version = "1.0", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+rand = "0.8"
+
+# Vehicle interface
+socketcan = "3.3"
+j1939 = "0.3"
+
+# Real-time systems
+rt-priority = "0.1"
+
+[dev-dependencies]
+criterion = "0.5"
+tempfile = "3.0"
+mockall = "0.11"
+
+[[bin]]
+name = "vehicle_controller"
+path = "src/main.rs"
+
+[[bin]]
+name = "vision_processor"
+path = "src/vision.rs"
+
+[[bin]]
+name = "lidar_processor"
+path = "src/lidar.rs"
+
+[[bin]]
+name = "path_planner"
+path = "src/planner.rs"
+
+[[bin]]
+name = "safety_monitor"
+path = "src/safety.rs"
+
+[features]
+default = ["simulation"]
+simulation = []
+hardware = ["socketcan"]
+gpu-acceleration = ["opencv/cuda"]
+real-time = ["rt-priority"]
+
+[profile.release]
+debug = true
+lto = true
+opt-level = 3
+codegen-units = 1
+
+[profile.dev]
+opt-level = 1
+
+[[bench]]
+name = "inference_benchmark"
+harness = false
+
+[[bench]]
+name = "sensor_fusion_benchmark"
+harness = false

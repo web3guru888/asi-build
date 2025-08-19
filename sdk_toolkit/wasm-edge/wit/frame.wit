@@ -1,0 +1,511 @@
+// Frame and sensor data interfaces for Kenny Edge AI SDK
+// Defines image frames, sensor data, and spatial information
+
+package kenny:edge@1.0.0;
+
+interface frame {
+    // Frame format specifications
+    variant frame-format {
+        rgb8,
+        rgba8,
+        bgr8,
+        bgra8,
+        yuv420,
+        yuv422,
+        nv12,
+        nv21,
+        gray8,
+        gray16,
+        depth16,
+        depth32f,
+        thermal16,
+        point-cloud,
+        compressed-jpeg,
+        compressed-png,
+        compressed-h264,
+        compressed-h265,
+        custom(string),
+    }
+
+    variant color-space {
+        srgb,
+        adobe-rgb,
+        rec709,
+        rec2020,
+        xyz,
+        lab,
+        hsv,
+        yuv,
+        custom(string),
+    }
+
+    // Frame metadata
+    record frame-metadata {
+        timestamp: u64,           // nanoseconds since epoch
+        sequence-id: u64,         // frame sequence number
+        width: u32,
+        height: u32,
+        format: frame-format,
+        color-space: color-space,
+        bit-depth: u8,
+        compression-quality: option<u8>,
+        sensor-id: string,
+        capture-mode: capture-mode,
+        exposure-info: option<exposure-info>,
+        focus-info: option<focus-info>,
+        white-balance: option<white-balance>,
+        sensor-pose: option<sensor-pose>,
+        environmental: option<environmental-data>,
+    }
+
+    variant capture-mode {
+        auto,
+        manual,
+        burst,
+        time-lapse,
+        hdr,
+        night-mode,
+        sports-mode,
+        portrait-mode,
+        macro-mode,
+        custom(string),
+    }
+
+    record exposure-info {
+        exposure-time-us: u32,
+        iso-value: u16,
+        f-number: f32,
+        aperture-value: f32,
+        brightness-value: f32,
+        exposure-bias: f32,
+        flash-fired: bool,
+    }
+
+    record focus-info {
+        focus-mode: focus-mode,
+        focus-distance-mm: option<f32>,
+        focus-area: option<focus-area>,
+        depth-of-field-mm: option<f32>,
+    }
+
+    variant focus-mode {
+        auto-single,
+        auto-continuous,
+        manual,
+        infinity,
+        macro,
+        hyperfocal,
+    }
+
+    record focus-area {
+        x: f32,      // normalized coordinates [0, 1]
+        y: f32,
+        width: f32,
+        height: f32,
+    }
+
+    record white-balance {
+        mode: white-balance-mode,
+        temperature-kelvin: option<u16>,
+        tint: option<f32>,
+        gains: option<color-gains>,
+    }
+
+    variant white-balance-mode {
+        auto,
+        daylight,
+        cloudy,
+        shade,
+        tungsten,
+        fluorescent,
+        flash,
+        custom,
+    }
+
+    record color-gains {
+        red: f32,
+        green: f32,
+        blue: f32,
+    }
+
+    // Spatial information
+    record sensor-pose {
+        position: position3d,                // meters
+        orientation: quaternion,             // rotation
+        velocity: option<velocity3d>,        // m/s
+        angular-velocity: option<angular-velocity3d>, // rad/s
+        acceleration: option<acceleration3d>, // m/s²
+        coordinate-system: coordinate-system,
+        confidence: f32,                     // [0, 1]
+        covariance: option<pose-covariance>, // uncertainty
+    }
+
+    record position3d {
+        x: f64,
+        y: f64,
+        z: f64,
+    }
+
+    record quaternion {
+        w: f64,
+        x: f64,
+        y: f64,
+        z: f64,
+    }
+
+    record velocity3d {
+        x: f32,
+        y: f32,
+        z: f32,
+    }
+
+    record angular-velocity3d {
+        x: f32,  // roll rate
+        y: f32,  // pitch rate
+        z: f32,  // yaw rate
+    }
+
+    record acceleration3d {
+        x: f32,
+        y: f32,
+        z: f32,
+    }
+
+    variant coordinate-system {
+        world,           // Global coordinate system
+        robot-base,      // Robot base frame
+        camera,          // Camera frame
+        imu,            // IMU frame
+        gps,            // GPS/geographic frame
+        custom(string),
+    }
+
+    record pose-covariance {
+        position-cov: list<f64>,      // 3x3 matrix (row-major)
+        orientation-cov: list<f64>,   // 3x3 matrix for RPY
+        velocity-cov: option<list<f64>>,     // 3x3 matrix
+        angular-velocity-cov: option<list<f64>>, // 3x3 matrix
+    }
+
+    // Environmental sensor data
+    record environmental-data {
+        temperature-celsius: option<f32>,
+        humidity-percent: option<f32>,
+        pressure-hpa: option<f32>,
+        altitude-meters: option<f32>,
+        light-level-lux: option<f32>,
+        uv-index: option<f32>,
+        air-quality-index: option<u16>,
+        wind-speed-ms: option<f32>,
+        wind-direction-deg: option<f32>,
+        gps-data: option<gps-data>,
+    }
+
+    record gps-data {
+        latitude: f64,
+        longitude: f64,
+        altitude: f64,
+        accuracy-meters: f32,
+        satellites: u8,
+        fix-type: gps-fix-type,
+        speed-ms: option<f32>,
+        heading-deg: option<f32>,
+    }
+
+    variant gps-fix-type {
+        no-fix,
+        fix-2d,
+        fix-3d,
+        dgps,
+        rtk-float,
+        rtk-fixed,
+    }
+
+    // Main frame data structure
+    record frame-data {
+        metadata: frame-metadata,
+        data: list<u8>,              // Raw frame data
+        regions-of-interest: list<roi>,
+        annotations: list<annotation>,
+        calibration: option<camera-calibration>,
+    }
+
+    record roi {
+        id: string,
+        name: option<string>,
+        bbox: bounding-box,
+        confidence: f32,
+        roi-type: roi-type,
+        properties: option<string>,  // JSON properties
+    }
+
+    record bounding-box {
+        x: f32,      // normalized coordinates [0, 1]
+        y: f32,
+        width: f32,
+        height: f32,
+    }
+
+    variant roi-type {
+        detection,
+        tracking,
+        attention,
+        exclusion,
+        measurement,
+        custom(string),
+    }
+
+    record annotation {
+        id: string,
+        label: string,
+        confidence: f32,
+        bbox: option<bounding-box>,
+        polygon: option<list<point2d>>,
+        keypoints: option<list<keypoint>>,
+        annotation-type: annotation-type,
+        properties: option<string>,  // JSON properties
+    }
+
+    record point2d {
+        x: f32,
+        y: f32,
+    }
+
+    record keypoint {
+        point: point2d,
+        confidence: f32,
+        visible: bool,
+        label: option<string>,
+    }
+
+    variant annotation-type {
+        object-detection,
+        semantic-segmentation,
+        instance-segmentation,
+        pose-estimation,
+        facial-landmarks,
+        text-detection,
+        custom(string),
+    }
+
+    // Camera calibration data
+    record camera-calibration {
+        intrinsic-matrix: list<f64>,     // 3x3 camera matrix (row-major)
+        distortion-coeffs: list<f64>,    // distortion coefficients
+        rectification-matrix: option<list<f64>>, // 3x3 rectification matrix
+        projection-matrix: option<list<f64>>,    // 3x4 projection matrix
+        calibration-model: calibration-model,
+        reprojection-error: option<f32>,
+        calibration-date: option<u64>,
+    }
+
+    variant calibration-model {
+        pinhole,
+        fisheye,
+        omnidirectional,
+        polynomial,
+        rational,
+        custom(string),
+    }
+
+    // Multi-modal sensor fusion
+    record sensor-frame {
+        primary-frame: frame-data,
+        auxiliary-frames: list<auxiliary-frame>,
+        synchronization: sync-info,
+        fusion-metadata: option<fusion-metadata>,
+    }
+
+    record auxiliary-frame {
+        sensor-type: sensor-type,
+        data: sensor-data,
+        timestamp: u64,
+        sensor-id: string,
+        pose-relative-to-primary: option<sensor-pose>,
+    }
+
+    variant sensor-type {
+        camera,
+        lidar,
+        radar,
+        ultrasonic,
+        imu,
+        gps,
+        thermal,
+        hyperspectral,
+        custom(string),
+    }
+
+    variant sensor-data {
+        frame(frame-data),
+        point-cloud(point-cloud-data),
+        imu(imu-data),
+        radar(radar-data),
+        ultrasonic(ultrasonic-data),
+        custom(list<u8>),
+    }
+
+    record point-cloud-data {
+        points: list<point3d>,
+        colors: option<list<color-rgb>>,
+        intensities: option<list<f32>>,
+        labels: option<list<string>>,
+        timestamp: u64,
+        coordinate-system: coordinate-system,
+    }
+
+    record point3d {
+        x: f32,
+        y: f32,
+        z: f32,
+    }
+
+    record color-rgb {
+        r: u8,
+        g: u8,
+        b: u8,
+    }
+
+    record imu-data {
+        acceleration: acceleration3d,        // m/s²
+        angular-velocity: angular-velocity3d, // rad/s
+        magnetic-field: option<magnetic-field3d>, // µT
+        temperature: option<f32>,           // °C
+        pressure: option<f32>,              // hPa
+        timestamp: u64,
+    }
+
+    record magnetic-field3d {
+        x: f32,
+        y: f32,
+        z: f32,
+    }
+
+    record radar-data {
+        range-doppler-map: list<list<f32>>,  // 2D range-Doppler map
+        detections: list<radar-detection>,
+        timestamp: u64,
+        range-resolution: f32,               // meters
+        velocity-resolution: f32,            // m/s
+        max-range: f32,                      // meters
+    }
+
+    record radar-detection {
+        range: f32,          // meters
+        velocity: f32,       // m/s (radial)
+        azimuth: f32,        // radians
+        elevation: option<f32>, // radians
+        rcs: f32,           // radar cross section (dBsm)
+        snr: f32,           // signal-to-noise ratio (dB)
+    }
+
+    record ultrasonic-data {
+        distances: list<f32>,               // meters
+        angles: list<f32>,                  // radians
+        confidences: list<f32>,             // [0, 1]
+        timestamp: u64,
+        max-range: f32,                     // meters
+        beam-width: f32,                    // radians
+    }
+
+    record sync-info {
+        sync-mode: sync-mode,
+        master-sensor: option<string>,
+        sync-accuracy-us: u32,              // microseconds
+        frame-alignment: frame-alignment,
+    }
+
+    variant sync-mode {
+        none,
+        hardware-trigger,
+        software-trigger,
+        timestamp-based,
+        external-sync,
+    }
+
+    variant frame-alignment {
+        temporal,        // Aligned by timestamp
+        spatial,         // Aligned by pose
+        both,           // Both temporal and spatial
+        best-effort,    // Best available alignment
+    }
+
+    record fusion-metadata {
+        fusion-algorithm: string,
+        calibration-status: calibration-status,
+        alignment-quality: f32,              // [0, 1]
+        fusion-confidence: f32,              // [0, 1]
+        processing-latency-ms: f32,
+    }
+
+    variant calibration-status {
+        not-calibrated,
+        approximate,
+        factory-calibrated,
+        field-calibrated,
+        verified,
+    }
+
+    // Streaming and buffering
+    record stream-config {
+        buffer-size: u32,                   // number of frames
+        max-latency-ms: u32,
+        drop-policy: drop-policy,
+        compression: compression-config,
+        quality-adaptation: bool,
+    }
+
+    variant drop-policy {
+        drop-oldest,
+        drop-newest,
+        drop-lowest-quality,
+        adaptive,
+    }
+
+    record compression-config {
+        enable: bool,
+        algorithm: compression-algorithm,
+        quality: u8,                        // 1-100
+        target-bitrate-kbps: option<u32>,
+    }
+
+    variant compression-algorithm {
+        jpeg,
+        png,
+        webp,
+        h264,
+        h265,
+        av1,
+        custom(string),
+    }
+
+    // Error handling
+    variant frame-error {
+        invalid-format,
+        corrupted-data,
+        unsupported-feature,
+        calibration-missing,
+        synchronization-failed,
+        buffer-overflow,
+        timeout,
+        sensor-error(string),
+        processing-error(string),
+    }
+
+    // Frame operations
+    validate-frame: func(frame: frame-data) -> result<_, frame-error>;
+    convert-format: func(frame: frame-data, target-format: frame-format) -> result<frame-data, frame-error>;
+    resize-frame: func(frame: frame-data, width: u32, height: u32) -> result<frame-data, frame-error>;
+    crop-frame: func(frame: frame-data, bbox: bounding-box) -> result<frame-data, frame-error>;
+    
+    // Multi-frame operations
+    align-frames: func(frames: list<frame-data>) -> result<list<frame-data>, frame-error>;
+    fuse-frames: func(sensor-frame: sensor-frame) -> result<frame-data, frame-error>;
+    
+    // Streaming
+    create-stream: func(config: stream-config) -> result<string, frame-error>;
+    push-frame: func(stream-id: string, frame: frame-data) -> result<_, frame-error>;
+    pop-frame: func(stream-id: string) -> result<option<frame-data>, frame-error>;
+    get-stream-stats: func(stream-id: string) -> result<string, frame-error>;
+    destroy-stream: func(stream-id: string) -> result<_, frame-error>;
+}

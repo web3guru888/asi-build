@@ -1,0 +1,21 @@
+packageName: kenny_agi_sdk
+projectName: kenny-agi-sdk
+packageVersion: 0.1.0
+packageUrl: https://github.com/kenny-agi/rdk
+packageCompany: Kenny AGI
+packageAuthor: Kenny AGI Team
+packageEmail: sdk@kenny-agi.dev
+packageDescription: Official Python SDK for Kenny AGI RDK (Reality Development Kit)
+packageKeywords: agi,ai,consciousness,reality,quantum,kenny
+generateSourceCodeOnly: false
+generateAliasAsModel: false
+hideGenerationTimestamp: true
+library: asyncio
+pythonAttr: 
+  packageName: kenny_agi_sdk
+  projectName: kenny-agi-sdk
+  packageVersion: 0.1.0
+  pythonPackageName: kenny_agi_sdk
+apiPackage: kenny_agi_sdk.api
+modelPackage: kenny_agi_sdk.models
+clientPackage: kenny_agi_sdk.client

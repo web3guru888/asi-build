@@ -1,0 +1,148 @@
+# Core Dependencies
+asyncio-mqtt==0.16.1
+aiohttp==3.9.1
+aiofiles==23.2.1
+pydantic==2.5.2
+python-dateutil==2.8.2
+click==8.1.7
+rich==13.7.0
+typer==0.9.0
+
+# Data Processing
+numpy==1.24.4
+pandas==2.1.4
+scipy==1.11.4
+
+# Machine Learning
+scikit-learn==1.3.2
+joblib==1.3.2
+
+# Model Registry Integrations
+mlflow==2.9.2
+wandb==0.16.1
+neptune==1.8.5
+
+# Monitoring and Observability
+prometheus-client==0.19.0
+psutil==5.9.6
+
+# Testing Framework
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# Security
+bandit==1.7.5
+safety==2.3.5
+
+# Infrastructure and GitOps
+GitPython==3.1.40
+jinja2==3.1.2
+terraform-compliance==1.3.45
+
+# Kubernetes Integration
+kubernetes==28.1.0
+pyyaml==6.0.1
+
+# Container and Docker
+docker==6.1.3
+
+# HTTP and API
+requests==2.31.0
+urllib3==2.1.0
+
+# Configuration Management
+python-dotenv==1.0.0
+configparser==6.0.0
+
+# Logging and Utilities
+structlog==23.2.0
+colorlog==6.8.0
+
+# Data Serialization
+orjson==3.9.10
+msgpack==1.0.7
+
+# Cryptography and Security
+cryptography==41.0.8
+hashlib-compat==1.0.1
+
+# Deployment and Infrastructure
+terraform-local==0.7.0
+ansible==8.7.0
+
+# Model Validation and Analysis
+model-validator==0.1.0
+data-drift==1.2.3
+
+# Performance and Profiling
+memory-profiler==0.61.0
+line-profiler==4.1.1
+
+# Development and Testing
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+isort==5.12.0
+pre-commit==3.6.0
+
+# Documentation
+mkdocs==1.5.3
+mkdocs-material==9.4.8
+
+# Additional ML Tools
+transformers==4.36.0
+torch>=2.0.0
+huggingface-hub==0.19.4
+
+# Visualization
+matplotlib==3.7.4
+seaborn==0.12.2
+plotly==5.17.0
+
+# Database Connectivity
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+redis==5.0.1
+
+# Message Queues and Streaming
+celery==5.3.4
+kafka-python==2.0.2
+
+# Cloud Provider SDKs
+boto3==1.34.0
+google-cloud-storage==2.10.0
+azure-storage-blob==12.19.0
+
+# Time Series and Analytics
+influxdb-client==1.38.0
+grafana-api==1.0.3
+
+# Additional Utilities
+tqdm==4.66.1
+tabulate==0.9.0
+humanize==4.8.0
+pathlib2==2.3.7
+
+# API and Web Framework Support
+fastapi==0.104.1
+uvicorn==0.24.0
+starlette==0.27.0
+
+# Model Serving and Inference
+triton-model-analyzer==1.37.0
+torchserve==0.8.2
+
+# Experiment Tracking
+tensorboard==2.15.1
+comet-ml==3.35.3
+
+# Version Control and Git
+dulwich==0.21.6
+gitdb==4.0.11
+
+# Linting and Code Quality
+pylint==3.0.3
+autopep8==2.0.4
+pycodestyle==2.11.1

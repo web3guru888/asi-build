@@ -1,0 +1,1163 @@
+// Control and actuation interfaces for Kenny Edge AI SDK
+// Defines robot control, motion planning, and safety systems
+
+package kenny:edge@1.0.0;
+
+interface control {
+    // Device and actuator types
+    variant device-type {
+        humanoid-robot(humanoid-config),
+        industrial-arm(arm-config),
+        mobile-robot(mobile-config),
+        quadruped-robot(quadruped-config),
+        autonomous-vehicle(vehicle-config),
+        drone(drone-config),
+        plc-system(plc-config),
+        custom(custom-device-config),
+    }
+
+    record humanoid-config {
+        degrees-of-freedom: u8,
+        height-meters: f32,
+        weight-kg: f32,
+        joint-types: list<joint-config>,
+        sensor-suite: sensor-suite,
+        capabilities: list<humanoid-capability>,
+    }
+
+    record arm-config {
+        axes: u8,
+        reach-mm: f32,
+        payload-kg: f32,
+        repeatability-mm: f32,
+        joint-limits: list<joint-limit>,
+        end-effector: option<end-effector-config>,
+    }
+
+    record mobile-config {
+        locomotion-type: locomotion-type,
+        max-speed-ms: f32,
+        dimensions: robot-dimensions,
+        wheel-config: option<wheel-config>,
+        track-config: option<track-config>,
+    }
+
+    record quadruped-config {
+        leg-count: u8,
+        body-dimensions: robot-dimensions,
+        leg-configuration: list<leg-config>,
+        gait-types: list<gait-type>,
+    }
+
+    record vehicle-config {
+        vehicle-type: vehicle-type,
+        propulsion: propulsion-type,
+        steering-type: steering-type,
+        brake-type: brake-type,
+        sensor-suite: sensor-suite,
+        autonomous-level: autonomous-level,
+    }
+
+    record drone-config {
+        rotor-count: u8,
+        max-altitude-m: f32,
+        max-speed-ms: f32,
+        flight-time-minutes: u32,
+        payload-kg: f32,
+        gimbal-config: option<gimbal-config>,
+    }
+
+    record plc-config {
+        input-channels: u16,
+        output-channels: u16,
+        protocol: plc-protocol,
+        cycle-time-ms: u32,
+        safety-level: safety-integrity-level,
+    }
+
+    record custom-device-config {
+        device-name: string,
+        specifications: string,  // JSON specifications
+        capabilities: list<string>,
+    }
+
+    // Joint and motion configuration
+    record joint-config {
+        joint-id: string,
+        joint-type: joint-type,
+        limits: joint-limit,
+        actuator: actuator-config,
+        sensor: joint-sensor-config,
+    }
+
+    variant joint-type {
+        revolute,
+        prismatic,
+        spherical,
+        universal,
+        fixed,
+        continuous,
+        custom(string),
+    }
+
+    record joint-limit {
+        min-position: f32,
+        max-position: f32,
+        max-velocity: f32,
+        max-acceleration: f32,
+        max-torque: f32,
+        max-power: f32,
+    }
+
+    record actuator-config {
+        actuator-type: actuator-type,
+        rated-torque: f32,
+        rated-speed: f32,
+        gear-ratio: f32,
+        efficiency: f32,
+        control-mode: control-mode,
+    }
+
+    variant actuator-type {
+        electric-servo,
+        electric-stepper,
+        hydraulic,
+        pneumatic,
+        piezoelectric,
+        shape-memory-alloy,
+        custom(string),
+    }
+
+    variant control-mode {
+        position-control,
+        velocity-control,
+        torque-control,
+        force-control,
+        impedance-control,
+        admittance-control,
+        hybrid-control,
+    }
+
+    record joint-sensor-config {
+        position-sensor: option<sensor-config>,
+        velocity-sensor: option<sensor-config>,
+        torque-sensor: option<sensor-config>,
+        temperature-sensor: option<sensor-config>,
+    }
+
+    record sensor-config {
+        sensor-type: string,
+        resolution: f32,
+        accuracy: f32,
+        sample-rate-hz: u32,
+        range: tuple<f32, f32>,
+    }
+
+    // Vehicle and locomotion specific
+    variant vehicle-type {
+        passenger-car,
+        truck,
+        bus,
+        motorcycle,
+        agricultural,
+        construction,
+        military,
+        emergency,
+        racing,
+        custom(string),
+    }
+
+    variant propulsion-type {
+        internal-combustion,
+        electric,
+        hybrid,
+        hydrogen,
+        pneumatic,
+        custom(string),
+    }
+
+    variant steering-type {
+        rack-and-pinion,
+        recirculating-ball,
+        steer-by-wire,
+        four-wheel-steering,
+        custom(string),
+    }
+
+    variant brake-type {
+        hydraulic,
+        electric,
+        pneumatic,
+        regenerative,
+        magnetic,
+        custom(string),
+    }
+
+    variant autonomous-level {
+        level-0,  // No automation
+        level-1,  // Driver assistance
+        level-2,  // Partial automation
+        level-3,  // Conditional automation
+        level-4,  // High automation
+        level-5,  // Full automation
+    }
+
+    variant locomotion-type {
+        wheeled,
+        tracked,
+        legged,
+        hovering,
+        flying,
+        swimming,
+        hybrid(list<locomotion-type>),
+    }
+
+    record wheel-config {
+        wheel-count: u8,
+        wheel-diameter-mm: f32,
+        drive-type: drive-type,
+        steering-geometry: steering-geometry,
+    }
+
+    variant drive-type {
+        front-wheel-drive,
+        rear-wheel-drive,
+        all-wheel-drive,
+        individual-wheel-drive,
+    }
+
+    record steering-geometry {
+        wheelbase-mm: f32,
+        track-width-mm: f32,
+        caster-angle-deg: f32,
+        camber-angle-deg: f32,
+        toe-angle-deg: f32,
+    }
+
+    record track-config {
+        track-width-mm: f32,
+        track-length-mm: f32,
+        ground-pressure-kpa: f32,
+    }
+
+    record leg-config {
+        segments: list<leg-segment>,
+        foot-config: foot-config,
+        compliance: compliance-config,
+    }
+
+    record leg-segment {
+        length-mm: f32,
+        mass-kg: f32,
+        joints: list<joint-config>,
+    }
+
+    record foot-config {
+        foot-type: foot-type,
+        contact-area-cm2: f32,
+        grip-coefficient: f32,
+        sensors: list<contact-sensor>,
+    }
+
+    variant foot-type {
+        point-contact,
+        line-contact,
+        surface-contact,
+        adaptive,
+        custom(string),
+    }
+
+    record contact-sensor {
+        sensor-type: contact-sensor-type,
+        threshold: f32,
+        location: contact-location,
+    }
+
+    variant contact-sensor-type {
+        force,
+        pressure,
+        tactile,
+        proximity,
+        slip,
+    }
+
+    record contact-location {
+        x: f32,  // relative to foot center
+        y: f32,
+        z: f32,
+    }
+
+    record compliance-config {
+        stiffness: f32,
+        damping: f32,
+        compliance-mode: compliance-mode,
+    }
+
+    variant compliance-mode {
+        fixed,
+        variable,
+        adaptive,
+        learning,
+    }
+
+    variant gait-type {
+        walk,
+        trot,
+        pace,
+        bound,
+        gallop,
+        creep,
+        custom(string),
+    }
+
+    record gimbal-config {
+        axes: u8,
+        range-degrees: list<f32>,
+        stabilization: bool,
+        target-tracking: bool,
+        payload-kg: f32,
+    }
+
+    // End effector configuration
+    record end-effector-config {
+        effector-type: end-effector-type,
+        degrees-of-freedom: u8,
+        grip-force-n: f32,
+        precision-mm: f32,
+        sensors: list<effector-sensor>,
+    }
+
+    variant end-effector-type {
+        gripper-parallel,
+        gripper-angular,
+        gripper-adaptive,
+        suction-cup,
+        magnetic,
+        welding-torch,
+        spray-gun,
+        drill,
+        camera,
+        custom(string),
+    }
+
+    record effector-sensor {
+        sensor-type: effector-sensor-type,
+        location: string,
+        specifications: string,
+    }
+
+    variant effector-sensor-type {
+        force-torque,
+        tactile,
+        vision,
+        proximity,
+        temperature,
+        pressure,
+        custom(string),
+    }
+
+    // Safety configuration
+    record safety-config {
+        safety-level: safety-integrity-level,
+        emergency-stop: emergency-stop-config,
+        workspace-limits: workspace-limits,
+        collision-detection: collision-detection-config,
+        force-limits: force-limits-config,
+        velocity-limits: velocity-limits-config,
+        watchdog-config: watchdog-config,
+        fault-tolerance: fault-tolerance-config,
+    }
+
+    variant safety-integrity-level {
+        sil-0,  // No safety requirements
+        sil-1,  // Low safety requirements
+        sil-2,  // Medium safety requirements
+        sil-3,  // High safety requirements
+        sil-4,  // Very high safety requirements
+    }
+
+    record emergency-stop-config {
+        enable: bool,
+        stop-time-ms: u32,
+        stop-category: stop-category,
+        reset-required: bool,
+        external-estop: bool,
+    }
+
+    variant stop-category {
+        category-0,  // Uncontrolled stop
+        category-1,  // Controlled stop with power available
+        category-2,  // Controlled stop with power removed
+    }
+
+    record workspace-limits {
+        boundaries: list<workspace-boundary>,
+        forbidden-zones: list<forbidden-zone>,
+        monitoring-frequency-hz: u32,
+    }
+
+    record workspace-boundary {
+        boundary-type: boundary-type,
+        points: list<point3d>,
+        violation-action: violation-action,
+    }
+
+    variant boundary-type {
+        rectangular,
+        cylindrical,
+        spherical,
+        polygonal,
+        mesh,
+        custom(string),
+    }
+
+    record point3d {
+        x: f64,
+        y: f64,
+        z: f64,
+    }
+
+    record forbidden-zone {
+        zone-id: string,
+        shape: zone-shape,
+        center: point3d,
+        dimensions: list<f32>,
+        severity: violation-severity,
+        active: bool,
+    }
+
+    variant zone-shape {
+        sphere,
+        cylinder,
+        box,
+        plane,
+        mesh,
+        custom(string),
+    }
+
+    variant violation-action {
+        warning,
+        slow-down,
+        stop,
+        emergency-stop,
+        retract,
+        custom(string),
+    }
+
+    variant violation-severity {
+        advisory,
+        warning,
+        alarm,
+        critical,
+        emergency,
+    }
+
+    record collision-detection-config {
+        enable: bool,
+        detection-method: collision-detection-method,
+        sensitivity: f32,
+        reaction-time-ms: u32,
+        recovery-behavior: recovery-behavior,
+    }
+
+    variant collision-detection-method {
+        force-based,
+        vision-based,
+        proximity-based,
+        model-based,
+        hybrid,
+        custom(string),
+    }
+
+    variant recovery-behavior {
+        stop,
+        retract,
+        compliant-mode,
+        human-guidance,
+        automatic-recovery,
+        custom(string),
+    }
+
+    record force-limits-config {
+        max-forces: list<f32>,      // per joint
+        max-torques: list<f32>,     // per joint
+        monitoring-frequency-hz: u32,
+        reaction-threshold: f32,
+    }
+
+    record velocity-limits-config {
+        max-velocities: list<f32>,  // per joint
+        max-accelerations: list<f32>, // per joint
+        monitoring-frequency-hz: u32,
+        deceleration-limit: f32,
+    }
+
+    record watchdog-config {
+        enable: bool,
+        timeout-ms: u32,
+        heartbeat-frequency-hz: u32,
+        failure-action: failure-action,
+    }
+
+    variant failure-action {
+        ignore,
+        warning,
+        safe-stop,
+        emergency-stop,
+        reboot,
+        custom(string),
+    }
+
+    record fault-tolerance-config {
+        redundancy-level: redundancy-level,
+        graceful-degradation: bool,
+        fault-detection: fault-detection-config,
+        recovery-strategies: list<recovery-strategy>,
+    }
+
+    variant redundancy-level {
+        none,
+        dual,
+        triple,
+        n-modular(u8),
+    }
+
+    record fault-detection-config {
+        self-diagnostics: bool,
+        cross-checking: bool,
+        model-based: bool,
+        statistical-monitoring: bool,
+    }
+
+    record recovery-strategy {
+        fault-type: fault-type,
+        strategy: string,
+        priority: u8,
+        timeout-ms: u32,
+    }
+
+    variant fault-type {
+        sensor-failure,
+        actuator-failure,
+        communication-failure,
+        power-failure,
+        software-error,
+        hardware-error,
+        custom(string),
+    }
+
+    // Communication and protocol configuration
+    variant plc-protocol {
+        modbus-tcp,
+        modbus-rtu,
+        ethernet-ip,
+        profinet,
+        ethercat,
+        canopen,
+        devicenet,
+        asi,
+        hart,
+        foundation-fieldbus,
+        custom(string),
+    }
+
+    record communication-config {
+        protocol: communication-protocol,
+        address: string,
+        port: option<u16>,
+        timeout-ms: u32,
+        retry-count: u8,
+        keep-alive: bool,
+        encryption: option<encryption-config>,
+    }
+
+    variant communication-protocol {
+        tcp,
+        udp,
+        serial,
+        can-bus,
+        ethernet,
+        wireless(wireless-type),
+        custom(string),
+    }
+
+    variant wireless-type {
+        wifi,
+        bluetooth,
+        zigbee,
+        lora,
+        cellular,
+        satellite,
+        custom(string),
+    }
+
+    record encryption-config {
+        algorithm: string,
+        key-length: u16,
+        certificate: option<string>,
+    }
+
+    // Control commands and states
+    record control-command {
+        command-id: string,
+        timestamp: u64,
+        priority: u8,
+        command-type: command-type,
+        safety-override: bool,
+        expected-duration-ms: option<u32>,
+        metadata: option<string>,
+    }
+
+    variant command-type {
+        position-command(position-command),
+        velocity-command(velocity-command),
+        force-command(force-command),
+        trajectory-command(trajectory-command),
+        cartesian-command(cartesian-command),
+        emergency-stop,
+        home,
+        calibrate,
+        enable,
+        disable,
+        reset,
+        custom(custom-command),
+    }
+
+    record position-command {
+        joint-positions: list<f32>,
+        coordinate-frame: coordinate-frame,
+        interpolation: interpolation-type,
+        speed-factor: f32,
+    }
+
+    record velocity-command {
+        joint-velocities: list<f32>,
+        coordinate-frame: coordinate-frame,
+        acceleration-limit: option<f32>,
+    }
+
+    record force-command {
+        forces: list<f32>,
+        coordinate-frame: coordinate-frame,
+        compliance-mode: compliance-mode,
+        force-feedback: bool,
+    }
+
+    record trajectory-command {
+        waypoints: list<waypoint>,
+        trajectory-type: trajectory-type,
+        timing-constraints: timing-constraints,
+        path-constraints: path-constraints,
+    }
+
+    record waypoint {
+        position: list<f32>,
+        velocity: option<list<f32>>,
+        acceleration: option<list<f32>>,
+        time-from-start-ms: u32,
+        coordinate-frame: coordinate-frame,
+    }
+
+    variant trajectory-type {
+        joint-space,
+        cartesian-space,
+        task-space,
+        hybrid,
+    }
+
+    record timing-constraints {
+        max-velocity: list<f32>,
+        max-acceleration: list<f32>,
+        max-jerk: list<f32>,
+        total-time-ms: option<u32>,
+    }
+
+    record path-constraints {
+        workspace-constraints: option<workspace-limits>,
+        collision-avoidance: bool,
+        smoothness-factor: f32,
+        energy-optimization: bool,
+    }
+
+    record cartesian-command {
+        position: point3d,
+        orientation: quaternion,
+        linear-velocity: option<velocity3d>,
+        angular-velocity: option<angular-velocity3d>,
+        reference-frame: coordinate-frame,
+        tool-frame: option<coordinate-frame>,
+    }
+
+    record quaternion {
+        w: f64,
+        x: f64,
+        y: f64,
+        z: f64,
+    }
+
+    record velocity3d {
+        x: f32,
+        y: f32,
+        z: f32,
+    }
+
+    record angular-velocity3d {
+        x: f32,  // roll rate
+        y: f32,  // pitch rate
+        z: f32,  // yaw rate
+    }
+
+    variant coordinate-frame {
+        world,
+        base,
+        tool,
+        joint,
+        custom(string),
+    }
+
+    variant interpolation-type {
+        linear,
+        spline,
+        polynomial,
+        circular,
+        custom(string),
+    }
+
+    record custom-command {
+        command-name: string,
+        parameters: string,  // JSON parameters
+        schema: option<string>,
+    }
+
+    // Actuator state and feedback
+    record actuator-state {
+        device-id: string,
+        timestamp: u64,
+        joint-states: list<joint-state>,
+        cartesian-pose: option<cartesian-pose>,
+        operational-state: operational-state,
+        safety-state: safety-state,
+        diagnostic-info: diagnostic-info,
+        performance-metrics: control-performance-metrics,
+    }
+
+    record joint-state {
+        joint-id: string,
+        position: f32,
+        velocity: f32,
+        acceleration: f32,
+        effort: f32,          // torque/force
+        temperature: option<f32>,
+        current-draw: option<f32>,
+        voltage: option<f32>,
+        error-state: error-state,
+    }
+
+    record cartesian-pose {
+        position: point3d,
+        orientation: quaternion,
+        linear-velocity: velocity3d,
+        angular-velocity: angular-velocity3d,
+        reference-frame: coordinate-frame,
+        pose-accuracy: f32,
+        tracking-error: option<tracking-error>,
+    }
+
+    record tracking-error {
+        position-error: f32,
+        orientation-error: f32,
+        velocity-error: f32,
+    }
+
+    variant operational-state {
+        initializing,
+        ready,
+        moving,
+        holding,
+        error,
+        emergency-stop,
+        maintenance,
+        calibrating,
+        disabled,
+    }
+
+    record safety-state {
+        emergency-stop-active: bool,
+        workspace-violation: bool,
+        collision-detected: bool,
+        force-limit-exceeded: bool,
+        velocity-limit-exceeded: bool,
+        temperature-warning: bool,
+        communication-ok: bool,
+        power-ok: bool,
+        external-safety-ok: bool,
+        safety-rating: safety-rating,
+    }
+
+    variant safety-rating {
+        safe,
+        warning,
+        alarm,
+        emergency,
+        unknown,
+    }
+
+    record diagnostic-info {
+        system-health: system-health,
+        component-status: list<component-diagnostic>,
+        error-log: list<error-record>,
+        maintenance-status: maintenance-status,
+        calibration-status: calibration-status,
+    }
+
+    variant system-health {
+        excellent,
+        good,
+        fair,
+        poor,
+        critical,
+        unknown,
+    }
+
+    record component-diagnostic {
+        component-id: string,
+        component-type: string,
+        health-score: f32,        // 0-100
+        last-maintenance: option<u64>,
+        next-maintenance: option<u64>,
+        operating-hours: u64,
+        fault-count: u32,
+        warning-count: u32,
+    }
+
+    record error-record {
+        error-id: string,
+        timestamp: u64,
+        severity: error-severity,
+        error-code: u32,
+        description: string,
+        component: option<string>,
+        resolved: bool,
+    }
+
+    variant error-severity {
+        info,
+        warning,
+        error,
+        critical,
+        fatal,
+    }
+
+    record maintenance-status {
+        last-maintenance: option<u64>,
+        next-scheduled: option<u64>,
+        maintenance-required: bool,
+        maintenance-type: option<maintenance-type>,
+        estimated-remaining-life: option<u32>,  // hours
+    }
+
+    variant maintenance-type {
+        routine,
+        preventive,
+        corrective,
+        predictive,
+        emergency,
+    }
+
+    variant calibration-status {
+        not-calibrated,
+        factory-calibrated,
+        field-calibrated,
+        auto-calibrated,
+        calibration-expired,
+        calibration-failed,
+    }
+
+    variant error-state {
+        no-error,
+        warning,
+        error,
+        critical-error,
+        fatal-error,
+    }
+
+    record control-performance-metrics {
+        command-execution-time-ms: f32,
+        position-accuracy-mm: f32,
+        repeatability-mm: f32,
+        path-following-error-mm: f32,
+        settling-time-ms: f32,
+        overshoot-percent: f32,
+        cycle-time-ms: f32,
+        throughput-commands-per-sec: f32,
+    }
+
+    // Sensor suite configuration
+    record sensor-suite {
+        cameras: list<camera-sensor>,
+        lidars: list<lidar-sensor>,
+        radars: list<radar-sensor>,
+        imus: list<imu-sensor>,
+        gps: option<gps-sensor>,
+        force-torque: list<force-torque-sensor>,
+        proximity: list<proximity-sensor>,
+        environmental: list<environmental-sensor>,
+    }
+
+    record camera-sensor {
+        sensor-id: string,
+        resolution: resolution,
+        frame-rate: u32,
+        field-of-view: field-of-view,
+        mounting-position: sensor-mount,
+    }
+
+    record resolution {
+        width: u32,
+        height: u32,
+    }
+
+    record field-of-view {
+        horizontal-deg: f32,
+        vertical-deg: f32,
+    }
+
+    record sensor-mount {
+        position: point3d,
+        orientation: quaternion,
+        mount-type: mount-type,
+    }
+
+    variant mount-type {
+        fixed,
+        pan-tilt,
+        gimbal,
+        robotic-arm,
+        custom(string),
+    }
+
+    record lidar-sensor {
+        sensor-id: string,
+        range-m: f32,
+        accuracy-mm: f32,
+        scan-rate-hz: u32,
+        beam-count: u32,
+        mounting-position: sensor-mount,
+    }
+
+    record radar-sensor {
+        sensor-id: string,
+        frequency-ghz: f32,
+        range-m: f32,
+        resolution-m: f32,
+        field-of-view: field-of-view,
+        mounting-position: sensor-mount,
+    }
+
+    record imu-sensor {
+        sensor-id: string,
+        accelerometer-range-g: f32,
+        gyroscope-range-dps: f32,
+        magnetometer-range-gauss: f32,
+        sample-rate-hz: u32,
+        mounting-position: sensor-mount,
+    }
+
+    record gps-sensor {
+        sensor-id: string,
+        accuracy-m: f32,
+        update-rate-hz: u32,
+        satellite-systems: list<satellite-system>,
+        mounting-position: sensor-mount,
+    }
+
+    variant satellite-system {
+        gps,
+        glonass,
+        galileo,
+        beidou,
+        qzss,
+    }
+
+    record force-torque-sensor {
+        sensor-id: string,
+        force-range-n: f32,
+        torque-range-nm: f32,
+        resolution-bits: u8,
+        sample-rate-hz: u32,
+        mounting-position: sensor-mount,
+    }
+
+    record proximity-sensor {
+        sensor-id: string,
+        sensor-type: proximity-sensor-type,
+        range-mm: f32,
+        resolution-mm: f32,
+        beam-angle-deg: f32,
+        mounting-position: sensor-mount,
+    }
+
+    variant proximity-sensor-type {
+        ultrasonic,
+        infrared,
+        laser,
+        capacitive,
+        inductive,
+        magnetic,
+    }
+
+    record environmental-sensor {
+        sensor-id: string,
+        sensor-type: environmental-sensor-type,
+        range: tuple<f32, f32>,
+        accuracy: f32,
+        mounting-position: sensor-mount,
+    }
+
+    variant environmental-sensor-type {
+        temperature,
+        humidity,
+        pressure,
+        air-quality,
+        light,
+        sound,
+        vibration,
+        gas(string),  // gas type
+    }
+
+    record robot-dimensions {
+        length-mm: f32,
+        width-mm: f32,
+        height-mm: f32,
+        weight-kg: f32,
+        center-of-mass: point3d,
+    }
+
+    variant humanoid-capability {
+        walking,
+        running,
+        climbing,
+        grasping,
+        manipulation,
+        speech,
+        vision,
+        hearing,
+        balance,
+        learning,
+        social-interaction,
+        custom(string),
+    }
+
+    // Control interface functions
+    configure-device: func(config: device-config) -> result<string, control-error>;
+    connect-device: func(device-id: string, communication: communication-config) -> result<_, control-error>;
+    disconnect-device: func(device-id: string) -> result<_, control-error>;
+    
+    // Command execution
+    execute-command: func(device-id: string, command: control-command) -> result<_, control-error>;
+    execute-batch-commands: func(device-id: string, commands: list<control-command>) -> result<list<result<_, control-error>>, control-error>;
+    cancel-command: func(device-id: string, command-id: string) -> result<_, control-error>;
+    
+    // State monitoring
+    get-state: func(device-id: string) -> result<actuator-state, control-error>;
+    subscribe-state: func(device-id: string, callback: func(actuator-state)) -> result<string, control-error>;
+    unsubscribe-state: func(subscription-id: string) -> result<_, control-error>;
+    
+    // Safety operations
+    emergency-stop: func(device-id: string) -> result<_, control-error>;
+    reset-emergency-stop: func(device-id: string) -> result<_, control-error>;
+    enable-device: func(device-id: string) -> result<_, control-error>;
+    disable-device: func(device-id: string) -> result<_, control-error>;
+    
+    // Calibration and homing
+    home-device: func(device-id: string) -> result<_, control-error>;
+    calibrate-device: func(device-id: string, calibration-type: calibration-type) -> result<_, control-error>;
+    
+    variant calibration-type {
+        zero-position,
+        workspace-limits,
+        force-sensors,
+        full-calibration,
+        custom(string),
+    }
+    
+    // Diagnostics and maintenance
+    run-diagnostics: func(device-id: string) -> result<diagnostic-report, control-error>;
+    get-maintenance-info: func(device-id: string) -> result<maintenance-info, control-error>;
+    
+    record diagnostic-report {
+        device-id: string,
+        timestamp: u64,
+        overall-health: system-health,
+        test-results: list<diagnostic-test-result>,
+        recommendations: list<string>,
+    }
+    
+    record diagnostic-test-result {
+        test-name: string,
+        result: test-result,
+        details: option<string>,
+        severity: error-severity,
+    }
+    
+    variant test-result {
+        passed,
+        failed,
+        warning,
+        not-applicable,
+    }
+    
+    record maintenance-info {
+        device-id: string,
+        last-maintenance: option<u64>,
+        next-maintenance: option<u64>,
+        operating-hours: u64,
+        maintenance-items: list<maintenance-item>,
+    }
+    
+    record maintenance-item {
+        item-name: string,
+        status: maintenance-item-status,
+        due-date: option<u64>,
+        priority: maintenance-priority,
+    }
+    
+    variant maintenance-item-status {
+        ok,
+        due-soon,
+        overdue,
+        critical,
+    }
+    
+    variant maintenance-priority {
+        low,
+        medium,
+        high,
+        critical,
+    }
+
+    record device-config {
+        device-id: string,
+        device-type: device-type,
+        safety-config: safety-config,
+        communication-config: communication-config,
+        calibration-data: option<string>,  // JSON calibration data
+    }
+
+    // Error types
+    variant control-error {
+        device-not-found,
+        device-not-connected,
+        invalid-command,
+        safety-violation,
+        hardware-error,
+        communication-error,
+        calibration-error,
+        timeout-error,
+        emergency-stop-active,
+        device-disabled,
+        configuration-error(string),
+        execution-error(string),
+        runtime-error(string),
+    }
+}

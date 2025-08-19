@@ -1,0 +1,50 @@
+{
+  "research_findings": {
+    "timestamp": "2025-08-17T15:02:52.960259",
+    "research_topic": "Cudo Compute and GPU Training for VLA++",
+    "findings": []
+  },
+  "recommendations": {
+    "gpu_requirements": {
+      "minimum": "1x NVIDIA RTX 3090 (24GB) for development",
+      "recommended": "4x NVIDIA A100 (40GB) for full training",
+      "optimal": "8x NVIDIA H100 (80GB) for production scale"
+    },
+    "estimated_costs": {
+      "development": "$0.50-1.00/hour (RTX 3090 spot)",
+      "training": "$8-12/hour (4x A100 cluster)",
+      "production": "$30-50/hour (8x H100 cluster)"
+    },
+    "training_time_estimates": {
+      "phase1_research": "24 GPU-hours",
+      "phase2_vision": "200 GPU-hours",
+      "phase3_language": "100 GPU-hours",
+      "phase4_action": "150 GPU-hours",
+      "phase5_wasm": "50 GPU-hours",
+      "total": "~524 GPU-hours"
+    },
+    "optimization_strategies": [
+      "Use gradient checkpointing to reduce memory by 30-50%",
+      "Implement mixed precision (BF16) for 2x speedup",
+      "Apply MiniMind's 6,400 vocab tokenizer approach",
+      "Use LoRA for efficient fine-tuning (10% of parameters)",
+      "Leverage knowledge distillation from larger models"
+    ],
+    "cudo_specific": {
+      "advantages": [
+        "30-70% cheaper than major cloud providers",
+        "Flexible instance types and regions",
+        "Good availability of high-end GPUs",
+        "API for automated instance management"
+      ],
+      "recommended_setup": "4x RTX 4090 cluster for best price/performance"
+    }
+  },
+  "next_steps": [
+    "Set up Cudo Compute account and API access",
+    "Provision initial RTX 3090 instance for prototype",
+    "Implement gradient checkpointing in VLA++ architecture",
+    "Design custom tokenizer for vision-language tokens",
+    "Create distributed training scripts with Horovod/DDP"
+  ]
+}

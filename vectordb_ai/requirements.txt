@@ -1,0 +1,44 @@
+# Core dependencies
+numpy>=1.21.0
+scikit-learn>=1.0.0
+scipy>=1.7.0
+
+# Vector database clients
+pinecone-client>=2.2.0
+weaviate-client>=3.20.0
+qdrant-client>=1.6.0
+
+# Embedding models
+sentence-transformers>=2.2.0
+transformers>=4.20.0
+torch>=1.12.0
+
+# OpenAI and Cohere for embeddings
+openai>=0.27.0
+cohere>=4.0.0
+
+# Configuration and utilities
+pyyaml>=6.0
+python-dotenv>=1.0.0
+click>=8.0.0
+tqdm>=4.64.0
+
+# Data processing
+pandas>=1.5.0
+datasets>=2.0.0
+
+# Testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+
+# Development
+black>=22.0.0
+flake8>=5.0.0
+mypy>=0.991
+
+# Optional dependencies for enhanced features
+# Uncomment if needed:
+# faiss-cpu>=1.7.0  # For local similarity search
+# chromadb>=0.4.0   # Alternative vector database
+# langchain>=0.0.200  # For advanced text processing

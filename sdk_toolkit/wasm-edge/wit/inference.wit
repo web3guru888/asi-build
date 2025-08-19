@@ -1,0 +1,753 @@
+// Inference interfaces for Kenny Edge AI SDK
+// Defines AI model inference, optimization, and result handling
+
+package kenny:edge@1.0.0;
+
+interface inference {
+    use frame.{frame-data, bounding-box, keypoint};
+
+    // Model configuration and metadata
+    record model-config {
+        id: string,
+        name: string,
+        version: string,
+        model-type: model-type,
+        framework: ai-framework,
+        precision: model-precision,
+        input-spec: list<tensor-spec>,
+        output-spec: list<tensor-spec>,
+        preprocessing: preprocessing-config,
+        postprocessing: postprocessing-config,
+        optimization: optimization-config,
+        hardware-requirements: hardware-requirements,
+        license: option<string>,
+        description: option<string>,
+    }
+
+    variant model-type {
+        classification,
+        object-detection,
+        semantic-segmentation,
+        instance-segmentation,
+        pose-estimation,
+        depth-estimation,
+        optical-flow,
+        super-resolution,
+        denoising,
+        style-transfer,
+        generative,
+        nlp-text-classification,
+        nlp-named-entity-recognition,
+        nlp-question-answering,
+        nlp-translation,
+        nlp-summarization,
+        speech-recognition,
+        speech-synthesis,
+        audio-classification,
+        time-series-forecasting,
+        anomaly-detection,
+        reinforcement-learning,
+        multi-modal,
+        custom(string),
+    }
+
+    variant ai-framework {
+        tensorflow,
+        tensorflow-lite,
+        pytorch,
+        onnx,
+        openvino,
+        tensorrt,
+        coreml,
+        paddle,
+        mxnet,
+        caffe,
+        darknet,
+        ncnn,
+        mnn,
+        snpe,
+        hexagon,
+        custom(string),
+    }
+
+    variant model-precision {
+        fp32,
+        fp16,
+        int8,
+        int4,
+        int1,
+        mixed-precision,
+        dynamic,
+        custom(string),
+    }
+
+    record tensor-spec {
+        name: string,
+        shape: list<s64>,                // -1 for dynamic dimensions
+        data-type: tensor-data-type,
+        layout: tensor-layout,
+        normalization: option<normalization-spec>,
+        constraints: option<tensor-constraints>,
+    }
+
+    variant tensor-data-type {
+        float32,
+        float16,
+        int32,
+        int16,
+        int8,
+        uint8,
+        bool,
+        string,
+        complex64,
+        custom(string),
+    }
+
+    variant tensor-layout {
+        nchw,    // batch, channel, height, width
+        nhwc,    // batch, height, width, channel
+        chw,     // channel, height, width
+        hwc,     // height, width, channel
+        nc,      // batch, channel
+        custom(string),
+    }
+
+    record normalization-spec {
+        mean: list<f32>,
+        std: list<f32>,
+        scale: option<f32>,
+        zero-point: option<s32>,
+    }
+
+    record tensor-constraints {
+        min-value: option<f32>,
+        max-value: option<f32>,
+        valid-range: option<tuple<f32, f32>>,
+        required-shape: option<list<s64>>,
+    }
+
+    record preprocessing-config {
+        resize: option<resize-config>,
+        crop: option<crop-config>,
+        color-conversion: option<color-conversion>,
+        normalization: option<normalization-spec>,
+        augmentation: option<augmentation-config>,
+        custom-ops: list<custom-operation>,
+    }
+
+    record resize-config {
+        target-width: u32,
+        target-height: u32,
+        interpolation: interpolation-method,
+        aspect-ratio-mode: aspect-ratio-mode,
+    }
+
+    variant interpolation-method {
+        nearest,
+        bilinear,
+        bicubic,
+        area,
+        lanczos,
+        custom(string),
+    }
+
+    variant aspect-ratio-mode {
+        ignore,
+        keep,
+        pad,
+        crop-center,
+        crop-smart,
+    }
+
+    record crop-config {
+        mode: crop-mode,
+        target-width: u32,
+        target-height: u32,
+        offset-x: option<u32>,
+        offset-y: option<u32>,
+    }
+
+    variant crop-mode {
+        center,
+        top-left,
+        custom-offset,
+        smart-crop,
+        attention-based,
+    }
+
+    record color-conversion {
+        source-format: color-format,
+        target-format: color-format,
+        gamma-correction: option<f32>,
+        white-balance: option<white-balance-adjustment>,
+    }
+
+    variant color-format {
+        rgb,
+        bgr,
+        rgba,
+        bgra,
+        yuv420,
+        yuv422,
+        hsv,
+        lab,
+        grayscale,
+        custom(string),
+    }
+
+    record white-balance-adjustment {
+        temperature-shift: f32,
+        tint-shift: f32,
+    }
+
+    record augmentation-config {
+        random-flip: option<flip-config>,
+        random-rotation: option<rotation-config>,
+        random-brightness: option<brightness-config>,
+        random-contrast: option<contrast-config>,
+        random-saturation: option<saturation-config>,
+        random-noise: option<noise-config>,
+    }
+
+    record flip-config {
+        horizontal-prob: f32,
+        vertical-prob: f32,
+    }
+
+    record rotation-config {
+        max-angle-degrees: f32,
+        probability: f32,
+    }
+
+    record brightness-config {
+        max-delta: f32,
+        probability: f32,
+    }
+
+    record contrast-config {
+        factor-range: tuple<f32, f32>,
+        probability: f32,
+    }
+
+    record saturation-config {
+        factor-range: tuple<f32, f32>,
+        probability: f32,
+    }
+
+    record noise-config {
+        noise-type: noise-type,
+        intensity: f32,
+        probability: f32,
+    }
+
+    variant noise-type {
+        gaussian,
+        uniform,
+        salt-pepper,
+        speckle,
+    }
+
+    record custom-operation {
+        name: string,
+        parameters: string,  // JSON parameters
+        order: u32,         // execution order
+    }
+
+    record postprocessing-config {
+        output-format: output-format,
+        confidence-threshold: option<f32>,
+        nms-config: option<nms-config>,
+        clustering: option<clustering-config>,
+        filtering: option<filtering-config>,
+        custom-ops: list<custom-operation>,
+    }
+
+    variant output-format {
+        raw-tensors,
+        structured-results,
+        json,
+        protobuf,
+        custom(string),
+    }
+
+    record nms-config {
+        iou-threshold: f32,
+        score-threshold: f32,
+        max-detections: u32,
+        method: nms-method,
+    }
+
+    variant nms-method {
+        standard,
+        soft-nms,
+        diou-nms,
+        matrix-nms,
+        custom(string),
+    }
+
+    record clustering-config {
+        algorithm: clustering-algorithm,
+        max-clusters: u32,
+        distance-threshold: f32,
+    }
+
+    variant clustering-algorithm {
+        kmeans,
+        dbscan,
+        mean-shift,
+        hierarchical,
+        custom(string),
+    }
+
+    record filtering-config {
+        min-area: option<f32>,
+        max-area: option<f32>,
+        min-confidence: option<f32>,
+        aspect-ratio-range: option<tuple<f32, f32>>,
+        spatial-constraints: option<spatial-constraints>,
+    }
+
+    record spatial-constraints {
+        allowed-regions: list<bounding-box>,
+        forbidden-regions: list<bounding-box>,
+        boundary-margin: f32,
+    }
+
+    record optimization-config {
+        batch-size: u32,
+        enable-batching: bool,
+        use-gpu: bool,
+        gpu-memory-fraction: option<f32>,
+        cpu-threads: option<u32>,
+        enable-fp16: bool,
+        enable-quantization: bool,
+        quantization-config: option<quantization-config>,
+        optimization-level: optimization-level,
+        cache-enabled: bool,
+        warm-up-iterations: u32,
+    }
+
+    record quantization-config {
+        method: quantization-method,
+        calibration-dataset-size: option<u32>,
+        target-accuracy-loss: option<f32>,
+        per-channel: bool,
+    }
+
+    variant quantization-method {
+        post-training-dynamic,
+        post-training-static,
+        quantization-aware-training,
+        custom(string),
+    }
+
+    variant optimization-level {
+        none,
+        basic,
+        aggressive,
+        max-performance,
+        memory-constrained,
+        custom(string),
+    }
+
+    record hardware-requirements {
+        min-memory-mb: u32,
+        recommended-memory-mb: u32,
+        min-compute-units: u32,
+        gpu-memory-mb: option<u32>,
+        supported-devices: list<device-type>,
+        power-consumption-watts: option<f32>,
+        thermal-design-power: option<f32>,
+    }
+
+    variant device-type {
+        cpu-x86-64,
+        cpu-arm64,
+        cpu-arm32,
+        cpu-riscv,
+        gpu-nvidia,
+        gpu-amd,
+        gpu-intel,
+        gpu-arm-mali,
+        gpu-qualcomm-adreno,
+        npu-edge-tpu,
+        npu-intel-vpu,
+        npu-qualcomm-hexagon,
+        npu-custom(string),
+        fpga,
+        asic-custom(string),
+    }
+
+    // Inference results
+    record inference-result {
+        model-id: string,
+        inference-id: string,
+        timestamp: u64,
+        latency-ms: f32,
+        results: list<inference-output>,
+        metadata: inference-metadata,
+        confidence: f32,
+        status: inference-status,
+    }
+
+    variant inference-output {
+        classification(classification-result),
+        detection(detection-result),
+        segmentation(segmentation-result),
+        pose(pose-result),
+        depth(depth-result),
+        flow(flow-result),
+        embedding(embedding-result),
+        text(text-result),
+        audio(audio-result),
+        custom(custom-result),
+    }
+
+    record classification-result {
+        predictions: list<classification>,
+        top-k: u32,
+        total-classes: u32,
+    }
+
+    record classification {
+        class-id: u32,
+        class-name: string,
+        confidence: f32,
+        probability: f32,
+    }
+
+    record detection-result {
+        detections: list<detection>,
+        total-detections: u32,
+        nms-applied: bool,
+    }
+
+    record detection {
+        class-id: u32,
+        class-name: string,
+        confidence: f32,
+        bbox: bounding-box,
+        mask: option<segmentation-mask>,
+        keypoints: option<list<keypoint>>,
+        track-id: option<u64>,
+    }
+
+    record segmentation-result {
+        segmentation-type: segmentation-type,
+        masks: list<segmentation-mask>,
+        class-map: option<list<u8>>,  // per-pixel class IDs
+        confidence-map: option<list<f32>>,  // per-pixel confidence
+    }
+
+    variant segmentation-type {
+        semantic,
+        instance,
+        panoptic,
+    }
+
+    record segmentation-mask {
+        class-id: u32,
+        class-name: string,
+        mask: list<u8>,      // binary mask
+        bbox: bounding-box,   // bounding box of mask
+        area: u32,           // number of pixels
+        confidence: f32,
+    }
+
+    record pose-result {
+        poses: list<pose>,
+        pose-type: pose-type,
+    }
+
+    variant pose-type {
+        human-2d,
+        human-3d,
+        hand-2d,
+        hand-3d,
+        face-2d,
+        face-3d,
+        object-6dof,
+        custom(string),
+    }
+
+    record pose {
+        keypoints: list<keypoint>,
+        confidence: f32,
+        bbox: option<bounding-box>,
+        pose-id: option<u64>,
+        tracking-state: option<tracking-state>,
+    }
+
+    variant tracking-state {
+        new,
+        tracked,
+        lost,
+        occluded,
+    }
+
+    record depth-result {
+        depth-map: list<f32>,    // depth values in meters
+        width: u32,
+        height: u32,
+        min-depth: f32,
+        max-depth: f32,
+        depth-scale: f32,
+        confidence-map: option<list<f32>>,
+    }
+
+    record flow-result {
+        flow-vectors: list<flow-vector>,
+        width: u32,
+        height: u32,
+        magnitude-map: option<list<f32>>,
+        direction-map: option<list<f32>>,
+    }
+
+    record flow-vector {
+        dx: f32,
+        dy: f32,
+        magnitude: f32,
+        angle: f32,
+    }
+
+    record embedding-result {
+        embeddings: list<f32>,
+        dimension: u32,
+        normalization: option<string>,
+        similarity-metric: option<string>,
+    }
+
+    record text-result {
+        text: string,
+        confidence: f32,
+        language: option<string>,
+        encoding: option<string>,
+        tokens: option<list<text-token>>,
+    }
+
+    record text-token {
+        text: string,
+        confidence: f32,
+        start-index: u32,
+        end-index: u32,
+        pos-tag: option<string>,
+        entity-type: option<string>,
+    }
+
+    record audio-result {
+        transcription: option<string>,
+        confidence: f32,
+        language: option<string>,
+        speaker-id: option<string>,
+        timestamps: option<list<time-segment>>,
+        features: option<list<f32>>,
+    }
+
+    record time-segment {
+        start-ms: u32,
+        end-ms: u32,
+        text: option<string>,
+        confidence: f32,
+    }
+
+    record custom-result {
+        result-type: string,
+        data: list<u8>,      // serialized result data
+        format: string,      // format description
+        schema: option<string>,  // schema definition
+    }
+
+    record inference-metadata {
+        preprocessing-time-ms: f32,
+        inference-time-ms: f32,
+        postprocessing-time-ms: f32,
+        memory-usage-mb: f32,
+        compute-utilization: f32,
+        cache-hit: bool,
+        batch-size: u32,
+        model-version: string,
+        hardware-info: hardware-info,
+    }
+
+    record hardware-info {
+        device-type: device-type,
+        device-name: string,
+        compute-capability: option<string>,
+        memory-total-mb: u32,
+        memory-used-mb: u32,
+        temperature-celsius: option<f32>,
+        power-consumption-watts: option<f32>,
+    }
+
+    variant inference-status {
+        success,
+        partial-success,
+        failed(inference-error),
+        timeout,
+        cancelled,
+    }
+
+    variant inference-error {
+        model-not-loaded,
+        invalid-input,
+        out-of-memory,
+        compute-error,
+        preprocessing-error,
+        postprocessing-error,
+        hardware-error,
+        timeout-error,
+        configuration-error(string),
+        runtime-error(string),
+    }
+
+    // Batch inference support
+    record batch-request {
+        model-id: string,
+        inputs: list<inference-input>,
+        batch-config: batch-config,
+        priority: u8,
+    }
+
+    record inference-input {
+        input-id: string,
+        data: input-data,
+        preprocessing-override: option<preprocessing-config>,
+    }
+
+    variant input-data {
+        frame(frame-data),
+        tensor(tensor-data),
+        text(string),
+        audio(audio-data),
+        custom(list<u8>),
+    }
+
+    record tensor-data {
+        data: list<u8>,
+        shape: list<u64>,
+        data-type: tensor-data-type,
+        layout: tensor-layout,
+    }
+
+    record audio-data {
+        samples: list<f32>,
+        sample-rate: u32,
+        channels: u32,
+        format: audio-format,
+    }
+
+    variant audio-format {
+        pcm-16,
+        pcm-24,
+        pcm-32,
+        float32,
+        compressed(string),
+    }
+
+    record batch-config {
+        max-batch-size: u32,
+        timeout-ms: u32,
+        accumulation-timeout-ms: u32,
+        dynamic-batching: bool,
+        padding-strategy: padding-strategy,
+    }
+
+    variant padding-strategy {
+        none,
+        zero-pad,
+        replicate,
+        reflect,
+        custom(string),
+    }
+
+    record batch-result {
+        batch-id: string,
+        results: list<inference-result>,
+        batch-metadata: batch-metadata,
+        total-latency-ms: f32,
+    }
+
+    record batch-metadata {
+        actual-batch-size: u32,
+        batching-time-ms: f32,
+        inference-time-ms: f32,
+        debatching-time-ms: f32,
+        throughput-ops-per-sec: f32,
+    }
+
+    // Model management
+    load-model: func(config: model-config) -> result<string, inference-error>;
+    unload-model: func(model-id: string) -> result<_, inference-error>;
+    get-model-info: func(model-id: string) -> result<model-config, inference-error>;
+    list-models: func() -> list<string>;
+    
+    // Model optimization
+    optimize-model: func(model-id: string, optimization: optimization-config) -> result<string, inference-error>;
+    quantize-model: func(model-id: string, quantization: quantization-config) -> result<string, inference-error>;
+    
+    // Single inference
+    infer: func(model-id: string, input: inference-input) -> result<inference-result, inference-error>;
+    infer-async: func(model-id: string, input: inference-input, callback: func(result<inference-result, inference-error>)) -> result<string, inference-error>;
+    
+    // Batch inference
+    infer-batch: func(request: batch-request) -> result<batch-result, inference-error>;
+    infer-batch-async: func(request: batch-request, callback: func(result<batch-result, inference-error>)) -> result<string, inference-error>;
+    
+    // Streaming inference
+    create-inference-stream: func(model-id: string, stream-config: stream-config) -> result<string, inference-error>;
+    push-to-stream: func(stream-id: string, input: inference-input) -> result<_, inference-error>;
+    pop-from-stream: func(stream-id: string) -> result<option<inference-result>, inference-error>;
+    close-stream: func(stream-id: string) -> result<_, inference-error>;
+    
+    record stream-config {
+        buffer-size: u32,
+        max-latency-ms: u32,
+        batch-processing: bool,
+        result-ordering: result-ordering,
+    }
+    
+    variant result-ordering {
+        fifo,           // First-in, first-out
+        priority,       // By input priority
+        fastest-first,  // Return fastest results first
+        preserve-order, // Maintain input order
+    }
+    
+    // Performance monitoring
+    get-performance-stats: func(model-id: string) -> result<performance-stats, inference-error>;
+    reset-performance-stats: func(model-id: string) -> result<_, inference-error>;
+    
+    record performance-stats {
+        total-inferences: u64,
+        successful-inferences: u64,
+        failed-inferences: u64,
+        avg-latency-ms: f32,
+        min-latency-ms: f32,
+        max-latency-ms: f32,
+        p50-latency-ms: f32,
+        p95-latency-ms: f32,
+        p99-latency-ms: f32,
+        throughput-ops-per-sec: f32,
+        memory-usage-mb: f32,
+        cache-hit-rate: f32,
+    }
+    
+    // Model comparison and A/B testing
+    compare-models: func(model-ids: list<string>, test-inputs: list<inference-input>) -> result<comparison-result, inference-error>;
+    
+    record comparison-result {
+        models: list<string>,
+        results: list<list<inference-result>>,  // results[model][input]
+        performance-comparison: list<performance-stats>,
+        accuracy-metrics: option<accuracy-metrics>,
+    }
+    
+    record accuracy-metrics {
+        precision: f32,
+        recall: f32,
+        f1-score: f32,
+        accuracy: f32,
+        iou: option<f32>,
+        map: option<f32>,  // mean Average Precision
+    }
+}

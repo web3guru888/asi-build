@@ -1,0 +1,144 @@
+# Kenny Vector Database Configuration
+
+# Pinecone Configuration
+pinecone:
+  api_key: null  # Set via PINECONE_API_KEY environment variable
+  environment: "us-east1-aws"
+  index_name: "kenny-vectors"
+  dimension: 1536
+  metric: "cosine"
+  replicas: 1
+  shards: 1
+  timeout: 30
+  max_retries: 3
+
+# Weaviate Configuration
+weaviate:
+  host: "localhost"
+  port: 8080
+  grpc_port: 50051
+  scheme: "http"
+  api_key: null  # Set via WEAVIATE_API_KEY environment variable
+  auth_client_secret: null
+  timeout: 30
+  max_retries: 3
+  startup_period: 5
+
+# Qdrant Configuration
+qdrant:
+  host: "localhost"
+  port: 6333
+  grpc_port: 6334
+  api_key: null  # Set via QDRANT_API_KEY environment variable
+  prefer_grpc: false
+  https: false
+  collection_name: "kenny-collection"
+  vector_size: 1536
+  distance: "Cosine"
+  timeout: 30
+  max_retries: 3
+
+# Embedding Configuration
+embedding:
+  model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  model_type: "sentence_transformers"  # Options: sentence_transformers, openai, cohere, huggingface
+  api_key: null  # Set via OPENAI_API_KEY or COHERE_API_KEY environment variable
+  batch_size: 32
+  max_length: 512
+  normalize_embeddings: true
+  cache_embeddings: true
+  cache_dir: "./embeddings_cache"
+
+# Search Configuration
+search:
+  top_k: 10
+  score_threshold: 0.7
+  rerank: true
+  rerank_top_k: 100
+  enable_filters: true
+  enable_hybrid_search: true
+  alpha: 0.5  # Hybrid search weight (0=keyword, 1=vector)
+
+# Advanced Model Configurations
+models:
+  # Sentence Transformers Models
+  sentence_transformers:
+    - name: "all-MiniLM-L6-v2"
+      dimension: 384
+      description: "Fast and efficient for most use cases"
+    - name: "all-mpnet-base-v2"
+      dimension: 768
+      description: "Higher quality embeddings"
+    - name: "multi-qa-MiniLM-L6-cos-v1"
+      dimension: 384
+      description: "Optimized for question-answering"
+    
+  # OpenAI Models
+  openai:
+    - name: "text-embedding-ada-002"
+      dimension: 1536
+      description: "OpenAI's latest embedding model"
+    - name: "text-embedding-3-small"
+      dimension: 1536
+      description: "Efficient OpenAI model"
+    - name: "text-embedding-3-large"
+      dimension: 3072
+      description: "High-performance OpenAI model"
+      
+  # Cohere Models
+  cohere:
+    - name: "embed-english-v3.0"
+      dimension: 4096
+      description: "Latest English embedding model"
+    - name: "embed-multilingual-v3.0"
+      dimension: 4096
+      description: "Multilingual embedding model"
+
+# Database Presets
+presets:
+  development:
+    pinecone:
+      replicas: 1
+      shards: 1
+    embedding:
+      model_name: "sentence-transformers/all-MiniLM-L6-v2"
+      batch_size: 16
+      cache_embeddings: true
+    search:
+      top_k: 5
+      rerank: false
+      
+  production:
+    pinecone:
+      replicas: 2
+      shards: 2
+    embedding:
+      model_name: "sentence-transformers/all-mpnet-base-v2"
+      batch_size: 64
+      cache_embeddings: true
+    search:
+      top_k: 10
+      rerank: true
+      rerank_top_k: 100
+      
+  high_performance:
+    pinecone:
+      replicas: 3
+      shards: 4
+    embedding:
+      model_name: "text-embedding-ada-002"
+      model_type: "openai"
+      batch_size: 100
+      cache_embeddings: true
+    search:
+      top_k: 20
+      rerank: true
+      rerank_top_k: 200
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "kenny_vectordb.log"
+  max_size: "10MB"
+  backup_count: 5

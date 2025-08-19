@@ -1,0 +1,722 @@
+// Telemetry and monitoring interfaces for Kenny Edge AI SDK
+// Defines metrics collection, alerting, and data export
+
+package kenny:edge@1.0.0;
+
+interface telemetry {
+    // Metric types and data structures
+    record metric-point {
+        name: string,
+        value: metric-value,
+        timestamp: u64,
+        labels: list<label>,
+        unit: option<string>,
+        description: option<string>,
+    }
+
+    variant metric-value {
+        counter(u64),
+        gauge(f64),
+        histogram(histogram-data),
+        summary(summary-data),
+        distribution(distribution-data),
+    }
+
+    record histogram-data {
+        buckets: list<histogram-bucket>,
+        sample-count: u64,
+        sample-sum: f64,
+    }
+
+    record histogram-bucket {
+        upper-bound: f64,
+        cumulative-count: u64,
+    }
+
+    record summary-data {
+        quantiles: list<quantile>,
+        sample-count: u64,
+        sample-sum: f64,
+    }
+
+    record quantile {
+        quantile: f64,   // 0.0 to 1.0
+        value: f64,
+    }
+
+    record distribution-data {
+        mean: f64,
+        variance: f64,
+        minimum: f64,
+        maximum: f64,
+        sample-count: u64,
+        percentiles: list<percentile>,
+    }
+
+    record percentile {
+        percentile: f64,  // 0.0 to 100.0
+        value: f64,
+    }
+
+    record label {
+        key: string,
+        value: string,
+    }
+
+    // Performance metrics for AI pipeline
+    record performance-metrics {
+        timestamp: u64,
+        component-id: string,
+        
+        // Latency metrics
+        total-latency-ms: f64,
+        preprocessing-latency-ms: f64,
+        inference-latency-ms: f64,
+        postprocessing-latency-ms: f64,
+        
+        // Throughput metrics
+        frames-per-second: f64,
+        operations-per-second: f64,
+        batch-size: u32,
+        
+        // Accuracy metrics
+        accuracy: option<f64>,
+        precision: option<f64>,
+        recall: option<f64>,
+        f1-score: option<f64>,
+        confidence-score: option<f64>,
+        
+        // Resource utilization
+        cpu-usage-percent: f64,
+        memory-usage-mb: f64,
+        gpu-usage-percent: option<f64>,
+        gpu-memory-mb: option<f64>,
+        
+        // Quality metrics
+        frame-quality-score: option<f64>,
+        detection-count: option<u32>,
+        tracking-accuracy: option<f64>,
+        
+        // Error metrics
+        error-rate: f64,
+        timeout-count: u32,
+        retry-count: u32,
+    }
+
+    // System metrics
+    record system-metrics {
+        timestamp: u64,
+        hostname: option<string>,
+        
+        // CPU metrics
+        cpu-usage-percent: f64,
+        cpu-load-average: list<f64>,  // 1m, 5m, 15m
+        cpu-temperature-celsius: option<f64>,
+        cpu-frequency-mhz: option<f64>,
+        
+        // Memory metrics
+        memory-total-mb: u64,
+        memory-used-mb: u64,
+        memory-available-mb: u64,
+        memory-cached-mb: u64,
+        memory-buffers-mb: u64,
+        swap-total-mb: u64,
+        swap-used-mb: u64,
+        
+        // Disk metrics
+        disk-total-gb: u64,
+        disk-used-gb: u64,
+        disk-available-gb: u64,
+        disk-read-bytes-per-sec: u64,
+        disk-write-bytes-per-sec: u64,
+        disk-read-ops-per-sec: u64,
+        disk-write-ops-per-sec: u64,
+        
+        // Network metrics
+        network-rx-bytes-per-sec: u64,
+        network-tx-bytes-per-sec: u64,
+        network-rx-packets-per-sec: u64,
+        network-tx-packets-per-sec: u64,
+        network-errors-per-sec: u64,
+        network-drops-per-sec: u64,
+        
+        // Power and thermal
+        power-consumption-watts: option<f64>,
+        battery-level-percent: option<f64>,
+        temperature-sensors: list<temperature-reading>,
+        
+        // Process metrics
+        process-count: u32,
+        thread-count: u32,
+        file-descriptor-count: u32,
+        uptime-seconds: u64,
+    }
+
+    record temperature-reading {
+        sensor-name: string,
+        temperature-celsius: f64,
+        critical-threshold: option<f64>,
+    }
+
+    // Edge-specific metrics
+    record edge-metrics {
+        timestamp: u64,
+        device-id: string,
+        
+        // Connectivity metrics
+        network-latency-ms: option<f64>,
+        network-bandwidth-mbps: option<f64>,
+        connection-quality: connection-quality,
+        offline-duration-ms: u64,
+        
+        // Edge computing metrics
+        model-cache-hit-rate: f64,
+        local-inference-rate: f64,
+        cloud-offload-rate: f64,
+        sync-latency-ms: option<f64>,
+        
+        // Device health
+        device-temperature-celsius: option<f64>,
+        vibration-level: option<f64>,
+        humidity-percent: option<f64>,
+        ambient-light-lux: option<f64>,
+        
+        // Power management
+        power-mode: power-mode,
+        battery-voltage: option<f64>,
+        charging-status: option<charging-status>,
+        estimated-runtime-hours: option<f64>,
+        
+        // Storage metrics
+        local-storage-used-percent: f64,
+        cache-utilization-percent: f64,
+        data-compression-ratio: option<f64>,
+    }
+
+    variant connection-quality {
+        excellent,
+        good,
+        fair,
+        poor,
+        disconnected,
+    }
+
+    variant power-mode {
+        high-performance,
+        balanced,
+        power-saver,
+        critical-battery,
+        custom(string),
+    }
+
+    variant charging-status {
+        not-charging,
+        charging,
+        fully-charged,
+        error,
+    }
+
+    // Alerting configuration
+    record alert-rule {
+        rule-id: string,
+        rule-name: string,
+        metric-selector: metric-selector,
+        condition: alert-condition,
+        threshold: threshold-config,
+        duration: alert-duration,
+        severity: alert-severity,
+        labels: list<label>,
+        annotations: list<annotation>,
+        enabled: bool,
+    }
+
+    record metric-selector {
+        metric-name: string,
+        label-matchers: list<label-matcher>,
+        aggregation: option<aggregation>,
+    }
+
+    record label-matcher {
+        key: string,
+        operator: match-operator,
+        value: string,
+    }
+
+    variant match-operator {
+        equal,
+        not-equal,
+        regex-match,
+        regex-not-match,
+        in-list,
+        not-in-list,
+    }
+
+    record aggregation {
+        function: aggregation-function,
+        grouping: list<string>,  // group by these label keys
+        window: time-window,
+    }
+
+    variant aggregation-function {
+        sum,
+        avg,
+        min,
+        max,
+        count,
+        stddev,
+        rate,
+        increase,
+        quantile(f64),
+    }
+
+    record time-window {
+        duration-ms: u64,
+        step-ms: option<u64>,  // evaluation step
+    }
+
+    record alert-condition {
+        operator: comparison-operator,
+        value: f64,
+        hysteresis: option<f64>,  // avoid flapping
+    }
+
+    variant comparison-operator {
+        greater-than,
+        greater-equal,
+        less-than,
+        less-equal,
+        equal,
+        not-equal,
+        in-range,
+        out-of-range,
+    }
+
+    record threshold-config {
+        warning-threshold: option<f64>,
+        critical-threshold: option<f64>,
+        recovery-threshold: option<f64>,
+    }
+
+    record alert-duration {
+        evaluation-interval-ms: u64,
+        for-duration-ms: u64,  // alert fires after this duration
+        resolve-timeout-ms: u64,  // auto-resolve after this time
+    }
+
+    variant alert-severity {
+        info,
+        warning,
+        error,
+        critical,
+        custom(string),
+    }
+
+    record annotation {
+        key: string,
+        value: string,
+    }
+
+    // Alert instances
+    record alert {
+        alert-id: string,
+        rule-id: string,
+        state: alert-state,
+        active-at: option<u64>,
+        resolved-at: option<u64>,
+        value: f64,
+        labels: list<label>,
+        annotations: list<annotation>,
+        fingerprint: string,
+        generator-url: option<string>,
+    }
+
+    variant alert-state {
+        inactive,
+        pending,
+        firing,
+        resolved,
+        silenced,
+    }
+
+    // Notification configuration
+    record notification-config {
+        channel-id: string,
+        channel-type: notification-channel-type,
+        endpoint: string,
+        credentials: option<string>,
+        template: option<notification-template>,
+        rate-limiting: option<rate-limiting-config>,
+        retry-config: option<retry-config>,
+        enabled: bool,
+    }
+
+    variant notification-channel-type {
+        email,
+        slack,
+        discord,
+        teams,
+        webhook,
+        sms,
+        push-notification,
+        pagerduty,
+        opsgenie,
+        victorops,
+        custom(string),
+    }
+
+    record notification-template {
+        subject-template: option<string>,
+        body-template: string,
+        format: template-format,
+    }
+
+    variant template-format {
+        text,
+        html,
+        markdown,
+        json,
+    }
+
+    record rate-limiting-config {
+        max-notifications-per-hour: u32,
+        burst-limit: u32,
+        cooldown-period-ms: u64,
+    }
+
+    record retry-config {
+        max-retries: u8,
+        initial-delay-ms: u64,
+        max-delay-ms: u64,
+        backoff-multiplier: f64,
+    }
+
+    // Data export configuration
+    record export-config {
+        exporter-id: string,
+        exporter-type: exporter-type,
+        endpoint: string,
+        credentials: option<string>,
+        format: export-format,
+        batch-config: batch-config,
+        retention: retention-config,
+        compression: option<compression-config>,
+        encryption: option<encryption-config>,
+        enabled: bool,
+    }
+
+    variant exporter-type {
+        prometheus,
+        influxdb,
+        elasticsearch,
+        cloudwatch,
+        datadog,
+        grafana-cloud,
+        azure-monitor,
+        google-cloud-monitoring,
+        new-relic,
+        splunk,
+        kafka,
+        mqtt,
+        file-system,
+        s3,
+        custom(string),
+    }
+
+    variant export-format {
+        prometheus-exposition,
+        influxdb-line-protocol,
+        json,
+        csv,
+        parquet,
+        protobuf,
+        msgpack,
+        custom(string),
+    }
+
+    record batch-config {
+        batch-size: u32,
+        flush-interval-ms: u64,
+        max-memory-mb: u32,
+        retry-on-failure: bool,
+    }
+
+    record retention-config {
+        max-age-hours: u32,
+        max-samples: option<u64>,
+        compression-after-hours: option<u32>,
+        delete-after-hours: option<u32>,
+    }
+
+    record compression-config {
+        algorithm: compression-algorithm,
+        level: option<u8>,  // 1-9 for most algorithms
+    }
+
+    variant compression-algorithm {
+        gzip,
+        lz4,
+        snappy,
+        zstd,
+        brotli,
+    }
+
+    record encryption-config {
+        algorithm: encryption-algorithm,
+        key-id: string,
+        key-rotation-hours: option<u32>,
+    }
+
+    variant encryption-algorithm {
+        aes-256-gcm,
+        chacha20-poly1305,
+        rsa-oaep,
+        custom(string),
+    }
+
+    // Telemetry configuration
+    record telemetry-config {
+        collection-interval-ms: u64,
+        buffer-size: u32,
+        sampling-config: sampling-config,
+        privacy-config: privacy-config,
+        performance-config: performance-config,
+        export-configs: list<export-config>,
+        alert-rules: list<alert-rule>,
+        notification-configs: list<notification-config>,
+    }
+
+    record sampling-config {
+        strategy: sampling-strategy,
+        rate: f64,  // 0.0 to 1.0
+        adaptive: bool,
+        reservoir-size: option<u32>,
+    }
+
+    variant sampling-strategy {
+        none,           // collect all metrics
+        uniform,        // uniform random sampling
+        reservoir,      // reservoir sampling
+        time-based,     // sample every N intervals
+        value-based,    // sample on significant value changes
+        adaptive,       // adjust sampling based on system load
+    }
+
+    record privacy-config {
+        anonymize-identifiers: bool,
+        hash-ip-addresses: bool,
+        redact-sensitive-data: bool,
+        data-locality-requirements: list<string>,
+        consent-required: bool,
+        retention-policy: retention-policy,
+    }
+
+    variant retention-policy {
+        indefinite,
+        time-based(u64),  // delete after N milliseconds
+        size-based(u64),  // delete when exceeding N bytes
+        custom(string),
+    }
+
+    record performance-config {
+        max-cpu-usage-percent: f64,
+        max-memory-mb: u32,
+        max-network-bandwidth-kbps: u32,
+        priority: collection-priority,
+        adaptive-collection: bool,
+    }
+
+    variant collection-priority {
+        low,
+        normal,
+        high,
+        real-time,
+    }
+
+    // Telemetry statistics
+    record telemetry-stats {
+        start-time: u64,
+        uptime-ms: u64,
+        
+        // Collection stats
+        metrics-collected: u64,
+        metrics-dropped: u64,
+        collection-errors: u64,
+        avg-collection-time-ms: f64,
+        
+        // Export stats
+        exports-successful: u64,
+        exports-failed: u64,
+        avg-export-time-ms: f64,
+        export-queue-size: u32,
+        
+        // Alert stats
+        alerts-fired: u64,
+        alerts-resolved: u64,
+        notifications-sent: u64,
+        notification-failures: u64,
+        
+        // Resource usage
+        memory-usage-mb: f64,
+        cpu-usage-percent: f64,
+        disk-usage-mb: f64,
+        network-usage-kbps: f64,
+        
+        // Data quality
+        data-quality-score: f64,
+        completeness-percent: f64,
+        timeliness-score: f64,
+    }
+
+    // Query and analysis
+    record query-request {
+        query-id: string,
+        metric-selector: metric-selector,
+        time-range: time-range,
+        aggregation: option<aggregation>,
+        limit: option<u32>,
+        order: option<sort-order>,
+    }
+
+    record time-range {
+        start-time: u64,
+        end-time: u64,
+        step-ms: option<u64>,
+    }
+
+    variant sort-order {
+        timestamp-asc,
+        timestamp-desc,
+        value-asc,
+        value-desc,
+    }
+
+    record query-result {
+        query-id: string,
+        execution-time-ms: u64,
+        result-type: query-result-type,
+        data: query-data,
+        warnings: list<string>,
+    }
+
+    variant query-result-type {
+        instant-vector,
+        range-vector,
+        scalar,
+        string,
+    }
+
+    variant query-data {
+        instant-vector(list<sample>),
+        range-vector(list<time-series>),
+        scalar(scalar-result),
+        string(string),
+    }
+
+    record sample {
+        metric: metric-point,
+        timestamp: u64,
+        value: f64,
+    }
+
+    record time-series {
+        metric-name: string,
+        labels: list<label>,
+        samples: list<sample>,
+    }
+
+    record scalar-result {
+        value: f64,
+        timestamp: u64,
+    }
+
+    // Streaming and real-time
+    record stream-config {
+        stream-id: string,
+        metric-selector: metric-selector,
+        buffer-size: u32,
+        max-latency-ms: u64,
+        compression: bool,
+    }
+
+    // Telemetry interface functions
+    
+    // Configuration
+    configure: func(config: telemetry-config) -> result<_, telemetry-error>;
+    get-config: func() -> result<telemetry-config, telemetry-error>;
+    update-config: func(config: telemetry-config) -> result<_, telemetry-error>;
+    
+    // Metric collection
+    record-metric: func(metric: metric-point) -> result<_, telemetry-error>;
+    record-metrics: func(metrics: list<metric-point>) -> result<_, telemetry-error>;
+    record-performance: func(performance: performance-metrics) -> result<_, telemetry-error>;
+    record-system-metrics: func(system: system-metrics) -> result<_, telemetry-error>;
+    record-edge-metrics: func(edge: edge-metrics) -> result<_, telemetry-error>;
+    
+    // Query and retrieval
+    query-metrics: func(query: query-request) -> result<query-result, telemetry-error>;
+    get-latest-metrics: func(metric-names: list<string>, limit: option<u32>) -> result<list<metric-point>, telemetry-error>;
+    get-metric-names: func() -> result<list<string>, telemetry-error>;
+    
+    // Streaming
+    create-stream: func(config: stream-config) -> result<string, telemetry-error>;
+    subscribe-stream: func(stream-id: string, callback: func(metric-point)) -> result<string, telemetry-error>;
+    unsubscribe-stream: func(subscription-id: string) -> result<_, telemetry-error>;
+    close-stream: func(stream-id: string) -> result<_, telemetry-error>;
+    
+    // Alerting
+    add-alert-rule: func(rule: alert-rule) -> result<_, telemetry-error>;
+    remove-alert-rule: func(rule-id: string) -> result<_, telemetry-error>;
+    update-alert-rule: func(rule-id: string, rule: alert-rule) -> result<_, telemetry-error>;
+    get-active-alerts: func() -> result<list<alert>, telemetry-error>;
+    acknowledge-alert: func(alert-id: string) -> result<_, telemetry-error>;
+    silence-alert: func(alert-id: string, duration-ms: u64) -> result<_, telemetry-error>;
+    
+    // Export management
+    add-exporter: func(config: export-config) -> result<_, telemetry-error>;
+    remove-exporter: func(exporter-id: string) -> result<_, telemetry-error>;
+    test-exporter: func(exporter-id: string) -> result<export-test-result, telemetry-error>;
+    flush-exporters: func() -> result<_, telemetry-error>;
+    
+    record export-test-result {
+        success: bool,
+        latency-ms: u64,
+        error-message: option<string>,
+        exported-count: u32,
+    }
+    
+    // Statistics and health
+    get-statistics: func() -> result<telemetry-stats, telemetry-error>;
+    health-check: func() -> result<health-status, telemetry-error>;
+    reset-statistics: func() -> result<_, telemetry-error>;
+    
+    variant health-status {
+        healthy,
+        degraded,
+        unhealthy,
+        unknown,
+    }
+    
+    // Lifecycle
+    start-collection: func() -> result<_, telemetry-error>;
+    stop-collection: func() -> result<_, telemetry-error>;
+    pause-collection: func() -> result<_, telemetry-error>;
+    resume-collection: func() -> result<_, telemetry-error>;
+    
+    // Error types
+    variant telemetry-error {
+        configuration-error(string),
+        collection-error(string),
+        storage-error(string),
+        export-error(string),
+        query-error(string),
+        alert-error(string),
+        network-error(string),
+        authentication-error(string),
+        quota-exceeded(string),
+        rate-limited(string),
+        invalid-input(string),
+        not-found(string),
+        permission-denied(string),
+        internal-error(string),
+    }
+}

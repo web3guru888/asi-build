@@ -1,0 +1,37 @@
+{
+  "name": "kenny-blockchain-audit-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for Kenny AGI blockchain-based audit trail system",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:goerli": "hardhat run scripts/deploy.js --network goerli",
+    "deploy:polygon": "hardhat run scripts/deploy.js --network polygon",
+    "verify": "hardhat verify --network",
+    "clean": "hardhat clean"
+  },
+  "keywords": [
+    "blockchain",
+    "audit",
+    "trail",
+    "smart-contracts",
+    "ethereum",
+    "polygon",
+    "kenny-agi"
+  ],
+  "author": "Kenny AGI Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/hardhat-upgrades": "^2.0.0",
+    "hardhat": "^2.19.0",
+    "chai": "^4.3.10",
+    "ethers": "^6.8.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "@openzeppelin/contracts-upgradeable": "^5.0.0"
+  }
+}

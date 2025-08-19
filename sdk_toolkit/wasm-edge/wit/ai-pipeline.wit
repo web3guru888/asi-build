@@ -1,0 +1,283 @@
+// Core AI pipeline interfaces for Kenny Edge AI SDK
+// Defines the main data flow and component communication
+
+package kenny:edge@1.0.0;
+
+world ai-pipeline {
+    // Import core interfaces
+    import frame;
+    import inference;
+    import control;
+    import telemetry;
+    
+    // Export pipeline interface
+    export pipeline;
+}
+
+interface pipeline {
+    use frame.{frame-data, frame-metadata, sensor-pose};
+    use inference.{inference-result, model-config};
+    use control.{control-command, actuator-state};
+    use telemetry.{metric-point, performance-metrics};
+
+    // Pipeline configuration
+    record pipeline-config {
+        id: string,
+        name: string,
+        components: list<component-config>,
+        connections: list<connection>,
+        real-time-config: real-time-config,
+        security-config: security-config,
+    }
+
+    record component-config {
+        id: string,
+        component-type: component-type,
+        config: string,  // JSON configuration
+        priority: u8,
+        timeout-ms: u32,
+        retry-count: u8,
+    }
+
+    variant component-type {
+        camera,
+        preprocessor,
+        inference-engine,
+        tracker,
+        actuator,
+        telemetry,
+        custom(string),
+    }
+
+    record connection {
+        from-component: string,
+        to-component: string,
+        data-type: data-type,
+        buffer-size: u32,
+        flow-control: flow-control,
+    }
+
+    variant data-type {
+        frame,
+        inference-result,
+        control-command,
+        telemetry,
+        custom(string),
+    }
+
+    variant flow-control {
+        blocking,
+        non-blocking,
+        rate-limited(u32),  // max messages per second
+        backpressure,
+    }
+
+    record real-time-config {
+        enable-real-time: bool,
+        target-latency-ms: u32,
+        max-jitter-ms: u32,
+        priority-inheritance: bool,
+        cpu-affinity: option<list<u8>>,
+        scheduling-policy: scheduling-policy,
+    }
+
+    variant scheduling-policy {
+        round-robin,
+        earliest-deadline-first,
+        rate-monotonic,
+        weighted-fair-queuing,
+    }
+
+    record security-config {
+        enable-signing: bool,
+        enable-encryption: bool,
+        trusted-components: list<string>,
+        capability-grants: list<capability-grant>,
+    }
+
+    record capability-grant {
+        component-id: string,
+        capabilities: list<capability>,
+        expires-at: option<u64>,
+    }
+
+    variant capability {
+        camera-access,
+        network-access,
+        file-system-read,
+        file-system-write,
+        actuator-control,
+        system-metrics,
+        custom(string),
+    }
+
+    // Pipeline state and lifecycle
+    variant pipeline-state {
+        stopped,
+        starting,
+        running,
+        pausing,
+        paused,
+        stopping,
+        error(string),
+    }
+
+    record pipeline-status {
+        state: pipeline-state,
+        uptime-ms: u64,
+        processed-frames: u64,
+        error-count: u64,
+        avg-latency-ms: f64,
+        throughput-fps: f64,
+        component-status: list<component-status>,
+    }
+
+    record component-status {
+        id: string,
+        state: component-state,
+        health: health-status,
+        last-heartbeat: u64,
+        metrics: string,  // JSON metrics
+    }
+
+    variant component-state {
+        initializing,
+        ready,
+        running,
+        degraded,
+        failed,
+        recovering,
+    }
+
+    variant health-status {
+        healthy,
+        warning,
+        critical,
+        unknown,
+    }
+
+    // Error types
+    variant pipeline-error {
+        configuration-error(string),
+        component-error(string, string),  // component-id, error
+        connection-error(string),
+        security-error(string),
+        resource-error(string),
+        timeout-error(string),
+        runtime-error(string),
+    }
+
+    // Pipeline management functions
+    create-pipeline: func(config: pipeline-config) -> result<string, pipeline-error>;
+    start-pipeline: func(id: string) -> result<_, pipeline-error>;
+    stop-pipeline: func(id: string) -> result<_, pipeline-error>;
+    pause-pipeline: func(id: string) -> result<_, pipeline-error>;
+    resume-pipeline: func(id: string) -> result<_, pipeline-error>;
+    delete-pipeline: func(id: string) -> result<_, pipeline-error>;
+
+    // Pipeline monitoring
+    get-status: func(id: string) -> result<pipeline-status, pipeline-error>;
+    get-metrics: func(id: string) -> result<list<metric-point>, pipeline-error>;
+    subscribe-events: func(id: string, callback: func(pipeline-event)) -> result<_, pipeline-error>;
+
+    // Hot reconfiguration
+    update-config: func(id: string, config: pipeline-config) -> result<_, pipeline-error>;
+    add-component: func(id: string, component: component-config) -> result<_, pipeline-error>;
+    remove-component: func(id: string, component-id: string) -> result<_, pipeline-error>;
+    update-component: func(id: string, component-id: string, config: string) -> result<_, pipeline-error>;
+
+    // Data flow control
+    process-frame: func(id: string, frame: frame-data) -> result<inference-result, pipeline-error>;
+    process-batch: func(id: string, frames: list<frame-data>) -> result<list<inference-result>, pipeline-error>;
+    execute-command: func(id: string, command: control-command) -> result<actuator-state, pipeline-error>;
+
+    // Events
+    variant pipeline-event {
+        state-changed(pipeline-state),
+        component-added(string),
+        component-removed(string),
+        component-state-changed(string, component-state),
+        error-occurred(pipeline-error),
+        metric-updated(metric-point),
+        performance-updated(performance-metrics),
+    }
+}
+
+// Component registry for dynamic loading
+interface component-registry {
+    record component-manifest {
+        id: string,
+        name: string,
+        version: string,
+        description: string,
+        component-type: component-type,
+        capabilities-required: list<capability>,
+        resource-requirements: resource-requirements,
+        wasm-module-url: string,
+        signature: option<string>,
+        dependencies: list<dependency>,
+    }
+
+    record resource-requirements {
+        min-memory-mb: u32,
+        max-memory-mb: u32,
+        min-cpu-cores: u8,
+        gpu-required: bool,
+        network-required: bool,
+        storage-mb: u32,
+    }
+
+    record dependency {
+        component-type: component-type,
+        version-constraint: string,
+        optional: bool,
+    }
+
+    // Registry operations
+    register-component: func(manifest: component-manifest) -> result<_, string>;
+    unregister-component: func(id: string) -> result<_, string>;
+    list-components: func() -> list<component-manifest>;
+    find-component: func(component-type: component-type, constraints: option<string>) -> result<component-manifest, string>;
+    
+    // Dynamic loading
+    load-component: func(id: string) -> result<_, string>;
+    unload-component: func(id: string) -> result<_, string>;
+    reload-component: func(id: string) -> result<_, string>;
+}
+
+// Security and capability management
+interface security {
+    record signing-key {
+        algorithm: string,
+        public-key: list<u8>,
+        key-id: string,
+    }
+
+    record signature {
+        algorithm: string,
+        signature: list<u8>,
+        key-id: string,
+        timestamp: u64,
+    }
+
+    record capability-token {
+        capabilities: list<capability>,
+        expires-at: u64,
+        issued-by: string,
+        issued-to: string,
+        signature: signature,
+    }
+
+    // Signature verification
+    verify-signature: func(data: list<u8>, signature: signature, key: signing-key) -> result<bool, string>;
+    sign-data: func(data: list<u8>, private-key: list<u8>) -> result<signature, string>;
+
+    // Capability management
+    grant-capability: func(component-id: string, capability: capability, duration-ms: u64) -> result<capability-token, string>;
+    revoke-capability: func(component-id: string, capability: capability) -> result<_, string>;
+    check-capability: func(component-id: string, capability: capability) -> bool;
+    
+    // Attestation
+    attest-component: func(component-id: string) -> result<signature, string>;
+    verify-attestation: func(component-id: string, attestation: signature) -> result<bool, string>;
+}

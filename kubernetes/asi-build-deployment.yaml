@@ -1,0 +1,932 @@
+---
+# ASI:BUILD Kubernetes Production Deployment
+# Complete K8s manifests for production ASI:BUILD deployment
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: asi-build
+  labels:
+    name: asi-build
+    environment: production
+    app.kubernetes.io/name: asi-build
+    app.kubernetes.io/version: "1.0.0"
+
+---
+# ConfigMap for ASI:BUILD configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: asi-build-config
+  namespace: asi-build
+data:
+  config.json: |
+    {
+      "system": {
+        "max_startup_time": 300,
+        "safety_check_interval": 10,
+        "reality_lock_default": true,
+        "god_mode_default": false,
+        "human_oversight_default": true
+      },
+      "safety": {
+        "emergency_shutdown_timeout": 5,
+        "reality_manipulation_allowed": false,
+        "consciousness_transfer_allowed": false,
+        "god_mode_authorization_required": true
+      },
+      "resources": {
+        "max_memory_gb": 64,
+        "max_cpu_cores": 16,
+        "max_gpu_memory_gb": 32,
+        "disk_space_gb": 500
+      },
+      "monitoring": {
+        "metrics_enabled": true,
+        "health_checks_enabled": true,
+        "dashboard_enabled": true
+      }
+    }
+
+---
+# Secret for sensitive configuration
+apiVersion: v1
+kind: Secret
+metadata:
+  name: asi-build-secrets
+  namespace: asi-build
+type: Opaque
+data:
+  postgres-password: YXNpX2J1aWxkX3NlY3VyZV9wYXNzd29yZF8yMDI0  # asi_build_secure_password_2024
+  redis-password: YXNpX2J1aWxkX3JlZGlzXzIwMjQ=  # asi_build_redis_2024
+  grafana-password: YXNpX2J1aWxkX2dyYWZhbmFfMjAyNA==  # asi_build_grafana_2024
+  god-mode-token: c3VwZXJfc2VjdXJlX2dvZF9tb2RlX3Rva2VuXzIwMjQ=  # super_secure_god_mode_token_2024
+
+---
+# ServiceAccount for ASI:BUILD
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: asi-build-sa
+  namespace: asi-build
+automountServiceAccountToken: false
+
+---
+# ClusterRole for ASI:BUILD (minimal permissions)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: asi-build-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["pods", "nodes"]
+  verbs: ["get", "list"]
+
+---
+# ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: asi-build-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: asi-build-role
+subjects:
+- kind: ServiceAccount
+  name: asi-build-sa
+  namespace: asi-build
+
+---
+# PersistentVolumeClaims for data persistence
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: asi-build-data-pvc
+  namespace: asi-build
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Gi
+  storageClassName: fast-ssd
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: asi-build-logs-pvc
+  namespace: asi-build
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data-pvc
+  namespace: asi-build
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: fast-ssd
+
+---
+# PostgreSQL Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: asi-build
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "asi_build"
+        - name: POSTGRES_USER
+          value: "asiuser"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: asi-build-secrets
+              key: postgres-password
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2"
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - asiuser
+            - -d
+            - asi_build
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - asiuser
+            - -d
+            - asi_build
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-data-pvc
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: asi-build
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: asi-build
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        command: ["redis-server", "--appendonly", "yes", "--requirepass", "$(REDIS_PASSWORD)"]
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: asi-build-secrets
+              key: redis-password
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: asi-build
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+  type: ClusterIP
+
+---
+# ASI:BUILD Core Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asi-build-core
+  namespace: asi-build
+  labels:
+    app: asi-build-core
+    component: core
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: asi-build-core
+  template:
+    metadata:
+      labels:
+        app: asi-build-core
+        component: core
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9091"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: asi-build-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: asi-build-core
+        image: asi-build:latest
+        imagePullPolicy: IfNotPresent
+        command: ["python", "-m", "asi_build_launcher"]
+        ports:
+        - containerPort: 8000
+          name: api
+        - containerPort: 8001
+          name: admin
+        - containerPort: 9091
+          name: metrics
+        env:
+        - name: ASI_BUILD_MODE
+          value: "production"
+        - name: ASI_BUILD_SAFETY_LEVEL
+          value: "maximum"
+        - name: ASI_BUILD_REALITY_LOCKED
+          value: "true"
+        - name: ASI_BUILD_GOD_MODE
+          value: "false"
+        - name: ASI_BUILD_HUMAN_OVERSIGHT
+          value: "true"
+        - name: PYTHONPATH
+          value: "/app"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: DATABASE_URL
+          value: "postgresql://asiuser:$(POSTGRES_PASSWORD)@postgres-service:5432/asi_build"
+        - name: REDIS_URL
+          value: "redis://:$(REDIS_PASSWORD)@redis-service:6379"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: asi-build-secrets
+              key: postgres-password
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: asi-build-secrets
+              key: redis-password
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/asi_build
+        - name: data-volume
+          mountPath: /var/lib/asi_build
+        - name: logs-volume
+          mountPath: /var/log/asi_build
+        resources:
+          requests:
+            memory: "16Gi"
+            cpu: "4"
+            nvidia.com/gpu: "1"
+          limits:
+            memory: "32Gi"
+            cpu: "8"
+            nvidia.com/gpu: "2"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
+      volumes:
+      - name: config-volume
+        configMap:
+          name: asi-build-config
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: asi-build-data-pvc
+      - name: logs-volume
+        persistentVolumeClaim:
+          claimName: asi-build-logs-pvc
+      nodeSelector:
+        node-type: "gpu-enabled"
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+
+---
+# ASI:BUILD Core Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: asi-build-core-service
+  namespace: asi-build
+  labels:
+    app: asi-build-core
+spec:
+  selector:
+    app: asi-build-core
+  ports:
+    - name: api
+      port: 8000
+      targetPort: 8000
+    - name: admin
+      port: 8001
+      targetPort: 8001
+    - name: metrics
+      port: 9091
+      targetPort: 9091
+  type: ClusterIP
+
+---
+# ASI:BUILD API Gateway Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asi-build-api
+  namespace: asi-build
+  labels:
+    app: asi-build-api
+    component: api-gateway
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: asi-build-api
+  template:
+    metadata:
+      labels:
+        app: asi-build-api
+        component: api-gateway
+    spec:
+      serviceAccountName: asi-build-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+      - name: asi-build-api
+        image: asi-build:latest
+        imagePullPolicy: IfNotPresent
+        command: ["python", "-m", "asi_build_api"]
+        ports:
+        - containerPort: 8080
+          name: api-gateway
+        env:
+        - name: ASI_BUILD_MODE
+          value: "api"
+        - name: API_HOST
+          value: "0.0.0.0"
+        - name: API_PORT
+          value: "8080"
+        - name: API_WORKERS
+          value: "4"
+        - name: DATABASE_URL
+          value: "postgresql://asiuser:$(POSTGRES_PASSWORD)@postgres-service:5432/asi_build"
+        - name: REDIS_URL
+          value: "redis://:$(REDIS_PASSWORD)@redis-service:6379"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: asi-build-secrets
+              key: postgres-password
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: asi-build-secrets
+              key: redis-password
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/asi_build
+        - name: logs-volume
+          mountPath: /var/log/asi_build
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1"
+          limits:
+            memory: "4Gi"
+            cpu: "2"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
+      volumes:
+      - name: config-volume
+        configMap:
+          name: asi-build-config
+      - name: logs-volume
+        persistentVolumeClaim:
+          claimName: asi-build-logs-pvc
+
+---
+# ASI:BUILD API Gateway Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: asi-build-api-service
+  namespace: asi-build
+  labels:
+    app: asi-build-api
+spec:
+  selector:
+    app: asi-build-api
+  ports:
+    - name: api-gateway
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
+
+---
+# Horizontal Pod Autoscaler for Core
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: asi-build-core-hpa
+  namespace: asi-build
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: asi-build-core
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+
+---
+# Horizontal Pod Autoscaler for API Gateway
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: asi-build-api-hpa
+  namespace: asi-build
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: asi-build-api
+  minReplicas: 5
+  maxReplicas: 50
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 200
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 25
+        periodSeconds: 60
+
+---
+# Vertical Pod Autoscaler for Core (optional)
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: asi-build-core-vpa
+  namespace: asi-build
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: asi-build-core
+  updatePolicy:
+    updateMode: "Off"  # Recommendation only, manual updates
+  resourcePolicy:
+    containerPolicies:
+    - containerName: asi-build-core
+      maxAllowed:
+        cpu: 16
+        memory: 64Gi
+      minAllowed:
+        cpu: 2
+        memory: 8Gi
+
+---
+# Pod Disruption Budget for Core
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: asi-build-core-pdb
+  namespace: asi-build
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: asi-build-core
+
+---
+# Pod Disruption Budget for API Gateway
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: asi-build-api-pdb
+  namespace: asi-build
+spec:
+  minAvailable: 3
+  selector:
+    matchLabels:
+      app: asi-build-api
+
+---
+# Network Policy for ASI:BUILD namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: asi-build-network-policy
+  namespace: asi-build
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: asi-build
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: asi-build
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443  # HTTPS
+    - protocol: TCP
+      port: 53   # DNS
+    - protocol: UDP
+      port: 53   # DNS
+
+---
+# Security Context Constraints (OpenShift)
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: asi-build-scc
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegedContainer: false
+allowedCapabilities:
+- NET_BIND_SERVICE
+defaultAddCapabilities: null
+fsGroup:
+  type: MustRunAs
+  ranges:
+  - min: 1000
+    max: 1000
+readOnlyRootFilesystem: true
+requiredDropCapabilities:
+- ALL
+runAsUser:
+  type: MustRunAs
+  uid: 1000
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  type: MustRunAs
+  ranges:
+  - min: 1000
+    max: 1000
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- persistentVolumeClaim
+- projected
+- secret
+
+---
+# ServiceMonitor for Prometheus monitoring
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: asi-build-metrics
+  namespace: asi-build
+  labels:
+    app: asi-build-core
+spec:
+  selector:
+    matchLabels:
+      app: asi-build-core
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+
+---
+# PrometheusRule for ASI:BUILD alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: asi-build-alerts
+  namespace: asi-build
+  labels:
+    app: asi-build
+spec:
+  groups:
+  - name: asi-build.rules
+    rules:
+    - alert: ASIBuildHighErrorRate
+      expr: rate(asi_build_errors_total[5m]) > 0.1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High error rate in ASI:BUILD"
+        description: "Error rate is {{ $value }} errors per second"
+    
+    - alert: ASIBuildHighMemoryUsage
+      expr: container_memory_usage_bytes{pod=~"asi-build-core-.*"} / container_spec_memory_limit_bytes > 0.9
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "High memory usage in ASI:BUILD Core"
+        description: "Memory usage is above 90%"
+    
+    - alert: ASIBuildPodCrashLooping
+      expr: rate(kube_pod_container_status_restarts_total{namespace="asi-build"}[15m]) > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "ASI:BUILD pod is crash looping"
+        description: "Pod {{ $labels.pod }} is restarting frequently"
+    
+    - alert: ASIBuildSafetyViolation
+      expr: asi_build_safety_score < 0.8
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "ASI:BUILD safety violation detected"
+        description: "Safety score is {{ $value }}, below threshold"
+    
+    - alert: ASIBuildGodModeActive
+      expr: asi_build_god_mode_active == 1
+      for: 0s
+      labels:
+        severity: warning
+      annotations:
+        summary: "ASI:BUILD God Mode is active"
+        description: "God Mode has been enabled - enhanced monitoring required"
+
+---
+# Ingress for external access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: asi-build-ingress
+  namespace: asi-build
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - api.asi-build.ai
+    secretName: asi-build-tls
+  rules:
+  - host: api.asi-build.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: asi-build-api-service
+            port:
+              number: 80
+
+---
+# CronJob for system maintenance
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: asi-build-maintenance
+  namespace: asi-build
+spec:
+  schedule: "0 2 * * 0"  # Weekly on Sunday at 2 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: asi-build-sa
+          containers:
+          - name: maintenance
+            image: asi-build:latest
+            command: ["python", "-m", "asi_build.maintenance"]
+            env:
+            - name: MAINTENANCE_MODE
+              value: "weekly"
+            volumeMounts:
+            - name: data-volume
+              mountPath: /var/lib/asi_build
+            - name: logs-volume
+              mountPath: /var/log/asi_build
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+              limits:
+                memory: "2Gi"
+                cpu: "1"
+          volumes:
+          - name: data-volume
+            persistentVolumeClaim:
+              claimName: asi-build-data-pvc
+          - name: logs-volume
+            persistentVolumeClaim:
+              claimName: asi-build-logs-pvc
+          restartPolicy: OnFailure
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1

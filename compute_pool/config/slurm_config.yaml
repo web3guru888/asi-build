@@ -1,0 +1,345 @@
+# Slurm Integration Configuration
+# Configuration for integrating with Slurm Workload Manager
+
+slurm:
+  # Slurm installation
+  installation:
+    bin_path: "/usr/bin"
+    spool_dir: "/var/spool/slurm"
+    config_file: "/etc/slurm/slurm.conf"
+    
+  # Cluster configuration
+  cluster:
+    name: "kenny-cluster"
+    control_machine: "controller"
+    control_addr: null  # null = use hostname
+    backup_controller: null
+    
+  # Default job settings
+  defaults:
+    partition: "compute"
+    account: null
+    qos: null
+    time_limit: "01:00:00"  # 1 hour
+    memory_per_cpu: "4G"
+    
+  # Partitions
+  partitions:
+    compute:
+      nodes: []  # Auto-discover
+      time_limit: "7-00:00:00"  # 7 days
+      priority: 1
+      max_time: "7-00:00:00"
+      default_time: "01:00:00"
+      max_cpus_per_node: null
+      max_mem_per_cpu: null
+      allowed_groups: []
+      denied_groups: []
+      state: "UP"
+      
+    gpu:
+      nodes: []  # Nodes with GPUs
+      time_limit: "2-00:00:00"  # 2 days
+      priority: 10
+      default_time: "00:30:00"
+      gres: "gpu"
+      state: "UP"
+      
+    priority:
+      nodes: []  # High-priority nodes
+      time_limit: "12:00:00"  # 12 hours
+      priority: 100
+      default_time: "00:15:00"
+      preempt_mode: "REQUEUE"
+      state: "UP"
+      
+    batch:
+      nodes: []  # Batch processing nodes
+      time_limit: "30-00:00:00"  # 30 days
+      priority: 0
+      default_time: "04:00:00"
+      state: "UP"
+  
+  # Job submission
+  submission:
+    # Default sbatch options
+    sbatch_defaults:
+      mail_type: "FAIL"
+      mail_user: null
+      output: "/tmp/slurm-%j.out"
+      error: "/tmp/slurm-%j.err"
+      
+    # Job arrays
+    job_arrays:
+      enabled: true
+      max_array_size: 1000
+      max_array_tasks: 100
+      
+    # Dependencies
+    dependencies:
+      enabled: true
+      max_depend_depth: 10
+      
+    # Resource limits
+    limits:
+      max_submit_jobs: 1000
+      max_array_tasks: 1000
+      max_wall_time: "30-00:00:00"
+      
+  # Scheduling
+  scheduling:
+    scheduler: "backfill"  # backfill, fifo, builtin
+    
+    # Backfill scheduling
+    backfill:
+      enabled: true
+      interval: 30  # seconds
+      max_job_user: 100
+      max_job_part: 1000
+      
+    # Fair share
+    fair_share:
+      enabled: true
+      tree: "/etc/slurm/fairshare.conf"
+      decay_half_life: "14-0"  # 14 days
+      calculation_period: "5min"
+      
+    # Preemption
+    preemption:
+      enabled: true
+      mode: "REQUEUE"  # REQUEUE, CANCEL, SUSPEND
+      grace_time: 60  # seconds
+      
+    # Gang scheduling
+    gang_scheduling:
+      enabled: false
+      
+    # Node selection
+    select_type: "cons_tres"  # cons_res, cons_tres, linear
+    select_type_parameters:
+      - "CR_Core"
+      - "CR_CORE_DEFAULT_DIST_BLOCK"
+      
+  # Resources
+  resources:
+    # Generic resources (GRES)
+    gres:
+      gpu:
+        types:
+          - name: "tesla_v100"
+            count: 8
+            file: "/dev/nvidia[0-7]"
+          - name: "tesla_a100"
+            count: 4
+            file: "/dev/nvidia[0-3]"
+            
+      mps:  # Multi-Process Service
+        enabled: false
+        
+    # Trackable resources (TRES)
+    tres:
+      - "cpu"
+      - "mem"
+      - "energy"
+      - "node"
+      - "billing"
+      - "fs/disk"
+      - "vmem"
+      - "pages"
+      - "gres/gpu"
+      
+    # CPU binding
+    task_affinity:
+      enabled: true
+      
+  # Accounting
+  accounting:
+    enabled: true
+    storage_type: "slurmdbd"
+    storage_host: "localhost"
+    storage_port: 6819
+    storage_user: "slurm"
+    storage_pass: null
+    
+    # Archive settings
+    archive:
+      enabled: true
+      events: true
+      jobs: true
+      steps: true
+      suspend: true
+      usage: "monthly"
+      
+  # Job limits
+  limits:
+    # Per user limits
+    user:
+      max_jobs: 1000
+      max_submit_jobs: 2000
+      max_wall_duration_per_job: "7-00:00:00"
+      max_tres_per_job:
+        cpu: 1000
+        mem: "1000G"
+        gres/gpu: 16
+      max_tres_per_user:
+        cpu: 2000
+        mem: "2000G"
+        gres/gpu: 32
+        
+    # Per partition limits
+    partition:
+      max_cpus_per_node: null
+      max_mem_per_node: null
+      max_nodes: null
+      min_nodes: null
+      
+  # Health checks
+  health_checks:
+    node_health_check_program: "/usr/sbin/nhc"
+    node_health_check_interval: 600  # 10 minutes
+    
+    # Return to service
+    return_to_service: 1  # Node auto-returns to service
+    
+  # Logging
+  logging:
+    # Slurm daemon logging
+    slurmd_log_file: "/var/log/slurm/slurmd.log"
+    slurmctld_log_file: "/var/log/slurm/slurmctld.log"
+    slurmdbd_log_file: "/var/log/slurm/slurmdbd.log"
+    
+    # Debug levels
+    slurmd_debug: 3
+    slurmctld_debug: 3
+    slurmdbd_debug: 3
+    
+    # Log rotation
+    log_time_format: "iso8601_ms"
+    
+  # Security
+  security:
+    # Authentication
+    auth_type: "munge"  # munge, none
+    auth_alt_types: []
+    
+    # Cryptography
+    crypto_type: "openssl"
+    
+    # Communication
+    comm_params:
+      - "NoAddrCache"
+      - "block=8192"
+      
+    # Job credential
+    cred_type: "none"
+    
+  # Power management
+  power_management:
+    enabled: false
+    suspend_program: "/usr/local/bin/slurm_suspend"
+    resume_program: "/usr/local/bin/slurm_resume"
+    suspend_timeout: 300
+    resume_timeout: 300
+    suspend_rate: 60  # nodes per minute
+    resume_rate: 300  # nodes per minute
+    
+  # Plugins
+  plugins:
+    # Job submission
+    job_submit: "lua,all_partitions"
+    
+    # Process tracking
+    proctrack: "cgroup"
+    
+    # Task
+    task: "cgroup"
+    
+    # Switch
+    switch: "none"
+    
+    # MPI
+    mpi: "pmix"
+    
+    # Topology
+    topology: "tree"
+    
+    # Job completion
+    job_comp: "filetxt"
+    job_comp_loc: "/var/log/slurm/job_completions.log"
+    
+  # Cgroups
+  cgroups:
+    enabled: true
+    cgroup_automount: true
+    cgroup_release_agent_dir: "/etc/slurm/cgroup"
+    
+    # Memory
+    constrain_ram_space: true
+    constrain_swap_space: true
+    memory_swappiness: 1
+    
+    # Devices
+    constrain_devices: true
+    allowed_devices_file: "/etc/slurm/cgroup_allowed_devices_file.conf"
+    
+    # KMemory
+    constrain_kmem_space: false
+    min_kmem_space: 30
+    
+  # Prolog/Epilog
+  prolog_epilog:
+    prolog: "/etc/slurm/prolog.sh"
+    epilog: "/etc/slurm/epilog.sh"
+    prolog_slurmctld: null
+    epilog_slurmctld: null
+    task_prolog: null
+    task_epilog: null
+    
+  # Spank plugins
+  spank:
+    plugins: []
+    
+  # External integration
+  integration:
+    # Kenny compute pool specific settings
+    kenny:
+      job_prefix: "kenny"
+      metadata_in_comment: true
+      resource_mapping:
+        cpu_cores: "cpus-per-task"
+        memory_gb: "mem"
+        gpu_count: "gres"
+        time_limit: "time"
+        
+    # Other schedulers
+    other_schedulers:
+      enabled: false
+      
+  # Monitoring
+  monitoring:
+    # Job statistics
+    job_acct_gather:
+      type: "cgroup"
+      frequency: 30
+      
+    # Profile data
+    acct_gather_profile:
+      enabled: true
+      type: "hdf5"
+      
+    # Energy accounting  
+    acct_gather_energy:
+      type: "rapl"
+      
+    # Interconnect statistics
+    acct_gather_interconnect:
+      type: "none"
+      
+    # Filesystem statistics
+    acct_gather_filesystem:
+      type: "lustre"
+      
+  # Burst buffer
+  burst_buffer:
+    enabled: false
+    type: "datawarp"

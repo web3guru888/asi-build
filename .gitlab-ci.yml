@@ -1,0 +1,682 @@
+# ASI:BUILD GitLab CI/CD Pipeline
+# Complete production deployment pipeline with build, test, security, and deployment stages
+
+# Global settings
+default:
+  image: python:3.11-slim
+  
+variables:
+  # Docker settings
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_BUILDKIT: 1
+  
+  # Project settings
+  PROJECT_NAME: "asi-build"
+  REGISTRY_IMAGE: "$CI_REGISTRY_IMAGE"
+  
+  # Security settings
+  SECURITY_SCAN_ENABLED: "true"
+  SAFETY_CHECK_ENABLED: "true"
+  
+  # Deployment settings
+  KUBERNETES_NAMESPACE: "asi-build-production"
+  HELM_CHART_PATH: "./helm/asi-build"
+  
+  # Environment-specific variables
+  STAGING_URL: "https://staging.asi-build.ai"
+  PRODUCTION_URL: "https://asi-build.ai"
+
+# Pipeline stages
+stages:
+  - validate
+  - test
+  - security
+  - build
+  - package
+  - deploy-staging
+  - integration-test
+  - deploy-production
+  - post-deploy
+
+# ============================================================================
+# VALIDATION STAGE
+# ============================================================================
+
+code-quality:
+  stage: validate
+  image: python:3.11-slim
+  before_script:
+    - pip install black flake8 mypy bandit safety isort
+  script:
+    - echo "Running code quality checks..."
+    - black --check --diff .
+    - flake8 --max-line-length=120 --exclude=venv,build,dist .
+    - mypy --ignore-missing-imports .
+    - isort --check-only --diff .
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+dockerfile-lint:
+  stage: validate
+  image: hadolint/hadolint:latest-debian
+  script:
+    - echo "Linting Dockerfile..."
+    - hadolint Dockerfile
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+yaml-lint:
+  stage: validate
+  image: cytopia/yamllint:latest
+  script:
+    - echo "Linting YAML files..."
+    - find . -name "*.yml" -o -name "*.yaml" | xargs yamllint -d relaxed
+  allow_failure: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ============================================================================
+# TESTING STAGE
+# ============================================================================
+
+unit-tests:
+  stage: test
+  image: python:3.11-slim
+  services:
+    - postgres:15-alpine
+    - redis:7-alpine
+  variables:
+    POSTGRES_DB: asi_build_test
+    POSTGRES_USER: test_user
+    POSTGRES_PASSWORD: test_password
+    POSTGRES_HOST_AUTH_METHOD: trust
+    DATABASE_URL: "postgresql://test_user:test_password@postgres:5432/asi_build_test"
+    REDIS_URL: "redis://redis:6379/0"
+  before_script:
+    - apt-get update -qy
+    - apt-get install -y --no-install-recommends build-essential gcc g++ git
+    - pip install --upgrade pip setuptools wheel
+    - pip install -r requirements.txt
+    - pip install pytest pytest-cov pytest-asyncio pytest-mock
+  script:
+    - echo "Running unit tests..."
+    - python -m pytest tests/unit/ -v --cov=. --cov-report=xml --cov-report=html
+  artifacts:
+    when: always
+    reports:
+      junit: tests/unit/junit.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - htmlcov/
+    expire_in: 30 days
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+integration-tests:
+  stage: test
+  image: python:3.11-slim
+  services:
+    - docker:dind
+    - postgres:15-alpine
+    - redis:7-alpine
+    - elasticsearch:8.11.0
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    POSTGRES_DB: asi_build_test
+    POSTGRES_USER: test_user
+    POSTGRES_PASSWORD: test_password
+    POSTGRES_HOST_AUTH_METHOD: trust
+    discovery.type: single-node
+    xpack.security.enabled: "false"
+  before_script:
+    - apt-get update -qy
+    - apt-get install -y --no-install-recommends build-essential gcc g++ git curl
+    - pip install --upgrade pip setuptools wheel
+    - pip install -r requirements.txt
+    - pip install pytest pytest-asyncio pytest-mock
+  script:
+    - echo "Running integration tests..."
+    - python -m pytest tests/integration/ -v --tb=short
+  artifacts:
+    when: always
+    reports:
+      junit: tests/integration/junit.xml
+    expire_in: 7 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+
+performance-tests:
+  stage: test
+  image: python:3.11-slim
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - apt-get update -qy
+    - apt-get install -y --no-install-recommends curl
+    - pip install locust
+  script:
+    - echo "Running performance tests..."
+    - docker-compose -f docker-compose.test.yml up -d
+    - sleep 30  # Wait for services to be ready
+    - locust -f tests/performance/locustfile.py --host=$STAGING_URL --users=10 --spawn-rate=2 --run-time=120s --headless
+  after_script:
+    - docker-compose -f docker-compose.test.yml down
+  artifacts:
+    paths:
+      - performance_results.html
+    expire_in: 7 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+# ============================================================================
+# SECURITY STAGE
+# ============================================================================
+
+dependency-scan:
+  stage: security
+  image: python:3.11-slim
+  before_script:
+    - pip install safety pip-audit
+  script:
+    - echo "Scanning dependencies for vulnerabilities..."
+    - safety check --json --output safety-report.json || true
+    - pip-audit --format=json --output=pip-audit-report.json || true
+  artifacts:
+    reports:
+      dependency_scanning: safety-report.json
+    paths:
+      - safety-report.json
+      - pip-audit-report.json
+    expire_in: 30 days
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+sast-scan:
+  stage: security
+  image: python:3.11-slim
+  before_script:
+    - pip install bandit semgrep
+  script:
+    - echo "Running static application security testing..."
+    - bandit -r . -f json -o bandit-report.json || true
+    - semgrep --config=auto --json --output=semgrep-report.json . || true
+  artifacts:
+    reports:
+      sast: bandit-report.json
+    paths:
+      - bandit-report.json
+      - semgrep-report.json
+    expire_in: 30 days
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+secret-detection:
+  stage: security
+  image: python:3.11-slim
+  before_script:
+    - pip install detect-secrets
+  script:
+    - echo "Scanning for secrets..."
+    - detect-secrets scan --all-files --force-use-all-plugins --baseline .secrets.baseline
+  artifacts:
+    paths:
+      - .secrets.baseline
+    expire_in: 30 days
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+container-scan:
+  stage: security
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - echo "Building image for security scan..."
+    - docker build -t $REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - echo "Scanning container for vulnerabilities..."
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock 
+      aquasec/trivy image --format json --output container-scan.json $REGISTRY_IMAGE:$CI_COMMIT_SHA || true
+  artifacts:
+    reports:
+      container_scanning: container-scan.json
+    paths:
+      - container-scan.json
+    expire_in: 30 days
+  dependencies:
+    - build-image
+  allow_failure: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ============================================================================
+# BUILD STAGE
+# ============================================================================
+
+build-image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - echo "Building Docker image..."
+    - |
+      docker build \
+        --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+        --build-arg VCS_REF=$CI_COMMIT_SHA \
+        --build-arg VERSION=$CI_COMMIT_TAG \
+        --cache-from $REGISTRY_IMAGE:latest \
+        --tag $REGISTRY_IMAGE:$CI_COMMIT_SHA \
+        --tag $REGISTRY_IMAGE:latest \
+        .
+    - docker push $REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $REGISTRY_IMAGE:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+build-docs:
+  stage: build
+  image: python:3.11-slim
+  before_script:
+    - apt-get update -qy
+    - apt-get install -y --no-install-recommends pandoc
+    - pip install sphinx sphinx-rtd-theme mkdocs mkdocs-material
+  script:
+    - echo "Building documentation..."
+    - cd docs && make html
+    - mkdocs build
+  artifacts:
+    paths:
+      - docs/_build/html/
+      - site/
+    expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# ============================================================================
+# PACKAGE STAGE
+# ============================================================================
+
+create-helm-package:
+  stage: package
+  image: alpine/helm:latest
+  script:
+    - echo "Creating Helm package..."
+    - helm dependency update $HELM_CHART_PATH
+    - helm package $HELM_CHART_PATH --version $CI_COMMIT_SHORT_SHA
+    - helm repo index . --url $CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/helm/stable
+  artifacts:
+    paths:
+      - "*.tgz"
+      - index.yaml
+    expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+create-release:
+  stage: package
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script:
+    - echo "Creating release..."
+  release:
+    name: 'ASI:BUILD Release $CI_COMMIT_TAG'
+    description: 'Release $CI_COMMIT_TAG of ASI:BUILD'
+    tag_name: '$CI_COMMIT_TAG'
+    ref: '$CI_COMMIT_TAG'
+    assets:
+      links:
+        - name: 'Docker Image'
+          url: '$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG'
+        - name: 'Documentation'
+          url: '$CI_PAGES_URL'
+  rules:
+    - if: $CI_COMMIT_TAG
+
+# ============================================================================
+# STAGING DEPLOYMENT
+# ============================================================================
+
+deploy-staging:
+  stage: deploy-staging
+  image: alpine/helm:latest
+  environment:
+    name: staging
+    url: $STAGING_URL
+    deployment_tier: staging
+  before_script:
+    - kubectl config use-context $KUBE_CONTEXT_STAGING
+  script:
+    - echo "Deploying to staging environment..."
+    - |
+      helm upgrade --install asi-build-staging $HELM_CHART_PATH \
+        --namespace $KUBERNETES_NAMESPACE-staging \
+        --create-namespace \
+        --set image.tag=$CI_COMMIT_SHA \
+        --set image.repository=$REGISTRY_IMAGE \
+        --set environment=staging \
+        --set ingress.host=staging.asi-build.ai \
+        --set safety.level=maximum \
+        --set safety.realityLocked=true \
+        --set safety.godMode=false \
+        --wait --timeout=600s
+  after_script:
+    - kubectl get pods -n $KUBERNETES_NAMESPACE-staging
+    - kubectl get services -n $KUBERNETES_NAMESPACE-staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ============================================================================
+# INTEGRATION TESTING (POST-STAGING)
+# ============================================================================
+
+staging-smoke-tests:
+  stage: integration-test
+  image: python:3.11-slim
+  before_script:
+    - pip install requests pytest
+  script:
+    - echo "Running smoke tests against staging..."
+    - python tests/smoke/test_staging.py --url=$STAGING_URL
+  environment:
+    name: staging
+    url: $STAGING_URL
+    deployment_tier: staging
+  dependencies:
+    - deploy-staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+staging-security-tests:
+  stage: integration-test
+  image: owasp/zap2docker-stable:latest
+  script:
+    - echo "Running security tests against staging..."
+    - zap-baseline.py -t $STAGING_URL -J zap-report.json || true
+  artifacts:
+    paths:
+      - zap-report.json
+    expire_in: 7 days
+  environment:
+    name: staging
+    url: $STAGING_URL
+    deployment_tier: staging
+  dependencies:
+    - deploy-staging
+  allow_failure: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ============================================================================
+# PRODUCTION DEPLOYMENT
+# ============================================================================
+
+deploy-production:
+  stage: deploy-production
+  image: alpine/helm:latest
+  environment:
+    name: production
+    url: $PRODUCTION_URL
+    deployment_tier: production
+  before_script:
+    - kubectl config use-context $KUBE_CONTEXT_PRODUCTION
+  script:
+    - echo "Deploying to production environment..."
+    - |
+      helm upgrade --install asi-build-production $HELM_CHART_PATH \
+        --namespace $KUBERNETES_NAMESPACE \
+        --create-namespace \
+        --set image.tag=$CI_COMMIT_SHA \
+        --set image.repository=$REGISTRY_IMAGE \
+        --set environment=production \
+        --set ingress.host=asi-build.ai \
+        --set safety.level=maximum \
+        --set safety.realityLocked=true \
+        --set safety.godMode=false \
+        --set replicaCount=3 \
+        --set autoscaling.enabled=true \
+        --set resources.limits.memory=32Gi \
+        --set resources.limits.cpu=8 \
+        --wait --timeout=900s
+  after_script:
+    - kubectl get pods -n $KUBERNETES_NAMESPACE
+    - kubectl get services -n $KUBERNETES_NAMESPACE
+    - kubectl get ingress -n $KUBERNETES_NAMESPACE
+  when: manual
+  allow_failure: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+# ============================================================================
+# POST-DEPLOYMENT STAGE
+# ============================================================================
+
+production-smoke-tests:
+  stage: post-deploy
+  image: python:3.11-slim
+  before_script:
+    - pip install requests pytest
+  script:
+    - echo "Running production smoke tests..."
+    - python tests/smoke/test_production.py --url=$PRODUCTION_URL
+  environment:
+    name: production
+    url: $PRODUCTION_URL
+    deployment_tier: production
+  dependencies:
+    - deploy-production
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - if: $CI_COMMIT_TAG
+      when: always
+
+deploy-docs:
+  stage: post-deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying documentation to GitLab Pages..."
+    - mkdir public
+    - cp -r docs/_build/html/* public/
+    - cp -r site/* public/
+  artifacts:
+    paths:
+      - public
+  dependencies:
+    - build-docs
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+notify-deployment:
+  stage: post-deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - echo "Sending deployment notifications..."
+    - |
+      curl -X POST -H 'Content-type: application/json' \
+        --data "{\"text\":\"🚀 ASI:BUILD deployed to production successfully!\nVersion: $CI_COMMIT_SHA\nURL: $PRODUCTION_URL\"}" \
+        $SLACK_WEBHOOK_URL
+  dependencies:
+    - deploy-production
+  allow_failure: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+    - if: $CI_COMMIT_TAG
+      when: on_success
+
+# ============================================================================
+# CLEANUP AND MAINTENANCE
+# ============================================================================
+
+cleanup-old-images:
+  stage: post-deploy
+  image: registry.gitlab.com/gitlab-org/cli:latest
+  script:
+    - echo "Cleaning up old container images..."
+    - |
+      # Keep only the last 10 images
+      glab api projects/$CI_PROJECT_ID/registry/repositories | \
+      jq -r '.[].id' | \
+      while read repo_id; do
+        glab api projects/$CI_PROJECT_ID/registry/repositories/$repo_id/tags | \
+        jq -r 'sort_by(.created_at) | reverse | .[10:] | .[].name' | \
+        while read tag; do
+          echo "Deleting old tag: $tag"
+          glab api -X DELETE projects/$CI_PROJECT_ID/registry/repositories/$repo_id/tags/$tag
+        done
+      done
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+
+# ============================================================================
+# SCHEDULED JOBS
+# ============================================================================
+
+scheduled-security-scan:
+  extends: dependency-scan
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+scheduled-performance-test:
+  extends: performance-tests
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+# ============================================================================
+# MANUAL JOBS
+# ============================================================================
+
+rollback-production:
+  stage: deploy-production
+  image: alpine/helm:latest
+  environment:
+    name: production
+    url: $PRODUCTION_URL
+    deployment_tier: production
+  before_script:
+    - kubectl config use-context $KUBE_CONTEXT_PRODUCTION
+  script:
+    - echo "Rolling back production deployment..."
+    - helm rollback asi-build-production -n $KUBERNETES_NAMESPACE
+  when: manual
+  allow_failure: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+emergency-shutdown:
+  stage: deploy-production
+  image: alpine/helm:latest
+  environment:
+    name: production
+    url: $PRODUCTION_URL
+    deployment_tier: production
+  before_script:
+    - kubectl config use-context $KUBE_CONTEXT_PRODUCTION
+  script:
+    - echo "EMERGENCY SHUTDOWN: Scaling down production deployment..."
+    - kubectl scale deployment asi-build-production --replicas=0 -n $KUBERNETES_NAMESPACE
+    - echo "Production ASI:BUILD system has been shut down."
+  when: manual
+  allow_failure: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# ============================================================================
+# WORKFLOW RULES
+# ============================================================================
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+# ============================================================================
+# INCLUDES (Optional external configurations)
+# ============================================================================
+
+include:
+  - local: '.gitlab/ci/security.yml'
+  - local: '.gitlab/ci/deployment.yml'
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/Container-Scanning.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+
+# ============================================================================
+# CONFIGURATION NOTES
+# ============================================================================
+
+# Required GitLab CI/CD Variables:
+# - CI_REGISTRY_USER: GitLab registry username
+# - CI_REGISTRY_PASSWORD: GitLab registry password
+# - KUBE_CONTEXT_STAGING: Kubernetes context for staging
+# - KUBE_CONTEXT_PRODUCTION: Kubernetes context for production
+# - SLACK_WEBHOOK_URL: Slack webhook for notifications
+# - POSTGRES_PASSWORD: Production database password
+# - REDIS_PASSWORD: Production Redis password
+# - GRAFANA_PASSWORD: Production Grafana password
+# - RABBITMQ_PASSWORD: Production RabbitMQ password
+
+# Required GitLab Runner configuration:
+# - Docker-in-Docker (dind) capability
+# - Kubernetes access for deployments
+# - Sufficient memory and CPU for building images
+# - Network access to staging and production environments
+
+# GitLab Pages configuration:
+# - Automatically deploys documentation to GitLab Pages
+# - Accessible at https://your-project.gitlab.io
+
+# Container Registry:
+# - Images are pushed to GitLab Container Registry
+# - Tagged with commit SHA and 'latest'
+# - Old images are automatically cleaned up
+
+# Monitoring and Alerting:
+# - Integration with external monitoring systems
+# - Slack notifications for deployment status
+# - Email notifications for security issues

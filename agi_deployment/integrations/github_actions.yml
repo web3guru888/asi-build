@@ -1,0 +1,618 @@
+name: AGI Model Deployment Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'models/**'
+      - 'pipelines/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'models/**'
+      - 'pipelines/**'
+  workflow_dispatch:
+    inputs:
+      model_version:
+        description: 'Model version to deploy'
+        required: true
+        default: 'latest'
+      deployment_environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      deployment_strategy:
+        description: 'Deployment strategy'
+        required: true
+        default: 'canary'
+        type: choice
+        options:
+          - canary
+          - blue-green
+          - shadow
+      skip_tests:
+        description: 'Skip testing phase'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  MODEL_REGISTRY: 'mlflow'
+  DEPLOYMENT_TIMEOUT: '3600'  # 1 hour timeout
+  KUBECONFIG_PATH: '${{ github.workspace }}/.kube/config'
+
+jobs:
+  # Job 1: Model Validation and Testing
+  validation:
+    name: Model Validation & Testing
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.skip_tests }}
+    
+    outputs:
+      model_id: ${{ steps.extract_model.outputs.model_id }}
+      model_version: ${{ steps.extract_model.outputs.model_version }}
+      validation_passed: ${{ steps.validation.outputs.passed }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r pipelines/agi_deployment/requirements.txt
+        pip install -r requirements.txt
+        
+    - name: Extract model information
+      id: extract_model
+      run: |
+        MODEL_ID=$(python -c "
+        import yaml, os
+        config_path = 'models/config.yaml'
+        if os.path.exists(config_path):
+            with open(config_path) as f:
+                config = yaml.safe_load(f)
+                print(config.get('model_id', 'kenny-agi'))
+        else:
+            print('kenny-agi')
+        ")
+        
+        MODEL_VERSION="${{ inputs.model_version || github.sha }}"
+        
+        echo "model_id=${MODEL_ID}" >> $GITHUB_OUTPUT
+        echo "model_version=${MODEL_VERSION}" >> $GITHUB_OUTPUT
+        echo "MODEL_ID=${MODEL_ID}" >> $GITHUB_ENV
+        echo "MODEL_VERSION=${MODEL_VERSION}" >> $GITHUB_ENV
+        
+    - name: Download model artifacts
+      run: |
+        mkdir -p ./model_artifacts
+        # Download from MLflow registry
+        python pipelines/agi_deployment/scripts/download_model.py \
+          --model-id ${{ env.MODEL_ID }} \
+          --version ${{ env.MODEL_VERSION }} \
+          --output ./model_artifacts/
+          
+    - name: Run model validation
+      id: validation
+      run: |
+        python pipelines/agi_deployment/ci_cd/model_validator.py \
+          --model-path ./model_artifacts/ \
+          --output-file ./validation_results.json
+          
+        # Check validation results
+        VALIDATION_PASSED=$(python -c "
+        import json
+        with open('./validation_results.json') as f:
+            results = json.load(f)
+        passed = all(r['passed'] for r in results)
+        print('true' if passed else 'false')
+        ")
+        
+        echo "passed=${VALIDATION_PASSED}" >> $GITHUB_OUTPUT
+        
+        if [ "$VALIDATION_PASSED" != "true" ]; then
+          echo "❌ Model validation failed"
+          cat ./validation_results.json
+          exit 1
+        else
+          echo "✅ Model validation passed"
+        fi
+        
+    - name: Run comprehensive tests
+      run: |
+        python pipelines/agi_deployment/ci_cd/testing_framework.py \
+          --model-endpoint http://localhost:8000 \
+          --config pipelines/agi_deployment/ci_cd/test_config.yaml \
+          --output ./test_results.json
+          
+    - name: Upload validation artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: validation-results
+        path: |
+          ./validation_results.json
+          ./test_results.json
+        retention-days: 30
+        
+    - name: Comment PR with validation results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const validationResults = JSON.parse(fs.readFileSync('./validation_results.json', 'utf8'));
+          const testResults = JSON.parse(fs.readFileSync('./test_results.json', 'utf8'));
+          
+          let comment = '## 🤖 AGI Model Validation Results\n\n';
+          comment += `**Model**: ${process.env.MODEL_ID} v${process.env.MODEL_VERSION}\n`;
+          comment += `**Validation**: ${validationResults.every(r => r.passed) ? '✅ PASSED' : '❌ FAILED'}\n`;
+          comment += `**Tests**: ${testResults.summary?.overall?.pass_rate > 0.8 ? '✅ PASSED' : '❌ FAILED'}\n\n`;
+          
+          comment += '### Validation Details\n';
+          validationResults.forEach(result => {
+            comment += `- **${result.check_name}**: ${result.passed ? '✅' : '❌'} (Score: ${result.score.toFixed(2)})\n`;
+          });
+          
+          if (testResults.summary?.overall) {
+            comment += `\n### Test Summary\n`;
+            comment += `- **Overall Pass Rate**: ${(testResults.summary.overall.pass_rate * 100).toFixed(1)}%\n`;
+            comment += `- **Tests Passed**: ${testResults.summary.overall.passed}/${testResults.summary.overall.total}\n`;
+          }
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  # Job 2: Security and Compliance Scanning
+  security:
+    name: Security & Compliance Scanning
+    runs-on: ubuntu-latest
+    needs: [validation]
+    if: ${{ needs.validation.outputs.validation_passed == 'true' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run security scanning
+      uses: securecodewarrior/github-action-add-sarif@v1
+      with:
+        sarif-file: 'security-scan-results.sarif'
+        
+    - name: Scan for secrets
+      uses: trufflesecurity/trufflehog@v3.63.2-beta
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        
+    - name: Run model security audit
+      run: |
+        python pipelines/agi_deployment/security/model_security_scanner.py \
+          --model-path ./model_artifacts/ \
+          --output ./security_audit.json
+          
+    - name: Check compliance policies
+      run: |
+        python pipelines/agi_deployment/gitops/compliance_checker.py \
+          --policies ./policies/ \
+          --model-config ./models/config.yaml \
+          --output ./compliance_results.json
+
+  # Job 3: Build and Package
+  build:
+    name: Build & Package Model
+    runs-on: ubuntu-latest
+    needs: [validation, security]
+    
+    outputs:
+      image_tag: ${{ steps.build.outputs.image_tag }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ secrets.CONTAINER_REGISTRY }}
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+        
+    - name: Download model artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: validation-results
+        
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./pipelines/agi_deployment/docker/Dockerfile
+        push: true
+        tags: |
+          ${{ secrets.CONTAINER_REGISTRY }}/kenny-agi:${{ needs.validation.outputs.model_version }}
+          ${{ secrets.CONTAINER_REGISTRY }}/kenny-agi:latest
+        build-args: |
+          MODEL_VERSION=${{ needs.validation.outputs.model_version }}
+          BUILD_DATE=${{ github.run_number }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Generate SBOM
+      uses: anchore/sbom-action@v0.15.0
+      with:
+        image: ${{ secrets.CONTAINER_REGISTRY }}/kenny-agi:${{ needs.validation.outputs.model_version }}
+        format: spdx-json
+        output-file: ./sbom.spdx.json
+        
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v3
+      with:
+        name: sbom
+        path: ./sbom.spdx.json
+
+  # Job 4: Deployment Strategy Selection and Execution
+  deploy:
+    name: Deploy Model
+    runs-on: ubuntu-latest
+    needs: [validation, security, build]
+    if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
+    
+    environment: 
+      name: ${{ inputs.deployment_environment || 'staging' }}
+      url: https://${{ inputs.deployment_environment || 'staging' }}.kenny-agi.example.com
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install deployment tools
+      run: |
+        pip install -r pipelines/agi_deployment/requirements.txt
+        
+        # Install kubectl
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        sudo mv kubectl /usr/local/bin/
+        
+        # Install Helm
+        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        
+    - name: Configure Kubernetes access
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
+        kubectl config current-context
+        
+    - name: Configure deployment parameters
+      id: deploy_config
+      run: |
+        ENVIRONMENT="${{ inputs.deployment_environment || 'staging' }}"
+        STRATEGY="${{ inputs.deployment_strategy || 'canary' }}"
+        IMAGE_TAG="${{ needs.build.outputs.image_tag }}"
+        MODEL_VERSION="${{ needs.validation.outputs.model_version }}"
+        
+        echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
+        echo "strategy=${STRATEGY}" >> $GITHUB_OUTPUT
+        echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+        echo "model_version=${MODEL_VERSION}" >> $GITHUB_OUTPUT
+        
+        # Create deployment configuration
+        cat > deployment_config.json << EOF
+        {
+          "model_id": "${{ needs.validation.outputs.model_id }}",
+          "model_version": "${MODEL_VERSION}",
+          "environment": "${ENVIRONMENT}",
+          "strategy": "${STRATEGY}",
+          "image_tag": "${IMAGE_TAG}",
+          "replicas": {
+            "min": 2,
+            "max": 10
+          },
+          "resources": {
+            "cpu": "2000m",
+            "memory": "4Gi",
+            "gpu": 1
+          }
+        }
+        EOF
+        
+    - name: Execute Canary Deployment
+      if: ${{ steps.deploy_config.outputs.strategy == 'canary' }}
+      run: |
+        python pipelines/agi_deployment/deployment_strategies/canary_deployment.py \
+          --config deployment_config.json \
+          --stages-config pipelines/agi_deployment/configs/canary_stages.yaml \
+          --output ./canary_results.json
+          
+    - name: Execute Blue-Green Deployment
+      if: ${{ steps.deploy_config.outputs.strategy == 'blue-green' }}
+      run: |
+        python pipelines/agi_deployment/deployment_strategies/blue_green_deployment.py \
+          --config deployment_config.json \
+          --output ./blue_green_results.json
+          
+    - name: Execute Shadow Deployment
+      if: ${{ steps.deploy_config.outputs.strategy == 'shadow' }}
+      run: |
+        python pipelines/agi_deployment/deployment_strategies/shadow_deployment.py \
+          --config deployment_config.json \
+          --test-duration 30 \
+          --output ./shadow_results.json
+          
+    - name: Wait for deployment health check
+      run: |
+        timeout 300 bash -c '
+        while true; do
+          if kubectl get deployment kenny-agi-${{ steps.deploy_config.outputs.environment }} -n ${{ steps.deploy_config.outputs.environment }}; then
+            if kubectl wait --for=condition=available --timeout=60s deployment/kenny-agi-${{ steps.deploy_config.outputs.environment }} -n ${{ steps.deploy_config.outputs.environment }}; then
+              echo "✅ Deployment is healthy"
+              break
+            fi
+          fi
+          echo "⏳ Waiting for deployment to be healthy..."
+          sleep 10
+        done
+        '
+        
+    - name: Run post-deployment validation
+      run: |
+        # Wait for service to be ready
+        sleep 30
+        
+        # Get service endpoint
+        SERVICE_URL=$(kubectl get ingress kenny-agi-${{ steps.deploy_config.outputs.environment }} \
+          -n ${{ steps.deploy_config.outputs.environment }} \
+          -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        
+        if [ -z "$SERVICE_URL" ]; then
+          SERVICE_URL=$(kubectl get service kenny-agi-${{ steps.deploy_config.outputs.environment }} \
+            -n ${{ steps.deploy_config.outputs.environment }} \
+            -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        fi
+        
+        echo "Testing deployment at: https://${SERVICE_URL}"
+        
+        # Run health check
+        curl -f "https://${SERVICE_URL}/health" || exit 1
+        
+        # Run basic inference test
+        curl -X POST "https://${SERVICE_URL}/generate" \
+          -H "Content-Type: application/json" \
+          -d '{"input": "Test deployment", "max_length": 50}' || exit 1
+          
+        echo "✅ Post-deployment validation passed"
+        
+    - name: Setup monitoring and alerting
+      run: |
+        # Deploy monitoring configuration
+        helm upgrade --install kenny-agi-monitoring \
+          ./helm/monitoring \
+          --namespace monitoring \
+          --create-namespace \
+          --set model.version=${{ steps.deploy_config.outputs.model_version }} \
+          --set environment=${{ steps.deploy_config.outputs.environment }}
+          
+        # Configure alerts
+        python pipelines/agi_deployment/monitoring/setup_alerts.py \
+          --environment ${{ steps.deploy_config.outputs.environment }} \
+          --model-version ${{ steps.deploy_config.outputs.model_version }}
+          
+    - name: Update deployment status
+      run: |
+        # Update status in model registry
+        python pipelines/agi_deployment/model_registries/update_deployment_status.py \
+          --model-id ${{ needs.validation.outputs.model_id }} \
+          --version ${{ needs.validation.outputs.model_version }} \
+          --environment ${{ steps.deploy_config.outputs.environment }} \
+          --status deployed \
+          --endpoint "https://${{ steps.deploy_config.outputs.environment }}.kenny-agi.example.com"
+          
+    - name: Upload deployment artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: deployment-results
+        path: |
+          ./deployment_config.json
+          ./*_results.json
+        retention-days: 90
+
+  # Job 5: Post-Deployment Monitoring
+  monitor:
+    name: Post-Deployment Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: ${{ always() && needs.deploy.result == 'success' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install monitoring tools
+      run: |
+        pip install -r pipelines/agi_deployment/requirements.txt
+        
+    - name: Start observability monitoring
+      run: |
+        python pipelines/agi_deployment/monitoring/agi_observability.py \
+          --environment ${{ inputs.deployment_environment || 'staging' }} \
+          --model-version ${{ needs.validation.outputs.model_version }} \
+          --duration 300 \
+          --output ./monitoring_results.json &
+          
+        MONITOR_PID=$!
+        echo "MONITOR_PID=${MONITOR_PID}" >> $GITHUB_ENV
+        
+    - name: Run integration tests
+      run: |
+        python pipelines/agi_deployment/tests/integration_tests.py \
+          --environment ${{ inputs.deployment_environment || 'staging' }} \
+          --test-suite post_deployment \
+          --output ./integration_test_results.json
+          
+    - name: Generate deployment report
+      run: |
+        python pipelines/agi_deployment/reporting/deployment_report.py \
+          --deployment-id ${{ github.run_id }} \
+          --artifacts-path ./ \
+          --output ./deployment_report.html
+          
+    - name: Upload monitoring results
+      uses: actions/upload-artifact@v3
+      with:
+        name: monitoring-results
+        path: |
+          ./monitoring_results.json
+          ./integration_test_results.json
+          ./deployment_report.html
+
+  # Job 6: Rollback (Manual trigger only)
+  rollback:
+    name: Emergency Rollback
+    runs-on: ubuntu-latest
+    if: ${{ failure() && github.event_name == 'workflow_dispatch' }}
+    needs: [deploy]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure Kubernetes access
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
+        
+    - name: Execute emergency rollback
+      run: |
+        python pipelines/agi_deployment/rollback/emergency_rollback.py \
+          --environment ${{ inputs.deployment_environment || 'staging' }} \
+          --model-id ${{ needs.validation.outputs.model_id }} \
+          --reason "deployment_failure" \
+          --output ./rollback_results.json
+          
+    - name: Notify teams of rollback
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#agi-deployments'
+        text: |
+          🚨 Emergency rollback executed for ${{ needs.validation.outputs.model_id }} 
+          Environment: ${{ inputs.deployment_environment || 'staging' }}
+          Trigger: Deployment failure in run ${{ github.run_id }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+# Workflow-level notifications
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [validation, security, build, deploy, monitor]
+    if: ${{ always() }}
+    
+    steps:
+    - name: Determine overall status
+      id: status
+      run: |
+        if [[ "${{ needs.validation.result }}" == "success" && 
+              "${{ needs.security.result }}" == "success" && 
+              "${{ needs.build.result }}" == "success" && 
+              "${{ needs.deploy.result }}" == "success" ]]; then
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "emoji=✅" >> $GITHUB_OUTPUT
+        elif [[ "${{ needs.validation.result }}" == "failure" || 
+                "${{ needs.security.result }}" == "failure" ]]; then
+          echo "status=failure" >> $GITHUB_OUTPUT
+          echo "emoji=❌" >> $GITHUB_OUTPUT
+        else
+          echo "status=partial" >> $GITHUB_OUTPUT
+          echo "emoji=⚠️" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Notify Slack
+      uses: 8398a7/action-slack@v3
+      with:
+        status: custom
+        custom_payload: |
+          {
+            "channel": "#agi-deployments",
+            "attachments": [{
+              "color": "${{ steps.status.outputs.status == 'success' && 'good' || steps.status.outputs.status == 'failure' && 'danger' || 'warning' }}",
+              "title": "${{ steps.status.outputs.emoji }} AGI Model Deployment Pipeline",
+              "fields": [
+                {
+                  "title": "Repository",
+                  "value": "${{ github.repository }}",
+                  "short": true
+                },
+                {
+                  "title": "Model Version", 
+                  "value": "${{ needs.validation.outputs.model_version }}",
+                  "short": true
+                },
+                {
+                  "title": "Environment",
+                  "value": "${{ inputs.deployment_environment || 'staging' }}",
+                  "short": true
+                },
+                {
+                  "title": "Strategy",
+                  "value": "${{ inputs.deployment_strategy || 'canary' }}",
+                  "short": true
+                },
+                {
+                  "title": "Status",
+                  "value": "${{ steps.status.outputs.status }}",
+                  "short": true
+                },
+                {
+                  "title": "Workflow",
+                  "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>",
+                  "short": true
+                }
+              ],
+              "footer": "GitHub Actions",
+              "ts": ${{ github.event.head_commit.timestamp && github.event.head_commit.timestamp || 'null' }}
+            }]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

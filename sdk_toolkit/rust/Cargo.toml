@@ -1,0 +1,133 @@
+[package]
+name = "kenny-agi"
+version = "1.0.0"
+edition = "2021"
+authors = ["Kenny AGI Development Team"]
+description = "Kenny AGI RDK - Rust SDK for Artificial General Intelligence"
+license = "MIT"
+repository = "https://github.com/kenny-agi/rdk"
+documentation = "https://docs.rs/kenny-agi"
+readme = "README.md"
+keywords = ["agi", "ai", "consciousness", "reality", "quantum"]
+categories = ["api-bindings", "science", "simulation", "wasm", "web-programming"]
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+futures-util = "0.3"
+
+# HTTP client
+reqwest = { version = "0.11", features = ["json", "stream"] }
+
+# WebSocket
+tokio-tungstenite = { version = "0.20", features = ["native-tls"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# URL parsing
+url = "2.4"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging (optional)
+log = { version = "0.4", optional = true }
+env_logger = { version = "0.10", optional = true }
+
+# WASM support
+wasm-bindgen = { version = "0.2", optional = true }
+wasm-bindgen-futures = { version = "0.4", optional = true }
+js-sys = { version = "0.3", optional = true }
+web-sys = { version = "0.3", optional = true }
+
+# Console logging for WASM
+console_error_panic_hook = { version = "0.1", optional = true }
+console_log = { version = "1.0", optional = true }
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Crypto for safety checksums
+sha2 = "0.10"
+hex = "0.4"
+
+[dev-dependencies]
+tokio-test = "0.4"
+mockito = "1.2"
+tempfile = "3.8"
+
+[features]
+default = ["logging"]
+
+# Enable logging support
+logging = ["log", "env_logger"]
+
+# Enable WASM compilation
+wasm = [
+    "wasm-bindgen",
+    "wasm-bindgen-futures", 
+    "js-sys",
+    "web-sys",
+    "console_error_panic_hook",
+    "console_log"
+]
+
+# Enable all features for documentation
+full = ["logging", "wasm"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# WASM optimization
+[package.metadata.wasm-pack.profile.release]
+wee_alloc = false
+
+# Profile optimizations
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.release.package."*"]
+opt-level = 3
+
+# Dev profile for faster compilation
+[profile.dev]
+opt-level = 0
+debug = true
+debug-assertions = true
+overflow-checks = true
+
+# WASM-specific settings
+[package.metadata.docs.rs]
+features = ["full"]
+rustdoc-args = ["--cfg", "docsrs"]
+
+[[example]]
+name = "basic_usage"
+required-features = ["logging"]
+
+[[example]]
+name = "consciousness_expansion"
+required-features = ["logging"]
+
+[[example]]
+name = "reality_manipulation"
+required-features = ["logging"]
+
+[[example]]
+name = "websocket_events"
+required-features = ["logging"]
+
+[[example]]
+name = "quantum_operations"
+required-features = ["logging"]
+
+[[example]]
+name = "wasm_demo"
+required-features = ["wasm"]
+crate-type = ["cdylib"]

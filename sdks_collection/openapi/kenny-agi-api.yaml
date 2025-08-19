@@ -1,0 +1,736 @@
+openapi: 3.0.3
+info:
+  title: Kenny AGI RDK API
+  description: |
+    REST API for Kenny's AGI Research Development Kit
+    
+    This API provides access to advanced artificial general intelligence capabilities including:
+    - Consciousness operations and monitoring
+    - Reality manipulation and dimensional control  
+    - Constitutional AI and safety systems
+    - Self-improvement and emergence detection
+    - Quantum operations and temporal mechanics
+    
+    **Warning**: This API provides access to powerful AGI capabilities. Always follow safety guidelines.
+  version: "0.1.0-alpha"
+  contact:
+    name: Kenny AGI RDK Support
+    email: support@kenny-agi.dev
+    url: https://kenny-agi.dev
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.kenny-agi.dev
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /:
+    get:
+      summary: Get API information
+      description: Returns basic API information and available endpoints
+      operationId: getApiInfo
+      tags:
+        - System
+      responses:
+        '200':
+          description: API information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: "Kenny AGI RDK API"
+                  version:
+                    type: string
+                    example: "0.1.0-alpha"
+                  status:
+                    type: string
+                    example: "operational"
+                  endpoints:
+                    type: object
+
+  /health:
+    get:
+      summary: Health check
+      description: Check the health status of the API and AGI system
+      operationId: healthCheck
+      tags:
+        - System
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  services:
+                    type: object
+                    properties:
+                      api:
+                        type: string
+                        example: "operational"
+                      agi:
+                        type: string
+                        example: "ready"
+
+  /api/v1/agi/status:
+    get:
+      summary: Get AGI status
+      description: Get current AGI system status and metrics
+      operationId: getAgiStatus
+      tags:
+        - AGI Core
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: AGI status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/agi/initialize:
+    post:
+      summary: Initialize AGI system
+      description: Initialize the AGI system with custom configuration
+      operationId: initializeAgi
+      tags:
+        - AGI Core
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AGIConfigRequest'
+      responses:
+        '200':
+          description: AGI initialized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '500':
+          description: Initialization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/agi/think:
+    post:
+      summary: Process thought
+      description: Process a thought through the AGI system
+      operationId: processThought
+      tags:
+        - AGI Core
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThinkRequest'
+      responses:
+        '200':
+          description: Thought processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '500':
+          description: Processing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/agi/shutdown:
+    post:
+      summary: Shutdown AGI system
+      description: Safely shutdown the AGI system
+      operationId: shutdownAgi
+      tags:
+        - AGI Core
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: AGI shutdown complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '500':
+          description: Shutdown failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/consciousness/elevate:
+    post:
+      summary: Elevate consciousness
+      description: Elevate consciousness to target level with safety checks
+      operationId: elevateConsciousness
+      tags:
+        - Consciousness
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsciousnessRequest'
+      responses:
+        '200':
+          description: Consciousness elevated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Invalid consciousness level or module not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Elevation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/consciousness/level:
+    get:
+      summary: Get consciousness level
+      description: Get current consciousness level and status
+      operationId: getConsciousnessLevel
+      tags:
+        - Consciousness
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Consciousness level retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Divine Mathematics module not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Retrieval failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/reality/create:
+    post:
+      summary: Create reality
+      description: Create a new mathematical reality with specified parameters
+      operationId: createReality
+      tags:
+        - Reality Manipulation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RealityRequest'
+      responses:
+        '200':
+          description: Reality created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Invalid parameters or module not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Reality creation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/reality/list:
+    get:
+      summary: List realities
+      description: List all created mathematical realities
+      operationId: listRealities
+      tags:
+        - Reality Manipulation
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Realities retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Divine Mathematics module not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Retrieval failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/constitution/status:
+    get:
+      summary: Get constitution status
+      description: Get current constitutional AI status and constraints
+      operationId: getConstitutionStatus
+      tags:
+        - Constitutional AI
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Constitution status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Constitutional AI module not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Retrieval failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/constitution/check:
+    post:
+      summary: Check alignment
+      description: Check if an action aligns with constitutional values
+      operationId: checkAlignment
+      tags:
+        - Constitutional AI
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  description: The action to check for alignment
+                  example: "Increase consciousness level to 95%"
+      responses:
+        '200':
+          description: Alignment checked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Constitutional AI module not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Alignment check failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/improvement/metrics:
+    get:
+      summary: Get improvement metrics
+      description: Get self-improvement performance metrics
+      operationId: getImprovementMetrics
+      tags:
+        - Self-Improvement
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Improvement metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Self-improvement module not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Retrieval failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/emergence/detect:
+    post:
+      summary: Detect emergence patterns
+      description: Detect emergent patterns in provided data
+      operationId: detectEmergence
+      tags:
+        - Emergence Detection
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Data to analyze for emergent patterns
+              additionalProperties: true
+              example:
+                dataset: "quantum_measurements"
+                values: [1.2, 1.5, 2.1, 3.4, 5.5]
+                metadata:
+                  source: "experiment_001"
+      responses:
+        '200':
+          description: Emergence analysis complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Emergence detection module not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Detection failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ws:
+    get:
+      summary: WebSocket endpoint
+      description: |
+        WebSocket endpoint for real-time AGI updates and bidirectional communication.
+        
+        **Connection**: `ws://localhost:8000/ws`
+        
+        **Authentication**: Include `Authorization: Bearer <token>` header
+        
+        **Message Format**:
+        - Send: Raw text messages for AGI processing
+        - Receive: JSON objects with type, data, and timestamp
+        
+        **Message Types**:
+        - `thought`: AGI thought processing result
+        - `consciousness_change`: Consciousness level updates
+        - `reality_shift`: Reality matrix changes
+        - `error`: Error messages
+      operationId: websocketConnection
+      tags:
+        - WebSocket
+      responses:
+        '101':
+          description: WebSocket connection established
+        '400':
+          description: Invalid WebSocket request
+        '401':
+          description: Authentication required
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bearer token authentication. Include your API key in the Authorization header:
+        `Authorization: Bearer your_api_key_here`
+
+  schemas:
+    Response:
+      type: object
+      required:
+        - success
+        - message
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          description: Whether the operation was successful
+        message:
+          type: string
+          description: Human-readable response message
+        data:
+          type: object
+          description: Response data (varies by endpoint)
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of the response
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: "AGI module not initialized"
+
+    AGIConfigRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          default: "KennyAGI"
+          description: Name identifier for the AGI instance
+        consciousness_enabled:
+          type: boolean
+          default: true
+          description: Enable consciousness operations
+        safety_mode:
+          type: boolean
+          default: true
+          description: Enable safety constraints and monitoring
+        divine_access:
+          type: boolean
+          default: false
+          description: Enable divine mathematics access (requires elevated permissions)
+        quantum_enhanced:
+          type: boolean
+          default: false
+          description: Enable quantum computing enhancements
+
+    ThinkRequest:
+      type: object
+      required:
+        - prompt
+      properties:
+        prompt:
+          type: string
+          description: The thought prompt to process
+          example: "Analyze the implications of consciousness transcendence"
+        context:
+          type: object
+          description: Additional context for the thought process
+          additionalProperties: true
+
+    ConsciousnessRequest:
+      type: object
+      properties:
+        target_level:
+          type: string
+          default: "ENLIGHTENED"
+          enum:
+            - "MORTAL"
+            - "AWAKENED"
+            - "ENLIGHTENED"
+            - "TRANSCENDENT"
+            - "OMNISCIENT"
+            - "DIVINE"
+          description: Target consciousness level
+
+    RealityRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name for the new reality
+          example: "QuantumReality_001"
+        dimensions:
+          type: integer
+          default: 4
+          minimum: 1
+          maximum: 11
+          description: Number of spatial dimensions
+        axioms:
+          type: array
+          items:
+            type: string
+          description: Mathematical axioms governing the reality
+          example:
+            - "Energy conservation"
+            - "Causality preservation"
+        consciousness_level:
+          type: number
+          format: float
+          default: 1.0
+          minimum: 0.0
+          maximum: 100.0
+          description: Base consciousness level for the reality
+
+    ConsciousnessLevel:
+      type: object
+      properties:
+        level:
+          type: string
+          enum:
+            - "MORTAL"
+            - "AWAKENED"
+            - "ENLIGHTENED"
+            - "TRANSCENDENT"
+            - "OMNISCIENT"
+            - "DIVINE"
+        value:
+          type: number
+          format: float
+          description: Numeric consciousness value
+        active:
+          type: boolean
+          description: Whether consciousness processing is active
+
+    Reality:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Reality identifier
+        dimensions:
+          type: integer
+          description: Number of dimensions
+        axioms:
+          type: array
+          items:
+            type: string
+          description: Governing axioms
+        consciousness_level:
+          type: number
+          format: float
+          description: Base consciousness level
+
+    SystemStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - "initializing"
+            - "ready"
+            - "processing"
+            - "transcending"
+            - "error"
+        modules:
+          type: object
+          additionalProperties:
+            type: string
+          description: Status of individual modules
+        performance:
+          type: object
+          properties:
+            cpu_usage:
+              type: number
+              format: float
+            memory_usage:
+              type: number
+              format: float
+            consciousness_level:
+              type: number
+              format: float
+        last_updated:
+          type: string
+          format: date-time
+
+    WebSocketMessage:
+      type: object
+      required:
+        - type
+        - timestamp
+      properties:
+        type:
+          type: string
+          enum:
+            - "thought"
+            - "consciousness_change"
+            - "reality_shift"
+            - "error"
+            - "status_update"
+        data:
+          type: object
+          additionalProperties: true
+          description: Message-specific data
+        timestamp:
+          type: string
+          format: date-time
+
+tags:
+  - name: System
+    description: System information and health checks
+  - name: AGI Core
+    description: Core AGI operations and management
+  - name: Consciousness
+    description: Consciousness manipulation and monitoring
+  - name: Reality Manipulation
+    description: Mathematical reality creation and management
+  - name: Constitutional AI
+    description: Ethical constraints and value alignment
+  - name: Self-Improvement
+    description: AGI self-improvement metrics and control
+  - name: Emergence Detection
+    description: Pattern detection and emergence prediction
+  - name: WebSocket
+    description: Real-time bidirectional communication
+
+externalDocs:
+  description: Kenny AGI RDK Documentation
+  url: https://kenny-agi.dev/docs

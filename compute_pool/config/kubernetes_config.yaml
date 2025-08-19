@@ -1,0 +1,295 @@
+# Kubernetes Integration Configuration
+# Configuration for integrating with Kubernetes clusters
+
+kubernetes:
+  # Cluster connection
+  cluster:
+    config_path: null  # null = auto-detect (in-cluster or ~/.kube/config)
+    context: null      # null = use current context
+    namespace: "kenny-compute-pool"
+    
+  # Resource management
+  resources:
+    default_limits:
+      cpu: "1"
+      memory: "2Gi"
+      ephemeral-storage: "10Gi"
+    
+    default_requests:
+      cpu: "500m"
+      memory: "1Gi"
+      ephemeral-storage: "5Gi"
+    
+    gpu_support:
+      enabled: true
+      vendors:
+        - "nvidia.com/gpu"
+        - "amd.com/gpu"
+        - "intel.com/gpu"
+    
+    # Resource quotas
+    quotas:
+      enabled: true
+      cpu_limit: "100"
+      memory_limit: "200Gi"
+      gpu_limit: "10"
+      storage_limit: "1Ti"
+  
+  # Job scheduling
+  scheduling:
+    # Node selection
+    node_selector:
+      enabled: false
+      labels: {}
+    
+    # Taints and tolerations
+    tolerations:
+      - key: "node-role.kubernetes.io/compute"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      - key: "kenny.ai/compute-pool"
+        operator: "Exists"
+        effect: "NoSchedule"
+    
+    # Affinity rules
+    affinity:
+      node_affinity:
+        enabled: false
+        preferred:
+          - weight: 100
+            preference:
+              match_expressions:
+                - key: "node-type"
+                  operator: "In"
+                  values: ["compute"]
+      
+      pod_affinity:
+        enabled: false
+      
+      pod_anti_affinity:
+        enabled: true
+        rules:
+          - weight: 100
+            topology_key: "kubernetes.io/hostname"
+            label_selector:
+              match_labels:
+                app: "kenny-compute-pool"
+  
+  # Pod configuration
+  pod:
+    # Security context
+    security_context:
+      run_as_non_root: true
+      run_as_user: 1000
+      run_as_group: 1000
+      fs_group: 1000
+      
+    # Service account
+    service_account:
+      create: true
+      name: "kenny-compute-pool"
+      annotations: {}
+    
+    # Image pull policy
+    image_pull_policy: "IfNotPresent"
+    
+    # Restart policy
+    restart_policy: "Never"
+    
+    # DNS policy
+    dns_policy: "ClusterFirst"
+    
+    # Termination grace period
+    termination_grace_period_seconds: 30
+    
+    # Labels and annotations
+    labels:
+      app: "kenny-compute-pool"
+      managed-by: "kenny-agi"
+      version: "v1.0.0"
+    
+    annotations:
+      "kenny.ai/pool-version": "1.0.0"
+      "kenny.ai/created-by": "compute-pool-manager"
+  
+  # Storage
+  storage:
+    # Persistent volumes
+    persistent_volumes:
+      enabled: true
+      storage_class: "standard"
+      access_mode: "ReadWriteOnce"
+      size: "10Gi"
+    
+    # Temporary storage
+    ephemeral_storage:
+      enabled: true
+      size_limit: "50Gi"
+    
+    # Shared storage
+    shared_storage:
+      enabled: false
+      storage_class: "shared-storage"
+      access_mode: "ReadWriteMany"
+      mount_path: "/shared"
+  
+  # Networking
+  networking:
+    # Network policies
+    network_policies:
+      enabled: true
+      ingress_rules:
+        - from:
+          - namespace_selector:
+              match_labels:
+                name: "kenny-compute-pool"
+          ports:
+          - protocol: TCP
+            port: 8080
+      
+      egress_rules:
+        - to: []
+          ports:
+          - protocol: TCP
+            port: 443
+          - protocol: TCP
+            port: 80
+    
+    # Service mesh
+    service_mesh:
+      enabled: false
+      type: "istio"  # istio, linkerd
+    
+    # Load balancing
+    load_balancing:
+      enabled: true
+      type: "round_robin"
+  
+  # Monitoring
+  monitoring:
+    # Metrics
+    metrics:
+      enabled: true
+      port: 9090
+      path: "/metrics"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    
+    # Health checks
+    health_checks:
+      liveness_probe:
+        enabled: true
+        http_get:
+          path: "/health"
+          port: 8080
+        initial_delay_seconds: 30
+        period_seconds: 10
+        timeout_seconds: 5
+        failure_threshold: 3
+      
+      readiness_probe:
+        enabled: true
+        http_get:
+          path: "/ready"
+          port: 8080
+        initial_delay_seconds: 5
+        period_seconds: 5
+        timeout_seconds: 3
+        failure_threshold: 3
+    
+    # Logging
+    logging:
+      enabled: true
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+  
+  # Autoscaling
+  autoscaling:
+    # Horizontal Pod Autoscaler
+    hpa:
+      enabled: false
+      min_replicas: 1
+      max_replicas: 10
+      target_cpu_utilization: 70
+      target_memory_utilization: 80
+    
+    # Vertical Pod Autoscaler
+    vpa:
+      enabled: false
+      update_mode: "Auto"  # Off, Initial, Auto
+    
+    # Cluster Autoscaler
+    cluster_autoscaler:
+      enabled: false
+      scale_down_delay_after_add: "10m"
+      scale_down_unneeded_time: "10m"
+  
+  # RBAC
+  rbac:
+    enabled: true
+    create: true
+    
+    cluster_role:
+      name: "kenny-compute-pool-cluster-role"
+      rules:
+        - api_groups: [""]
+          resources: ["nodes"]
+          verbs: ["get", "list", "watch"]
+        - api_groups: [""]
+          resources: ["pods"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        - api_groups: [""]
+          resources: ["pods/log"]
+          verbs: ["get", "list"]
+        - api_groups: [""]
+          resources: ["persistentvolumes", "persistentvolumeclaims"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        - api_groups: ["apps"]
+          resources: ["deployments", "replicasets"]
+          verbs: ["get", "list", "watch"]
+        - api_groups: ["metrics.k8s.io"]
+          resources: ["pods", "nodes"]
+          verbs: ["get", "list"]
+    
+    role:
+      name: "kenny-compute-pool-role"
+      rules:
+        - api_groups: [""]
+          resources: ["configmaps", "secrets"]
+          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        - api_groups: [""]
+          resources: ["events"]
+          verbs: ["create", "patch"]
+  
+  # Custom Resources
+  custom_resources:
+    enabled: true
+    definitions:
+      - group: "kenny.ai"
+        version: "v1"
+        kind: "ComputeJob"
+        plural: "computejobs"
+        scope: "Namespaced"
+        
+      - group: "kenny.ai"
+        version: "v1"
+        kind: "ResourcePool"
+        plural: "resourcepools"
+        scope: "Cluster"
+  
+  # Operators
+  operators:
+    # Job operator
+    job_operator:
+      enabled: false
+      image: "kenny/compute-job-operator:v1.0.0"
+    
+    # Resource operator
+    resource_operator:
+      enabled: false
+      image: "kenny/resource-operator:v1.0.0"
