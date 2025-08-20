@@ -259,3 +259,58 @@ The system is organized into 8 major categories:
 - Graph intelligence issues: check Memgraph connection first
 - Quantum errors: verify Qiskit backend availability
 - Consciousness anomalies: review attention schema logs
+
+## Session Memory - Updated 2025-08-20
+
+### Current Context
+- **User**: Robin (ASI Build Team)
+- **GitLab User**: asi-build (ID: 29711923)
+- **Repository**: https://gitlab.com/asi-build/asi-build (Project ID: 73296605)
+- **Last Git Push**: 2025-08-20 17:08:50 UTC
+
+### GitLab MCP Integration (CRITICAL UPDATE)
+**⚠️ IMPORTANT**: Now using **Zereight's enhanced GitLab MCP server** (as of 2025-08-20)
+- **Docker Image**: `iwakitakuma/gitlab-mcp:latest` (NOT the old fforster one)
+- **Version**: 2.0.3 (better-gitlab-mcp-server)
+- **Tools**: 83 tools available (upgraded from 62)
+- **Key Improvements**:
+  - ✅ `get_project` tool now works (was missing before)
+  - ✅ `list_commits`, `push_files`, `create_branch` added
+  - ✅ Full wiki and pipeline support
+- **Removed**: `registry.gitlab.com/fforster/gitlab-mcp` (deprecated)
+
+### MCP Access Pattern
+```python
+from integrations.mcp_bridge import MCPBridge
+bridge = MCPBridge()  # Uses Zereight's server
+last_push = bridge.get_last_push("asi-build/asi-build")  # Works directly now!
+bridge._cleanup()
+```
+
+### Related Projects
+1. **universal-hf-deployer** - Separate GitLab repo for HuggingFace deployments
+   - Created: 2025-08-20
+   - URL: https://gitlab.com/asi-build/universal-hf-deployer
+   - Purpose: Deploy ANY HuggingFace resource with single command
+
+### Active Docker Services
+- PostgreSQL: Ports 5432, 5433
+- Hasura GraphQL: Port 8080
+- ASI Indexer: Port 9090
+- GitLab MCP: On-demand (`iwakitakuma/gitlab-mcp`)
+
+### Key Documentation Created
+- **GITLAB_MCP_GUIDE.md** - Complete guide for 83 MCP tools
+- **KENNY_INITIALIZATION_PROMPT.md** - Kenny agent setup
+- **HUGGINGFACE_INTEGRATION_REPORT.md** - HF system docs
+- **Wiki**: 105+ pages created in GitLab Wiki
+
+### Authentication
+- GitLab Token: `glpat-LqRBlwO60YyKQUHk2QGwUW86MQp1OmhvdHY3Cw.01.120xbvdlz`
+
+### Session Achievements
+- ✅ Migrated to Zereight's MCP server (83 tools)
+- ✅ Fixed missing `get_project` tool issue
+- ✅ Updated all integration scripts
+- ✅ Created comprehensive documentation
+- ✅ Removed old MCP server completely
