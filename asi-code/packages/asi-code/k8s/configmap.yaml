@@ -1,0 +1,150 @@
+# ASI-Code ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: asi-code-config
+  namespace: asi-code
+  labels:
+    app: asi-code
+    component: configuration
+data:
+  NODE_ENV: "production"
+  ASI_CONFIG_PATH: "/app/config/production.yml"
+  LOG_LEVEL: "info"
+  SERVER_PORT: "3000"
+  SERVER_HOST: "0.0.0.0"
+  CORS_ORIGINS: "*"
+  RATE_LIMIT_WINDOW: "900000"  # 15 minutes
+  RATE_LIMIT_MAX: "100"
+  SESSION_TTL: "86400000"      # 24 hours
+  CACHE_TTL: "3600"            # 1 hour
+  HEALTH_CHECK_INTERVAL: "30"
+  METRICS_INTERVAL: "30"
+  
+---
+# ASI-Code Production Configuration File
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: asi-code-production-config
+  namespace: asi-code
+  labels:
+    app: asi-code
+    component: configuration
+data:
+  production.yml: |
+    id: asi-code-production
+    name: ASI-Code
+    version: 1.0.0
+    environment: production
+    
+    logging:
+      level: info
+      format: json
+      enabled: true
+      outputs:
+        - type: file
+          enabled: true
+          level: info
+          format: json
+          options:
+            filename: /app/logs/asi-code.log
+        - type: console
+          enabled: true
+          level: error
+          format: json
+      colorize: false
+      includeTimestamp: true
+      metadata:
+        service: asi-code
+        version: 1.0.0
+    
+    server:
+      port: 3000
+      host: 0.0.0.0
+      ssl:
+        enabled: false
+      cors:
+        origin: ["*"]
+        credentials: true
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+      auth:
+        enabled: true
+        type: jwt
+        expiresIn: 24h
+      middleware:
+        compression: true
+        helmet: true
+        rateLimiting:
+          enabled: true
+          windowMs: 900000
+          max: 100
+        requestLogging: true
+    
+    providers:
+      default: anthropic
+      anthropic:
+        enabled: true
+        priority: 1
+        model: claude-3-sonnet-20240229
+        maxTokens: 4000
+        temperature: 0.7
+        timeout: 30000
+        retries: 3
+        rateLimiting:
+          enabled: true
+          requestsPerSecond: 2
+          requestsPerMinute: 100
+          requestsPerHour: 1000
+    
+    session:
+      maxMessages: 100
+      ttl: 86400000
+      persistHistory: true
+      storageProvider: postgres
+      compression:
+        enabled: true
+        algorithm: gzip
+        level: 6
+      encryption:
+        enabled: true
+        algorithm: aes-256-gcm
+    
+    storage:
+      provider: postgres
+      encryption:
+        enabled: true
+      backup:
+        enabled: true
+        interval: 3600
+        retention: 168
+        location: /app/backups
+    
+    performance:
+      monitoring:
+        enabled: true
+        metricsInterval: 30
+        healthCheckInterval: 60
+      caching:
+        enabled: true
+        provider: redis
+        ttl: 3600
+        maxSize: 100
+    
+    security:
+      authentication:
+        required: true
+        methods: ["jwt", "api-key"]
+        sessionTimeout: 3600
+      authorization:
+        enabled: true
+        defaultRole: user
+      encryption:
+        enabled: true
+        algorithm: aes-256-gcm
+        keySize: 256
+      audit:
+        enabled: true
+        logLevel: detailed
+        retention: 90

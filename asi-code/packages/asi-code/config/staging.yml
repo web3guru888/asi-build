@@ -1,0 +1,308 @@
+# ASI-Code Staging Configuration
+# This file contains staging-specific configuration overrides
+
+# Basic application settings
+id: asi-code-staging
+name: ASI-Code Staging
+version: 1.0.0
+environment: staging
+description: ASI-Code Staging Environment
+
+# Directory configuration
+dataDirectory: /app/data
+cacheDirectory: /app/cache
+logsDirectory: /app/logs
+
+# Logging configuration for staging (more verbose than production)
+logging:
+  level: debug
+  format: pretty
+  enabled: true
+  outputs:
+    - type: file
+      enabled: true
+      level: debug
+      format: json
+      options:
+        filename: /app/logs/asi-code.log
+        maxsize: 50
+        maxfiles: 3
+        compress: false
+    - type: console
+      enabled: true
+      level: info
+      format: pretty
+  includeTimestamp: true
+  includeStack: true
+  colorize: true
+  metadata:
+    service: asi-code
+    version: 1.0.0
+    environment: staging
+
+# Server configuration
+server:
+  port: 3000
+  host: 0.0.0.0
+  ssl:
+    enabled: false
+  cors:
+    origin: 
+      - "https://staging.asi-code.company.com"
+      - "http://localhost:3000"
+      - "http://localhost:3001"
+    credentials: true
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allowedHeaders: 
+      - "Content-Type"
+      - "Authorization" 
+      - "X-Requested-With"
+      - "X-API-Key"
+  auth:
+    enabled: true
+    type: jwt
+    secret: "${JWT_SECRET}"
+    algorithm: HS256
+    expiresIn: 8h  # Shorter for staging
+    issuer: asi-code-staging
+    audience: asi-code-staging-users
+  middleware:
+    compression: true
+    helmet: true
+    rateLimiting:
+      enabled: true
+      windowMs: 900000  # 15 minutes
+      max: 2000  # More permissive for testing
+      message: "Too many requests from this IP"
+    requestLogging: true
+    requestIdHeader: X-Request-ID
+  healthCheck:
+    enabled: true
+    path: /health
+    timeout: 5000
+
+# Provider configurations
+providers:
+  default: anthropic
+  anthropic:
+    enabled: true
+    priority: 1
+    apiKey: "${ANTHROPIC_API_KEY}"
+    model: claude-3-sonnet-20240229
+    maxTokens: 4000
+    temperature: 0.7
+    timeout: 30000
+    retries: 3
+    rateLimiting:
+      enabled: true
+      requestsPerSecond: 5  # More permissive for testing
+      requestsPerMinute: 200
+      requestsPerHour: 2000
+  openai:
+    enabled: true  # Enabled for testing
+    priority: 2
+    apiKey: "${OPENAI_API_KEY}"
+    model: gpt-4
+    maxTokens: 4000
+    temperature: 0.7
+    timeout: 30000
+    retries: 3
+
+# Session management
+session:
+  maxMessages: 200  # Lower for staging
+  ttl: 28800000  # 8 hours
+  persistHistory: true
+  storageProvider: postgres
+  storageConfig:
+    connectionString: "${DATABASE_URL}"
+    tableName: sessions
+    schemaName: public
+  compression:
+    enabled: true
+    algorithm: gzip
+    level: 6
+  encryption:
+    enabled: true
+    algorithm: aes-256-gcm
+    key: "${ENCRYPTION_KEY}"
+
+# Storage configuration
+storage:
+  provider: postgres
+  connectionString: "${DATABASE_URL}"
+  options:
+    ssl:
+      rejectUnauthorized: false
+    pool:
+      min: 2
+      max: 10
+      acquireTimeoutMillis: 30000
+      idleTimeoutMillis: 30000
+  migrations:
+    enabled: true
+    directory: /app/migrations
+  encryption:
+    enabled: true
+    algorithm: aes-256-gcm
+    key: "${ENCRYPTION_KEY}"
+  backup:
+    enabled: true
+    interval: 7200  # 2 hours
+    retention: 72   # 3 days
+    location: /app/backups
+
+# Caching configuration
+cache:
+  provider: redis
+  connectionString: "${REDIS_URL}"
+  options:
+    password: "${REDIS_PASSWORD}"
+    db: 1  # Different DB for staging
+    keyPrefix: "asi-code-staging:"
+  ttl: 1800  # 30 minutes default TTL
+  compression:
+    enabled: true
+    threshold: 1024
+
+# Performance monitoring (less intensive for staging)
+performance:
+  monitoring:
+    enabled: true
+    metricsPort: 9090
+    metricsPath: /metrics
+    metricsInterval: 60000  # 1 minute
+    healthCheckInterval: 120000  # 2 minutes
+  caching:
+    enabled: true
+    provider: redis
+    ttl: 1800
+    maxSize: 500
+  optimization:
+    lazyLoading: true
+    preloadModules: 
+      - kenny
+      - consciousness
+    memoryThreshold: 1073741824  # 1GB
+    gcStrategy: default
+
+# Security (less strict for staging testing)
+security:
+  encryption:
+    algorithm: aes-256-gcm
+    keySize: 256
+  authentication:
+    required: true
+    methods: 
+      - jwt
+      - api-key
+    sessionTimeout: 28800  # 8 hours
+    maxLoginAttempts: 10  # More permissive
+    lockoutDuration: 300   # 5 minutes
+  authorization:
+    enabled: true
+    defaultRole: user
+  rateLimit:
+    enabled: true
+    windowMs: 900000
+    maxRequests: 2000  # More permissive
+  audit:
+    enabled: true
+    logLevel: detailed
+    retention: 30  # 30 days
+
+# Kenny configuration
+kenny:
+  enabled: true
+  contextWindowSize: 30
+  adaptationRate: 0.1  # Faster adaptation for testing
+  memoryPersistence: true
+  learningEnabled: true
+  personalityTraits:
+    curiosity: 90  # More curious in staging
+    helpfulness: 95
+    creativity: 85
+    analytical: 90
+    empathy: 85
+    precision: 90
+    innovation: 85
+    patience: 80
+
+# Consciousness configuration
+consciousness:
+  enabled: true
+  awarenessThreshold: 70
+  memoryRetentionHours: 24
+  selfReflectionEnabled: true
+  emotionalModelingEnabled: true
+  metacognitionEnabled: true
+  learningConfig:
+    enabled: true
+    adaptationRate: 0.1
+    memoryConsolidationInterval: 900  # 15 minutes
+    experienceWeighting: 0.8
+
+# Tools configuration (more permissive for testing)
+tools:
+  builtinEnabled: true
+  allowCustom: true  # Enabled for testing
+  permissions:
+    fileAccess: true
+    commandExecution: false  # Still disabled for security
+    networkAccess: false
+    systemInfo: true
+    processManagement: false
+    databaseAccess: false
+  sandbox:
+    enabled: true
+    timeout: 45000  # 45 seconds - more generous
+    memoryLimit: 1024  # 1GB
+    cpuLimit: 90
+    networkIsolation: true
+
+# Development features (enabled in staging)
+development:
+  devMode: false
+  debugging:
+    enabled: true
+    level: verbose
+    breakpoints: false
+    profiling: true
+  hotReload:
+    enabled: false
+  testing:
+    mockEnabled: false
+    coverageEnabled: false
+
+# Integration configurations
+integrations:
+  prometheus:
+    enabled: true
+    port: 9090
+    path: /metrics
+    collectDefaultMetrics: true
+  jaeger:
+    enabled: true
+    endpoint: "${JAEGER_ENDPOINT}"
+    serviceName: asi-code-staging
+    sampler:
+      type: const
+      param: 1  # 100% sampling for staging
+  sentry:
+    enabled: true
+    dsn: "${SENTRY_DSN}"
+    environment: staging
+    release: "${APP_VERSION}"
+    tracesSampleRate: 1.0  # Full sampling for staging
+
+# Backup configuration (less frequent)
+backup:
+  enabled: true
+  schedule: "0 4 * * *"  # Daily at 4 AM
+  retention:
+    daily: 3
+    weekly: 2
+    monthly: 1
+  destinations:
+    - type: local
+      path: /app/backups

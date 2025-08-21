@@ -177,6 +177,10 @@ export class ASI1Provider {
   updateConfig(updates: Partial<ASI1Config>): void {
     this.config = { ...this.config, ...updates } as Required<ASI1Config>;
   }
+  
+  getAvailableModels(): string[] {
+    return ['asi1-mini', 'asi1-extended', 'asi1-thinking', 'asi1-graph'];
+  }
 
   async testConnection(): Promise<boolean> {
     try {

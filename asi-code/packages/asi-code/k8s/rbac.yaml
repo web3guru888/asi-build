@@ -1,0 +1,219 @@
+# ASI-Code RBAC Configuration
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: asi-code
+  namespace: asi-code
+  labels:
+    app: asi-code
+    component: rbac
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ASICodeServiceRole
+
+---
+# Role for ASI-Code application
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: asi-code
+  name: asi-code-role
+  labels:
+    app: asi-code
+    component: rbac
+rules:
+# ConfigMaps
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+# Secrets (read-only)
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch"]
+# Pods (for health checks and metrics)
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+# Services
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list", "watch"]
+# Events (for logging)
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+
+---
+# RoleBinding for ASI-Code application
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: asi-code-rolebinding
+  namespace: asi-code
+  labels:
+    app: asi-code
+    component: rbac
+subjects:
+- kind: ServiceAccount
+  name: asi-code
+  namespace: asi-code
+roleRef:
+  kind: Role
+  name: asi-code-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# ClusterRole for cross-namespace operations (minimal)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: asi-code-cluster-role
+  labels:
+    app: asi-code
+    component: rbac
+rules:
+# Node information (for system metrics)
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list", "watch"]
+# Namespace information
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list", "watch"]
+
+---
+# ClusterRoleBinding for ASI-Code application
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: asi-code-cluster-rolebinding
+  labels:
+    app: asi-code
+    component: rbac
+subjects:
+- kind: ServiceAccount
+  name: asi-code
+  namespace: asi-code
+roleRef:
+  kind: ClusterRole
+  name: asi-code-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Security Context Constraints (OpenShift)
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: asi-code-scc
+  labels:
+    app: asi-code
+    component: rbac
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegeEscalation: false
+allowPrivilegedContainer: false
+allowedCapabilities: null
+defaultAddCapabilities: null
+fsGroup:
+  type: MustRunAs
+  ranges:
+  - min: 1001
+    max: 1001
+readOnlyRootFilesystem: true
+requiredDropCapabilities:
+- ALL
+runAsUser:
+  type: MustRunAs
+  uid: 1001
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  type: MustRunAs
+  ranges:
+  - min: 1001
+    max: 1001
+users:
+- system:serviceaccount:asi-code:asi-code
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- persistentVolumeClaim
+- projected
+- secret
+
+---
+# Pod Security Policy (deprecated but for legacy clusters)
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: asi-code-psp
+  labels:
+    app: asi-code
+    component: rbac
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  runAsUser:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1001
+        max: 1001
+  runAsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1001
+        max: 1001
+  seLinux:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1001
+        max: 1001
+  readOnlyRootFilesystem: true
+
+---
+# ClusterRole for Pod Security Policy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: asi-code-psp-user
+  labels:
+    app: asi-code
+    component: rbac
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs: ['use']
+  resourceNames:
+  - asi-code-psp
+
+---
+# ClusterRoleBinding for Pod Security Policy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: asi-code-psp-binding
+  labels:
+    app: asi-code
+    component: rbac
+roleRef:
+  kind: ClusterRole
+  name: asi-code-psp-user
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: asi-code
+  namespace: asi-code

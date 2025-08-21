@@ -1,0 +1,108 @@
+# ASI-Code Service Definitions
+apiVersion: v1
+kind: Service
+metadata:
+  name: asi-code
+  namespace: asi-code
+  labels:
+    app: asi-code
+    component: service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+spec:
+  selector:
+    app: asi-code
+    component: application
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  - port: 9090
+    targetPort: 9090
+    protocol: TCP
+    name: metrics
+  type: ClusterIP
+  sessionAffinity: None
+
+---
+# Headless Service for StatefulSet components
+apiVersion: v1
+kind: Service
+metadata:
+  name: asi-code-headless
+  namespace: asi-code
+  labels:
+    app: asi-code
+    component: headless-service
+spec:
+  selector:
+    app: asi-code
+    component: application
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  clusterIP: None
+  type: ClusterIP
+
+---
+# External Service (LoadBalancer)
+apiVersion: v1
+kind: Service
+metadata:
+  name: asi-code-external
+  namespace: asi-code
+  labels:
+    app: asi-code
+    component: external-service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "instance"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/health"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: "3000"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "http"
+    external-dns.alpha.kubernetes.io/hostname: asi-code.company.com
+spec:
+  selector:
+    app: asi-code
+    component: application
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: 3000
+    protocol: TCP
+    name: https
+  type: LoadBalancer
+  loadBalancerSourceRanges:
+  - 10.0.0.0/8
+  - 172.16.0.0/12
+  - 192.168.0.0/16
+
+---
+# Service Monitor for Prometheus
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: asi-code
+  namespace: asi-code
+  labels:
+    app: asi-code
+    component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: asi-code
+      component: service
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s

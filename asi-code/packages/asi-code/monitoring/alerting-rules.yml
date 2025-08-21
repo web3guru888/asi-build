@@ -1,0 +1,274 @@
+# Prometheus Alerting Rules for ASI-Code
+groups:
+  # Application-level alerts
+  - name: asi-code-application
+    rules:
+      - alert: ASICodeServiceDown
+        expr: up{job="asi-code"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: asi-code
+        annotations:
+          summary: "ASI-Code service is down"
+          description: "ASI-Code service {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: ASICodeHighErrorRate
+        expr: rate(asi_code_http_requests_total{status=~"5.."}[5m]) / rate(asi_code_http_requests_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: asi-code
+        annotations:
+          summary: "High error rate detected"
+          description: "ASI-Code instance {{ $labels.instance }} has an error rate of {{ $value | humanizePercentage }} over the last 5 minutes."
+
+      - alert: ASICodeHighLatency
+        expr: histogram_quantile(0.95, rate(asi_code_http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: asi-code
+        annotations:
+          summary: "High response latency"
+          description: "ASI-Code instance {{ $labels.instance }} has 95th percentile latency of {{ $value }}s over the last 5 minutes."
+
+      - alert: ASICodeMemoryUsageHigh
+        expr: (asi_code_process_resident_memory_bytes / (1024*1024*1024)) > 2
+        for: 10m
+        labels:
+          severity: warning
+          service: asi-code
+        annotations:
+          summary: "High memory usage"
+          description: "ASI-Code instance {{ $labels.instance }} is using {{ $value | humanize }}GB of memory."
+
+      - alert: ASICodeCPUUsageHigh
+        expr: rate(asi_code_process_cpu_seconds_total[5m]) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: asi-code
+        annotations:
+          summary: "High CPU usage"
+          description: "ASI-Code instance {{ $labels.instance }} has {{ $value | humanizePercentage }} CPU usage over the last 5 minutes."
+
+      - alert: ASICodeDiskSpaceLow
+        expr: (node_filesystem_free_bytes{mountpoint="/app/data"} / node_filesystem_size_bytes{mountpoint="/app/data"}) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+          service: asi-code
+        annotations:
+          summary: "Low disk space"
+          description: "ASI-Code data disk on {{ $labels.instance }} has less than 10% free space remaining."
+
+      - alert: ASICodeHealthCheckFailing
+        expr: probe_success{job="blackbox"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          service: asi-code
+        annotations:
+          summary: "Health check failing"
+          description: "ASI-Code health check for {{ $labels.instance }} has been failing for more than 3 minutes."
+
+  # Database alerts
+  - name: asi-code-database
+    rules:
+      - alert: PostgreSQLDown
+        expr: up{job="postgresql"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: postgresql
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL instance {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: PostgreSQLConnectionsHigh
+        expr: pg_stat_database_numbackends / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: postgresql
+        annotations:
+          summary: "PostgreSQL connection count high"
+          description: "PostgreSQL instance {{ $labels.instance }} is using {{ $value | humanizePercentage }} of available connections."
+
+      - alert: PostgreSQLSlowQueries
+        expr: rate(pg_stat_database_tup_returned[5m]) / rate(pg_stat_database_tup_fetched[5m]) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: postgresql
+        annotations:
+          summary: "PostgreSQL slow queries detected"
+          description: "PostgreSQL instance {{ $labels.instance }} has a low tuple efficiency ratio."
+
+      - alert: PostgreSQLDiskSpaceLow
+        expr: (node_filesystem_free_bytes{mountpoint="/var/lib/postgresql/data"} / node_filesystem_size_bytes{mountpoint="/var/lib/postgresql/data"}) < 0.15
+        for: 5m
+        labels:
+          severity: warning
+          service: postgresql
+        annotations:
+          summary: "PostgreSQL disk space low"
+          description: "PostgreSQL data disk on {{ $labels.instance }} has less than 15% free space remaining."
+
+  # Cache alerts
+  - name: asi-code-cache
+    rules:
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Redis instance {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: RedisMemoryUsageHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis instance {{ $labels.instance }} is using {{ $value | humanizePercentage }} of available memory."
+
+      - alert: RedisConnectionsHigh
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis connection count high"
+          description: "Redis instance {{ $labels.instance }} has {{ $value }} connected clients."
+
+  # Kubernetes infrastructure alerts
+  - name: kubernetes-infrastructure
+    rules:
+      - alert: KubernetesNodeReady
+        expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+        for: 10m
+        labels:
+          severity: critical
+          service: kubernetes
+        annotations:
+          summary: "Kubernetes node not ready"
+          description: "Kubernetes node {{ $labels.node }} has been not ready for more than 10 minutes."
+
+      - alert: KubernetesPodCrashLooping
+        expr: increase(kube_pod_container_status_restarts_total[1h]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: kubernetes
+        annotations:
+          summary: "Pod crash looping"
+          description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping with {{ $value }} restarts in the last hour."
+
+      - alert: KubernetesDeploymentReplicasMismatch
+        expr: kube_deployment_spec_replicas != kube_deployment_status_replicas_available
+        for: 15m
+        labels:
+          severity: warning
+          service: kubernetes
+        annotations:
+          summary: "Deployment replicas mismatch"
+          description: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has {{ $labels.spec_replicas }} desired but {{ $labels.available_replicas }} available replicas."
+
+      - alert: KubernetesPersistentVolumeClaimPending
+        expr: kube_persistentvolumeclaim_status_phase{phase="Pending"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          service: kubernetes
+        annotations:
+          summary: "PVC pending"
+          description: "PersistentVolumeClaim {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is pending for more than 5 minutes."
+
+  # Network and ingress alerts
+  - name: network-ingress
+    rules:
+      - alert: NginxIngressDown
+        expr: up{job="nginx-ingress"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: nginx-ingress
+        annotations:
+          summary: "NGINX Ingress Controller is down"
+          description: "NGINX Ingress Controller {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: NginxIngressHighErrorRate
+        expr: rate(nginx_ingress_controller_requests{status=~"5.."}[5m]) / rate(nginx_ingress_controller_requests[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: nginx-ingress
+        annotations:
+          summary: "High error rate on ingress"
+          description: "NGINX Ingress {{ $labels.ingress }} has {{ $value | humanizePercentage }} error rate over the last 5 minutes."
+
+  # Business logic alerts
+  - name: business-logic
+    rules:
+      - alert: ASICodeAPICallsLow
+        expr: rate(asi_code_api_calls_total[10m]) < 1
+        for: 15m
+        labels:
+          severity: warning
+          service: asi-code
+        annotations:
+          summary: "Low API call rate"
+          description: "ASI-Code API call rate is {{ $value }} calls/second, which is unusually low."
+
+      - alert: ASICodeSessionCreationHigh
+        expr: rate(asi_code_sessions_created_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: info
+          service: asi-code
+        annotations:
+          summary: "High session creation rate"
+          description: "ASI-Code is creating {{ $value }} sessions per second, which is higher than normal."
+
+      - alert: ASICodeProviderErrors
+        expr: rate(asi_code_provider_errors_total[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: asi-code
+        annotations:
+          summary: "High provider error rate"
+          description: "ASI-Code provider {{ $labels.provider }} has {{ $value }} errors per second."
+
+  # Security alerts
+  - name: security
+    rules:
+      - alert: ASICodeUnauthorizedAccess
+        expr: rate(asi_code_http_requests_total{status="401"}[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+          service: asi-code
+          security: true
+        annotations:
+          summary: "High rate of unauthorized access attempts"
+          description: "ASI-Code is receiving {{ $value }} unauthorized requests per second from {{ $labels.instance }}."
+
+      - alert: ASICodeBruteForceAttack
+        expr: rate(asi_code_auth_failures_total[1m]) > 10
+        for: 1m
+        labels:
+          severity: critical
+          service: asi-code
+          security: true
+        annotations:
+          summary: "Potential brute force attack"
+          description: "ASI-Code is experiencing {{ $value }} authentication failures per second, indicating a potential brute force attack."

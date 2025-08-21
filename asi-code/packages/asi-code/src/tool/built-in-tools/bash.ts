@@ -143,7 +143,12 @@ export class BashTool extends BaseTool {
       const result = await this.executeCommand(command, {
         timeout,
         cwd,
-        env: { ...process.env, ...context.environment },
+        env: { 
+          ...Object.fromEntries(
+            Object.entries(process.env).filter(([_, value]) => value !== undefined)
+          ) as Record<string, string>, 
+          ...(context.environment || {})
+        },
         shell,
         captureStderr
       });

@@ -327,7 +327,7 @@ export class WriteTool extends BaseTool {
           throw new Error(`Parent directory does not exist: ${parentDir}`);
         }
       } else {
-        throw new Error(`Cannot access parent directory: ${error.message}`);
+        throw new Error(`Cannot access parent directory: ${(error as Error).message}`);
       }
     }
   }

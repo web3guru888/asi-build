@@ -9,6 +9,7 @@
 import { EventEmitter } from 'eventemitter3';
 import { getKennyIntegration } from '../kenny/integration.js';
 import { BaseSubsystem } from '../kenny/base-subsystem.js';
+import { ResourceType } from '../permission/permission-types.js';
 import type { PermissionManager } from '../permission/permission-manager.js';
 import type { BaseTool, ToolDefinition, ToolExecutionContext, ToolResult } from './base-tool.js';
 
@@ -63,7 +64,7 @@ export class ToolRegistry extends BaseSubsystem {
   private runningExecutions = new Set<string>();
   
   private permissionManager?: PermissionManager;
-  private config: Required<ToolRegistryConfig>;
+  public config: Required<Omit<ToolRegistryConfig, 'permissionManager'>> & { permissionManager?: PermissionManager };
   private executionId = 0;
 
   constructor(config: ToolRegistryConfig = {}) {
@@ -72,7 +73,7 @@ export class ToolRegistry extends BaseSubsystem {
       name: 'Tool Registry',
       description: 'Central management system for tools',
       version: '1.0.0'
-    }, ['permission-manager']);
+    }, []);
 
     this.config = {
       permissionManager: config.permissionManager,
@@ -291,15 +292,22 @@ export class ToolRegistry extends BaseSubsystem {
 
     // Check permissions if permission manager is available
     if (this.permissionManager && context.userId) {
-      const hasPermission = await this.permissionManager.checkPermission(
-        {
+      const permissionResult = await this.permissionManager.checkPermission({
+        context: {
           userId: context.userId,
           sessionId: context.sessionId,
           resource: `tool.${toolName}`,
-          operation: 'execute'
+          operation: 'execute',
+          resourceType: ResourceType.TOOL,
+          timestamp: new Date(),
+          metadata: {
+            toolName,
+            category: entry.definition.category
+          }
         },
-        `tool.${entry.definition.category}`
-      );
+        permissionId: 'tool_execution'
+      });
+      const hasPermission = permissionResult.granted;
 
       if (!hasPermission) {
         return {
@@ -474,7 +482,7 @@ export class ToolRegistry extends BaseSubsystem {
     const runningExecutions = this.runningExecutions.size;
     
     return {
-      status: this.status === 'running' ? 'healthy' : 'unhealthy' as const,
+      status: (this.status === 'running' ? 'healthy' : 'unhealthy') as 'healthy' | 'unhealthy' | 'degraded',
       message: `${healthyTools} active tools, ${runningExecutions} running executions`,
       timestamp: new Date(),
       details: {

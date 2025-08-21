@@ -1,0 +1,340 @@
+# ASI-Code Continuous Deployment Pipeline
+name: CD
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      force_deploy:
+        description: 'Force deployment (skip checks)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/asi-code
+  KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+
+concurrency:
+  group: deploy-${{ github.ref }}-${{ github.event.inputs.environment || 'staging' }}
+  cancel-in-progress: false
+
+jobs:
+  # Determine deployment environment and strategy
+  setup:
+    name: Setup Deployment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      image-tag: ${{ steps.env.outputs.image-tag }}
+      deploy-strategy: ${{ steps.env.outputs.deploy-strategy }}
+      requires-approval: ${{ steps.env.outputs.requires-approval }}
+    steps:
+    - name: Determine environment
+      id: env
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          echo "environment=staging" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          echo "environment=production" >> $GITHUB_OUTPUT
+        else
+          echo "environment=staging" >> $GITHUB_OUTPUT
+        fi
+        
+        # Set image tag
+        if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          echo "image-tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        else
+          echo "image-tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+        fi
+        
+        # Set deployment strategy
+        if [[ "${{ github.event.inputs.environment }}" == "production" ]] || [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          echo "deploy-strategy=blue-green" >> $GITHUB_OUTPUT
+          echo "requires-approval=true" >> $GITHUB_OUTPUT
+        else
+          echo "deploy-strategy=rolling" >> $GITHUB_OUTPUT
+          echo "requires-approval=false" >> $GITHUB_OUTPUT
+        fi
+
+  # Pre-deployment checks
+  pre-deployment-checks:
+    name: Pre-deployment Checks
+    runs-on: ubuntu-latest
+    needs: setup
+    if: github.event.inputs.force_deploy != 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Validate Kubernetes manifests
+      run: |
+        # Install kubeval
+        wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+        tar xf kubeval-linux-amd64.tar.gz
+        sudo mv kubeval /usr/local/bin
+        
+        # Validate manifests
+        find k8s/ -name "*.yaml" -exec kubeval {} \;
+
+    - name: Check image availability
+      run: |
+        docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.setup.outputs.image-tag }}
+
+    - name: Run deployment readiness checks
+      run: |
+        echo "✅ Kubernetes manifests are valid"
+        echo "✅ Docker image is available"
+        echo "✅ Ready for deployment to ${{ needs.setup.outputs.environment }}"
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [setup, pre-deployment-checks]
+    if: needs.setup.outputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.asi-code.company.com
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure kubectl
+      run: |
+        echo "${{ secrets.KUBE_CONFIG_DATA_STAGING }}" | base64 -d > kubeconfig
+        export KUBECONFIG=kubeconfig
+
+    - name: Deploy to staging
+      run: |
+        export KUBECONFIG=kubeconfig
+        
+        # Update image tag in manifests
+        sed -i "s|image: .*asi-code:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.setup.outputs.image-tag }}|g" k8s/deployment.yaml
+        
+        # Apply namespace and RBAC first
+        kubectl apply -f k8s/namespace.yaml
+        kubectl apply -f k8s/rbac.yaml
+        
+        # Apply storage and secrets
+        kubectl apply -f k8s/pv.yaml
+        kubectl apply -f k8s/secrets.yaml -n asi-code
+        kubectl apply -f k8s/configmap.yaml -n asi-code
+        
+        # Deploy database and cache
+        kubectl apply -f k8s/postgres.yaml -n asi-code
+        kubectl apply -f k8s/redis.yaml -n asi-code
+        
+        # Wait for database to be ready
+        kubectl wait --for=condition=ready pod -l component=database -n asi-code --timeout=300s
+        kubectl wait --for=condition=ready pod -l component=cache -n asi-code --timeout=300s
+        
+        # Deploy application
+        kubectl apply -f k8s/deployment.yaml -n asi-code
+        kubectl apply -f k8s/service.yaml -n asi-code
+        kubectl apply -f k8s/ingress.yaml -n asi-code
+        
+        # Wait for deployment
+        kubectl rollout status deployment/asi-code -n asi-code --timeout=600s
+
+    - name: Run post-deployment tests
+      run: |
+        export KUBECONFIG=kubeconfig
+        
+        # Wait for pods to be ready
+        kubectl wait --for=condition=ready pod -l app=asi-code -n asi-code --timeout=300s
+        
+        # Run health checks
+        kubectl exec deployment/asi-code -n asi-code -- curl -f http://localhost:3000/health
+        
+        # Run smoke tests
+        STAGING_URL=$(kubectl get ingress asi-code-ingress -n asi-code -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        curl -f https://$STAGING_URL/health
+        curl -f https://$STAGING_URL/ready
+
+    - name: Update deployment status
+      run: |
+        echo "✅ Successfully deployed to staging"
+        echo "🔗 Staging URL: https://staging.asi-code.company.com"
+
+  # Deploy to Production (with approval)
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [setup, pre-deployment-checks]
+    if: needs.setup.outputs.environment == 'production'
+    environment:
+      name: production
+      url: https://asi-code.company.com
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure kubectl
+      run: |
+        echo "${{ secrets.KUBE_CONFIG_DATA_PRODUCTION }}" | base64 -d > kubeconfig
+        export KUBECONFIG=kubeconfig
+
+    - name: Pre-production health check
+      run: |
+        export KUBECONFIG=kubeconfig
+        
+        # Check current production health
+        kubectl get pods -n asi-code
+        kubectl top pods -n asi-code || true
+
+    - name: Blue-Green Deployment
+      run: |
+        export KUBECONFIG=kubeconfig
+        
+        # Create green environment
+        sed -i "s|image: .*asi-code:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.setup.outputs.image-tag }}|g" k8s/deployment.yaml
+        sed -i "s|name: asi-code|name: asi-code-green|g" k8s/deployment.yaml
+        sed -i "s|app: asi-code|app: asi-code-green|g" k8s/deployment.yaml
+        
+        # Deploy green version
+        kubectl apply -f k8s/deployment.yaml -n asi-code
+        
+        # Wait for green deployment
+        kubectl rollout status deployment/asi-code-green -n asi-code --timeout=600s
+        
+        # Test green environment
+        kubectl wait --for=condition=ready pod -l app=asi-code-green -n asi-code --timeout=300s
+        kubectl exec deployment/asi-code-green -n asi-code -- curl -f http://localhost:3000/health
+
+    - name: Switch traffic to green
+      run: |
+        export KUBECONFIG=kubeconfig
+        
+        # Update service selector to point to green
+        kubectl patch service asi-code -n asi-code -p '{"spec":{"selector":{"app":"asi-code-green"}}}'
+        
+        # Wait a moment for traffic to switch
+        sleep 30
+        
+        # Verify production health
+        PROD_URL=$(kubectl get ingress asi-code-ingress -n asi-code -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        for i in {1..5}; do
+          curl -f https://$PROD_URL/health && break
+          sleep 10
+        done
+
+    - name: Cleanup old blue deployment
+      run: |
+        export KUBECONFIG=kubeconfig
+        
+        # Scale down old deployment
+        kubectl scale deployment asi-code --replicas=0 -n asi-code || true
+        
+        # Wait and then delete old deployment
+        sleep 60
+        kubectl delete deployment asi-code -n asi-code || true
+        
+        # Rename green to blue for next deployment
+        kubectl patch deployment asi-code-green -n asi-code -p '{"metadata":{"name":"asi-code"}}'
+
+    - name: Post-production verification
+      run: |
+        export KUBECONFIG=kubeconfig
+        
+        # Run comprehensive health checks
+        kubectl get pods -n asi-code
+        kubectl top pods -n asi-code
+        
+        # Verify all endpoints
+        PROD_URL="https://asi-code.company.com"
+        curl -f $PROD_URL/health
+        curl -f $PROD_URL/ready
+        curl -f $PROD_URL/metrics
+
+  # Rollback mechanism
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: failure() && (needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure')
+    needs: [setup, deploy-staging, deploy-production]
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+    steps:
+    - name: Configure kubectl
+      run: |
+        if [[ "${{ needs.setup.outputs.environment }}" == "production" ]]; then
+          echo "${{ secrets.KUBE_CONFIG_DATA_PRODUCTION }}" | base64 -d > kubeconfig
+        else
+          echo "${{ secrets.KUBE_CONFIG_DATA_STAGING }}" | base64 -d > kubeconfig
+        fi
+        export KUBECONFIG=kubeconfig
+
+    - name: Rollback deployment
+      run: |
+        export KUBECONFIG=kubeconfig
+        
+        # Rollback to previous version
+        kubectl rollout undo deployment/asi-code -n asi-code
+        
+        # Wait for rollback to complete
+        kubectl rollout status deployment/asi-code -n asi-code --timeout=300s
+        
+        # Verify rollback health
+        kubectl wait --for=condition=ready pod -l app=asi-code -n asi-code --timeout=300s
+        kubectl exec deployment/asi-code -n asi-code -- curl -f http://localhost:3000/health
+
+  # Post-deployment monitoring setup
+  setup-monitoring:
+    name: Setup Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: success()
+    steps:
+    - name: Configure monitoring alerts
+      run: |
+        echo "Setting up monitoring alerts for new deployment"
+        # This would typically integrate with your monitoring system
+        # (Prometheus AlertManager, DataDog, New Relic, etc.)
+
+    - name: Create deployment notification
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        text: |
+          🚀 ASI-Code deployment successful!
+          Environment: ${{ needs.setup.outputs.environment }}
+          Version: ${{ needs.setup.outputs.image-tag }}
+          URL: https://${{ needs.setup.outputs.environment == 'production' && 'asi-code.company.com' || 'staging.asi-code.company.com' }}
+
+  # Update deployment tracking
+  update-tracking:
+    name: Update Deployment Tracking
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: success()
+    steps:
+    - name: Update deployment database
+      run: |
+        # Update internal deployment tracking
+        curl -X POST "${{ secrets.DEPLOYMENT_TRACKING_URL }}" \
+          -H "Authorization: Bearer ${{ secrets.DEPLOYMENT_TRACKING_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "service": "asi-code",
+            "version": "${{ needs.setup.outputs.image-tag }}",
+            "environment": "${{ needs.setup.outputs.environment }}",
+            "status": "deployed",
+            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+            "commit": "${{ github.sha }}",
+            "author": "${{ github.actor }}"
+          }'

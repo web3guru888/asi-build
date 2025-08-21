@@ -382,8 +382,17 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
       certFile: '/etc/ssl/certs/asi-code.crt',
       keyFile: '/etc/ssl/private/asi-code.key'
     },
+    cors: {
+      origin: ['*'],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization']
+    },
     auth: {
-      enabled: true
+      enabled: true,
+      secret: 'production-secret',
+      algorithm: 'HS256',
+      expiresIn: '24h'
     },
     middleware: {
       compression: true,
@@ -394,10 +403,27 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
         windowMs: 15 * 60 * 1000,
         max: 100 // More restrictive in production
       }
+    },
+    static: {
+      enabled: false,
+      path: './public',
+      options: {}
     }
   },
 
   tools: {
+    builtinEnabled: true,
+    allowCustom: false,
+    sandbox: {
+      enabled: true,
+      timeout: 30000,
+      memoryLimit: 256
+    },
+    registry: {
+      autoRegister: true,
+      loadPaths: ['./tools'],
+      enableVersioning: true
+    },
     permissions: {
       fileAccess: true,
       commandExecution: false,
@@ -410,13 +436,11 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
 
   storage: {
     provider: 'postgres',
-    encryption: {
-      enabled: true
-    },
-    backup: {
-      enabled: true,
-      interval: '24h',
-      retention: '30d'
+    connectionString: 'postgresql://user:password@localhost:5432/asi_code_prod',
+    options: {
+      database: 'asi_code_prod',
+      maxConnections: 50,
+      connectionTimeout: 30000
     }
   },
 
@@ -433,6 +457,16 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
         admin: ['user'],
         user: []
       }
+    },
+    encryption: {
+      enabled: true,
+      algorithm: 'aes-256-gcm',
+      keyDerivation: 'pbkdf2'
+    },
+    audit: {
+      enabled: true,
+      retention: 90,
+      format: 'json'
     }
   },
 
@@ -478,15 +512,33 @@ export const TEST_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
     maxMessages: 100,
     persistHistory: false,
     storageProvider: 'memory',
-    compression: false,
-    encryption: false
+    compression: {
+      enabled: false,
+      algorithm: 'gzip',
+      level: 6
+    },
+    encryption: {
+      enabled: false,
+      algorithm: 'aes-256-gcm',
+      keyDerivation: 'pbkdf2'
+    }
   },
 
   server: {
     port: 0, // Random available port
     host: 'localhost',
-    ssl: false,
-    cors: true,
+    ssl: {
+      enabled: false,
+      certFile: '',
+      keyFile: '',
+      caFile: ''
+    },
+    cors: {
+      origin: ['*'],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization']
+    },
     middleware: {
       compression: false,
       helmet: false,

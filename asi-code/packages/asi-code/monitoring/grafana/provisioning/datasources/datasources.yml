@@ -1,0 +1,122 @@
+# Grafana Data Sources Configuration
+apiVersion: 1
+
+datasources:
+  # Prometheus data source
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus-uid
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 15s
+      queryTimeout: 60s
+      httpMethod: GET
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.45.0
+      cacheLevel: High
+      incrementalQueryOverlapWindow: 10m
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: jaeger-uid
+          urlDisplayLabel: View in Jaeger
+
+  # Loki data source for logs
+  - name: Loki
+    type: loki
+    uid: loki-uid
+    access: proxy
+    url: http://loki:3100
+    editable: true
+    jsonData:
+      timeout: 60
+      maxLines: 1000
+      derivedFields:
+        - datasourceUid: jaeger-uid
+          matcherRegex: "trace_id=(\\w+)"
+          name: TraceID
+          url: "$${__value.raw}"
+          urlDisplayLabel: View in Jaeger
+
+  # Jaeger data source for distributed tracing
+  - name: Jaeger
+    type: jaeger
+    uid: jaeger-uid
+    access: proxy
+    url: http://jaeger:16686
+    editable: true
+    jsonData:
+      tracesToLogs:
+        datasourceUid: loki-uid
+        tags:
+          - key: service.name
+            value: service
+        mappedTags:
+          - key: http.status_code
+            value: status
+        mapTagNamesEnabled: true
+        spanStartTimeShift: -1h
+        spanEndTimeShift: 1h
+        filterByTraceID: true
+        filterBySpanID: false
+      tracesToMetrics:
+        datasourceUid: prometheus-uid
+        tags:
+          - key: service.name
+            value: service
+        queries:
+          - name: Request rate
+            query: sum(rate(asi_code_http_requests_total{service="$${__data.fields.service}"}[5m]))
+          - name: Request duration
+            query: histogram_quantile(0.9, sum(rate(asi_code_http_request_duration_seconds_bucket{service="$${__data.fields.service}"}[5m])) by (le))
+      nodeGraph:
+        enabled: true
+      spanBar:
+        type: Tag
+        tag: http.status_code
+
+  # AlertManager data source
+  - name: AlertManager
+    type: alertmanager
+    uid: alertmanager-uid
+    access: proxy
+    url: http://alertmanager:9093
+    editable: true
+    jsonData:
+      implementation: prometheus
+
+  # Postgres data source for direct database queries
+  - name: PostgreSQL
+    type: postgres
+    uid: postgres-uid
+    access: proxy
+    url: asi-code-postgres:5432
+    database: asicode
+    user: asicode
+    editable: true
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 5
+      maxIdleConns: 5
+      connMaxLifetime: 14400
+      postgresVersion: 1600
+      timescaledb: false
+
+  # Redis data source
+  - name: Redis
+    type: redis-datasource
+    uid: redis-uid
+    access: proxy
+    url: redis://asi-code-redis:6379
+    editable: true
+    jsonData:
+      client: standalone
+      poolSize: 5
+      timeout: 10
+      pingInterval: 0
+      pipelineWindow: 0

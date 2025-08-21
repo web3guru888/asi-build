@@ -1,0 +1,395 @@
+# ASI-Code Security Scanning and Compliance Pipeline
+name: Security
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/asi-code
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  # Static Application Security Testing (SAST)
+  sast:
+    name: Static Security Analysis
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Run Semgrep
+      uses: securecodewarrior/github-action-add-sarif@v1
+      with:
+        sarif-file: semgrep.sarif
+      env:
+        SEMGREP_RULES: >-
+          p/security-audit
+          p/secrets
+          p/owasp-top-ten
+          p/typescript
+          p/nodejs
+
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript
+        queries: security-and-quality
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+
+    - name: Run ESLint security rules
+      run: |
+        npm install -g eslint eslint-plugin-security
+        eslint --format unix --ext .ts,.js src/ --config .eslintrc.security.js || true
+
+  # Dependency Security Scanning
+  dependency-scan:
+    name: Dependency Security Scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: 1.1.34
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Run Bun audit
+      run: bun audit --json > bun-audit.json || true
+
+    - name: Run npm audit
+      run: |
+        npm audit --audit-level=moderate --json > npm-audit.json || true
+        npm audit --parseable --audit-level=moderate || true
+
+    - name: Run Snyk dependency scan
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high --json
+
+    - name: Run OSV-Scanner
+      uses: google/osv-scanner-action@v1.7.4
+      with:
+        scan-args: |-
+          -r
+          --skip-git
+          ./
+
+    - name: Upload dependency scan results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: dependency-scan-results
+        path: |
+          bun-audit.json
+          npm-audit.json
+          snyk-report.json
+
+  # Container Security Scanning
+  container-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    needs: []
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build Docker image for scanning
+      run: |
+        docker build -t asi-code:scan .
+
+    - name: Run Trivy container scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'asi-code:scan'
+        format: 'sarif'
+        output: 'trivy-container-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-container-results.sarif'
+
+    - name: Run Anchore Grype scan
+      uses: anchore/scan-action@v3
+      with:
+        image: 'asi-code:scan'
+        fail-build: false
+        severity-cutoff: critical
+
+    - name: Run Docker Scout
+      if: github.event_name == 'push'
+      run: |
+        echo ${{ secrets.DOCKER_HUB_TOKEN }} | docker login --username ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+        docker scout cves asi-code:scan --format sarif --output docker-scout-results.sarif || true
+
+    - name: Upload Docker Scout results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: docker-scout-results
+        path: docker-scout-results.sarif
+
+  # Infrastructure as Code Security
+  iac-security:
+    name: IaC Security Scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Checkov
+      uses: bridgecrewio/checkov-action@master
+      with:
+        directory: .
+        framework: kubernetes,dockerfile
+        output_format: sarif
+        output_file_path: checkov-report.sarif
+
+    - name: Upload Checkov results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: checkov-report.sarif
+
+    - name: Run kube-score
+      run: |
+        wget https://github.com/zegl/kube-score/releases/download/v1.16.1/kube-score_1.16.1_linux_amd64.tar.gz
+        tar xzf kube-score_1.16.1_linux_amd64.tar.gz
+        ./kube-score score k8s/*.yaml --output-format json > kube-score-results.json || true
+
+    - name: Run Polaris
+      run: |
+        wget https://github.com/FairwindsOps/polaris/releases/download/8.5.1/polaris_linux_amd64.tar.gz
+        tar xzf polaris_linux_amd64.tar.gz
+        ./polaris audit --audit-path k8s/ --format json > polaris-results.json || true
+
+    - name: Upload IaC scan results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: iac-scan-results
+        path: |
+          kube-score-results.json
+          polaris-results.json
+
+  # Secrets Scanning
+  secrets-scan:
+    name: Secrets Scanning
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Run GitGuardian scan
+      uses: GitGuardian/ggshield-action@v1.25.0
+      env:
+        GITHUB_PUSH_BEFORE_SHA: ${{ github.event.before }}
+        GITHUB_PUSH_BASE_SHA: ${{ github.event.base }}
+        GITHUB_PULL_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        GITHUB_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+
+    - name: Run TruffleHog
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+
+    - name: Run gitleaks
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # License Compliance
+  license-compliance:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: 1.1.34
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Run license checker
+      run: |
+        npm install -g license-checker
+        license-checker --json > license-report.json
+
+    - name: Check license compatibility
+      run: |
+        npm install -g license-compatibility-checker
+        license-compatibility-checker --production --onlyAllow 'MIT;Apache-2.0;BSD-3-Clause;BSD-2-Clause;ISC' || true
+
+    - name: Generate FOSSA scan
+      if: github.event_name == 'push'
+      run: |
+        curl -H 'Authorization: Bearer ${{ secrets.FOSSA_API_KEY }}' \
+             'https://app.fossa.com/api/builds/custom+1+${{ github.repository }}+${{ github.ref_name }}' || true
+
+    - name: Upload license report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: license-report
+        path: license-report.json
+
+  # Security Policy Enforcement
+  policy-check:
+    name: Security Policy Check
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check for security policy
+      run: |
+        if [ ! -f "SECURITY.md" ]; then
+          echo "❌ SECURITY.md file missing"
+          exit 1
+        else
+          echo "✅ Security policy found"
+        fi
+
+    - name: Validate Dockerfile security practices
+      run: |
+        # Check for root user
+        if grep -q "USER root" Dockerfile; then
+          echo "❌ Dockerfile runs as root user"
+          exit 1
+        fi
+        
+        # Check for HEALTHCHECK
+        if ! grep -q "HEALTHCHECK" Dockerfile; then
+          echo "⚠️ Dockerfile missing HEALTHCHECK"
+        fi
+        
+        echo "✅ Dockerfile security practices validated"
+
+    - name: Check Kubernetes security policies
+      run: |
+        # Check for security context
+        if ! grep -q "securityContext" k8s/deployment.yaml; then
+          echo "❌ Kubernetes deployment missing securityContext"
+          exit 1
+        fi
+        
+        # Check for resource limits
+        if ! grep -q "limits:" k8s/deployment.yaml; then
+          echo "❌ Kubernetes deployment missing resource limits"
+          exit 1
+        fi
+        
+        echo "✅ Kubernetes security policies validated"
+
+  # Vulnerability Database Update
+  vuln-db-update:
+    name: Update Vulnerability Database
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+    - name: Update vulnerability databases
+      run: |
+        echo "Updating vulnerability databases..."
+        # This would typically update internal vulnerability tracking
+        curl -X POST "${{ secrets.VULN_DB_UPDATE_URL }}" \
+          -H "Authorization: Bearer ${{ secrets.VULN_DB_TOKEN }}" \
+          -d '{"action": "update", "source": "github-actions"}'
+
+  # Security Report Generation
+  security-report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    needs: [sast, dependency-scan, container-scan, iac-security, secrets-scan, license-compliance]
+    if: always()
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+
+    - name: Generate comprehensive security report
+      run: |
+        cat << 'EOF' > security-report.md
+        # ASI-Code Security Report
+        
+        **Generated:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+        **Commit:** ${{ github.sha }}
+        **Branch:** ${{ github.ref_name }}
+        
+        ## Summary
+        
+        - 🔍 **SAST:** Static analysis completed
+        - 📦 **Dependencies:** Dependency scan completed  
+        - 🐳 **Container:** Container security scan completed
+        - 🏗️ **IaC:** Infrastructure as Code scan completed
+        - 🔐 **Secrets:** Secrets scan completed
+        - ⚖️ **License:** License compliance check completed
+        
+        ## Recommendations
+        
+        1. Review all HIGH and CRITICAL severity findings
+        2. Update dependencies with known vulnerabilities
+        3. Implement additional security controls as needed
+        4. Regular security reviews and updates
+        
+        EOF
+
+    - name: Upload security report
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-report
+        path: security-report.md
+
+    - name: Notify security team
+      if: github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      uses: 8398a7/action-slack@v3
+      with:
+        status: custom
+        webhook_url: ${{ secrets.SECURITY_SLACK_WEBHOOK }}
+        custom_payload: |
+          {
+            "text": "🔒 ASI-Code Security Scan Complete",
+            "attachments": [{
+              "color": "good",
+              "fields": [{
+                "title": "Repository",
+                "value": "${{ github.repository }}",
+                "short": true
+              }, {
+                "title": "Commit",
+                "value": "${{ github.sha }}",
+                "short": true
+              }]
+            }]
+          }

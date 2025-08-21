@@ -1,0 +1,375 @@
+# ASI-Code Production Configuration
+# This file contains production-specific configuration overrides
+
+# Basic application settings
+id: asi-code-production
+name: ASI-Code Production
+version: 1.0.0
+environment: production
+description: ASI-Code Production Environment
+
+# Directory configuration
+dataDirectory: /app/data
+cacheDirectory: /app/cache
+logsDirectory: /app/logs
+backupsDirectory: /app/backups
+
+# Logging configuration for production
+logging:
+  level: info
+  format: json
+  enabled: true
+  outputs:
+    - type: file
+      enabled: true
+      level: info
+      format: json
+      options:
+        filename: /app/logs/asi-code.log
+        maxsize: 100
+        maxfiles: 5
+        compress: true
+    - type: file
+      enabled: true
+      level: error
+      format: json
+      options:
+        filename: /app/logs/asi-code-error.log
+        maxsize: 50
+        maxfiles: 10
+        compress: true
+    - type: console
+      enabled: true
+      level: warn
+      format: json
+  includeTimestamp: true
+  includeStack: true
+  colorize: false
+  metadata:
+    service: asi-code
+    version: 1.0.0
+    environment: production
+
+# Server configuration
+server:
+  port: 3000
+  host: 0.0.0.0
+  ssl:
+    enabled: false  # Terminated at load balancer
+  cors:
+    origin: 
+      - "https://asi-code.company.com"
+      - "https://www.asi-code.company.com" 
+      - "https://api.asi-code.company.com"
+    credentials: true
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allowedHeaders: 
+      - "Content-Type"
+      - "Authorization" 
+      - "X-Requested-With"
+      - "X-API-Key"
+  auth:
+    enabled: true
+    type: jwt
+    secret: "${JWT_SECRET}"
+    algorithm: HS256
+    expiresIn: 24h
+    issuer: asi-code
+    audience: asi-code-users
+  middleware:
+    compression: true
+    helmet: true
+    rateLimiting:
+      enabled: true
+      windowMs: 900000  # 15 minutes
+      max: 1000  # per IP
+      message: "Too many requests from this IP"
+      standardHeaders: true
+      legacyHeaders: false
+    requestLogging: true
+    requestIdHeader: X-Request-ID
+  static:
+    enabled: false  # Static files served by CDN
+  healthCheck:
+    enabled: true
+    path: /health
+    timeout: 5000
+
+# Provider configurations (AI services)
+providers:
+  default: anthropic
+  anthropic:
+    enabled: true
+    priority: 1
+    apiKey: "${ANTHROPIC_API_KEY}"
+    model: claude-3-sonnet-20240229
+    maxTokens: 4000
+    temperature: 0.7
+    topP: 0.9
+    timeout: 30000
+    retries: 3
+    baseURL: https://api.anthropic.com
+    rateLimiting:
+      enabled: true
+      requestsPerSecond: 2
+      requestsPerMinute: 100
+      requestsPerHour: 1000
+    systemPrompt: "You are ASI-Code, an advanced AI assistant specialized in software development."
+  openai:
+    enabled: false  # Disabled in production
+    priority: 2
+    apiKey: "${OPENAI_API_KEY}"
+    model: gpt-4
+    maxTokens: 4000
+    temperature: 0.7
+    timeout: 30000
+    retries: 3
+
+# Session management
+session:
+  maxMessages: 500  # Increased for production
+  ttl: 86400000  # 24 hours
+  persistHistory: true
+  storageProvider: postgres
+  storageConfig:
+    connectionString: "${DATABASE_URL}"
+    tableName: sessions
+    schemaName: public
+  compression:
+    enabled: true
+    algorithm: gzip
+    level: 6
+  encryption:
+    enabled: true
+    algorithm: aes-256-gcm
+    key: "${ENCRYPTION_KEY}"
+
+# Storage configuration (database)
+storage:
+  provider: postgres
+  connectionString: "${DATABASE_URL}"
+  options:
+    ssl:
+      rejectUnauthorized: false
+    pool:
+      min: 5
+      max: 20
+      acquireTimeoutMillis: 30000
+      createTimeoutMillis: 30000
+      destroyTimeoutMillis: 5000
+      idleTimeoutMillis: 30000
+      reapIntervalMillis: 1000
+      createRetryIntervalMillis: 200
+  migrations:
+    enabled: true
+    directory: /app/migrations
+  encryption:
+    enabled: true
+    algorithm: aes-256-gcm
+    key: "${ENCRYPTION_KEY}"
+  backup:
+    enabled: true
+    interval: 3600  # 1 hour
+    retention: 168  # 7 days
+    location: /app/backups
+    compression: true
+
+# Caching configuration (Redis)
+cache:
+  provider: redis
+  connectionString: "${REDIS_URL}"
+  options:
+    password: "${REDIS_PASSWORD}"
+    db: 0
+    keyPrefix: "asi-code:"
+    maxRetriesPerRequest: 3
+    retryDelayOnFailover: 100
+    enableReadyCheck: true
+    maxRetriesPerRequest: null
+    lazyConnect: true
+  ttl: 3600  # 1 hour default TTL
+  compression:
+    enabled: true
+    threshold: 1024  # Compress values larger than 1KB
+
+# Performance and monitoring
+performance:
+  monitoring:
+    enabled: true
+    metricsPort: 9090
+    metricsPath: /metrics
+    metricsInterval: 30000  # 30 seconds
+    healthCheckInterval: 60000  # 1 minute
+    collectGC: true
+    collectMemory: true
+    collectCPU: true
+  caching:
+    enabled: true
+    provider: redis
+    ttl: 3600
+    maxSize: 1000  # Max number of cached items
+  optimization:
+    lazyLoading: true
+    preloadModules: 
+      - kenny
+      - consciousness
+      - provider
+    memoryThreshold: 2147483648  # 2GB
+    gcStrategy: aggressive
+
+# Security configuration
+security:
+  encryption:
+    algorithm: aes-256-gcm
+    keySize: 256
+    keyDerivation: pbkdf2
+  authentication:
+    required: true
+    methods: 
+      - jwt
+      - api-key
+    sessionTimeout: 3600  # 1 hour
+    maxLoginAttempts: 5
+    lockoutDuration: 900  # 15 minutes
+  authorization:
+    enabled: true
+    defaultRole: user
+    roleHierarchy:
+      admin: [user, moderator]
+      moderator: [user]
+      user: []
+  rateLimit:
+    enabled: true
+    windowMs: 900000  # 15 minutes
+    maxRequests: 1000
+    skipSuccessfulRequests: false
+    skipFailedRequests: false
+  cors:
+    enabled: true
+    maxAge: 86400
+  helmet:
+    enabled: true
+    contentSecurityPolicy: true
+    crossOriginEmbedderPolicy: false
+  audit:
+    enabled: true
+    logLevel: detailed
+    retention: 90  # 90 days
+    includeRequestBody: false
+    includeResponseBody: false
+
+# Kenny configuration (AI personality system)
+kenny:
+  enabled: true
+  contextWindowSize: 50  # Increased for production
+  adaptationRate: 0.05
+  memoryPersistence: true
+  learningEnabled: true
+  personalityTraits:
+    curiosity: 85
+    helpfulness: 95
+    creativity: 80
+    analytical: 90
+    empathy: 85
+    precision: 95
+    innovation: 80
+    patience: 90
+  behaviorConfig:
+    responseStyle: professional
+    verbosity: concise
+    proactiveness: 80
+
+# Consciousness configuration
+consciousness:
+  enabled: true
+  awarenessThreshold: 75
+  memoryRetentionHours: 48  # Increased for production
+  selfReflectionEnabled: true
+  emotionalModelingEnabled: true
+  metacognitionEnabled: true
+  personalityTraits:
+    curiosity: 85
+    helpfulness: 95
+    creativity: 80
+    analytical: 90
+    empathy: 85
+    precision: 95
+    innovation: 80
+    patience: 90
+  learningConfig:
+    enabled: true
+    adaptationRate: 0.03
+    memoryConsolidationInterval: 1800  # 30 minutes
+    experienceWeighting: 0.9
+
+# Tools configuration
+tools:
+  builtinEnabled: true
+  allowCustom: false  # Disabled for security in production
+  permissions:
+    fileAccess: true
+    commandExecution: false  # Disabled for security
+    networkAccess: false    # Disabled for security
+    systemInfo: true
+    processManagement: false
+    databaseAccess: false
+  sandbox:
+    enabled: true
+    timeout: 30000  # 30 seconds
+    memoryLimit: 512  # 512MB
+    cpuLimit: 80     # 80%
+    networkIsolation: true
+  registry:
+    autoRegister: false
+    loadPaths: 
+      - /app/tools
+    enableVersioning: true
+
+# Integration configurations
+integrations:
+  prometheus:
+    enabled: true
+    port: 9090
+    path: /metrics
+    collectDefaultMetrics: true
+  jaeger:
+    enabled: true
+    endpoint: "${JAEGER_ENDPOINT}"
+    serviceName: asi-code
+    sampler:
+      type: probabilistic
+      param: 0.1  # 10% sampling rate
+  sentry:
+    enabled: true
+    dsn: "${SENTRY_DSN}"
+    environment: production
+    release: "${APP_VERSION}"
+    tracesSampleRate: 0.1
+
+# Backup and disaster recovery
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention:
+    daily: 7
+    weekly: 4
+    monthly: 12
+  destinations:
+    - type: s3
+      bucket: "${BACKUP_S3_BUCKET}"
+      region: "${AWS_REGION}"
+      encryption: true
+    - type: local
+      path: /app/backups
+
+# Environment-specific overrides
+environments:
+  production:
+    logging:
+      level: info
+    security:
+      authentication:
+        required: true
+    performance:
+      optimization:
+        aggressive: true

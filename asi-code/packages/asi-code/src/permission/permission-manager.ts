@@ -25,12 +25,14 @@ import type {
   SafetyLevel,
   ResourceType,
   PermissionLevel,
-  UserStatus,
-  SessionStatus,
   BUILT_IN_PERMISSIONS,
-  BUILT_IN_ROLES,
+  BUILT_IN_ROLES
+} from './permission-types.js';
+import {
   PermissionError,
-  SecurityViolationError
+  SecurityViolationError,
+  UserStatus,
+  SessionStatus
 } from './permission-types.js';
 
 export interface PermissionManagerConfig {
@@ -75,8 +77,7 @@ export class PermissionManager extends BaseSubsystem {
       id: 'permission-manager',
       name: 'Permission Manager',
       description: 'Advanced permission checking and management system',
-      version: '1.0.0',
-      dependencies: []
+      version: '1.0.0'
     });
 
     this.config = {
@@ -102,6 +103,44 @@ export class PermissionManager extends BaseSubsystem {
     this.setupCleanupTimers();
   }
 
+  /**
+   * BaseSubsystem lifecycle methods
+   */
+  protected async onInitialize(config: Record<string, any>): Promise<void> {
+    await this.initializeBuiltInData();
+
+    // Initialize safety protocols if enabled
+    if (this.config.enableSafetyProtocols) {
+      await this.safetyProtocols.initialize();
+    }
+
+    // Setup storage if configured
+    if (this.config.storage.type !== 'memory') {
+      await this.initializeStorage();
+    }
+
+    this.emit('initialized', { config: this.config });
+  }
+
+  protected async onStart(): Promise<void> {
+    // Start safety protocols
+    if (this.config.enableSafetyProtocols) {
+      await this.safetyProtocols.start();
+    }
+    this.emit('started');
+  }
+
+  protected async onStop(): Promise<void> {
+    // Stop safety protocols
+    if (this.config.enableSafetyProtocols) {
+      await this.safetyProtocols.stop();
+    }
+    
+    // Cleanup resources
+    this.cleanup();
+    this.emit('stopped');
+  }
+
   async initialize(config: Record<string, any> = {}): Promise<void> {
     try {
       // Initialize built-in permissions and roles
@@ -117,7 +156,7 @@ export class PermissionManager extends BaseSubsystem {
         await this.initializeStorage();
       }
 
-      this.setStatus('ready');
+      // Status is managed by BaseSubsystem
       this.emit('initialized', { config: this.config });
 
       // Publish initialization event
@@ -129,13 +168,13 @@ export class PermissionManager extends BaseSubsystem {
       );
 
     } catch (error) {
-      this.setStatus('error');
+      // Error status is managed by BaseSubsystem
       throw error;
     }
   }
 
   async start(): Promise<void> {
-    this.setStatus('running');
+    // Status is managed by BaseSubsystem
     this.emit('started');
 
     // Start safety protocols
@@ -150,7 +189,7 @@ export class PermissionManager extends BaseSubsystem {
       await this.safetyProtocols.stop();
     }
 
-    this.setStatus('stopped');
+    // Status is managed by BaseSubsystem
     this.emit('stopped');
   }
 
@@ -172,7 +211,7 @@ export class PermissionManager extends BaseSubsystem {
       await this.safetyProtocols.shutdown();
     }
 
-    this.setStatus('shutdown');
+    // Status is managed by BaseSubsystem
     this.emit('shutdown');
   }
 
@@ -529,7 +568,7 @@ export class PermissionManager extends BaseSubsystem {
   /**
    * Health check for the permission manager
    */
-  async healthCheck() {
+  protected async onHealthCheck() {
     const activeUsers = Array.from(this.users.values()).filter(u => u.status === UserStatus.ACTIVE).length;
     const activeSessions = Array.from(this.sessions.values()).filter(s => s.status === SessionStatus.ACTIVE).length;
     const cacheSize = this.permissionCache.size;
@@ -537,7 +576,6 @@ export class PermissionManager extends BaseSubsystem {
     return {
       status: this.status === 'running' ? 'healthy' : 'unhealthy' as const,
       message: `${this.permissions.size} permissions, ${activeUsers} active users, ${activeSessions} active sessions`,
-      timestamp: new Date(),
       details: {
         permissions: this.permissions.size,
         roles: this.roles.size,

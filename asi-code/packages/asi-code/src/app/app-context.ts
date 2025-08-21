@@ -7,6 +7,7 @@
 
 import { EventEmitter } from 'eventemitter3';
 import type { ASICodeConfig } from '../config/config-types.js';
+import { DEFAULT_ASI_CONFIG } from '../config/default-config.js';
 import type { KennyContext } from '../kenny/index.js';
 import type { Provider } from '../provider/index.js';
 import type { ToolRegistry } from '../tool/index.js';
@@ -60,45 +61,9 @@ export class DefaultAppContext extends EventEmitter implements AppContext {
   constructor(initialConfig?: Partial<ASICodeConfig>) {
     super();
     
-    // Default configuration
+    // Use default configuration and merge with initial config
     this.config = {
-      providers: {},
-      tools: {
-        enableBuiltIn: true,
-        customTools: [],
-        registry: {}
-      },
-      permissions: {
-        enableSafetyProtocols: true,
-        enableCaching: true,
-        enableAuditing: true,
-        storage: {
-          type: 'memory'
-        }
-      },
-      storage: {
-        type: 'memory',
-        config: {}
-      },
-      server: {
-        port: 3000,
-        host: 'localhost'
-      },
-      consciousness: {
-        enabled: true,
-        model: 'claude-3-sonnet-20240229'
-      },
-      kenny: {
-        enabled: true,
-        logging: {
-          level: 'info',
-          enabled: true
-        },
-        health: {
-          checkInterval: 30000,
-          enabled: true
-        }
-      },
+      ...DEFAULT_ASI_CONFIG,
       ...initialConfig
     };
   }
@@ -114,11 +79,6 @@ export class DefaultAppContext extends EventEmitter implements AppContext {
         level: 1,
         state: 'active',
         lastActivity: new Date()
-      },
-      permissions: {
-        tools: ['read', 'write'],
-        resources: ['file-system'],
-        restrictions: []
       },
       metadata: {
         createdAt: new Date().toISOString(),
@@ -228,7 +188,7 @@ export class DefaultAppContext extends EventEmitter implements AppContext {
       }
 
       if (this.permissionManager) {
-        await this.permissionManager.initialize();
+        await this.permissionManager.initialize({});
         this.emit('component:initialized', { type: 'permissionManager' });
       }
 

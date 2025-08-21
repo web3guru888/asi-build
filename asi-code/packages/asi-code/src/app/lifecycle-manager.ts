@@ -103,7 +103,7 @@ export class DefaultLifecycleManager extends EventEmitter implements LifecycleMa
 
     this.registerComponent('sessionStorage', ['eventBus'], async (appContext) => {
       const { createSessionStorage } = await import('../session/index.js');
-      return createSessionStorage(appContext.config.storage.type as any);
+      return createSessionStorage(appContext.config.storage.provider);
     });
 
     this.registerComponent('sessionManager', ['sessionStorage', 'eventBus'], async (appContext) => {

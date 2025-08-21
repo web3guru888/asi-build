@@ -196,9 +196,9 @@ export class MessageBus extends EventEmitter {
    * Publish a subsystem event
    */
   async publishSubsystem(
-    type: SubsystemEvent['type'],
+    type: string,
     source: string,
-    data: SubsystemEvent['data'],
+    data: any,
     metadata?: Record<string, any>
   ): Promise<void> {
     await this.publish({

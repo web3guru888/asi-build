@@ -8,11 +8,11 @@
 import { EventEmitter } from 'eventemitter3';
 import { nanoid } from 'nanoid';
 import { getKennyIntegration } from '../kenny/integration.js';
+import { SafetyLevel } from './permission-types.js';
 import type {
   SafetyProtocol,
   SafetyTrigger,
   SafetyAction,
-  SafetyLevel,
   PermissionRequest,
   PermissionResult,
   PermissionContext,
@@ -924,7 +924,7 @@ export class SafetyProtocolManager extends EventEmitter {
         id: 'permission-escalation-detector',
         name: 'Permission Escalation Detector',
         description: 'Detects attempts to escalate privileges',
-        safetyLevel: 'high-risk',
+        safetyLevel: SafetyLevel.HIGH_RISK,
         triggers: [
           {
             type: 'permission_escalation',
@@ -958,7 +958,7 @@ export class SafetyProtocolManager extends EventEmitter {
         id: 'multiple-failures-detector',
         name: 'Multiple Failures Detector',
         description: 'Detects multiple permission failures in short time',
-        safetyLevel: 'moderate',
+        safetyLevel: SafetyLevel.MODERATE,
         triggers: [
           {
             type: 'multiple_failures',

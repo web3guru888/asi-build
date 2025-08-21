@@ -1,0 +1,12 @@
+# ASI-Code Kubernetes Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: asi-code
+  labels:
+    app: asi-code
+    environment: production
+    version: v1.0.0
+  annotations:
+    description: "ASI-Code production deployment namespace"
+    contact: "asi-team@company.com"

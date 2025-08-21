@@ -13,23 +13,9 @@ import { setupRoutes } from './routes.js';
 import type { SessionManager } from '../session/index.js';
 import type { ProviderManager } from '../provider/index.js';
 import type { ToolManager } from '../tool/index.js';
+import type { ServerConfig } from '../config/config-types.js';
 
-export interface ServerConfig {
-  port: number;
-  host: string;
-  cors: {
-    origin: string[];
-    credentials: boolean;
-  };
-  rateLimit: {
-    windowMs: number;
-    maxRequests: number;
-  };
-  auth: {
-    enabled: boolean;
-    apiKey?: string;
-  };
-}
+// ServerConfig imported from config-types.js
 
 export interface ASIServer extends EventEmitter {
   config: ServerConfig;
@@ -172,15 +158,31 @@ export function createASIServer(
 export const defaultServerConfig: ServerConfig = {
   port: 3000,
   host: 'localhost',
+  ssl: {
+    enabled: false
+  },
   cors: {
     origin: ['http://localhost:3000'],
-    credentials: true
-  },
-  rateLimit: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 100
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
   },
   auth: {
-    enabled: false
+    enabled: false,
+    type: 'jwt'
+  },
+  middleware: {
+    compression: true,
+    helmet: true,
+    rateLimiting: {
+      enabled: true,
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100
+    },
+    requestLogging: true
+  },
+  static: {
+    enabled: false,
+    path: './public'
   }
 };

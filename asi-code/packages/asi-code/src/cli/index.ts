@@ -13,22 +13,19 @@ import chalk from 'chalk';
 import ora from 'ora';
 
 // Import core modules
-import { 
-  createKennyIntegration,
-  createProviderManager,
-  createToolManager,
-  createSessionManager,
-  createSessionStorage,
-  createASIServer,
-  createConsciousnessEngine,
-  createAgentManager,
-  createPermissionManager,
-  createEventBus,
-  createConfigManager,
-  createSATEngine,
-  defaultServerConfig,
-  defaultConsciousnessConfig
-} from '../index.js';
+import { createMinimalASICode } from '../index.js';
+import { AppContext } from '../app/app-context.js';
+import { createLogManager } from '../logging/log-manager.js';
+import { createConfigManager } from '../config/config-manager.js';
+import { createEventBus } from '../bus/index.js';
+import { createProviderManager } from '../provider/index.js';
+import { createToolManager } from '../tool/index.js';
+import { createSessionStorage, createSessionManager } from '../session/index.js';
+import { createConsciousnessEngine, defaultConsciousnessConfig } from '../consciousness/index.js';
+import { createAgentManager } from '../agent/index.js';
+import { createPermissionManager } from '../permission/index.js';
+import { createSATEngine } from '../sat/index.js';
+import { createASIServer, defaultServerConfig } from '../server/index.js';
 
 import type { ProviderConfig, ASICodeConfig } from '../index.js';
 

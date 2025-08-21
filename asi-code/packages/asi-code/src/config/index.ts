@@ -320,5 +320,3 @@ export default ConfigSystemFactory;
 
 // Legacy exports for backward compatibility
 export const defaultASIConfig = DEFAULT_ASI_CONFIG;
-export interface ConfigManager extends ConfigManager {} // Re-export interface
-export class DefaultConfigManager extends ConfigManager {} // Legacy alias
