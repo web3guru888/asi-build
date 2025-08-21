@@ -1,0 +1,66 @@
+[install]
+# Enable bun install to use exact versions from bun.lockb
+exact = true
+
+# Use hardlinks for faster installs
+hardlinks = true
+
+# Auto-install peer dependencies
+auto = true
+
+# Registry configuration
+registry = "https://registry.npmjs.org/"
+
+# Cache directory
+cache = false
+
+# Install optional dependencies
+optional = true
+
+[install.scopes]
+# Private registry scopes (if needed)
+# "@asi" = "https://npm.asi.dev/"
+
+[run]
+# Enable bun run to use shell
+shell = "system"
+
+# Silent mode for cleaner output
+silent = false
+
+[test]
+# Test runner configuration
+preload = ["./test/setup.ts"]
+timeout = 5000
+
+# Coverage settings
+coverage = true
+
+[build]
+# Build settings
+target = "node"
+format = "esm"
+minify = false
+sourcemap = true
+
+# External packages (don't bundle)
+external = ["fsevents", "esbuild"]
+
+[dev]
+# Development server settings
+port = 3000
+hot = true
+
+# File watching
+watch = true
+ignore = ["node_modules", "dist", ".git"]
+
+[bundle]
+# Bundle configuration
+splitting = true
+minify = false
+sourcemap = true
+
+# [macros]
+# Macro configuration for performance
+# react-refresh = true

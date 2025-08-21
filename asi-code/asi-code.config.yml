@@ -1,0 +1,52 @@
+asi:
+  name: "ASI-Code"
+  version: "0.1.0"
+  environment: "development"
+
+providers:
+  default:
+    name: "default"
+    type: "anthropic"
+    apiKey: "" # Set via environment variable ANTHROPIC_API_KEY
+    model: "claude-3-sonnet-20240229"
+    maxTokens: 4000
+    temperature: 0.7
+
+kenny:
+  enabled: true
+  contextWindowSize: 20
+  adaptationRate: 0.1
+
+consciousness:
+  enabled: true
+  awarenessThreshold: 70
+  memoryRetentionHours: 24
+  personalityTraits:
+    curiosity: 80
+    helpfulness: 90
+    creativity: 70
+    analytical: 85
+    empathy: 75
+
+session:
+  maxMessages: 100
+  ttl: 86400000 # 24 hours in milliseconds
+  persistHistory: true
+  storageProvider: "memory"
+
+server:
+  port: 3000
+  host: "localhost"
+  cors:
+    origin: ["http://localhost:3000"]
+    credentials: true
+  auth:
+    enabled: false
+
+tools:
+  builtinEnabled: true
+  allowCustom: true
+  permissions:
+    fileAccess: true
+    commandExecution: false
+    networkAccess: false

@@ -1,0 +1,8 @@
+#!/usr/bin/env bun
+// ASI-Code CLI Entry Point
+import { main } from '../src/index.js';
+
+main().catch((error) => {
+  console.error('ASI-Code CLI Error:', error.message);
+  process.exit(1);
+});
