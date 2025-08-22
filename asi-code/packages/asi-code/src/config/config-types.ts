@@ -206,6 +206,54 @@ export interface ServerConfig {
     readonly path?: string;
     readonly maxAge?: number;
   };
+  readonly websocket: {
+    readonly enabled: boolean;
+    readonly path?: string;
+    readonly maxConnections?: number;
+    readonly heartbeat: {
+      readonly enabled: boolean;
+      readonly interval?: number; // milliseconds
+      readonly timeout?: number; // milliseconds
+    };
+    readonly compression: {
+      readonly enabled: boolean;
+      readonly threshold?: number; // bytes
+      readonly level?: number; // 1-9
+    };
+    readonly auth: {
+      readonly enabled: boolean;
+      readonly type?: 'jwt' | 'token' | 'session';
+      readonly timeout?: number; // seconds
+    };
+    readonly rateLimiting: {
+      readonly enabled: boolean;
+      readonly messagesPerSecond?: number;
+      readonly messagesPerMinute?: number;
+      readonly bytesPerSecond?: number;
+    };
+    readonly messageQueue: {
+      readonly enabled: boolean;
+      readonly maxSize?: number;
+      readonly persistence?: boolean;
+      readonly ttl?: number; // seconds
+    };
+    readonly channels: {
+      readonly enabled: boolean;
+      readonly maxChannelsPerConnection?: number;
+      readonly channelNamePattern?: string;
+    };
+    readonly binary: {
+      readonly enabled: boolean;
+      readonly maxSize?: number; // bytes
+      readonly allowedTypes?: string[];
+    };
+    readonly reconnection: {
+      readonly enabled: boolean;
+      readonly maxRetries?: number;
+      readonly backoffMultiplier?: number;
+      readonly maxBackoffTime?: number; // milliseconds
+    };
+  };
 }
 
 // Tool system configuration

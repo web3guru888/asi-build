@@ -1,0 +1,468 @@
+# Comprehensive Prometheus Alerting Rules for ASI-Code
+groups:
+  # Critical Infrastructure Alerts
+  - name: asi-code-infrastructure
+    rules:
+      - alert: ServiceDown
+        expr: up{job="asi-code"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+          service: asi-code
+        annotations:
+          summary: "ASI-Code service is down"
+          description: "ASI-Code service has been down for more than 1 minute on {{ $labels.instance }}"
+          runbook_url: "https://docs.asi-code.com/runbooks/service-down"
+
+      - alert: HighCPUUsage
+        expr: asi_code_system_cpu_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: asi-code
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+          runbook_url: "https://docs.asi-code.com/runbooks/high-cpu"
+
+      - alert: CriticalCPUUsage
+        expr: asi_code_system_cpu_usage_percent > 95
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+          service: asi-code
+        annotations:
+          summary: "Critical CPU usage detected"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+          runbook_url: "https://docs.asi-code.com/runbooks/critical-cpu"
+
+      - alert: HighMemoryUsage
+        expr: (asi_code_system_memory_usage_bytes{type="used"} / asi_code_system_memory_usage_bytes{type="total"}) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: asi-code
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+          runbook_url: "https://docs.asi-code.com/runbooks/high-memory"
+
+      - alert: CriticalMemoryUsage
+        expr: (asi_code_system_memory_usage_bytes{type="used"} / asi_code_system_memory_usage_bytes{type="total"}) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+          service: asi-code
+        annotations:
+          summary: "Critical memory usage detected"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+          runbook_url: "https://docs.asi-code.com/runbooks/critical-memory"
+
+      - alert: DiskSpaceLow
+        expr: (asi_code_system_disk_usage_bytes / (asi_code_system_disk_usage_bytes + asi_code_system_disk_free_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: asi-code
+        annotations:
+          summary: "Low disk space detected"
+          description: "Disk usage is {{ $value }}% on {{ $labels.instance }} ({{ $labels.mount }})"
+          runbook_url: "https://docs.asi-code.com/runbooks/low-disk-space"
+
+  # Application Performance Alerts
+  - name: asi-code-performance
+    rules:
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(asi_code_http_request_duration_seconds_bucket[5m])) > 2
+        for: 3m
+        labels:
+          severity: warning
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s"
+          runbook_url: "https://docs.asi-code.com/runbooks/high-response-time"
+
+      - alert: CriticalResponseTime
+        expr: histogram_quantile(0.95, rate(asi_code_http_request_duration_seconds_bucket[5m])) > 5
+        for: 1m
+        labels:
+          severity: critical
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "Critical response time detected"
+          description: "95th percentile response time is {{ $value }}s"
+          runbook_url: "https://docs.asi-code.com/runbooks/critical-response-time"
+
+      - alert: LowThroughput
+        expr: rate(asi_code_http_requests_total[5m]) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "Low throughput detected"
+          description: "Request rate is {{ $value }} requests/second"
+          runbook_url: "https://docs.asi-code.com/runbooks/low-throughput"
+
+      - alert: EventLoopLag
+        expr: performance_event_loop_delay > 100
+        for: 2m
+        labels:
+          severity: warning
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "Event loop lag detected"
+          description: "Event loop delay is {{ $value }}ms on {{ $labels.instance }}"
+          runbook_url: "https://docs.asi-code.com/runbooks/event-loop-lag"
+
+      - alert: HighGCPressure
+        expr: rate(performance_gc_total_time[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "High garbage collection pressure"
+          description: "GC time rate is {{ $value }}ms/second on {{ $labels.instance }}"
+          runbook_url: "https://docs.asi-code.com/runbooks/high-gc-pressure"
+
+  # Error Rate Alerts
+  - name: asi-code-errors
+    rules:
+      - alert: HighErrorRate
+        expr: (rate(asi_code_errors_total[5m]) / rate(asi_code_http_requests_total[5m])) * 100 > 1
+        for: 2m
+        labels:
+          severity: warning
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }}% over the last 5 minutes"
+          runbook_url: "https://docs.asi-code.com/runbooks/high-error-rate"
+
+      - alert: CriticalErrorRate
+        expr: (rate(asi_code_errors_total[5m]) / rate(asi_code_http_requests_total[5m])) * 100 > 5
+        for: 1m
+        labels:
+          severity: critical
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "Critical error rate detected"
+          description: "Error rate is {{ $value }}% over the last 5 minutes"
+          runbook_url: "https://docs.asi-code.com/runbooks/critical-error-rate"
+
+      - alert: HighToolFailureRate
+        expr: (rate(asi_code_tool_executions_total{status="failure"}[5m]) / rate(asi_code_tool_executions_total[5m])) * 100 > 10
+        for: 3m
+        labels:
+          severity: warning
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "High tool failure rate"
+          description: "Tool failure rate is {{ $value }}% for tool {{ $labels.tool_name }}"
+          runbook_url: "https://docs.asi-code.com/runbooks/tool-failures"
+
+      - alert: ProviderErrors
+        expr: rate(asi_code_provider_requests_total{status="error"}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "Provider errors detected"
+          description: "{{ $labels.provider_name }} error rate is {{ $value }} errors/second"
+          runbook_url: "https://docs.asi-code.com/runbooks/provider-errors"
+
+  # Business Logic Alerts
+  - name: asi-code-business
+    rules:
+      - alert: HighSessionFailureRate
+        expr: (rate(asi_code_sessions_closed_total{reason!="completed"}[5m]) / rate(asi_code_sessions_closed_total[5m])) * 100 > 20
+        for: 5m
+        labels:
+          severity: warning
+          team: product
+          service: asi-code
+        annotations:
+          summary: "High session failure rate"
+          description: "{{ $value }}% of sessions are failing"
+          runbook_url: "https://docs.asi-code.com/runbooks/session-failures"
+
+      - alert: LowSessionCreationRate
+        expr: rate(asi_code_sessions_created_total[10m]) < 0.01
+        for: 15m
+        labels:
+          severity: warning
+          team: product
+          service: asi-code
+        annotations:
+          summary: "Low session creation rate"
+          description: "Session creation rate is {{ $value }} sessions/second"
+          runbook_url: "https://docs.asi-code.com/runbooks/low-session-creation"
+
+      - alert: KennySubsystemFailure
+        expr: rate(asi_code_kenny_operations_total{status="failure"}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "Kenny subsystem failure detected"
+          description: "{{ $labels.subsystem }} subsystem failure rate is {{ $value }} failures/second"
+          runbook_url: "https://docs.asi-code.com/runbooks/kenny-failures"
+
+      - alert: HighProviderCosts
+        expr: increase(asi_code_provider_costs_total{cost_type="cost"}[1h]) > 100
+        for: 0m
+        labels:
+          severity: warning
+          team: finance
+          service: asi-code
+        annotations:
+          summary: "High provider costs"
+          description: "{{ $labels.provider }} costs are ${{ $value }} in the last hour"
+          runbook_url: "https://docs.asi-code.com/runbooks/high-costs"
+
+  # SLO Violation Alerts
+  - name: asi-code-slo
+    rules:
+      - alert: SLOAvailabilityViolation
+        expr: asi_code_sli_availability_percent < 99.9
+        for: 1m
+        labels:
+          severity: critical
+          team: sre
+          service: asi-code
+          slo: availability
+        annotations:
+          summary: "SLO availability violation"
+          description: "Availability is {{ $value }}%, below SLO target of 99.9%"
+          runbook_url: "https://docs.asi-code.com/runbooks/slo-availability"
+
+      - alert: SLOLatencyViolation
+        expr: histogram_quantile(0.95, asi_code_sli_latency_seconds) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          team: sre
+          service: asi-code
+          slo: latency
+        annotations:
+          summary: "SLO latency violation"
+          description: "P95 latency is {{ $value }}s, above SLO target of 200ms"
+          runbook_url: "https://docs.asi-code.com/runbooks/slo-latency"
+
+      - alert: SLOErrorRateViolation
+        expr: asi_code_sli_error_rate_percent > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          team: sre
+          service: asi-code
+          slo: error_rate
+        annotations:
+          summary: "SLO error rate violation"
+          description: "Error rate is {{ $value }}%, above SLO target of 0.1%"
+          runbook_url: "https://docs.asi-code.com/runbooks/slo-error-rate"
+
+      # Error Budget Burn Rate Alerts
+      - alert: ErrorBudgetBurnRateFast
+        expr: |
+          (
+            rate(asi_code_errors_total[1h]) / rate(asi_code_http_requests_total[1h]) > 0.001 * 14.4
+          )
+          and
+          (
+            rate(asi_code_errors_total[5m]) / rate(asi_code_http_requests_total[5m]) > 0.001 * 14.4
+          )
+        for: 2m
+        labels:
+          severity: critical
+          team: sre
+          service: asi-code
+          burn_rate: fast
+        annotations:
+          summary: "Fast error budget burn rate"
+          description: "Error budget will be exhausted in < 6 hours at current rate"
+          runbook_url: "https://docs.asi-code.com/runbooks/error-budget-burn"
+
+      - alert: ErrorBudgetBurnRateSlow
+        expr: |
+          (
+            rate(asi_code_errors_total[6h]) / rate(asi_code_http_requests_total[6h]) > 0.001 * 1
+          )
+          and
+          (
+            rate(asi_code_errors_total[30m]) / rate(asi_code_http_requests_total[30m]) > 0.001 * 1
+          )
+        for: 15m
+        labels:
+          severity: warning
+          team: sre
+          service: asi-code
+          burn_rate: slow
+        annotations:
+          summary: "Slow error budget burn rate"
+          description: "Error budget will be exhausted in < 30 days at current rate"
+          runbook_url: "https://docs.asi-code.com/runbooks/error-budget-burn"
+
+  # Security Alerts
+  - name: asi-code-security
+    rules:
+      - alert: UnusualRequestPattern
+        expr: rate(asi_code_http_requests_total[1m]) > 100
+        for: 1m
+        labels:
+          severity: warning
+          team: security
+          service: asi-code
+        annotations:
+          summary: "Unusual request pattern detected"
+          description: "Request rate is {{ $value }} requests/second, which is unusually high"
+          runbook_url: "https://docs.asi-code.com/runbooks/unusual-traffic"
+
+      - alert: High4xxErrorRate
+        expr: rate(asi_code_http_requests_total{status_code=~"4.."}[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          team: security
+          service: asi-code
+        annotations:
+          summary: "High 4xx error rate"
+          description: "4xx error rate is {{ $value }} errors/second"
+          runbook_url: "https://docs.asi-code.com/runbooks/4xx-errors"
+
+      - alert: AuthenticationFailures
+        expr: rate(asi_code_http_requests_total{status_code="401"}[5m]) > 1
+        for: 1m
+        labels:
+          severity: warning
+          team: security
+          service: asi-code
+        annotations:
+          summary: "High authentication failure rate"
+          description: "Authentication failure rate is {{ $value }} failures/second"
+          runbook_url: "https://docs.asi-code.com/runbooks/auth-failures"
+
+  # Health Check Alerts
+  - name: asi-code-health
+    rules:
+      - alert: HealthCheckFailing
+        expr: asi_code_health_status != 1
+        for: 1m
+        labels:
+          severity: warning
+          team: platform
+          service: asi-code
+        annotations:
+          summary: "Health check failing"
+          description: "Health check status is {{ $value }} on {{ $labels.instance }}"
+          runbook_url: "https://docs.asi-code.com/runbooks/health-check"
+
+      - alert: ComponentHealthDegraded
+        expr: asi_code_health_checks_degraded > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "Component health degraded"
+          description: "{{ $value }} components are in degraded state"
+          runbook_url: "https://docs.asi-code.com/runbooks/component-health"
+
+      - alert: ComponentHealthUnhealthy
+        expr: asi_code_health_checks_unhealthy > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "Component health unhealthy"
+          description: "{{ $value }} components are unhealthy"
+          runbook_url: "https://docs.asi-code.com/runbooks/component-health"
+
+  # Dependency Alerts
+  - name: asi-code-dependencies
+    rules:
+      - alert: DatabaseConnectionFailure
+        expr: asi_code_database_connections_failed_total > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+          service: asi-code
+        annotations:
+          summary: "Database connection failure"
+          description: "Database connections are failing"
+          runbook_url: "https://docs.asi-code.com/runbooks/database-connection"
+
+      - alert: ExternalServiceDown
+        expr: asi_code_external_service_up == 0
+        for: 2m
+        labels:
+          severity: warning
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "External service down"
+          description: "External service {{ $labels.service_name }} is down"
+          runbook_url: "https://docs.asi-code.com/runbooks/external-service"
+
+  # Capacity Planning Alerts
+  - name: asi-code-capacity
+    rules:
+      - alert: HighConnectionCount
+        expr: asi_code_active_connections_count > 500
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: asi-code
+        annotations:
+          summary: "High connection count"
+          description: "Active connections: {{ $value }}"
+          runbook_url: "https://docs.asi-code.com/runbooks/high-connections"
+
+      - alert: QueueDepthHigh
+        expr: asi_code_queue_depth_count > 100
+        for: 3m
+        labels:
+          severity: warning
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "High queue depth"
+          description: "{{ $labels.queue_type }} queue depth is {{ $value }}"
+          runbook_url: "https://docs.asi-code.com/runbooks/queue-depth"
+
+      - alert: CacheHitRateLow
+        expr: asi_code_cache_hit_rate_percent < 80
+        for: 10m
+        labels:
+          severity: warning
+          team: engineering
+          service: asi-code
+        annotations:
+          summary: "Low cache hit rate"
+          description: "{{ $labels.cache_type }} cache hit rate is {{ $value }}%"
+          runbook_url: "https://docs.asi-code.com/runbooks/cache-hit-rate"

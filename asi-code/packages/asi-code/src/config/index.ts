@@ -14,7 +14,7 @@ export {
 } from './config-manager.js';
 
 // Configuration types
-export {
+export type {
   ASICodeConfig,
   BaseConfig,
   EnvironmentConfig,
@@ -218,13 +218,9 @@ export class ConfigManagerSubsystem extends BaseSubsystem {
     });
   }
 
-  async initialize(options: ConfigFactoryOptions): Promise<void> {
-    if (this.status !== 'uninitialized') {
-      throw new Error('Config Manager subsystem is already initialized');
-    }
-
+  protected async onInitialize(config: Record<string, any>): Promise<void> {
     try {
-      this.configManager = await ConfigSystemFactory.createStandalone(options);
+      this.configManager = await ConfigSystemFactory.createStandalone(config);
       
       // Forward events
       this.configManager.on('error', (error) => this.emit('error', error));
@@ -232,13 +228,23 @@ export class ConfigManagerSubsystem extends BaseSubsystem {
       this.configManager.on('updated', (event) => this.emit('config.updated', event));
       this.configManager.on('validated', (event) => this.emit('config.validated', event));
       
-      this.status = 'ready';
-      this.emit('initialized', { options });
+      this.emit('initialized', { config });
     } catch (error) {
-      this.status = 'error';
       this.emit('error', error);
       throw error;
     }
+  }
+
+  protected async onStart(): Promise<void> {
+    this.emit('started');
+  }
+
+  protected async onStop(): Promise<void> {
+    this.emit('stopped');
+  }
+
+  async initialize(options: ConfigFactoryOptions): Promise<void> {
+    return super.initialize(options);
   }
 
   async start(): Promise<void> {

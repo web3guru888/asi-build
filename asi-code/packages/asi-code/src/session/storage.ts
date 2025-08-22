@@ -474,10 +474,14 @@ export function createSQLiteSessionStorage(dbPath?: string): SessionStorage {
 }
 
 // Automatic storage selection based on environment
-export function createSessionStorage(type?: 'memory' | 'sqlite', options?: { dbPath?: string }): SessionStorage {
+export function createSessionStorage(type?: 'memory' | 'file' | 'sqlite' | 'postgres' | 'mongodb' | 'redis', options?: { dbPath?: string }): SessionStorage {
   switch (type) {
     case 'sqlite':
+    case 'postgres':
+    case 'mongodb':
       return new SQLiteSessionStorage(options?.dbPath);
+    case 'file':
+    case 'redis':
     case 'memory':
     default:
       return new MemorySessionStorage();

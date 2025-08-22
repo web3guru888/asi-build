@@ -24,6 +24,9 @@ export interface ASIServer extends EventEmitter {
   stop(): Promise<void>;
   isRunning(): boolean;
   sseManager: SSEConnectionManager;
+  getSessionManager(): SessionManager;
+  getProviderManager(): ProviderManager;
+  getToolManager(): ToolManager;
 }
 
 // SSE Connection Manager
@@ -73,6 +76,7 @@ export class DefaultASIServer extends EventEmitter implements ASIServer {
   public config: ServerConfig;
   public app: Hono;
   public sseManager = new SSEConnectionManager();
+  public wsServer?: import('./websocket/websocket-server.js').WSServer;
   
   private server: any = null;
   private sessionManager: SessionManager;
@@ -92,12 +96,28 @@ export class DefaultASIServer extends EventEmitter implements ASIServer {
     this.toolManager = toolManager;
     this.app = new Hono();
     
-    this.setupServer();
+    // Setup server asynchronously
+    this.setupServer().catch(error => {
+      console.error('Failed to setup server:', error);
+      this.emit('error', error);
+    });
   }
 
-  private setupServer(): void {
+  private async setupServer(): Promise<void> {
     setupMiddleware(this.app, this.config);
     setupRoutes(this.app, this);
+    
+    // Setup WebSocket server if enabled
+    if (this.config.websocket?.enabled) {
+      try {
+        const { WSServer } = await import('./websocket/websocket-server.js');
+        this.wsServer = new WSServer(this);
+        this.wsServer.setupRoutes(this.app);
+        console.log('WebSocket server initialized');
+      } catch (error) {
+        console.error('Failed to initialize WebSocket server:', error);
+      }
+    }
   }
 
   // Getters for route handlers to access dependencies
@@ -135,6 +155,13 @@ export class DefaultASIServer extends EventEmitter implements ASIServer {
       this.server.close();
       this.server = null;
       this.sseManager.cleanup();
+      
+      // Cleanup WebSocket server
+      if (this.wsServer) {
+        this.wsServer.cleanup();
+        this.wsServer = undefined;
+      }
+      
       this.emit('server:stopped');
     }
   }
@@ -184,5 +211,53 @@ export const defaultServerConfig: ServerConfig = {
   static: {
     enabled: false,
     path: './public'
+  },
+  websocket: {
+    enabled: true,
+    path: '/ws',
+    maxConnections: 1000,
+    heartbeat: {
+      enabled: true,
+      interval: 30000,
+      timeout: 60000,
+    },
+    compression: {
+      enabled: true,
+      threshold: 1024,
+      level: 6,
+    },
+    auth: {
+      enabled: false,
+      type: 'jwt',
+      timeout: 300,
+    },
+    rateLimiting: {
+      enabled: true,
+      messagesPerSecond: 10,
+      messagesPerMinute: 100,
+      bytesPerSecond: 10240,
+    },
+    messageQueue: {
+      enabled: true,
+      maxSize: 1000,
+      persistence: false,
+      ttl: 3600,
+    },
+    channels: {
+      enabled: true,
+      maxChannelsPerConnection: 50,
+      channelNamePattern: '^[a-zA-Z0-9_-]{1,64}$',
+    },
+    binary: {
+      enabled: true,
+      maxSize: 10485760,
+      allowedTypes: ['application/octet-stream', 'application/json', 'text/plain'],
+    },
+    reconnection: {
+      enabled: true,
+      maxRetries: 5,
+      backoffMultiplier: 1.5,
+      maxBackoffTime: 30000,
+    },
   }
 };

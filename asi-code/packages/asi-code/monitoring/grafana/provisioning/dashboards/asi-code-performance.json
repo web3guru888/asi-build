@@ -1,0 +1,222 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "ASI-Code Performance Dashboard",
+    "tags": ["asi-code", "performance"],
+    "timezone": "browser",
+    "refresh": "10s",
+    "time": {
+      "from": "now-30m",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Response Time Heatmap",
+        "type": "heatmap",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(asi_code_http_request_duration_seconds_bucket[5m])",
+            "legendFormat": "{{le}}",
+            "refId": "A"
+          }
+        ],
+        "heatmap": {
+          "bucketSize": 0.1,
+          "bucketOffset": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "CPU Usage by Component",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "asi_code_process_cpu_usage_percent",
+            "legendFormat": "Process CPU",
+            "refId": "A"
+          },
+          {
+            "expr": "asi_code_system_cpu_usage_percent",
+            "legendFormat": "System CPU",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "CPU %",
+            "unit": "percent",
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Memory Usage Breakdown",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "asi_code_process_memory_usage_bytes{type=\"heap_used\"}",
+            "legendFormat": "Heap Used",
+            "refId": "A"
+          },
+          {
+            "expr": "asi_code_process_memory_usage_bytes{type=\"heap_total\"}",
+            "legendFormat": "Heap Total",
+            "refId": "B"
+          },
+          {
+            "expr": "asi_code_process_memory_usage_bytes{type=\"rss\"}",
+            "legendFormat": "RSS",
+            "refId": "C"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Memory",
+            "unit": "bytes"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Event Loop Delay",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "performance_event_loop_delay",
+            "legendFormat": "Event Loop Delay",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Delay",
+            "unit": "ms"
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 10,
+            "colorMode": "critical",
+            "op": "gt"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Garbage Collection",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(performance_gc_total_time[5m])",
+            "legendFormat": "GC Time Rate",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(performance_gc_count[5m])",
+            "legendFormat": "GC Count Rate",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Rate",
+            "unit": "short"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Active Requests",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 8, "x": 16, "y": 16},
+        "targets": [
+          {
+            "expr": "performance_active_requests",
+            "legendFormat": "Active Requests",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Count",
+            "unit": "short"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Tool Execution Performance",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(asi_code_tool_execution_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{tool_name}} P95",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Duration",
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Provider Latency",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(asi_code_provider_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{provider_name}} - {{model}} P95",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Duration",
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Throughput by Operation",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 30},
+        "targets": [
+          {
+            "expr": "rate(asi_code_tool_executions_total[5m])",
+            "legendFormat": "Tools: {{tool_name}}",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(asi_code_provider_requests_total[5m])",
+            "legendFormat": "Providers: {{provider_name}}",
+            "refId": "B"
+          },
+          {
+            "expr": "rate(asi_code_kenny_operations_total[5m])",
+            "legendFormat": "Kenny: {{subsystem}}",
+            "refId": "C"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Operations/sec",
+            "unit": "ops"
+          }
+        ]
+      }
+    ]
+  }
+}

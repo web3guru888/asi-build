@@ -1,0 +1,424 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "ASI-Code SLO/SLI Dashboard",
+    "tags": ["asi-code", "slo", "sli", "reliability"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "SLO Summary",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+        "collapsed": false
+      },
+      {
+        "id": 2,
+        "title": "Availability SLO",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 1},
+        "targets": [
+          {
+            "expr": "asi_code_sli_availability_percent",
+            "legendFormat": "Current Availability",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 99.0},
+                {"color": "green", "value": 99.9}
+              ]
+            },
+            "unit": "percent",
+            "decimals": 3
+          }
+        },
+        "pluginVersion": "8.0.0"
+      },
+      {
+        "id": 3,
+        "title": "Latency SLO (P95)",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 1},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, asi_code_sli_latency_seconds)",
+            "legendFormat": "P95 Latency",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 0.2},
+                {"color": "red", "value": 1.0}
+              ]
+            },
+            "unit": "s",
+            "decimals": 3
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Error Rate SLO",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 8, "x": 16, "y": 1},
+        "targets": [
+          {
+            "expr": "asi_code_sli_error_rate_percent",
+            "legendFormat": "Current Error Rate",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 0.1},
+                {"color": "red", "value": 1.0}
+              ]
+            },
+            "unit": "percent",
+            "decimals": 3
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "SLO Compliance Over Time",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 7},
+        "targets": [
+          {
+            "expr": "asi_code_sli_availability_percent",
+            "legendFormat": "Availability (Target: 99.9%)",
+            "refId": "A"
+          },
+          {
+            "expr": "100 - asi_code_sli_error_rate_percent",
+            "legendFormat": "Success Rate (Target: 99.9%)",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Percentage",
+            "unit": "percent",
+            "min": 99.0,
+            "max": 100
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 99.9,
+            "colorMode": "critical",
+            "op": "lt",
+            "fill": true,
+            "fillColor": "rgba(255, 255, 255, 0.1)"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Error Budget",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 15},
+        "collapsed": false
+      },
+      {
+        "id": 7,
+        "title": "Error Budget Consumption",
+        "type": "bargauge",
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "(1 - asi_code_sli_availability_percent / 100) / 0.001 * 100",
+            "legendFormat": "Availability Error Budget Used",
+            "refId": "A"
+          },
+          {
+            "expr": "asi_code_sli_error_rate_percent / 0.1 * 100",
+            "legendFormat": "Error Rate Budget Used",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 50},
+                {"color": "red", "value": 80}
+              ]
+            },
+            "unit": "percent",
+            "max": 100
+          }
+        },
+        "options": {
+          "orientation": "horizontal",
+          "displayMode": "gradient"
+        }
+      },
+      {
+        "id": 8,
+        "title": "Error Budget Burn Rate",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(asi_code_errors_total[1h]) / (0.001 * rate(asi_code_http_requests_total[1h]))",
+            "legendFormat": "1h Burn Rate",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(asi_code_errors_total[6h]) / (0.001 * rate(asi_code_http_requests_total[6h]))",
+            "legendFormat": "6h Burn Rate",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Burn Rate",
+            "unit": "short"
+          }
+        ],
+        "thresholds": [
+          {
+            "value": 1,
+            "colorMode": "critical",
+            "op": "gt"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Service Level Indicators",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 22},
+        "collapsed": false
+      },
+      {
+        "id": 10,
+        "title": "Request Success Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 23},
+        "targets": [
+          {
+            "expr": "rate(asi_code_http_requests_total{status_code!~\"5..\"}[5m]) / rate(asi_code_http_requests_total[5m]) * 100",
+            "legendFormat": "Success Rate",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Success Rate %",
+            "unit": "percent",
+            "min": 99.0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Response Time Percentiles",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 23},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(asi_code_http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P50",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(asi_code_http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(asi_code_http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P99",
+            "refId": "C"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Response Time",
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Throughput",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 23},
+        "targets": [
+          {
+            "expr": "rate(asi_code_http_requests_total[5m])",
+            "legendFormat": "Requests/sec",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Requests/sec",
+            "unit": "reqps"
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "Component SLIs",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 31},
+        "collapsed": false
+      },
+      {
+        "id": 14,
+        "title": "Session Success Rate",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 32},
+        "targets": [
+          {
+            "expr": "rate(asi_code_sessions_closed_total{reason=\"completed\"}[5m]) / rate(asi_code_sessions_closed_total[5m]) * 100",
+            "legendFormat": "Session Success Rate",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Success Rate %",
+            "unit": "percent",
+            "min": 95.0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "title": "Tool Execution Success Rate",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 32},
+        "targets": [
+          {
+            "expr": "rate(asi_code_tool_executions_total{status=\"success\"}[5m]) / rate(asi_code_tool_executions_total[5m]) * 100",
+            "legendFormat": "Tool Success Rate",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Success Rate %",
+            "unit": "percent",
+            "min": 95.0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "title": "Provider Success Rate",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 8, "x": 16, "y": 32},
+        "targets": [
+          {
+            "expr": "rate(asi_code_provider_requests_total{status=\"success\"}[5m]) / rate(asi_code_provider_requests_total[5m]) * 100",
+            "legendFormat": "{{provider_name}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Success Rate %",
+            "unit": "percent",
+            "min": 95.0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 17,
+        "title": "SLO Alerts",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 38},
+        "collapsed": false
+      },
+      {
+        "id": 18,
+        "title": "Active SLO Violations",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 39},
+        "targets": [
+          {
+            "expr": "ALERTS{alertname=~\".*SLO.*\"}",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "alertstate"},
+              "properties": [
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-background"
+                },
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "thresholds"
+                  }
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "steps": [
+                      {"color": "green", "value": null},
+                      {"color": "red", "value": 1}
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "options": {
+          "showHeader": true
+        }
+      }
+    ]
+  }
+}

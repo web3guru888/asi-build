@@ -396,7 +396,7 @@ export class ToolRegistry extends BaseSubsystem {
       const errorMessage = error instanceof Error ? error.message : String(error);
       
       // Update execution info
-      executionInfo.status = error.message === 'Execution timeout' ? 'timeout' : 'failed';
+      executionInfo.status = errorMessage === 'Execution timeout' ? 'timeout' : 'failed';
       executionInfo.endTime = new Date();
       executionInfo.error = errorMessage;
 

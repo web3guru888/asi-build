@@ -85,7 +85,7 @@ async function testSession() {
   try {
     console.log('\n💾 Testing Session Management...');
     const { DefaultSessionManager } = await import('./src/session/session-manager.js');
-    const { MemorySessionStorage } = await import('./src/session/session-storage.js');
+    const { MemorySessionStorage } = await import('./src/session/storage.js');
     
     const storage = new MemorySessionStorage();
     const manager = new DefaultSessionManager(storage);
@@ -93,11 +93,11 @@ async function testSession() {
     
     // Create a test session
     const session = await manager.createSession('test-user');
-    console.log('📋 Session created:', session.id);
+    console.log('📋 Session created:', session.data.id);
     
     // Clean up
-    await manager.destroySession(session.id);
-    console.log('🗑️ Session destroyed');
+    await manager.deleteSession(session.data.id);
+    console.log('🗑️ Session deleted');
     
   } catch (error) {
     console.error('❌ Error in Session test:', error.message);

@@ -26,7 +26,6 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@opencode/*": ["packages/opencode/src/*"],
       "@asi-code/*": ["packages/asi-code/src/*"],
       "@types/*": ["src/types/*"],
       "@utils/*": ["src/utils/*"],
@@ -39,7 +38,6 @@
   },
   "include": [
     "src/**/*",
-    "packages/**/*",
     "*.ts",
     "*.tsx"
   ],
@@ -48,16 +46,9 @@
     "dist",
     "archive",
     "docs",
+    "packages",
     "**/*.test.ts",
     "**/*.spec.ts"
-  ],
-  "references": [
-    {
-      "path": "./packages/opencode"
-    },
-    {
-      "path": "./packages/asi-code"
-    }
   ],
   "ts-node": {
     "esm": true,

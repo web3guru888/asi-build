@@ -199,6 +199,54 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
       enabled: true,
       path: './public',
       maxAge: 86400000 // 1 day
+    },
+    websocket: {
+      enabled: true,
+      path: '/ws',
+      maxConnections: 1000,
+      heartbeat: {
+        enabled: true,
+        interval: 30000, // 30 seconds
+        timeout: 5000 // 5 seconds
+      },
+      compression: {
+        enabled: true,
+        threshold: 1024,
+        level: 6
+      },
+      auth: {
+        enabled: false,
+        type: 'jwt',
+        timeout: 300
+      },
+      rateLimiting: {
+        enabled: true,
+        messagesPerSecond: 10,
+        messagesPerMinute: 100,
+        bytesPerSecond: 1024
+      },
+      messageQueue: {
+        enabled: true,
+        maxSize: 1000,
+        persistence: false,
+        ttl: 300
+      },
+      channels: {
+        enabled: true,
+        maxChannelsPerConnection: 10,
+        channelNamePattern: '^[a-zA-Z0-9_-]+$'
+      },
+      binary: {
+        enabled: false,
+        maxSize: 1048576, // 1MB
+        allowedTypes: ['application/octet-stream']
+      },
+      reconnection: {
+        enabled: true,
+        maxRetries: 5,
+        backoffMultiplier: 1.5,
+        maxBackoffTime: 30000
+      }
     }
   },
 
@@ -243,6 +291,78 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
       interval: 60, // 1 hour
       retention: 7, // 7 days
       location: './backups'
+    }
+  },
+
+  // Database configuration  
+  database: {
+    host: process.env.DATABASE_HOST || 'localhost',
+    port: parseInt(process.env.DATABASE_PORT || '5432'),
+    database: process.env.DATABASE_NAME || 'asicode',
+    username: process.env.DATABASE_USER || 'asicode',
+    password: process.env.DATABASE_PASSWORD || 'password',
+    pool: {
+      min: 2,
+      max: 20,
+      acquireTimeoutMillis: 30000,
+      createTimeoutMillis: 30000,
+      destroyTimeoutMillis: 5000,
+      idleTimeoutMillis: 30000,
+      reapIntervalMillis: 1000,
+      createRetryIntervalMillis: 100
+    },
+    retry: {
+      maxAttempts: 3,
+      initialDelayMs: 1000,
+      maxDelayMs: 10000,
+      exponentialBackoff: true
+    },
+    migrations: {
+      directory: './src/database/migrations',
+      tableName: 'knex_migrations',
+      extension: '.ts',
+      loadExtensions: ['.ts', '.js'],
+      disableTransactions: false,
+      sortDirsSeparately: false
+    },
+    seeds: {
+      directory: './src/database/seeds',
+      loadExtensions: ['.ts', '.js'],
+      recursive: true
+    },
+    audit: {
+      enabled: true,
+      tableName: 'audit_log',
+      trackChanges: true,
+      trackDeletes: true,
+      excludeTables: ['knex_migrations']
+    },
+    softDelete: {
+      enabled: true,
+      columnName: 'deleted_at',
+      defaultValue: null,
+      deletedValue: new Date()
+    },
+    monitoring: {
+      enabled: true,
+      slowQueryThreshold: 1000,
+      logQueries: false,
+      trackMetrics: true
+    },
+    backup: {
+      enabled: true,
+      schedule: '0 2 * * *',
+      retention: 30,
+      location: './backups/database',
+      compression: true
+    },
+    cleanup: {
+      enabled: true,
+      schedule: '0 3 * * 0',
+      retentionPeriods: {
+        audit_log: 365,
+        sessions: 30
+      }
     }
   },
 
@@ -390,8 +510,8 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
     },
     auth: {
       enabled: true,
-      secret: 'production-secret',
-      algorithm: 'HS256',
+      type: 'jwt',
+      secretKey: 'production-secret',
       expiresIn: '24h'
     },
     middleware: {
@@ -406,8 +526,55 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
     },
     static: {
       enabled: false,
-      path: './public',
-      options: {}
+      path: './public'
+    },
+    websocket: {
+      enabled: true,
+      path: '/ws',
+      maxConnections: 500, // More restrictive in production
+      heartbeat: {
+        enabled: true,
+        interval: 30000,
+        timeout: 10000
+      },
+      compression: {
+        enabled: true,
+        threshold: 512,
+        level: 9
+      },
+      auth: {
+        enabled: true,
+        type: 'jwt',
+        timeout: 300
+      },
+      rateLimiting: {
+        enabled: true,
+        messagesPerSecond: 5,
+        messagesPerMinute: 50,
+        bytesPerSecond: 512
+      },
+      messageQueue: {
+        enabled: true,
+        maxSize: 500,
+        persistence: true,
+        ttl: 600
+      },
+      channels: {
+        enabled: false,
+        maxChannelsPerConnection: 5,
+        channelNamePattern: '^[a-zA-Z0-9_-]+$'
+      },
+      binary: {
+        enabled: false,
+        maxSize: 1048576, // 1MB
+        allowedTypes: ['application/octet-stream']
+      },
+      reconnection: {
+        enabled: true,
+        maxRetries: 3,
+        backoffMultiplier: 2.0,
+        maxBackoffTime: 60000
+      }
     }
   },
 
@@ -441,6 +608,17 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
       database: 'asi_code_prod',
       maxConnections: 50,
       connectionTimeout: 30000
+    },
+    encryption: {
+      enabled: true,
+      algorithm: 'aes-256-gcm',
+      keyFile: '/etc/asi-code/encryption.key'
+    },
+    backup: {
+      enabled: true,
+      interval: 60, // minutes
+      retention: 30, // days
+      location: '/backup/asi-code'
     }
   },
 
@@ -459,14 +637,14 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
       }
     },
     encryption: {
-      enabled: true,
       algorithm: 'aes-256-gcm',
-      keyDerivation: 'pbkdf2'
+      keySize: 256,
+      keyRotationInterval: 168 // weekly
     },
     audit: {
       enabled: true,
-      retention: 90,
-      format: 'json'
+      logLevel: 'detailed',
+      retention: 90
     }
   },
 
@@ -551,18 +729,68 @@ export const TEST_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
     },
     auth: {
       enabled: false
+    },
+    websocket: {
+      enabled: false,
+      path: '/ws',
+      maxConnections: 100,
+      heartbeat: {
+        enabled: false,
+        interval: 30000,
+        timeout: 5000
+      },
+      compression: {
+        enabled: false,
+        threshold: 1024,
+        level: 1
+      },
+      auth: {
+        enabled: false,
+        type: 'jwt',
+        timeout: 60
+      },
+      rateLimiting: {
+        enabled: false,
+        messagesPerSecond: 100,
+        messagesPerMinute: 1000,
+        bytesPerSecond: 10240
+      },
+      messageQueue: {
+        enabled: false,
+        maxSize: 100,
+        persistence: false,
+        ttl: 60
+      },
+      channels: {
+        enabled: false,
+        maxChannelsPerConnection: 1,
+        channelNamePattern: '^test.*'
+      },
+      binary: {
+        enabled: false,
+        maxSize: 1048576, // 1MB
+        allowedTypes: ['application/octet-stream']
+      },
+      reconnection: {
+        enabled: false,
+        maxRetries: 1,
+        backoffMultiplier: 1.0,
+        maxBackoffTime: 1000
+      }
     }
   },
 
   storage: {
     provider: 'memory',
     encryption: {
-      enabled: false
+      enabled: false,
+      algorithm: 'aes-256-gcm',
+      keyFile: ''
     },
     backup: {
       enabled: false,
-      interval: '24h',
-      retention: '7d'
+      interval: 1440, // minutes (24h)
+      retention: 7 // days
     }
   },
 
@@ -576,6 +804,12 @@ export const TEST_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
       enabled: false,
       provider: 'memory',
       ttl: 300000
+    },
+    optimization: {
+      lazyLoading: false,
+      preloadModules: [],
+      memoryThreshold: 512,
+      gcStrategy: 'default'
     }
   },
 

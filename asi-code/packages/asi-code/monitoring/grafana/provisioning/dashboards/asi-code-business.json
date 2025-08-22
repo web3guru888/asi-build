@@ -1,0 +1,359 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "ASI-Code Business Metrics Dashboard",
+    "tags": ["asi-code", "business", "metrics"],
+    "timezone": "browser",
+    "refresh": "1m",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Session Overview",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+        "collapsed": false
+      },
+      {
+        "id": 2,
+        "title": "Total Sessions Created",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 1},
+        "targets": [
+          {
+            "expr": "increase(asi_code_sessions_created_total[24h])",
+            "legendFormat": "Sessions (24h)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Average Session Duration",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 1},
+        "targets": [
+          {
+            "expr": "avg(rate(asi_code_session_duration_seconds_sum[1h]) / rate(asi_code_session_duration_seconds_count[1h]))",
+            "legendFormat": "Avg Duration",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Session Success Rate",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 1},
+        "targets": [
+          {
+            "expr": "rate(asi_code_sessions_closed_total{reason=\"completed\"}[1h]) / rate(asi_code_sessions_closed_total[1h]) * 100",
+            "legendFormat": "Success Rate",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 80},
+                {"color": "green", "value": 95}
+              ]
+            },
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Active Sessions by Type",
+        "type": "piechart",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 1},
+        "targets": [
+          {
+            "expr": "asi_code_sessions_active",
+            "legendFormat": "{{session_type}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Session Activity Timeline",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 5},
+        "targets": [
+          {
+            "expr": "rate(asi_code_sessions_created_total[5m])",
+            "legendFormat": "Created - {{session_type}}",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(asi_code_sessions_closed_total[5m])",
+            "legendFormat": "Closed - {{reason}}",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Sessions/sec",
+            "unit": "short"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Tool Usage Analytics",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 13},
+        "collapsed": false
+      },
+      {
+        "id": 8,
+        "title": "Most Used Tools",
+        "type": "barchart",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14},
+        "targets": [
+          {
+            "expr": "topk(10, increase(asi_code_tool_executions_total[24h]))",
+            "legendFormat": "{{tool_name}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Tool Success Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14},
+        "targets": [
+          {
+            "expr": "rate(asi_code_tool_executions_total{status=\"success\"}[5m]) / rate(asi_code_tool_executions_total[5m]) * 100",
+            "legendFormat": "{{tool_name}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Success Rate %",
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Tool Chain Analysis",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 22},
+        "targets": [
+          {
+            "expr": "rate(asi_code_tool_chains_total[5m])",
+            "legendFormat": "Chain: {{chain_pattern}} ({{chain_length}} tools)",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Chains/sec",
+            "unit": "short"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Provider Analytics",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 30},
+        "collapsed": false
+      },
+      {
+        "id": 12,
+        "title": "Provider Usage Distribution",
+        "type": "piechart",
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 31},
+        "targets": [
+          {
+            "expr": "increase(asi_code_provider_requests_total[24h])",
+            "legendFormat": "{{provider_name}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "Provider Costs",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 31},
+        "targets": [
+          {
+            "expr": "increase(asi_code_provider_costs_total{cost_type=\"cost\"}[24h])",
+            "legendFormat": "{{provider}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "currencyUSD"
+          }
+        }
+      },
+      {
+        "id": 14,
+        "title": "Token Usage",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 8, "x": 16, "y": 31},
+        "targets": [
+          {
+            "expr": "rate(asi_code_provider_costs_total{cost_type=\"tokens\"}[5m])",
+            "legendFormat": "{{provider}} - {{model}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Tokens/sec",
+            "unit": "short"
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "title": "Kenny Subsystem Activity",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 37},
+        "collapsed": false
+      },
+      {
+        "id": 16,
+        "title": "Kenny Operations by Subsystem",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 38},
+        "targets": [
+          {
+            "expr": "rate(asi_code_kenny_operations_total[5m])",
+            "legendFormat": "{{subsystem}} - {{operation_type}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Operations/sec",
+            "unit": "short"
+          }
+        ]
+      },
+      {
+        "id": 17,
+        "title": "Kenny Communication Patterns",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 38},
+        "targets": [
+          {
+            "expr": "rate(asi_code_kenny_communication_total[5m])",
+            "legendFormat": "{{from_subsystem}} → {{to_subsystem}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Messages/sec",
+            "unit": "short"
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "title": "User Engagement",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 46},
+        "collapsed": false
+      },
+      {
+        "id": 19,
+        "title": "User Sessions",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 47},
+        "targets": [
+          {
+            "expr": "rate(asi_code_user_engagement_duration_seconds_count[5m])",
+            "legendFormat": "{{user_type}} - {{engagement_type}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Sessions/sec",
+            "unit": "short"
+          }
+        ]
+      },
+      {
+        "id": 20,
+        "title": "Resource Efficiency",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 47},
+        "targets": [
+          {
+            "expr": "asi_code_resource_efficiency_percent",
+            "legendFormat": "{{resource_type}} - {{component}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Efficiency %",
+            "unit": "percent"
+          }
+        ]
+      },
+      {
+        "id": 21,
+        "title": "Cache Hit Rates",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 8, "x": 16, "y": 47},
+        "targets": [
+          {
+            "expr": "asi_code_cache_hit_rate_percent",
+            "legendFormat": "{{cache_type}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Hit Rate %",
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          }
+        ]
+      }
+    ]
+  }
+}

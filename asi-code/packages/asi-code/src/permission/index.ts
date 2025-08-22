@@ -40,6 +40,8 @@ export interface PermissionManager extends EventEmitter {
   assignRole(userId: string, roleId: string): Promise<void>;
   checkPermission(context: PermissionContext, permissionId: string): Promise<boolean>;
   getUserPermissions(userId: string): Promise<Permission[]>;
+  initialize(config?: Record<string, any>): Promise<void>;
+  shutdown(): Promise<void>;
   cleanup(): Promise<void>;
 }
 
@@ -101,6 +103,16 @@ export class DefaultPermissionManager extends EventEmitter implements Permission
     }
 
     return userPermissions;
+  }
+
+  async initialize(config?: Record<string, any>): Promise<void> {
+    // Basic initialization - no complex setup needed
+    this.emit('initialized', { config });
+  }
+
+  async shutdown(): Promise<void> {
+    await this.cleanup();
+    this.emit('shutdown');
   }
 
   async cleanup(): Promise<void> {
