@@ -1,0 +1,518 @@
+name: 📚 Documentation Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - '**.md'
+      - 'API.md'
+      - 'src/server/routes.ts'
+      - 'docs/**'
+      - 'scripts/validate-api-docs.js'
+      - 'scripts/test-examples.js'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - '**.md'
+      - 'API.md'
+      - 'src/server/routes.ts'
+      - 'docs/**'
+      - 'scripts/validate-api-docs.js'
+      - 'scripts/test-examples.js'
+  workflow_dispatch:
+    inputs:
+      validation_type:
+        description: 'Type of validation to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - api-docs
+        - examples
+        - coverage
+
+env:
+  NODE_ENV: test
+
+jobs:
+  # Documentation Lint and Format Check
+  docs-lint:
+    name: 📝 Documentation Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📋 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 🔧 Install dependencies
+        run: |
+          npm ci
+          sudo apt-get update
+          sudo apt-get install -y aspell aspell-en
+
+      - name: 📝 Check markdown formatting
+        run: npx prettier --check "**/*.md"
+
+      - name: 🔍 Lint markdown files
+        run: |
+          npx markdownlint-cli2 "**/*.md" --config .markdownlint.json || true
+
+      - name: ✏️ Spell check documentation
+        run: |
+          # Create basic word list for technical terms
+          echo -e "ASI\nAPI\nRESTful\nJSON\nHTTP\nWebSocket\nTypeScript\nJavaScript\nKenny\nAnthropic\nClaude" > .aspell.en.pws
+          
+          # Check main documentation files
+          find . -name "*.md" -not -path "./node_modules/*" -exec aspell --mode=markdown --personal=.aspell.en.pws list {} \; | sort -u > spelling-errors.txt
+          
+          if [ -s spelling-errors.txt ]; then
+            echo "⚠️ Potential spelling errors found:"
+            cat spelling-errors.txt
+            echo "Please review these terms. Add legitimate technical terms to .aspell.en.pws"
+          else
+            echo "✅ No spelling errors detected"
+          fi
+
+  # API Documentation Validation
+  api-docs-validation:
+    name: 🔗 API Documentation Validation
+    runs-on: ubuntu-latest
+    if: github.event.inputs.validation_type == 'all' || github.event.inputs.validation_type == 'api-docs' || github.event.inputs.validation_type == ''
+    steps:
+      - name: 🏗️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 📦 Install dependencies
+        run: bun install
+
+      - name: 🏗️ Build project
+        run: bun run build
+
+      - name: 🔍 Validate API documentation
+        run: node scripts/validate-api-docs.js
+
+      - name: 📊 Upload API validation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-validation-report
+          path: docs/validation-reports/api-validation-*.json
+          retention-days: 30
+
+      - name: 💬 Comment validation results on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Find the latest validation report
+            const reportsDir = 'docs/validation-reports';
+            try {
+              const files = fs.readdirSync(reportsDir);
+              const reportFiles = files.filter(f => f.startsWith('api-validation-'));
+              
+              if (reportFiles.length > 0) {
+                const latestReport = reportFiles.sort().pop();
+                const reportPath = path.join(reportsDir, latestReport);
+                const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+                
+                const comment = `## 🔗 API Documentation Validation Results
+            
+            **Summary:**
+            - 📄 Documented Endpoints: ${report.summary.documentedEndpoints}
+            - ⚙️ Implemented Endpoints: ${report.summary.implementedEndpoints}  
+            - ❌ Errors: ${report.summary.errors}
+            - ⚠️ Warnings: ${report.summary.warnings}
+            
+            ${report.summary.errors === 0 ? '✅ **All API documentation is in sync!**' : '❌ **API documentation validation failed**'}
+            
+            ${report.errors.length > 0 ? `
+            **Errors:**
+            ${report.errors.map(e => `- ${e}`).join('\n')}
+            ` : ''}
+            
+            ${report.warnings.length > 0 ? `
+            **Warnings:**  
+            ${report.warnings.slice(0, 5).map(w => `- ${w}`).join('\n')}
+            ${report.warnings.length > 5 ? `\n... and ${report.warnings.length - 5} more` : ''}
+            ` : ''}
+            
+            *Report generated at ${report.timestamp}*`;
+                
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              }
+            } catch (error) {
+              console.log('Could not generate validation comment:', error);
+            }
+
+  # Code Examples Testing
+  examples-testing:
+    name: 🧪 Code Examples Testing
+    runs-on: ubuntu-latest
+    if: github.event.inputs.validation_type == 'all' || github.event.inputs.validation_type == 'examples' || github.event.inputs.validation_type == ''
+    steps:
+      - name: 🏗️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 📦 Install dependencies
+        run: bun install
+
+      - name: 🏗️ Build project
+        run: bun run build
+
+      - name: 🔧 Install testing tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+
+      - name: 🧪 Test documentation examples
+        run: node scripts/test-examples.js
+        timeout-minutes: 10
+
+      - name: 📊 Upload examples test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: examples-test-report
+          path: docs/validation-reports/examples-test-*.json
+          retention-days: 30
+
+      - name: 💬 Comment test results on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Find the latest test report
+            const reportsDir = 'docs/validation-reports';
+            try {
+              const files = fs.readdirSync(reportsDir);
+              const reportFiles = files.filter(f => f.startsWith('examples-test-'));
+              
+              if (reportFiles.length > 0) {
+                const latestReport = reportFiles.sort().pop();
+                const reportPath = path.join(reportsDir, latestReport);
+                const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+                
+                const comment = `## 🧪 Code Examples Testing Results
+            
+            **Summary:**
+            - 📝 Total Code Blocks: ${report.summary.total}
+            - ✅ Passed: ${report.summary.passed}
+            - ❌ Failed: ${report.summary.failed}
+            - ⚠️ Skipped: ${report.summary.skipped}
+            - ℹ️ Expected Errors: ${report.summary.expected_error || 0}
+            
+            ${report.summary.failed === 0 ? '✅ **All testable code examples are working!**' : '❌ **Some code examples failed**'}
+            
+            **By Language:**
+            ${Object.entries(report.byType).map(([type, stats]) => 
+              `- **${type}**: ${stats.passed}✅ ${stats.failed}❌ ${stats.skipped}⚠️`
+            ).join('\n')}
+            
+            ${report.failedTests.length > 0 ? `
+            **Failed Tests:**
+            ${report.failedTests.slice(0, 3).map(test => 
+              `- \`${test.file}:${test.line}\` (${test.language}): ${test.error}`
+            ).join('\n')}
+            ${report.failedTests.length > 3 ? `\n... and ${report.failedTests.length - 3} more` : ''}
+            ` : ''}
+            
+            *Report generated at ${report.timestamp}*`;
+                
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              }
+            } catch (error) {
+              console.log('Could not generate test comment:', error);
+            }
+
+  # Documentation Coverage Analysis
+  docs-coverage:
+    name: 📈 Documentation Coverage
+    runs-on: ubuntu-latest
+    if: github.event.inputs.validation_type == 'all' || github.event.inputs.validation_type == 'coverage' || github.event.inputs.validation_type == ''
+    steps:
+      - name: 🏗️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 📦 Install dependencies
+        run: bun install
+
+      - name: 🏗️ Build project
+        run: bun run build
+
+      - name: 📊 Generate documentation coverage report
+        run: |
+          # Create documentation coverage script
+          cat > scripts/doc-coverage.js << 'EOF'
+          #!/usr/bin/env node
+          import fs from 'fs/promises';
+          import path from 'path';
+          import { fileURLToPath } from 'url';
+
+          const __dirname = path.dirname(fileURLToPath(import.meta.url));
+          const PROJECT_ROOT = path.resolve(__dirname, '..');
+
+          async function analyzeCoverage() {
+            const coverage = {
+              timestamp: new Date().toISOString(),
+              files: {},
+              summary: {
+                totalFiles: 0,
+                documentedFiles: 0,
+                coveragePercentage: 0
+              }
+            };
+
+            // Check source files for documentation
+            const srcFiles = await findSourceFiles();
+            
+            for (const file of srcFiles) {
+              const content = await fs.readFile(file, 'utf-8');
+              const hasJSDoc = /\/\*\*[\s\S]*?\*\//.test(content);
+              const hasTypeDoc = /@param|@returns|@description|@example/.test(content);
+              const hasComments = /\/\/.*/.test(content);
+              const exportCount = (content.match(/export\s+(class|function|const|interface)/g) || []).length;
+              
+              coverage.files[path.relative(PROJECT_ROOT, file)] = {
+                hasJSDoc,
+                hasTypeDoc,
+                hasComments,
+                exportCount,
+                documented: hasJSDoc || hasTypeDoc
+              };
+              
+              coverage.summary.totalFiles++;
+              if (hasJSDoc || hasTypeDoc) {
+                coverage.summary.documentedFiles++;
+              }
+            }
+
+            coverage.summary.coveragePercentage = 
+              Math.round((coverage.summary.documentedFiles / coverage.summary.totalFiles) * 100);
+
+            // Save report
+            const reportDir = path.join(PROJECT_ROOT, 'docs', 'validation-reports');
+            await fs.mkdir(reportDir, { recursive: true });
+            const reportFile = path.join(reportDir, `doc-coverage-${Date.now()}.json`);
+            await fs.writeFile(reportFile, JSON.stringify(coverage, null, 2));
+
+            console.log(`Documentation Coverage: ${coverage.summary.coveragePercentage}%`);
+            console.log(`Files with docs: ${coverage.summary.documentedFiles}/${coverage.summary.totalFiles}`);
+            console.log(`Report saved to: ${reportFile}`);
+
+            return coverage;
+          }
+
+          async function findSourceFiles() {
+            const files = [];
+            const srcDir = path.join(PROJECT_ROOT, 'src');
+            
+            async function walk(dir) {
+              const entries = await fs.readdir(dir, { withFileTypes: true });
+              for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                  await walk(fullPath);
+                } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts')) {
+                  files.push(fullPath);
+                }
+              }
+            }
+            
+            await walk(srcDir);
+            return files;
+          }
+
+          analyzeCoverage().catch(console.error);
+          EOF
+
+          node scripts/doc-coverage.js
+
+      - name: 📊 Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docs-coverage-report
+          path: docs/validation-reports/doc-coverage-*.json
+          retention-days: 30
+
+  # Documentation Freshness Check
+  docs-freshness:
+    name: 🕐 Documentation Freshness
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗️ Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 100  # Get more history for freshness analysis
+
+      - name: 📅 Check documentation freshness
+        run: |
+          # Check when key documentation files were last updated
+          echo "📅 Documentation Freshness Report" > freshness-report.md
+          echo "Generated: $(date)" >> freshness-report.md
+          echo "" >> freshness-report.md
+          
+          docs_files=("API.md" "README.md" "DEPLOYMENT.md" "SECURITY.md")
+          
+          for file in "${docs_files[@]}"; do
+            if [ -f "$file" ]; then
+              last_modified=$(git log -1 --format="%ci" -- "$file" 2>/dev/null || echo "Unknown")
+              days_old=$(( ( $(date +%s) - $(date -d "$last_modified" +%s 2>/dev/null || echo "0") ) / 86400 ))
+              
+              echo "## $file" >> freshness-report.md
+              echo "- Last modified: $last_modified" >> freshness-report.md
+              echo "- Days old: $days_old" >> freshness-report.md
+              
+              if [ "$days_old" -gt 30 ]; then
+                echo "- ⚠️ WARNING: File is older than 30 days" >> freshness-report.md
+              else
+                echo "- ✅ File is up to date" >> freshness-report.md
+              fi
+              echo "" >> freshness-report.md
+            fi
+          done
+          
+          # Check for broken links
+          echo "## Link Validation" >> freshness-report.md
+          if command -v markdown-link-check &> /dev/null; then
+            echo "Checking for broken links..." >> freshness-report.md
+            find . -name "*.md" -not -path "./node_modules/*" -exec markdown-link-check {} \; >> freshness-report.md 2>&1 || true
+          else
+            echo "markdown-link-check not available, skipping link validation" >> freshness-report.md
+          fi
+          
+          cat freshness-report.md
+
+      - name: 📤 Upload freshness report
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-freshness-report
+          path: freshness-report.md
+          retention-days: 30
+
+  # Combine all results and create summary
+  validation-summary:
+    name: 📋 Validation Summary
+    runs-on: ubuntu-latest
+    needs: [docs-lint, api-docs-validation, examples-testing, docs-coverage, docs-freshness]
+    if: always()
+    steps:
+      - name: 🏗️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📥 Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: 📊 Generate combined summary
+        run: |
+          echo "# 📚 Documentation Validation Summary" > validation-summary.md
+          echo "Generated: $(date)" >> validation-summary.md
+          echo "" >> validation-summary.md
+          
+          # Check job results
+          echo "## Job Results" >> validation-summary.md
+          echo "- 📝 Documentation Lint: ${{ needs.docs-lint.result }}" >> validation-summary.md  
+          echo "- 🔗 API Documentation: ${{ needs.api-docs-validation.result }}" >> validation-summary.md
+          echo "- 🧪 Examples Testing: ${{ needs.examples-testing.result }}" >> validation-summary.md
+          echo "- 📈 Documentation Coverage: ${{ needs.docs-coverage.result }}" >> validation-summary.md
+          echo "- 🕐 Documentation Freshness: ${{ needs.docs-freshness.result }}" >> validation-summary.md
+          echo "" >> validation-summary.md
+          
+          # Determine overall status
+          if [[ "${{ needs.docs-lint.result }}" == "success" && 
+                "${{ needs.api-docs-validation.result }}" == "success" && 
+                "${{ needs.examples-testing.result }}" == "success" ]]; then
+            echo "## ✅ Overall Status: PASSED" >> validation-summary.md
+            echo "All documentation validation checks passed!" >> validation-summary.md
+          else
+            echo "## ❌ Overall Status: FAILED" >> validation-summary.md
+            echo "Some documentation validation checks failed. Please review the reports." >> validation-summary.md
+          fi
+          
+          echo "" >> validation-summary.md
+          echo "## 📁 Available Reports" >> validation-summary.md
+          find . -name "*.json" -o -name "*.md" | grep -v validation-summary.md | sort >> validation-summary.md
+          
+          cat validation-summary.md
+
+      - name: 📤 Upload validation summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-summary
+          path: validation-summary.md
+          retention-days: 30
+
+      - name: 💬 Post summary comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let summary = "# 📚 Documentation Validation Summary\n\n";
+            summary += `**Validation completed at:** ${new Date().toISOString()}\n\n`;
+            summary += "## Results Overview\n";
+            summary += `- 📝 Documentation Lint: ${{ needs.docs-lint.result }}\n`;
+            summary += `- 🔗 API Documentation: ${{ needs.api-docs-validation.result }}\n`;
+            summary += `- 🧪 Examples Testing: ${{ needs.examples-testing.result }}\n`;
+            summary += `- 📈 Documentation Coverage: ${{ needs.docs-coverage.result }}\n`;
+            summary += `- 🕐 Documentation Freshness: ${{ needs.docs-freshness.result }}\n\n`;
+            
+            const allPassed = [
+              '${{ needs.docs-lint.result }}',
+              '${{ needs.api-docs-validation.result }}',
+              '${{ needs.examples-testing.result }}'
+            ].every(result => result === 'success');
+            
+            if (allPassed) {
+              summary += "## ✅ All documentation validation checks passed!\n";
+            } else {
+              summary += "## ❌ Some validation checks failed\n";
+              summary += "Please check the individual job outputs and artifacts for details.\n";
+            }
+            
+            summary += "\n📁 Detailed reports are available in the workflow artifacts.";
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });

@@ -1,6 +1,6 @@
 /**
  * Storage Abstraction Layer
- * 
+ *
  * Provides unified storage interface for various backends (memory, file, database).
  */
 
@@ -15,18 +15,21 @@ export interface StorageAdapter extends EventEmitter {
   cleanup(): Promise<void>;
 }
 
-export class MemoryStorageAdapter extends EventEmitter implements StorageAdapter {
-  private data = new Map<string, { value: any; expiresAt?: number }>();
+export class MemoryStorageAdapter
+  extends EventEmitter
+  implements StorageAdapter
+{
+  private readonly data = new Map<string, { value: any; expiresAt?: number }>();
 
   async get(key: string): Promise<any> {
     const item = this.data.get(key);
     if (!item) return undefined;
-    
+
     if (item.expiresAt && Date.now() > item.expiresAt) {
       this.data.delete(key);
       return undefined;
     }
-    
+
     return item.value;
   }
 

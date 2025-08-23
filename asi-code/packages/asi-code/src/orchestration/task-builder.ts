@@ -1,18 +1,18 @@
 /**
  * Task Builder Implementation
- * 
+ *
  * Fluent API for building Task objects with validation, templates,
  * and support for complex task structures and workflows.
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { 
-  Task, 
-  TaskPriority, 
-  TaskStatus, 
-  TaskConstraints,
+import {
   ResourceRequirements,
-  TaskDependency
+  Task,
+  TaskConstraints,
+  TaskDependency,
+  TaskPriority,
+  TaskStatus,
 } from './types.js';
 
 /**
@@ -59,7 +59,7 @@ export interface SubtaskConfig {
  */
 export class TaskBuilder {
   private task: Partial<Task>;
-  private templates: Map<string, TaskTemplate> = new Map();
+  private readonly templates: Map<string, TaskTemplate> = new Map();
   private validationRules: ValidationRule[] = [];
 
   constructor(type?: string) {
@@ -72,7 +72,7 @@ export class TaskBuilder {
       dependencies: [],
       subtasks: [],
       createdAt: Date.now(),
-      metadata: {}
+      metadata: {},
     };
 
     this.initializeTemplates();
@@ -318,7 +318,10 @@ export class TaskBuilder {
   /**
    * Apply task template
    */
-  fromTemplate(templateName: string, overrides: Partial<Task> = {}): TaskBuilder {
+  fromTemplate(
+    templateName: string,
+    overrides: Partial<Task> = {}
+  ): TaskBuilder {
     const template = this.templates.get(templateName);
     if (!template) {
       throw new Error(`Task template '${templateName}' not found`);
@@ -340,16 +343,16 @@ export class TaskBuilder {
           ...(this.task.metadata?.tags || []),
           ...(template.baseConfig.metadata?.tags || []),
           ...(overrides.metadata?.tags || []),
-          ...template.tags
-        ]
-      }
+          ...template.tags,
+        ],
+      },
     };
 
     // Apply default constraints if specified
     if (template.defaultConstraints) {
       this.task.constraints = {
         ...this.task.constraints,
-        ...template.defaultConstraints
+        ...template.defaultConstraints,
       };
     }
 
@@ -397,7 +400,10 @@ export class TaskBuilder {
   /**
    * Build task and create subtasks
    */
-  buildWithSubtasks(subtaskConfigs: SubtaskConfig[]): { parentTask: Task; subtasks: Task[] } {
+  buildWithSubtasks(subtaskConfigs: SubtaskConfig[]): {
+    parentTask: Task;
+    subtasks: Task[];
+  } {
     const parentTask = this.build();
     const subtasks: Task[] = [];
 
@@ -421,7 +427,7 @@ export class TaskBuilder {
 
       const subtask = subtaskBuilder.build();
       subtasks.push(subtask);
-      
+
       // Add subtask ID to parent
       if (!parentTask.subtasks) {
         parentTask.subtasks = [];
@@ -455,7 +461,7 @@ export class TaskBuilder {
       dependencies: [],
       subtasks: [],
       createdAt: Date.now(),
-      metadata: {}
+      metadata: {},
     };
     return this;
   }
@@ -482,14 +488,17 @@ export class TaskBuilder {
   }
 
   // Private properties and methods
-  private static globalTemplates: Map<string, TaskTemplate> = new Map();
+  private static readonly globalTemplates: Map<string, TaskTemplate> =
+    new Map();
 
   /**
    * Initialize default templates
    */
   private initializeTemplates(): void {
     // Copy global templates to instance
-    for (const [name, template] of Array.from(TaskBuilder.globalTemplates.entries())) {
+    for (const [name, template] of Array.from(
+      TaskBuilder.globalTemplates.entries()
+    )) {
       this.templates.set(name, template);
     }
 
@@ -504,11 +513,11 @@ export class TaskBuilder {
           constraints: {
             requiredCapabilities: ['data-processing'],
             maxExecutionTime: 60000,
-            parallelizable: true
-          }
+            parallelizable: true,
+          },
         },
         description: 'Template for data processing tasks',
-        tags: ['data', 'processing']
+        tags: ['data', 'processing'],
       },
       {
         name: 'computation',
@@ -521,12 +530,12 @@ export class TaskBuilder {
             maxExecutionTime: 120000,
             requiredResources: {
               cpu: 2,
-              memory: 1024
-            }
-          }
+              memory: 1024,
+            },
+          },
         },
         description: 'Template for computational tasks',
-        tags: ['computation', 'cpu-intensive']
+        tags: ['computation', 'cpu-intensive'],
       },
       {
         name: 'io-operation',
@@ -537,11 +546,11 @@ export class TaskBuilder {
           constraints: {
             requiredCapabilities: ['io-operations'],
             maxExecutionTime: 30000,
-            parallelizable: true
-          }
+            parallelizable: true,
+          },
         },
         description: 'Template for I/O operation tasks',
-        tags: ['io', 'file-system']
+        tags: ['io', 'file-system'],
       },
       {
         name: 'analysis',
@@ -554,12 +563,12 @@ export class TaskBuilder {
             maxExecutionTime: 180000,
             requiredResources: {
               cpu: 4,
-              memory: 2048
-            }
-          }
+              memory: 2048,
+            },
+          },
         },
         description: 'Template for analysis tasks',
-        tags: ['analysis', 'intelligence']
+        tags: ['analysis', 'intelligence'],
       },
       {
         name: 'validation',
@@ -569,11 +578,11 @@ export class TaskBuilder {
           priority: 'high',
           constraints: {
             requiredCapabilities: ['validation'],
-            maxExecutionTime: 15000
-          }
+            maxExecutionTime: 15000,
+          },
         },
         description: 'Template for validation tasks',
-        tags: ['validation', 'quality-assurance']
+        tags: ['validation', 'quality-assurance'],
       },
       {
         name: 'workflow-coordinator',
@@ -584,12 +593,12 @@ export class TaskBuilder {
           constraints: {
             requiredCapabilities: ['coordination', 'workflow-management'],
             maxExecutionTime: 300000,
-            parallelizable: false
-          }
+            parallelizable: false,
+          },
         },
         description: 'Template for workflow coordination tasks',
-        tags: ['coordination', 'workflow']
-      }
+        tags: ['coordination', 'workflow'],
+      },
     ];
 
     for (const template of defaultTemplates) {
@@ -607,39 +616,47 @@ export class TaskBuilder {
       {
         name: 'priority-validation',
         validate: (task: Task) => {
-          const validPriorities: TaskPriority[] = ['critical', 'high', 'medium', 'low'];
+          const validPriorities: TaskPriority[] = [
+            'critical',
+            'high',
+            'medium',
+            'low',
+          ];
           if (!validPriorities.includes(task.priority)) {
             return {
               isValid: false,
-              message: `Invalid priority: ${task.priority}. Must be one of: ${validPriorities.join(', ')}`
+              message: `Invalid priority: ${task.priority}. Must be one of: ${validPriorities.join(', ')}`,
             };
           }
           return { isValid: true };
-        }
+        },
       },
       {
         name: 'dependency-validation',
         validate: (task: Task) => {
-          if (task.dependencies && task.dependencies.includes(task.id)) {
+          if (task.dependencies?.includes(task.id)) {
             return {
               isValid: false,
-              message: 'Task cannot depend on itself'
+              message: 'Task cannot depend on itself',
             };
           }
           return { isValid: true };
-        }
+        },
       },
       {
         name: 'execution-time-validation',
         validate: (task: Task) => {
-          if (task.constraints?.maxExecutionTime && task.constraints.maxExecutionTime <= 0) {
+          if (
+            task.constraints?.maxExecutionTime &&
+            task.constraints.maxExecutionTime <= 0
+          ) {
             return {
               isValid: false,
-              message: 'Maximum execution time must be positive'
+              message: 'Maximum execution time must be positive',
             };
           }
           return { isValid: true };
-        }
+        },
       },
       {
         name: 'resource-validation',
@@ -649,19 +666,19 @@ export class TaskBuilder {
             if (resources.cpu && resources.cpu <= 0) {
               return {
                 isValid: false,
-                message: 'CPU requirement must be positive'
+                message: 'CPU requirement must be positive',
               };
             }
             if (resources.memory && resources.memory <= 0) {
               return {
                 isValid: false,
-                message: 'Memory requirement must be positive'
+                message: 'Memory requirement must be positive',
               };
             }
           }
           return { isValid: true };
-        }
-      }
+        },
+      },
     ];
   }
 }
@@ -686,9 +703,9 @@ interface ValidationResult {
  * Workflow Builder for creating complex task workflows
  */
 export class WorkflowBuilder {
-  private config: WorkflowConfig;
-  private tasks: Map<string, TaskBuilder> = new Map();
-  private dependencies: TaskDependency[] = [];
+  private readonly config: WorkflowConfig;
+  private readonly tasks: Map<string, TaskBuilder> = new Map();
+  private readonly dependencies: TaskDependency[] = [];
 
   constructor(name: string, config: Partial<WorkflowConfig> = {}) {
     this.config = {
@@ -697,7 +714,7 @@ export class WorkflowBuilder {
       description: config.description || `Workflow: ${name}`,
       parallel: config.parallel || false,
       failFast: config.failFast || true,
-      retryPolicy: config.retryPolicy
+      retryPolicy: config.retryPolicy,
     };
   }
 
@@ -716,7 +733,7 @@ export class WorkflowBuilder {
     const builder = new TaskBuilder(type)
       .withId(taskId)
       .withMetadataProperty('workflowId', this.config.id);
-    
+
     this.tasks.set(taskId, builder);
     return builder;
   }
@@ -724,11 +741,15 @@ export class WorkflowBuilder {
   /**
    * Add dependency between tasks
    */
-  addDependency(fromTaskId: string, toTaskId: string, type: 'blocking' | 'soft' | 'optional' = 'blocking'): WorkflowBuilder {
+  addDependency(
+    fromTaskId: string,
+    toTaskId: string,
+    type: 'blocking' | 'soft' | 'optional' = 'blocking'
+  ): WorkflowBuilder {
     this.dependencies.push({
       from: fromTaskId,
       to: toTaskId,
-      type
+      type,
     });
     return this;
   }
@@ -750,9 +771,12 @@ export class WorkflowBuilder {
     // Build all tasks
     for (const [taskId, builder] of Array.from(this.tasks.entries())) {
       builder.withMetadataProperty('workflowId', this.config.id);
-      
+
       if (this.config.retryPolicy) {
-        builder.withRetry(this.config.retryPolicy.maxRetries, this.config.retryPolicy.delay);
+        builder.withRetry(
+          this.config.retryPolicy.maxRetries,
+          this.config.retryPolicy.delay
+        );
       }
 
       tasks.push(builder.build());
@@ -764,9 +788,13 @@ export class WorkflowBuilder {
   /**
    * Build workflow with coordinator task
    */
-  buildWithCoordinator(): { coordinatorTask: Task; tasks: Task[]; dependencies: TaskDependency[] } {
+  buildWithCoordinator(): {
+    coordinatorTask: Task;
+    tasks: Task[];
+    dependencies: TaskDependency[];
+  } {
     const workflow = this.build();
-    
+
     const coordinatorTask = new TaskBuilder('coordination')
       .withDescription(`Coordinator for workflow: ${this.config.name}`)
       .withPriority('critical')
@@ -775,18 +803,18 @@ export class WorkflowBuilder {
         workflowId: this.config.id,
         workflowName: this.config.name,
         workflowConfig: this.config,
-        isCoordinator: true
+        isCoordinator: true,
       })
       .withConstraints({
         requiredCapabilities: ['coordination', 'workflow-management'],
-        parallelizable: false
+        parallelizable: false,
       })
       .build();
 
     return {
       coordinatorTask,
       tasks: workflow.tasks,
-      dependencies: workflow.dependencies
+      dependencies: workflow.dependencies,
     };
   }
 }
@@ -805,7 +833,10 @@ export function createTask(type: string, description: string): TaskBuilder {
 /**
  * Create a task from template
  */
-export function createTaskFromTemplate(templateName: string, overrides: Partial<Task> = {}): TaskBuilder {
+export function createTaskFromTemplate(
+  templateName: string,
+  overrides: Partial<Task> = {}
+): TaskBuilder {
   return new TaskBuilder().fromTemplate(templateName, overrides);
 }
 
@@ -813,9 +844,9 @@ export function createTaskFromTemplate(templateName: string, overrides: Partial<
  * Create a batch of similar tasks
  */
 export function createTaskBatch(
-  count: number, 
-  type: string, 
-  baseDescription: string, 
+  count: number,
+  type: string,
+  baseDescription: string,
   inputs: any[] = []
 ): TaskBuilder[] {
   const builders: TaskBuilder[] = [];
@@ -838,7 +869,9 @@ export function createTaskBatch(
 /**
  * Create a pipeline of dependent tasks
  */
-export function createTaskPipeline(configs: { type: string; description: string; input?: any }[]): TaskBuilder[] {
+export function createTaskPipeline(
+  configs: { type: string; description: string; input?: any }[]
+): TaskBuilder[] {
   const builders: TaskBuilder[] = [];
 
   for (let i = 0; i < configs.length; i++) {
@@ -868,8 +901,8 @@ TaskBuilder.registerTemplate({
   type: 'generic',
   baseConfig: {
     description: 'Default task',
-    priority: 'medium'
+    priority: 'medium',
   },
   description: 'Default task template',
-  tags: ['default']
+  tags: ['default'],
 });

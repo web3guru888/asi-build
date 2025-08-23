@@ -2,7 +2,7 @@
  * Test Utilities - Helper functions and mocks for testing
  */
 
-import { mock } from 'bun:test';
+import { vi } from 'vitest';
 import type { Provider, ProviderConfig, ProviderMessage, ProviderResponse } from '../src/provider/index.js';
 import type { KennyContext, KennyMessage } from '../src/kenny/index.js';
 import type { Tool, ToolDefinition, ToolExecutionContext, ToolResult } from '../src/tool/index.js';
@@ -22,8 +22,8 @@ export function createMockProvider(config?: Partial<ProviderConfig>): Provider {
   return {
     name: defaultConfig.name,
     config: defaultConfig,
-    initialize: mock(async () => {}),
-    generate: mock(async (messages: ProviderMessage[]): Promise<ProviderResponse> => {
+    initialize: vi.fn(async () => {}),
+    generate: vi.fn(async (messages: ProviderMessage[]): Promise<ProviderResponse> => {
       const lastMessage = messages[messages.length - 1];
       return {
         content: `Mock response to: ${lastMessage.content}`,
@@ -36,7 +36,7 @@ export function createMockProvider(config?: Partial<ProviderConfig>): Provider {
         metadata: { mock: true }
       };
     }),
-    streamGenerate: mock(async function* (messages: ProviderMessage[]) {
+    streamGenerate: vi.fn(async function* (messages: ProviderMessage[]) {
       const lastMessage = messages[messages.length - 1];
       const response = `Mock response to: ${lastMessage.content}`;
       
@@ -53,12 +53,12 @@ export function createMockProvider(config?: Partial<ProviderConfig>): Provider {
         metadata: { mock: true, streamed: true }
       };
     }),
-    isAvailable: mock(async () => true),
-    cleanup: mock(async () => {}),
-    on: mock(() => ({} as any)),
-    off: mock(() => ({} as any)),
-    emit: mock(() => false),
-    removeAllListeners: mock(() => ({} as any))
+    isAvailable: vi.fn(async () => true),
+    cleanup: vi.fn(async () => {}),
+    on: vi.fn(() => ({} as any)),
+    off: vi.fn(() => ({} as any)),
+    emit: vi.fn(() => false),
+    removeAllListeners: vi.fn(() => ({} as any))
   } as Provider;
 }
 
@@ -131,7 +131,7 @@ export function createMockTool(definition?: Partial<ToolDefinition>): Tool {
 
   return {
     definition: defaultDefinition,
-    execute: mock(async (parameters: Record<string, any>, context: ToolExecutionContext): Promise<ToolResult> => {
+    execute: vi.fn(async (parameters: Record<string, any>, context: ToolExecutionContext): Promise<ToolResult> => {
       return {
         success: true,
         data: {
@@ -142,17 +142,17 @@ export function createMockTool(definition?: Partial<ToolDefinition>): Tool {
         metadata: { mock: true, executedAt: new Date().toISOString() }
       };
     }),
-    validate: mock((parameters: Record<string, any>): boolean => {
+    validate: vi.fn((parameters: Record<string, any>): boolean => {
       // Simple validation - check required parameters
       return defaultDefinition.parameters
         .filter(p => p.required)
         .every(p => p.name in parameters);
     }),
-    cleanup: mock(async () => {}),
-    on: mock(() => ({} as any)),
-    off: mock(() => ({} as any)),
-    emit: mock(() => false),
-    removeAllListeners: mock(() => ({} as any))
+    cleanup: vi.fn(async () => {}),
+    on: vi.fn(() => ({} as any)),
+    off: vi.fn(() => ({} as any)),
+    emit: vi.fn(() => false),
+    removeAllListeners: vi.fn(() => ({} as any))
   } as Tool;
 }
 
@@ -165,7 +165,7 @@ export function createFailingMockTool(errorMessage: string = 'Mock tool error'):
     description: 'A mock tool that always fails'
   });
 
-  tool.execute = mock(async (): Promise<ToolResult> => {
+  tool.execute = vi.fn(async (): Promise<ToolResult> => {
     throw new Error(errorMessage);
   });
 
@@ -211,13 +211,13 @@ export function createMockEventEmitter() {
   const listeners = new Map<string, Function[]>();
   
   return {
-    on: mock((event: string, listener: Function) => {
+    on: vi.fn((event: string, listener: Function) => {
       if (!listeners.has(event)) {
         listeners.set(event, []);
       }
       listeners.get(event)!.push(listener);
     }),
-    off: mock((event: string, listener: Function) => {
+    off: vi.fn((event: string, listener: Function) => {
       const eventListeners = listeners.get(event);
       if (eventListeners) {
         const index = eventListeners.indexOf(listener);
@@ -226,7 +226,7 @@ export function createMockEventEmitter() {
         }
       }
     }),
-    emit: mock((event: string, ...args: any[]) => {
+    emit: vi.fn((event: string, ...args: any[]) => {
       const eventListeners = listeners.get(event);
       if (eventListeners) {
         eventListeners.forEach(listener => listener(...args));
@@ -234,7 +234,7 @@ export function createMockEventEmitter() {
       }
       return false;
     }),
-    removeAllListeners: mock((event?: string) => {
+    removeAllListeners: vi.fn((event?: string) => {
       if (event) {
         listeners.delete(event);
       } else {

@@ -17,8 +17,11 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
+      reporter: ['text', 'json', 'html', 'lcov', 'clover', 'cobertura'],
       reportsDirectory: 'coverage',
+      cleanOnRerun: true,
+      all: true,
+      include: ['src/**/*'],
       exclude: [
         'node_modules/',
         'test/',
@@ -29,7 +32,12 @@ export default defineConfig({
         '**/*.config.*',
         '**/test-utils.ts',
         '**/fixtures/**',
-        '**/mocks/**'
+        '**/mocks/**',
+        '**/index.ts', // Barrel exports
+        '**/types.ts', // Type definitions
+        '**/*.interface.ts',
+        '**/*.type.ts',
+        '**/constants.ts'
       ],
       thresholds: {
         global: {
@@ -67,13 +75,20 @@ export default defineConfig({
           functions: 90,
           lines: 90,
           statements: 90
+        },
+        'src/security/': {
+          branches: 95,
+          functions: 95,
+          lines: 95,
+          statements: 95
         }
       }
     },
-    reporters: ['verbose', 'json', 'html'],
+    reporters: ['verbose', 'json', 'html', 'junit'],
     outputFile: {
       json: 'test-results/results.json',
-      html: 'test-results/index.html'
+      html: 'test-results/index.html',
+      junit: 'test-results/junit.xml'
     },
     setupFiles: ['./test/setup.ts'],
     testTimeout: 10000,
@@ -84,16 +99,40 @@ export default defineConfig({
       '**/dist/**',
       '**/coverage/**',
       '**/test-results/**'
-    ]
+    ],
+    // Enhanced features
+    bail: 1, // Stop after first failure in CI
+    passWithNoTests: false,
+    logHeapUsage: true,
+    isolate: true,
+    sequence: {
+      concurrent: true,
+      shuffle: false
+    },
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        maxThreads: 4,
+        minThreads: 1
+      }
+    },
+    silent: false
   },
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
-      '@test': resolve(__dirname, 'test')
+      '@test': resolve(__dirname, 'test'),
+      '@fixtures': resolve(__dirname, 'test/fixtures'),
+      '@mocks': resolve(__dirname, 'test/mocks'),
+      '@utils': resolve(__dirname, 'test/utils')
     }
   },
   define: {
     __TEST__: true,
-    __DEV__: false
+    __DEV__: false,
+    __VITEST__: true
+  },
+  esbuild: {
+    target: 'node18'
   }
 });

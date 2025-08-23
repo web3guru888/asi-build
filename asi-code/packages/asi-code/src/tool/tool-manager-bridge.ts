@@ -1,13 +1,22 @@
 /**
  * Tool Manager Bridge - Compatibility layer between legacy ToolManager and new ToolRegistry
- * 
+ *
  * Provides backward compatibility while enabling new features from the ToolRegistry system.
  * Bridges the gap between the existing server architecture and the new tool system.
  */
 
 import { ToolRegistry } from './tool-registry.js';
-import { ToolInitializer, ToolInitializerConfig, initializeToolSystem } from './tool-initializer.js';
-import { BaseTool, ToolDefinition, ToolExecutionContext, ToolResult } from './base-tool.js';
+import {
+  ToolInitializer,
+  ToolInitializerConfig,
+  initializeToolSystem,
+} from './tool-initializer.js';
+import {
+  BaseTool,
+  ToolDefinition,
+  ToolExecutionContext,
+  ToolResult,
+} from './base-tool.js';
 import { EventEmitter } from 'eventemitter3';
 import type { PermissionManager } from '../permission/permission-manager.js';
 
@@ -27,8 +36,8 @@ export interface EnhancedToolManagerConfig {
  * Maintains backward compatibility while providing new capabilities
  */
 export class EnhancedToolManager extends EventEmitter {
-  private toolRegistry: ToolRegistry;
-  private toolInitializer: ToolInitializer;
+  private readonly toolRegistry: ToolRegistry;
+  private readonly toolInitializer: ToolInitializer;
   private initialized = false;
 
   constructor(config: EnhancedToolManagerConfig = {}) {
@@ -43,7 +52,7 @@ export class EnhancedToolManager extends EventEmitter {
       defaultTimeout: config.defaultTimeout ?? 300000,
       autoRegisterBuiltIns: config.autoRegisterBuiltIns ?? true,
       enableToolValidation: config.enableToolValidation ?? true,
-      enableVersioning: config.enableVersioning ?? true
+      enableVersioning: config.enableVersioning ?? true,
     };
 
     this.toolInitializer = new ToolInitializer(initializerConfig);
@@ -63,18 +72,23 @@ export class EnhancedToolManager extends EventEmitter {
 
     try {
       const result = await this.toolInitializer.initialize();
-      
-      console.log(`[EnhancedToolManager] Initialized with ${result.toolsRegistered} tools`);
-      console.log(`[EnhancedToolManager] Categories: ${Object.keys(result.categoryCounts).join(', ')}`);
+
+      console.log(
+        `[EnhancedToolManager] Initialized with ${result.toolsRegistered} tools`
+      );
+      console.log(
+        `[EnhancedToolManager] Categories: ${Object.keys(result.categoryCounts).join(', ')}`
+      );
 
       if (result.errors.length > 0) {
-        console.warn(`[EnhancedToolManager] ${result.errors.length} tool registration errors:`, 
-          result.errors.map(e => `${e.toolName}: ${e.error}`));
+        console.warn(
+          `[EnhancedToolManager] ${result.errors.length} tool registration errors:`,
+          result.errors.map(e => `${e.toolName}: ${e.error}`)
+        );
       }
 
       this.initialized = true;
       this.emit('initialized', { result });
-
     } catch (error) {
       console.error('[EnhancedToolManager] Initialization failed:', error);
       throw error;
@@ -90,7 +104,10 @@ export class EnhancedToolManager extends EventEmitter {
    */
   register(tool: BaseTool): void {
     this.toolRegistry.register(tool, []);
-    this.emit('tool:registered', { name: tool.definition.name, category: tool.definition.category });
+    this.emit('tool:registered', {
+      name: tool.definition.name,
+      category: tool.definition.category,
+    });
   }
 
   /**
@@ -117,7 +134,11 @@ export class EnhancedToolManager extends EventEmitter {
   /**
    * Execute a tool (legacy interface)
    */
-  async execute(name: string, parameters: Record<string, any>, context: ToolExecutionContext): Promise<ToolResult> {
+  async execute(
+    name: string,
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<ToolResult> {
     if (!this.initialized) {
       await this.initialize();
     }
@@ -210,7 +231,7 @@ export class EnhancedToolManager extends EventEmitter {
       return {
         isValid: false,
         errors: [`Tool '${toolName}' not found`],
-        warnings: []
+        warnings: [],
       };
     }
 
@@ -243,11 +264,11 @@ export class EnhancedToolManager extends EventEmitter {
       'execution.start',
       'execution.complete',
       'execution.error',
-      'execution.cancelled'
+      'execution.cancelled',
     ];
 
     eventsToForward.forEach(eventName => {
-      this.toolRegistry.on(eventName, (data) => {
+      this.toolRegistry.on(eventName, data => {
         this.emit(eventName, data);
       });
     });
@@ -260,7 +281,9 @@ export class EnhancedToolManager extends EventEmitter {
 /**
  * Factory function to create an enhanced tool manager
  */
-export async function createEnhancedToolManager(config?: EnhancedToolManagerConfig): Promise<EnhancedToolManager> {
+export async function createEnhancedToolManager(
+  config?: EnhancedToolManagerConfig
+): Promise<EnhancedToolManager> {
   const manager = new EnhancedToolManager(config);
   await manager.initialize();
   return manager;
@@ -269,7 +292,9 @@ export async function createEnhancedToolManager(config?: EnhancedToolManagerConf
 /**
  * Backward compatibility: Create a tool manager that looks like the legacy one
  */
-export async function createCompatibleToolManager(config?: EnhancedToolManagerConfig): Promise<any> {
+export async function createCompatibleToolManager(
+  config?: EnhancedToolManagerConfig
+): Promise<any> {
   const enhancedManager = await createEnhancedToolManager(config);
 
   // Return an object that matches the legacy interface exactly
@@ -277,23 +302,31 @@ export async function createCompatibleToolManager(config?: EnhancedToolManagerCo
     register: (tool: BaseTool) => enhancedManager.register(tool),
     get: (name: string) => enhancedManager.get(name),
     list: () => enhancedManager.list(),
-    listByCategory: (category: string) => enhancedManager.listByCategory(category),
-    execute: (name: string, parameters: Record<string, any>, context: ToolExecutionContext) => 
-      enhancedManager.execute(name, parameters, context),
+    listByCategory: (category: string) =>
+      enhancedManager.listByCategory(category),
+    execute: (
+      name: string,
+      parameters: Record<string, any>,
+      context: ToolExecutionContext
+    ) => enhancedManager.execute(name, parameters, context),
     unregister: (name: string) => enhancedManager.unregister(name),
     cleanup: () => enhancedManager.cleanup(),
-    
+
     // Enhanced features (backward compatible extensions)
     discoverTools: () => enhancedManager.discoverTools(),
     getSystemInfo: () => enhancedManager.getSystemInfo(),
     getMetrics: (toolName?: string) => enhancedManager.getMetrics(toolName),
     getRunningExecutions: () => enhancedManager.getRunningExecutions(),
-    cancelExecution: (executionId: string) => enhancedManager.cancelExecution(executionId),
+    cancelExecution: (executionId: string) =>
+      enhancedManager.cancelExecution(executionId),
     healthCheck: () => enhancedManager.healthCheck(),
-    
+
     // Event emitter functionality
-    on: (event: string, listener: (...args: any[]) => void) => enhancedManager.on(event, listener),
-    off: (event: string, listener: (...args: any[]) => void) => enhancedManager.off(event, listener),
-    emit: (event: string, ...args: any[]) => enhancedManager.emit(event, ...args)
+    on: (event: string, listener: (...args: any[]) => void) =>
+      enhancedManager.on(event, listener),
+    off: (event: string, listener: (...args: any[]) => void) =>
+      enhancedManager.off(event, listener),
+    emit: (event: string, ...args: any[]) =>
+      enhancedManager.emit(event, ...args),
   };
 }

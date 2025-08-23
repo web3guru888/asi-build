@@ -1,14 +1,19 @@
 /**
  * Edit Tool - Advanced file editing with diff tracking and validation
- * 
+ *
  * Provides sophisticated file editing capabilities with change tracking,
  * backup creation, validation, and rollback functionality.
  */
 
-import { readFile, writeFile, stat, access } from 'fs/promises';
+import { access, readFile, stat, writeFile } from 'fs/promises';
 import { constants } from 'fs';
-import { resolve, normalize, dirname, extname } from 'path';
-import { BaseTool, ToolDefinition, ToolExecutionContext, ToolResult } from '../base-tool.js';
+import { dirname, extname, normalize, resolve } from 'path';
+import {
+  BaseTool,
+  ToolDefinition,
+  ToolExecutionContext,
+  ToolResult,
+} from '../base-tool.js';
 
 export interface EditOperation {
   type: 'replace' | 'insert' | 'delete' | 'append' | 'prepend';
@@ -43,7 +48,8 @@ export class EditTool extends BaseTool {
   constructor() {
     const definition: ToolDefinition = {
       name: 'edit',
-      description: 'Advanced file editing with diff tracking, validation, and rollback capabilities',
+      description:
+        'Advanced file editing with diff tracking, validation, and rollback capabilities',
       parameters: [
         {
           name: 'path',
@@ -53,10 +59,11 @@ export class EditTool extends BaseTool {
           validation: {
             custom: (value: string) => {
               if (!value.trim()) return 'Path cannot be empty';
-              if (value.length > 500) return 'Path too long (max 500 characters)';
+              if (value.length > 500)
+                return 'Path too long (max 500 characters)';
               return true;
-            }
-          }
+            },
+          },
         },
         {
           name: 'operation',
@@ -65,41 +72,49 @@ export class EditTool extends BaseTool {
           required: true,
           validation: {
             custom: (value: any) => {
-              if (!value || typeof value !== 'object') return 'Operation must be an object';
+              if (!value || typeof value !== 'object')
+                return 'Operation must be an object';
               if (!value.type) return 'Operation type is required';
-              const validTypes = ['replace', 'insert', 'delete', 'append', 'prepend'];
+              const validTypes = [
+                'replace',
+                'insert',
+                'delete',
+                'append',
+                'prepend',
+              ];
               if (!validTypes.includes(value.type)) {
                 return `Invalid operation type. Must be one of: ${validTypes.join(', ')}`;
               }
               return true;
-            }
-          }
+            },
+          },
         },
         {
           name: 'encoding',
           type: 'string',
           description: 'File encoding to use',
           default: 'utf8',
-          enum: ['utf8', 'ascii', 'latin1']
+          enum: ['utf8', 'ascii', 'latin1'],
         },
         {
           name: 'createBackup',
           type: 'boolean',
           description: 'Create a backup before editing',
-          default: true
+          default: true,
         },
         {
           name: 'validateSyntax',
           type: 'boolean',
-          description: 'Validate syntax after editing (for supported file types)',
-          default: true
+          description:
+            'Validate syntax after editing (for supported file types)',
+          default: true,
         },
         {
           name: 'dryRun',
           type: 'boolean',
           description: 'Preview changes without applying them',
-          default: false
-        }
+          default: false,
+        },
       ],
       category: 'file',
       version: '1.0.0',
@@ -115,9 +130,9 @@ export class EditTool extends BaseTool {
             operation: {
               type: 'replace',
               search: '"debug": false',
-              replacement: '"debug": true'
-            }
-          }
+              replacement: '"debug": true',
+            },
+          },
         },
         {
           description: 'Insert content at specific line',
@@ -126,50 +141,85 @@ export class EditTool extends BaseTool {
             operation: {
               type: 'insert',
               lineNumber: 10,
-              content: 'console.log("Debug point");'
-            }
-          }
-        }
-      ]
+              content: 'console.log("Debug point");',
+            },
+          },
+        },
+      ],
     };
 
     super(definition);
 
     this.maxFileSize = 5 * 1024 * 1024; // 5MB
-    
+
     // File extensions that support syntax validation
     this.allowedExtensions = new Set([
-      '.txt', '.md', '.json', '.js', '.ts', '.jsx', '.tsx', '.css', '.html',
-      '.xml', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.py', '.rb',
-      '.java', '.c', '.cpp', '.h', '.hpp', '.go', '.rs', '.php', '.sh', '.sql'
+      '.txt',
+      '.md',
+      '.json',
+      '.js',
+      '.ts',
+      '.jsx',
+      '.tsx',
+      '.css',
+      '.html',
+      '.xml',
+      '.yaml',
+      '.yml',
+      '.toml',
+      '.ini',
+      '.cfg',
+      '.conf',
+      '.py',
+      '.rb',
+      '.java',
+      '.c',
+      '.cpp',
+      '.h',
+      '.hpp',
+      '.go',
+      '.rs',
+      '.php',
+      '.sh',
+      '.sql',
     ]);
   }
 
-  async execute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<ToolResult> {
+  async execute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<ToolResult> {
     const {
       path: inputPath,
       operation,
       encoding = 'utf8',
       createBackup = true,
       validateSyntax = true,
-      dryRun = false
+      dryRun = false,
     } = parameters;
 
     const startTime = Date.now();
 
     try {
       // Normalize path
-      const normalizedPath = this.normalizePath(inputPath, context.workingDirectory);
-      
+      const normalizedPath = this.normalizePath(
+        inputPath,
+        context.workingDirectory
+      );
+
       // Security checks
-      const securityCheck = await this.performSecurityCheck(normalizedPath, operation, context);
+      const securityCheck = await this.performSecurityCheck(
+        normalizedPath,
+        operation,
+        context
+      );
       if (!securityCheck.safe) {
         return {
           success: false,
           error: `Edit denied: ${securityCheck.reason}`,
           performance: {
-            executionTime: Date.now() - startTime
-          }
+            executionTime: Date.now() - startTime,
+          },
         };
       }
 
@@ -178,16 +228,19 @@ export class EditTool extends BaseTool {
 
       // Read original content
       const originalContent = await readFile(normalizedPath, encoding);
-      
+
       // Apply edit operation
-      const editResult = await this.applyEditOperation(originalContent.toString(), operation);
+      const editResult = await this.applyEditOperation(
+        originalContent.toString(),
+        operation
+      );
       if (!editResult.success) {
         return {
           success: false,
           error: editResult.error,
           performance: {
-            executionTime: Date.now() - startTime
-          }
+            executionTime: Date.now() - startTime,
+          },
         };
       }
 
@@ -199,9 +252,12 @@ export class EditTool extends BaseTool {
       // Validate syntax if requested
       let syntaxValid = true;
       let syntaxError = '';
-      
+
       if (validateSyntax && this.supportsSyntaxValidation(normalizedPath)) {
-        const validation = await this.validateSyntax(normalizedPath, newContent);
+        const validation = await this.validateSyntax(
+          normalizedPath,
+          newContent
+        );
         syntaxValid = validation.valid;
         syntaxError = validation.error;
       }
@@ -218,11 +274,11 @@ export class EditTool extends BaseTool {
             syntaxError: syntaxError || undefined,
             preview: true,
             changes: diff.changes,
-            statistics: diff.statistics
+            statistics: diff.statistics,
           },
           performance: {
-            executionTime: Date.now() - startTime
-          }
+            executionTime: Date.now() - startTime,
+          },
         };
       }
 
@@ -234,11 +290,11 @@ export class EditTool extends BaseTool {
           warnings: ['Changes were not applied due to syntax errors'],
           data: {
             diff,
-            syntaxError
+            syntaxError,
           },
           performance: {
-            executionTime: Date.now() - startTime
-          }
+            executionTime: Date.now() - startTime,
+          },
         };
       }
 
@@ -246,7 +302,10 @@ export class EditTool extends BaseTool {
 
       // Create backup if requested
       if (createBackup) {
-        backupPath = await this.createBackup(normalizedPath, originalContent.toString());
+        backupPath = await this.createBackup(
+          normalizedPath,
+          originalContent.toString()
+        );
       }
 
       // Write the edited content
@@ -255,9 +314,12 @@ export class EditTool extends BaseTool {
       this.emit('executed', {
         path: normalizedPath,
         operation: operation.type,
-        linesChanged: diff.statistics.linesAdded + diff.statistics.linesRemoved + diff.statistics.linesModified,
+        linesChanged:
+          diff.statistics.linesAdded +
+          diff.statistics.linesRemoved +
+          diff.statistics.linesModified,
         backupCreated: !!backupPath,
-        success: true
+        success: true,
       });
 
       return {
@@ -271,30 +333,33 @@ export class EditTool extends BaseTool {
           changes: diff.changes,
           statistics: diff.statistics,
           originalSize: originalContent.length,
-          newSize: newContent.length
+          newSize: newContent.length,
         },
         performance: {
           executionTime: Date.now() - startTime,
-          resourcesAccessed: [normalizedPath, ...(backupPath ? [backupPath] : [])]
-        }
+          resourcesAccessed: [
+            normalizedPath,
+            ...(backupPath ? [backupPath] : []),
+          ],
+        },
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
       this.emit('error', {
         path: inputPath,
         operation: operation?.type,
         error: errorMessage,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       });
 
       return {
         success: false,
         error: `Failed to edit file: ${errorMessage}`,
         performance: {
-          executionTime: Date.now() - startTime
-        }
+          executionTime: Date.now() - startTime,
+        },
       };
     }
   }
@@ -307,8 +372,8 @@ export class EditTool extends BaseTool {
   }
 
   private async performSecurityCheck(
-    filePath: string, 
-    operation: EditOperation, 
+    filePath: string,
+    operation: EditOperation,
     context: ToolExecutionContext
   ): Promise<{ safe: boolean; reason?: string }> {
     // Check for path traversal
@@ -318,8 +383,15 @@ export class EditTool extends BaseTool {
 
     // Check file extension
     const ext = extname(filePath).toLowerCase();
-    if (ext && !this.allowedExtensions.has(ext) && !context.permissions.includes('edit_any_file')) {
-      return { safe: false, reason: `File type '${ext}' not allowed without edit_any_file permission` };
+    if (
+      ext &&
+      !this.allowedExtensions.has(ext) &&
+      !context.permissions.includes('edit_any_file')
+    ) {
+      return {
+        safe: false,
+        reason: `File type '${ext}' not allowed without edit_any_file permission`,
+      };
     }
 
     // Check operation content for dangerous patterns
@@ -331,13 +403,16 @@ export class EditTool extends BaseTool {
       /exec\s*\(/i,
       /system\s*\(/i,
       /rm\s+-rf/i,
-      /sudo\s/i
+      /sudo\s/i,
     ];
 
     if (!context.permissions.includes('edit_dangerous_content')) {
       for (const pattern of dangerousPatterns) {
         if (pattern.test(content)) {
-          return { safe: false, reason: 'Operation contains potentially dangerous content' };
+          return {
+            safe: false,
+            reason: 'Operation contains potentially dangerous content',
+          };
         }
       }
     }
@@ -355,18 +430,22 @@ export class EditTool extends BaseTool {
       } else if (err.code === 'EACCES') {
         throw new Error('Permission denied');
       } else {
-        throw new Error(`Cannot access file: ${err.message || 'Unknown error'}`);
+        throw new Error(
+          `Cannot access file: ${err.message || 'Unknown error'}`
+        );
       }
     }
 
     const fileStats = await stat(filePath);
     if (fileStats.size > this.maxFileSize) {
-      throw new Error(`File too large (${fileStats.size} bytes, max ${this.maxFileSize} bytes)`);
+      throw new Error(
+        `File too large (${fileStats.size} bytes, max ${this.maxFileSize} bytes)`
+      );
     }
   }
 
   private async applyEditOperation(
-    content: string, 
+    content: string,
     operation: EditOperation
   ): Promise<{ success: boolean; content?: string; error?: string }> {
     try {
@@ -382,19 +461,28 @@ export class EditTool extends BaseTool {
         case 'prepend':
           return this.applyPrepend(content, operation);
         default:
-          return { success: false, error: `Unknown operation type: ${operation.type}` };
+          return {
+            success: false,
+            error: `Unknown operation type: ${operation.type}`,
+          };
       }
     } catch (error) {
-      return { 
-        success: false, 
-        error: `Operation failed: ${error instanceof Error ? error.message : String(error)}` 
+      return {
+        success: false,
+        error: `Operation failed: ${error instanceof Error ? error.message : String(error)}`,
       };
     }
   }
 
-  private applyReplace(content: string, operation: EditOperation): { success: boolean; content?: string; error?: string } {
+  private applyReplace(
+    content: string,
+    operation: EditOperation
+  ): { success: boolean; content?: string; error?: string } {
     if (!operation.search || operation.replacement === undefined) {
-      return { success: false, error: 'Replace operation requires search and replacement parameters' };
+      return {
+        success: false,
+        error: 'Replace operation requires search and replacement parameters',
+      };
     }
 
     let newContent: string;
@@ -407,7 +495,10 @@ export class EditTool extends BaseTool {
       matchFound = operation.search.test(content);
       newContent = content.replace(operation.search, operation.replacement);
     } else {
-      return { success: false, error: 'Search parameter must be a string or RegExp' };
+      return {
+        success: false,
+        error: 'Search parameter must be a string or RegExp',
+      };
     }
 
     if (operation.validateMatch && !matchFound) {
@@ -417,36 +508,55 @@ export class EditTool extends BaseTool {
     return { success: true, content: newContent };
   }
 
-  private applyInsert(content: string, operation: EditOperation): { success: boolean; content?: string; error?: string } {
+  private applyInsert(
+    content: string,
+    operation: EditOperation
+  ): { success: boolean; content?: string; error?: string } {
     if (!operation.content) {
-      return { success: false, error: 'Insert operation requires content parameter' };
+      return {
+        success: false,
+        error: 'Insert operation requires content parameter',
+      };
     }
 
     if (operation.lineNumber !== undefined) {
       const lines = content.split('\n');
       const lineIndex = operation.lineNumber - 1;
-      
+
       if (lineIndex < 0 || lineIndex > lines.length) {
-        return { success: false, error: `Invalid line number: ${operation.lineNumber}` };
+        return {
+          success: false,
+          error: `Invalid line number: ${operation.lineNumber}`,
+        };
       }
 
       lines.splice(lineIndex, 0, operation.content);
       return { success: true, content: lines.join('\n') };
     } else if (operation.position !== undefined) {
       if (operation.position < 0 || operation.position > content.length) {
-        return { success: false, error: `Invalid position: ${operation.position}` };
+        return {
+          success: false,
+          error: `Invalid position: ${operation.position}`,
+        };
       }
 
-      const newContent = content.slice(0, operation.position) + 
-                        operation.content + 
-                        content.slice(operation.position);
+      const newContent =
+        content.slice(0, operation.position) +
+        operation.content +
+        content.slice(operation.position);
       return { success: true, content: newContent };
     }
 
-    return { success: false, error: 'Insert operation requires lineNumber or position parameter' };
+    return {
+      success: false,
+      error: 'Insert operation requires lineNumber or position parameter',
+    };
   }
 
-  private applyDelete(content: string, operation: EditOperation): { success: boolean; content?: string; error?: string } {
+  private applyDelete(
+    content: string,
+    operation: EditOperation
+  ): { success: boolean; content?: string; error?: string } {
     if (operation.search) {
       let newContent: string;
       if (typeof operation.search === 'string') {
@@ -454,35 +564,56 @@ export class EditTool extends BaseTool {
       } else if (operation.search instanceof RegExp) {
         newContent = content.replace(operation.search, '');
       } else {
-        return { success: false, error: 'Search parameter must be a string or RegExp' };
+        return {
+          success: false,
+          error: 'Search parameter must be a string or RegExp',
+        };
       }
       return { success: true, content: newContent };
     } else if (operation.lineNumber !== undefined) {
       const lines = content.split('\n');
       const lineIndex = operation.lineNumber - 1;
-      
+
       if (lineIndex < 0 || lineIndex >= lines.length) {
-        return { success: false, error: `Invalid line number: ${operation.lineNumber}` };
+        return {
+          success: false,
+          error: `Invalid line number: ${operation.lineNumber}`,
+        };
       }
 
       lines.splice(lineIndex, 1);
       return { success: true, content: lines.join('\n') };
     }
 
-    return { success: false, error: 'Delete operation requires search or lineNumber parameter' };
+    return {
+      success: false,
+      error: 'Delete operation requires search or lineNumber parameter',
+    };
   }
 
-  private applyAppend(content: string, operation: EditOperation): { success: boolean; content?: string; error?: string } {
+  private applyAppend(
+    content: string,
+    operation: EditOperation
+  ): { success: boolean; content?: string; error?: string } {
     if (!operation.content) {
-      return { success: false, error: 'Append operation requires content parameter' };
+      return {
+        success: false,
+        error: 'Append operation requires content parameter',
+      };
     }
 
     return { success: true, content: content + operation.content };
   }
 
-  private applyPrepend(content: string, operation: EditOperation): { success: boolean; content?: string; error?: string } {
+  private applyPrepend(
+    content: string,
+    operation: EditOperation
+  ): { success: boolean; content?: string; error?: string } {
     if (!operation.content) {
-      return { success: false, error: 'Prepend operation requires content parameter' };
+      return {
+        success: false,
+        error: 'Prepend operation requires content parameter',
+      };
     }
 
     return { success: true, content: operation.content + content };
@@ -491,7 +622,7 @@ export class EditTool extends BaseTool {
   private generateDiff(oldContent: string, newContent: string): EditDiff {
     const oldLines = oldContent.split('\n');
     const newLines = newContent.split('\n');
-    
+
     const changes: EditDiff['changes'] = [];
     let linesAdded = 0;
     let linesRemoved = 0;
@@ -499,7 +630,7 @@ export class EditTool extends BaseTool {
 
     // Simple diff algorithm (can be enhanced with more sophisticated algorithms)
     const maxLines = Math.max(oldLines.length, newLines.length);
-    
+
     for (let i = 0; i < maxLines; i++) {
       const oldLine = oldLines[i];
       const newLine = newLines[i];
@@ -509,7 +640,7 @@ export class EditTool extends BaseTool {
         changes.push({
           type: 'added',
           lineNumber: i + 1,
-          newLine
+          newLine,
         });
         linesAdded++;
       } else if (oldLine !== undefined && newLine === undefined) {
@@ -517,7 +648,7 @@ export class EditTool extends BaseTool {
         changes.push({
           type: 'removed',
           lineNumber: i + 1,
-          oldLine
+          oldLine,
         });
         linesRemoved++;
       } else if (oldLine !== newLine) {
@@ -526,7 +657,7 @@ export class EditTool extends BaseTool {
           type: 'modified',
           lineNumber: i + 1,
           oldLine,
-          newLine
+          newLine,
         });
         linesModified++;
       }
@@ -539,25 +670,33 @@ export class EditTool extends BaseTool {
       statistics: {
         linesAdded,
         linesRemoved,
-        linesModified
-      }
+        linesModified,
+      },
     };
   }
 
-  private async createBackup(filePath: string, content: string): Promise<string> {
+  private async createBackup(
+    filePath: string,
+    content: string
+  ): Promise<string> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupPath = `${filePath}.backup-${timestamp}`;
-    
+
     await writeFile(backupPath, content, 'utf8');
     return backupPath;
   }
 
   private supportsSyntaxValidation(filePath: string): boolean {
     const ext = extname(filePath).toLowerCase();
-    return ['.json', '.js', '.ts', '.jsx', '.tsx', '.yaml', '.yml'].includes(ext);
+    return ['.json', '.js', '.ts', '.jsx', '.tsx', '.yaml', '.yml'].includes(
+      ext
+    );
   }
 
-  private async validateSyntax(filePath: string, content: string): Promise<{ valid: boolean; error: string }> {
+  private async validateSyntax(
+    filePath: string,
+    content: string
+  ): Promise<{ valid: boolean; error: string }> {
     const ext = extname(filePath).toLowerCase();
 
     try {
@@ -565,7 +704,7 @@ export class EditTool extends BaseTool {
         case '.json':
           JSON.parse(content);
           return { valid: true, error: '' };
-        
+
         case '.yaml':
         case '.yml':
           // Basic YAML validation (would need yaml parser for full validation)
@@ -580,7 +719,7 @@ export class EditTool extends BaseTool {
         case '.tsx':
           // Basic syntax check for obvious errors
           const jsErrors = this.validateJavaScriptBasic(content);
-          return jsErrors.length > 0 
+          return jsErrors.length > 0
             ? { valid: false, error: jsErrors.join(', ') }
             : { valid: true, error: '' };
 
@@ -588,30 +727,33 @@ export class EditTool extends BaseTool {
           return { valid: true, error: '' };
       }
     } catch (error) {
-      return { 
-        valid: false, 
-        error: error instanceof Error ? error.message : String(error) 
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
 
   private validateJavaScriptBasic(content: string): string[] {
     const errors: string[] = [];
-    
+
     // Check for unmatched braces
-    const braceCount = (content.match(/\{/g) || []).length - (content.match(/\}/g) || []).length;
+    const braceCount =
+      (content.match(/\{/g) || []).length - (content.match(/\}/g) || []).length;
     if (braceCount !== 0) {
       errors.push('Unmatched braces');
     }
 
     // Check for unmatched parentheses
-    const parenCount = (content.match(/\(/g) || []).length - (content.match(/\)/g) || []).length;
+    const parenCount =
+      (content.match(/\(/g) || []).length - (content.match(/\)/g) || []).length;
     if (parenCount !== 0) {
       errors.push('Unmatched parentheses');
     }
 
     // Check for unmatched brackets
-    const bracketCount = (content.match(/\[/g) || []).length - (content.match(/\]/g) || []).length;
+    const bracketCount =
+      (content.match(/\[/g) || []).length - (content.match(/\]/g) || []).length;
     if (bracketCount !== 0) {
       errors.push('Unmatched brackets');
     }
@@ -619,14 +761,24 @@ export class EditTool extends BaseTool {
     return errors;
   }
 
-  async beforeExecute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<void> {
+  async beforeExecute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<void> {
     await super.beforeExecute(parameters, context);
-    
-    if (!context.permissions.includes('write_files') || !context.permissions.includes('read_files')) {
-      throw new Error('Edit tool requires both read_files and write_files permissions');
+
+    if (
+      !context.permissions.includes('write_files') ||
+      !context.permissions.includes('read_files')
+    ) {
+      throw new Error(
+        'Edit tool requires both read_files and write_files permissions'
+      );
     }
 
-    console.log(`[EditTool] Editing file for user ${context.userId}: ${parameters.path} (${parameters.operation.type})`);
+    console.log(
+      `[EditTool] Editing file for user ${context.userId}: ${parameters.path} (${parameters.operation.type})`
+    );
   }
 }
 

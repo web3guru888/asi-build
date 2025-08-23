@@ -1,6 +1,6 @@
 /**
  * Kenny Integration Pattern - State Manager
- * 
+ *
  * Provides global state management with watching, subscriptions,
  * persistence, and atomic updates for the Kenny integration system.
  */
@@ -53,12 +53,12 @@ export interface StateTransaction {
 
 export class StateManager extends EventEmitter {
   private state: Record<string, any> = {};
-  private watchers = new Map<string, StateWatcher>();
+  private readonly watchers = new Map<string, StateWatcher>();
   private changeHistory: StateChange[] = [];
-  private maxHistorySize = 500;
+  private readonly maxHistorySize = 500;
   private persistenceOptions: PersistenceOptions | null = null;
   private persistenceTimer: NodeJS.Timeout | null = null;
-  private transactions = new Map<string, StateTransaction>();
+  private readonly transactions = new Map<string, StateTransaction>();
 
   constructor() {
     super();
@@ -95,13 +95,13 @@ export class StateManager extends EventEmitter {
    */
   async set<T = any>(path: string, value: T, source?: string): Promise<void> {
     const oldValue = this.get(path);
-    
+
     if (oldValue === value) {
       return; // No change
     }
 
     this.setValueByPath(this.state, path, value);
-    
+
     const change: StateChange<T> = {
       id: `chg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
@@ -109,7 +109,7 @@ export class StateManager extends EventEmitter {
       oldValue,
       newValue: value,
       operation: 'set',
-      source
+      source,
     };
 
     await this.processStateChange(change);
@@ -120,13 +120,13 @@ export class StateManager extends EventEmitter {
    */
   async delete(path: string, source?: string): Promise<void> {
     const oldValue = this.get(path);
-    
+
     if (oldValue === undefined) {
       return; // Already doesn't exist
     }
 
     this.deleteValueByPath(this.state, path);
-    
+
     const change: StateChange = {
       id: `chg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
@@ -134,7 +134,7 @@ export class StateManager extends EventEmitter {
       oldValue,
       newValue: undefined,
       operation: 'delete',
-      source
+      source,
     };
 
     await this.processStateChange(change);
@@ -143,12 +143,16 @@ export class StateManager extends EventEmitter {
   /**
    * Merge an object into the state at the given path
    */
-  async merge(path: string, value: Record<string, any>, source?: string): Promise<void> {
+  async merge(
+    path: string,
+    value: Record<string, any>,
+    source?: string
+  ): Promise<void> {
     const oldValue = this.get(path);
     const newValue = { ...(oldValue || {}), ...value };
-    
+
     this.setValueByPath(this.state, path, newValue);
-    
+
     const change: StateChange = {
       id: `chg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
@@ -156,7 +160,7 @@ export class StateManager extends EventEmitter {
       oldValue,
       newValue,
       operation: 'merge',
-      source
+      source,
     };
 
     await this.processStateChange(change);
@@ -172,10 +176,13 @@ export class StateManager extends EventEmitter {
   /**
    * Replace the entire state
    */
-  async setState(newState: Record<string, any>, source?: string): Promise<void> {
+  async setState(
+    newState: Record<string, any>,
+    source?: string
+  ): Promise<void> {
     const oldState = this.getState();
     this.state = { ...newState };
-    
+
     const change: StateChange = {
       id: `chg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
@@ -183,7 +190,7 @@ export class StateManager extends EventEmitter {
       oldValue: oldState,
       newValue: newState,
       operation: 'set',
-      source
+      source,
     };
 
     await this.processStateChange(change);
@@ -198,13 +205,13 @@ export class StateManager extends EventEmitter {
     options: { immediate?: boolean; deep?: boolean } = {}
   ): string {
     const watcherId = `wtch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const watcher: StateWatcher = {
       id: watcherId,
       path,
       callback,
       immediate: options.immediate,
-      deep: options.deep
+      deep: options.deep,
     };
 
     this.watchers.set(watcherId, watcher);
@@ -220,7 +227,7 @@ export class StateManager extends EventEmitter {
           oldValue: undefined,
           newValue: currentValue,
           operation: 'set',
-          source: 'immediate'
+          source: 'immediate',
         };
         setTimeout(() => callback(immediateChange), 0);
       }
@@ -250,7 +257,7 @@ export class StateManager extends EventEmitter {
       rollback: async () => {
         this.state = snapshot;
         this.transactions.delete(transactionId);
-        
+
         const rollbackChange: StateChange = {
           id: `rb_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           timestamp: new Date(),
@@ -258,15 +265,15 @@ export class StateManager extends EventEmitter {
           oldValue: this.state,
           newValue: snapshot,
           operation: 'set',
-          source: `transaction.rollback.${transactionId}`
+          source: `transaction.rollback.${transactionId}`,
         };
-        
+
         await this.processStateChange(rollbackChange);
       },
       commit: async () => {
         // Operations have already been applied to state
         this.transactions.delete(transactionId);
-        
+
         const commitChange: StateChange = {
           id: `cm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           timestamp: new Date(),
@@ -274,11 +281,11 @@ export class StateManager extends EventEmitter {
           oldValue: snapshot,
           newValue: this.getState(),
           operation: 'set',
-          source: `transaction.commit.${transactionId}`
+          source: `transaction.commit.${transactionId}`,
         };
-        
+
         await this.processStateChange(commitChange);
-      }
+      },
     };
 
     this.transactions.set(transactionId, transaction);
@@ -327,8 +334,8 @@ export class StateManager extends EventEmitter {
     }
 
     // Notify watchers
-    const matchingWatchers = Array.from(this.watchers.values()).filter(watcher => 
-      this.watcherMatches(watcher, change.path)
+    const matchingWatchers = Array.from(this.watchers.values()).filter(
+      watcher => this.watcherMatches(watcher, change.path)
     );
 
     for (const watcher of matchingWatchers) {
@@ -356,7 +363,9 @@ export class StateManager extends EventEmitter {
    */
   private watcherMatches(watcher: StateWatcher, path: string): boolean {
     if (typeof watcher.path === 'string') {
-      return watcher.deep ? path.startsWith(watcher.path) : path === watcher.path;
+      return watcher.deep
+        ? path.startsWith(watcher.path)
+        : path === watcher.path;
     } else {
       return watcher.path.test(path);
     }
@@ -367,17 +376,17 @@ export class StateManager extends EventEmitter {
    */
   private getValueByPath(obj: any, path: string): any {
     if (!path) return obj;
-    
+
     const keys = path.split('.');
     let current = obj;
-    
+
     for (const key of keys) {
       if (current === null || current === undefined) {
         return undefined;
       }
       current = current[key];
     }
-    
+
     return current;
   }
 
@@ -386,10 +395,10 @@ export class StateManager extends EventEmitter {
    */
   private setValueByPath(obj: any, path: string, value: any): void {
     if (!path) return;
-    
+
     const keys = path.split('.');
     const lastKey = keys.pop()!;
-    
+
     let current = obj;
     for (const key of keys) {
       if (!(key in current) || typeof current[key] !== 'object') {
@@ -397,7 +406,7 @@ export class StateManager extends EventEmitter {
       }
       current = current[key];
     }
-    
+
     current[lastKey] = value;
   }
 
@@ -406,10 +415,10 @@ export class StateManager extends EventEmitter {
    */
   private deleteValueByPath(obj: any, path: string): void {
     if (!path) return;
-    
+
     const keys = path.split('.');
     const lastKey = keys.pop()!;
-    
+
     let current = obj;
     for (const key of keys) {
       if (!(key in current)) {
@@ -417,7 +426,7 @@ export class StateManager extends EventEmitter {
       }
       current = current[key];
     }
-    
+
     delete current[lastKey];
   }
 

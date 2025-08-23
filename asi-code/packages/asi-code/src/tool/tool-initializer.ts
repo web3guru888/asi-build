@@ -1,12 +1,16 @@
 /**
  * Tool Initializer - Central tool registration and initialization system
- * 
+ *
  * Provides automated registration of all built-in tools with the Tool Registry,
  * handles tool discovery, validation, and startup initialization.
  */
 
 import { ToolRegistry, ToolRegistryConfig } from './tool-registry.js';
-import { createBuiltInTools, getBuiltInToolNames, getBuiltInToolCategories } from './built-in-tools/index.js';
+import {
+  createBuiltInTools,
+  getBuiltInToolCategories,
+  getBuiltInToolNames,
+} from './built-in-tools/index.js';
 import { BaseTool, ToolDefinition } from './base-tool.js';
 import { getKennyIntegration } from '../kenny/integration.js';
 import type { PermissionManager } from '../permission/permission-manager.js';
@@ -50,8 +54,10 @@ export interface ToolDiscoveryInfo {
  * Integrates with Kenny Integration Pattern for event-driven operations
  */
 export class ToolInitializer {
-  private registry: ToolRegistry;
-  private config: Required<Omit<ToolInitializerConfig, 'permissionManager'>> & { permissionManager?: PermissionManager };
+  private readonly registry: ToolRegistry;
+  private readonly config: Required<
+    Omit<ToolInitializerConfig, 'permissionManager'>
+  > & { permissionManager?: PermissionManager };
   private initializationTime?: number;
 
   constructor(config: ToolInitializerConfig = {}) {
@@ -63,7 +69,7 @@ export class ToolInitializer {
       defaultTimeout: config.defaultTimeout ?? 300000,
       autoRegisterBuiltIns: config.autoRegisterBuiltIns ?? true,
       enableToolValidation: config.enableToolValidation ?? true,
-      enableVersioning: config.enableVersioning ?? true
+      enableVersioning: config.enableVersioning ?? true,
     };
 
     // Create tool registry with configuration
@@ -72,7 +78,7 @@ export class ToolInitializer {
       enableMetrics: this.config.enableMetrics,
       enableCaching: this.config.enableCaching,
       maxConcurrentExecutions: this.config.maxConcurrentExecutions,
-      defaultTimeout: this.config.defaultTimeout
+      defaultTimeout: this.config.defaultTimeout,
     };
 
     this.registry = new ToolRegistry(registryConfig);
@@ -90,7 +96,7 @@ export class ToolInitializer {
     try {
       // Initialize the tool registry
       await this.registry.initialize({
-        permissionManager: this.config.permissionManager
+        permissionManager: this.config.permissionManager,
       });
 
       // Start the registry
@@ -103,7 +109,9 @@ export class ToolInitializer {
         errors.push(...registrationResult.errors);
 
         // Update category counts
-        for (const [category, count] of Object.entries(registrationResult.categoryCounts)) {
+        for (const [category, count] of Object.entries(
+          registrationResult.categoryCounts
+        )) {
           categoryCounts[category] = (categoryCounts[category] || 0) + count;
         }
       }
@@ -112,36 +120,35 @@ export class ToolInitializer {
 
       // Emit initialization event
       const kenny = getKennyIntegration();
-      await kenny.getMessageBus().publishSubsystem(
-        'tool.system.initialized',
-        'tool-registry',
-        {
+      await kenny
+        .getMessageBus()
+        .publishSubsystem('tool.system.initialized', 'tool-registry', {
           toolsRegistered,
           categoryCounts,
           initializationTime: this.initializationTime,
-          hasErrors: errors.length > 0
-        }
-      );
+          hasErrors: errors.length > 0,
+        });
 
       return {
         registry: this.registry,
         toolsRegistered,
         categoryCounts,
         errors,
-        initializationTime: this.initializationTime
+        initializationTime: this.initializationTime,
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       errors.push({ toolName: 'system', error: errorMessage });
 
       // Emit error event
       const kenny = getKennyIntegration();
-      await kenny.getMessageBus().publishSubsystem(
-        'tool.system.error',
-        'tool-registry',
-        { error: errorMessage, initializationTime: Date.now() - startTime }
-      );
+      await kenny
+        .getMessageBus()
+        .publishSubsystem('tool.system.error', 'tool-registry', {
+          error: errorMessage,
+          initializationTime: Date.now() - startTime,
+        });
 
       throw error;
     }
@@ -173,7 +180,7 @@ export class ToolInitializer {
             if (!validation.isValid) {
               errors.push({
                 toolName: tool.definition.name,
-                error: `Validation failed: ${validation.errors.join(', ')}`
+                error: `Validation failed: ${validation.errors.join(', ')}`,
               });
               continue;
             }
@@ -194,19 +201,24 @@ export class ToolInitializer {
           const category = tool.definition.category;
           categoryCounts[category] = (categoryCounts[category] || 0) + 1;
 
-          console.log(`[ToolInitializer] Registered tool: ${tool.definition.name} (${category})`);
-
+          console.log(
+            `[ToolInitializer] Registered tool: ${tool.definition.name} (${category})`
+          );
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
           errors.push({ toolName: tool.definition.name, error: errorMessage });
-          console.error(`[ToolInitializer] Failed to register tool ${tool.definition.name}:`, errorMessage);
+          console.error(
+            `[ToolInitializer] Failed to register tool ${tool.definition.name}:`,
+            errorMessage
+          );
         }
       }
 
       return { toolsRegistered, categoryCounts, errors };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       errors.push({ toolName: 'bulk_registration', error: errorMessage });
       return { toolsRegistered, categoryCounts, errors };
     }
@@ -231,7 +243,10 @@ export class ToolInitializer {
         errors.push('Tool name is required');
       }
 
-      if (!definition.description || definition.description.trim().length === 0) {
+      if (
+        !definition.description ||
+        definition.description.trim().length === 0
+      ) {
         errors.push('Tool description is required');
       }
 
@@ -262,13 +277,27 @@ export class ToolInitializer {
 
       // Validate safety level
       const validSafetyLevels = ['safe', 'moderate', 'high-risk', 'dangerous'];
-      if (definition.safetyLevel && !validSafetyLevels.includes(definition.safetyLevel)) {
+      if (
+        definition.safetyLevel &&
+        !validSafetyLevels.includes(definition.safetyLevel)
+      ) {
         errors.push(`Invalid safety level: ${definition.safetyLevel}`);
       }
 
       // Validate category
-      const validCategories = ['file', 'system', 'network', 'ai', 'custom', 'analysis', 'generation'];
-      if (definition.category && !validCategories.includes(definition.category)) {
+      const validCategories = [
+        'file',
+        'system',
+        'network',
+        'ai',
+        'custom',
+        'analysis',
+        'generation',
+      ];
+      if (
+        definition.category &&
+        !validCategories.includes(definition.category)
+      ) {
         errors.push(`Invalid category: ${definition.category}`);
       }
 
@@ -276,7 +305,9 @@ export class ToolInitializer {
       if (this.config.enableVersioning && definition.version) {
         const versionRegex = /^\d+\.\d+\.\d+(-\w+)?$/;
         if (!versionRegex.test(definition.version)) {
-          warnings.push(`Tool version '${definition.version}' doesn't follow semantic versioning`);
+          warnings.push(
+            `Tool version '${definition.version}' doesn't follow semantic versioning`
+          );
         }
       }
 
@@ -292,11 +323,12 @@ export class ToolInitializer {
       return {
         isValid: errors.length === 0,
         errors,
-        warnings
+        warnings,
       };
-
     } catch (error) {
-      errors.push(`Validation error: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(
+        `Validation error: ${error instanceof Error ? error.message : String(error)}`
+      );
       return { isValid: false, errors, warnings };
     }
   }
@@ -304,7 +336,10 @@ export class ToolInitializer {
   /**
    * Generate appropriate tags for a tool
    */
-  private generateToolTags(tool: BaseTool, categories: Record<string, string[]>): string[] {
+  private generateToolTags(
+    tool: BaseTool,
+    categories: Record<string, string[]>
+  ): string[] {
     const tags = new Set<string>();
 
     // Add category-based tags
@@ -368,7 +403,7 @@ export class ToolInitializer {
         safetyLevel: definition.safetyLevel || 'safe',
         tags: definition.tags || [],
         status: 'active', // Could be enhanced to check actual tool status
-        registeredAt: toolInfo ? undefined : new Date() // Would need registry metadata
+        registeredAt: toolInfo ? undefined : new Date(), // Would need registry metadata
       });
     }
 
@@ -398,7 +433,8 @@ export class ToolInitializer {
       categoryCounts[tool.category] = (categoryCounts[tool.category] || 0) + 1;
 
       // Safety level counts
-      safetyLevelCounts[tool.safetyLevel] = (safetyLevelCounts[tool.safetyLevel] || 0) + 1;
+      safetyLevelCounts[tool.safetyLevel] =
+        (safetyLevelCounts[tool.safetyLevel] || 0) + 1;
 
       // Built-in vs custom classification
       if (tool.tags.includes('built-in')) {
@@ -415,7 +451,7 @@ export class ToolInitializer {
       initializationTime: this.initializationTime,
       registryHealth: this.registry.healthCheck(),
       builtInTools,
-      customTools
+      customTools,
     };
   }
 
@@ -434,18 +470,20 @@ export class ToolInitializer {
 
     // Emit shutdown event
     const kenny = getKennyIntegration();
-    await kenny.getMessageBus().publishSubsystem(
-      'tool.system.shutdown',
-      'tool-registry',
-      { shutdownTime: new Date() }
-    );
+    await kenny
+      .getMessageBus()
+      .publishSubsystem('tool.system.shutdown', 'tool-registry', {
+        shutdownTime: new Date(),
+      });
   }
 }
 
 /**
  * Factory function to create and initialize the tool system
  */
-export async function initializeToolSystem(config?: ToolInitializerConfig): Promise<ToolInitializationResult> {
+export async function initializeToolSystem(
+  config?: ToolInitializerConfig
+): Promise<ToolInitializationResult> {
   const initializer = new ToolInitializer(config);
   return await initializer.initialize();
 }
@@ -453,6 +491,8 @@ export async function initializeToolSystem(config?: ToolInitializerConfig): Prom
 /**
  * Create a configured tool initializer instance
  */
-export function createToolInitializer(config?: ToolInitializerConfig): ToolInitializer {
+export function createToolInitializer(
+  config?: ToolInitializerConfig
+): ToolInitializer {
   return new ToolInitializer(config);
 }

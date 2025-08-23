@@ -1,6 +1,6 @@
 /**
  * Transaction Manager
- * 
+ *
  * Provides comprehensive transaction support with:
  * - Nested transaction handling (savepoints)
  * - Isolation level management
@@ -12,7 +12,12 @@
 
 import { Knex } from 'knex';
 import { nanoid } from 'nanoid';
-import { DatabaseAdapter, TransactionOptions, TransactionContext, TransactionError } from '../types';
+import {
+  DatabaseAdapter,
+  TransactionContext,
+  TransactionError,
+  TransactionOptions,
+} from '../types';
 import { Logger } from '../../logging';
 
 export interface TransactionMetrics {
@@ -27,9 +32,9 @@ export interface TransactionMetrics {
 }
 
 export class TransactionManager {
-  private adapter: DatabaseAdapter;
-  private logger: Logger;
-  private activeTransactions = new Map<string, TransactionContext>();
+  private readonly adapter: DatabaseAdapter;
+  private readonly logger: Logger;
+  private readonly activeTransactions = new Map<string, TransactionContext>();
   private metrics: TransactionMetrics = {
     total: 0,
     committed: 0,
@@ -38,7 +43,7 @@ export class TransactionManager {
     timeouts: 0,
     averageExecutionTime: 0,
     longestTransaction: 0,
-    activeTransactions: 0
+    activeTransactions: 0,
   };
 
   constructor(adapter: DatabaseAdapter, logger: Logger) {
@@ -55,12 +60,12 @@ export class TransactionManager {
   ): Promise<T> {
     const transactionId = nanoid();
     const startTime = Date.now();
-    
+
     const context: TransactionContext = {
       id: transactionId,
       startTime: new Date(),
       queries: [],
-      options
+      options,
     };
 
     this.activeTransactions.set(transactionId, context);
@@ -70,21 +75,23 @@ export class TransactionManager {
     try {
       this.logger.debug('Starting transaction', {
         transactionId,
-        options
+        options,
       });
 
       // Set up transaction configuration
       const trxConfig: any = {};
-      
+
       if (options.isolationLevel) {
         trxConfig.isolationLevel = options.isolationLevel;
       }
 
       const result = await this.executeWithRetry(async () => {
-        return await this.adapter.knex.transaction(async (trx) => {
+        return await this.adapter.knex.transaction(async trx => {
           // Set isolation level if specified
           if (options.isolationLevel) {
-            await trx.raw(`SET TRANSACTION ISOLATION LEVEL ${options.isolationLevel}`);
+            await trx.raw(
+              `SET TRANSACTION ISOLATION LEVEL ${options.isolationLevel}`
+            );
           }
 
           // Set read-only mode if specified
@@ -94,7 +101,9 @@ export class TransactionManager {
 
           // Set timeout if specified
           if (options.timeout) {
-            await trx.raw(`SET LOCAL statement_timeout = '${options.timeout}ms'`);
+            await trx.raw(
+              `SET LOCAL statement_timeout = '${options.timeout}ms'`
+            );
           }
 
           // Execute callback with monitoring
@@ -108,7 +117,7 @@ export class TransactionManager {
       this.logger.debug('Transaction committed successfully', {
         transactionId,
         executionTime,
-        queries: context.queries.length
+        queries: context.queries.length,
       });
 
       return result;
@@ -120,7 +129,7 @@ export class TransactionManager {
         transactionId,
         error: error.message,
         executionTime,
-        queries: context.queries.length
+        queries: context.queries.length,
       });
 
       // Check for specific error types
@@ -162,9 +171,9 @@ export class TransactionManager {
             attempt,
             maxRetries,
             delay,
-            error: error.message
+            error: error.message,
           });
-          
+
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
@@ -189,20 +198,22 @@ export class TransactionManager {
     trx.raw = (...args: any[]) => {
       const startTime = Date.now();
       const promise = originalQuery(...args);
-      
+
       promise.then(
-        (result) => {
+        result => {
           const executionTime = Date.now() - startTime;
           context.queries.push({
             query: args[0],
             type: this.getQueryType(args[0]),
             executionTime,
-            rowsAffected: Array.isArray(result.rows) ? result.rows.length : undefined,
+            rowsAffected: Array.isArray(result.rows)
+              ? result.rows.length
+              : undefined,
             timestamp: new Date(),
-            success: true
+            success: true,
           });
         },
-        (error) => {
+        error => {
           const executionTime = Date.now() - startTime;
           context.queries.push({
             query: args[0],
@@ -210,7 +221,7 @@ export class TransactionManager {
             executionTime,
             timestamp: new Date(),
             success: false,
-            error: error.message
+            error: error.message,
           });
         }
       );
@@ -230,34 +241,36 @@ export class TransactionManager {
     callback: (savepoint: Knex.Transaction) => Promise<T>
   ): Promise<T> {
     const savepointName = `sp_${name}_${nanoid(8)}`;
-    
+
     try {
       this.logger.debug('Creating savepoint', { name: savepointName });
-      
+
       await trx.raw(`SAVEPOINT ${savepointName}`);
-      
+
       const result = await callback(trx);
-      
+
       await trx.raw(`RELEASE SAVEPOINT ${savepointName}`);
-      
-      this.logger.debug('Savepoint completed successfully', { name: savepointName });
-      
+
+      this.logger.debug('Savepoint completed successfully', {
+        name: savepointName,
+      });
+
       return result;
     } catch (error) {
       this.logger.warn('Rolling back to savepoint', {
         name: savepointName,
-        error: error.message
+        error: error.message,
       });
-      
+
       try {
         await trx.raw(`ROLLBACK TO SAVEPOINT ${savepointName}`);
       } catch (rollbackError) {
         this.logger.error('Failed to rollback to savepoint', {
           name: savepointName,
-          error: rollbackError.message
+          error: rollbackError.message,
         });
       }
-      
+
       throw error;
     }
   }
@@ -269,7 +282,7 @@ export class TransactionManager {
     operations: Array<(trx: Knex.Transaction) => Promise<T>>,
     options: TransactionOptions = {}
   ): Promise<T[]> {
-    return await this.transaction(async (trx) => {
+    return await this.transaction(async trx => {
       return await Promise.all(operations.map(op => op(trx)));
     }, options);
   }
@@ -278,17 +291,20 @@ export class TransactionManager {
    * Execute multiple operations sequentially with individual savepoints
    */
   async transactionSequence<T>(
-    operations: Array<{ name: string; operation: (trx: Knex.Transaction) => Promise<T> }>,
+    operations: Array<{
+      name: string;
+      operation: (trx: Knex.Transaction) => Promise<T>;
+    }>,
     options: TransactionOptions = {}
   ): Promise<T[]> {
-    return await this.transaction(async (trx) => {
+    return await this.transaction(async trx => {
       const results: T[] = [];
-      
+
       for (const { name, operation } of operations) {
         const result = await this.savepoint(trx, name, operation);
         results.push(result);
       }
-      
+
       return results;
     }, options);
   }
@@ -311,10 +327,12 @@ export class TransactionManager {
       '08000', // connection_exception
     ];
 
-    return recoverableCodes.includes(code) ||
-           message.includes('deadlock') ||
-           message.includes('connection') ||
-           message.includes('timeout');
+    return (
+      recoverableCodes.includes(code) ||
+      message.includes('deadlock') ||
+      message.includes('connection') ||
+      message.includes('timeout')
+    );
   }
 
   /**
@@ -323,7 +341,7 @@ export class TransactionManager {
   private isDeadlockError(error: any): boolean {
     const message = error.message?.toLowerCase() || '';
     const code = error.code;
-    
+
     return code === '40P01' || message.includes('deadlock');
   }
 
@@ -333,10 +351,12 @@ export class TransactionManager {
   private isTimeoutError(error: any): boolean {
     const message = error.message?.toLowerCase() || '';
     const code = error.code;
-    
-    return code === '57014' || 
-           message.includes('timeout') ||
-           message.includes('canceling statement due to statement timeout');
+
+    return (
+      code === '57014' ||
+      message.includes('timeout') ||
+      message.includes('canceling statement due to statement timeout')
+    );
   }
 
   /**
@@ -344,17 +364,20 @@ export class TransactionManager {
    */
   private getQueryType(sql: string): any {
     if (!sql) return 'OTHER';
-    
+
     const trimmed = sql.trim().toUpperCase();
-    
+
     if (trimmed.startsWith('SELECT')) return 'SELECT';
     if (trimmed.startsWith('INSERT')) return 'INSERT';
     if (trimmed.startsWith('UPDATE')) return 'UPDATE';
     if (trimmed.startsWith('DELETE')) return 'DELETE';
-    if (trimmed.startsWith('CREATE') || 
-        trimmed.startsWith('DROP') || 
-        trimmed.startsWith('ALTER')) return 'DDL';
-    
+    if (
+      trimmed.startsWith('CREATE') ||
+      trimmed.startsWith('DROP') ||
+      trimmed.startsWith('ALTER')
+    )
+      return 'DDL';
+
     return 'OTHER';
   }
 
@@ -369,11 +392,16 @@ export class TransactionManager {
     }
 
     // Update average execution time
-    const totalExecutionTime = this.metrics.averageExecutionTime * (this.metrics.total - 1) + executionTime;
+    const totalExecutionTime =
+      this.metrics.averageExecutionTime * (this.metrics.total - 1) +
+      executionTime;
     this.metrics.averageExecutionTime = totalExecutionTime / this.metrics.total;
 
     // Update longest transaction
-    this.metrics.longestTransaction = Math.max(this.metrics.longestTransaction, executionTime);
+    this.metrics.longestTransaction = Math.max(
+      this.metrics.longestTransaction,
+      executionTime
+    );
   }
 
   /**
@@ -410,16 +438,16 @@ export class TransactionManager {
       // In PostgreSQL, we need to cancel the backend process
       // This is a dangerous operation and should be used carefully
       this.logger.warn('Attempting to kill transaction', { transactionId: id });
-      
+
       // Get the backend PID for this transaction (if possible)
       // This is a simplified implementation - in practice, you'd need to track
       // the connection/process ID associated with each transaction
-      
+
       return true;
     } catch (error) {
       this.logger.error('Failed to kill transaction', {
         transactionId: id,
-        error: error.message
+        error: error.message,
       });
       return false;
     }
@@ -428,7 +456,8 @@ export class TransactionManager {
   /**
    * Clean up stale transaction tracking
    */
-  cleanupStaleTransactions(maxAgeMs = 300000): number { // 5 minutes default
+  cleanupStaleTransactions(maxAgeMs = 300000): number {
+    // 5 minutes default
     const now = Date.now();
     let cleaned = 0;
 
@@ -437,7 +466,7 @@ export class TransactionManager {
       if (age > maxAgeMs) {
         this.logger.warn('Removing stale transaction from tracking', {
           transactionId: id,
-          age
+          age,
         });
         this.activeTransactions.delete(id);
         this.metrics.activeTransactions--;
@@ -464,9 +493,9 @@ export class TransactionManager {
       timeouts: 0,
       averageExecutionTime: 0,
       longestTransaction: 0,
-      activeTransactions: this.activeTransactions.size
+      activeTransactions: this.activeTransactions.size,
     };
-    
+
     this.logger.info('Transaction metrics reset');
   }
 }

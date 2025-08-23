@@ -1,15 +1,12 @@
 /**
  * WebSocket Client Reconnection Strategy
- * 
- * Client-side reconnection logic with exponential backoff, 
+ *
+ * Client-side reconnection logic with exponential backoff,
  * connection state management, and automatic recovery.
  */
 
 import { EventEmitter } from 'eventemitter3';
-import type { 
-  WSMessage, 
-  WSConnectionState 
-} from './types.js';
+import type { WSConnectionState, WSMessage } from './types.js';
 
 export interface ReconnectionConfig {
   enabled: boolean;
@@ -25,7 +22,12 @@ export interface ReconnectionConfig {
 }
 
 export interface ConnectionState {
-  status: 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'failed';
+  status:
+    | 'disconnected'
+    | 'connecting'
+    | 'connected'
+    | 'reconnecting'
+    | 'failed';
   attempts: number;
   lastConnected?: number;
   lastDisconnected?: number;
@@ -44,20 +46,26 @@ export interface ReconnectionEvents {
   'heartbeat:timeout': () => void;
   'message:queued': (message: WSMessage) => void;
   'message:sent': (message: WSMessage) => void;
-  'state:changed': (oldState: ConnectionState, newState: ConnectionState) => void;
+  'state:changed': (
+    oldState: ConnectionState,
+    newState: ConnectionState
+  ) => void;
 }
 
 export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
-  private config: ReconnectionConfig;
+  private readonly config: ReconnectionConfig;
   private state: ConnectionState;
   private ws: WebSocket | null = null;
   private reconnectTimeout?: NodeJS.Timeout;
   private heartbeatInterval?: NodeJS.Timeout;
   private heartbeatTimeout?: NodeJS.Timeout;
   private messageQueue: WSMessage[] = [];
-  private url: string;
-  private protocols?: string | string[];
-  private pendingMessages = new Map<string, { resolve: Function; reject: Function; timeout: NodeJS.Timeout }>();
+  private readonly url: string;
+  private readonly protocols?: string | string[];
+  private readonly pendingMessages = new Map<
+    string,
+    { resolve: Function; reject: Function; timeout: NodeJS.Timeout }
+  >();
   private lastHeartbeat?: number;
 
   constructor(
@@ -66,7 +74,7 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
     protocols?: string | string[]
   ) {
     super();
-    
+
     this.url = url;
     this.protocols = protocols;
     this.config = {
@@ -96,13 +104,16 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
    * Connect to WebSocket server
    */
   async connect(): Promise<void> {
-    if (this.state.status === 'connecting' || this.state.status === 'connected') {
+    if (
+      this.state.status === 'connecting' ||
+      this.state.status === 'connected'
+    ) {
       return;
     }
 
-    this.updateState({ 
+    this.updateState({
       status: 'connecting',
-      attempts: this.state.attempts + 1 
+      attempts: this.state.attempts + 1,
     });
 
     try {
@@ -118,7 +129,7 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
   disconnect(code?: number, reason?: string): void {
     this.config.autoReconnect = false;
     this.clearTimeouts();
-    
+
     if (this.ws) {
       this.ws.close(code || 1000, reason || 'Client disconnect');
     }
@@ -134,7 +145,7 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
       // Queue message if not connected
       this.messageQueue.push(message);
       this.emit('message:queued', message);
-      
+
       if (this.config.autoReconnect && this.state.status !== 'connecting') {
         this.scheduleReconnect();
       }
@@ -156,7 +167,7 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
       try {
         this.ws!.send(JSON.stringify(message));
         this.emit('message:sent', message);
-        
+
         // For messages that don't expect a response, resolve immediately
         if (!this.expectsResponse(message.type)) {
           const pending = this.pendingMessages.get(message.id);
@@ -198,7 +209,9 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
       state: this.getState(),
       queuedMessages: this.messageQueue.length,
       pendingMessages: this.pendingMessages.size,
-      uptime: this.state.lastConnected ? Date.now() - this.state.lastConnected : undefined,
+      uptime: this.state.lastConnected
+        ? Date.now() - this.state.lastConnected
+        : undefined,
       latency: this.lastHeartbeat ? Date.now() - this.lastHeartbeat : undefined,
     };
   }
@@ -246,7 +259,7 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
     return new Promise((resolve, reject) => {
       try {
         this.ws = new WebSocket(this.url, this.protocols);
-        
+
         const connectionTimeout = setTimeout(() => {
           this.ws?.close();
           reject(new Error('Connection timeout'));
@@ -258,19 +271,21 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
           resolve();
         };
 
-        this.ws.onmessage = (event) => {
+        this.ws.onmessage = event => {
           this.handleMessage(event);
         };
 
-        this.ws.onclose = (event) => {
+        this.ws.onclose = event => {
           clearTimeout(connectionTimeout);
           this.handleConnectionClose(event.code, event.reason);
           if (this.state.status === 'connecting') {
-            reject(new Error(`Connection failed: ${event.code} ${event.reason}`));
+            reject(
+              new Error(`Connection failed: ${event.code} ${event.reason}`)
+            );
           }
         };
 
-        this.ws.onerror = (error) => {
+        this.ws.onerror = error => {
           clearTimeout(connectionTimeout);
           console.error('WebSocket error:', error);
           if (this.state.status === 'connecting') {
@@ -288,8 +303,10 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
    */
   private handleConnectionOpen(): void {
     const now = Date.now();
-    const duration = this.state.lastDisconnected ? now - this.state.lastDisconnected : 0;
-    
+    const duration = this.state.lastDisconnected
+      ? now - this.state.lastDisconnected
+      : 0;
+
     this.updateState({
       status: 'connected',
       attempts: 0,
@@ -309,7 +326,7 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
   private handleConnectionClose(code: number, reason: string): void {
     this.clearTimeouts();
     this.ws = null;
-    
+
     this.updateState({
       status: 'disconnected',
       lastDisconnected: Date.now(),
@@ -351,7 +368,7 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
   private handleMessage(event: MessageEvent): void {
     try {
       const message: WSMessage = JSON.parse(event.data);
-      
+
       // Handle heartbeat responses
       if (message.type === 'connection:pong') {
         this.handleHeartbeatResponse(message);
@@ -377,7 +394,10 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
    * Schedule reconnection attempt
    */
   private scheduleReconnect(): void {
-    if (this.state.status === 'connecting' || this.state.status === 'connected') {
+    if (
+      this.state.status === 'connecting' ||
+      this.state.status === 'connected'
+    ) {
       return;
     }
 
@@ -391,7 +411,7 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
 
     const delay = this.calculateDelay();
     const nextAttempt = Date.now() + delay;
-    
+
     this.updateState({
       status: 'reconnecting',
       nextAttempt,
@@ -408,10 +428,9 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
    * Calculate reconnection delay with exponential backoff
    */
   private calculateDelay(): number {
-    const baseDelay = this.config.initialDelay * Math.pow(
-      this.config.backoffMultiplier,
-      this.state.attempts
-    );
+    const baseDelay =
+      this.config.initialDelay *
+      Math.pow(this.config.backoffMultiplier, this.state.attempts);
 
     let delay = Math.min(baseDelay, this.config.maxDelay);
 
@@ -453,7 +472,7 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
     };
 
     this.lastHeartbeat = Date.now();
-    
+
     try {
       this.ws.send(JSON.stringify(pingMessage));
       this.emit('heartbeat:sent');
@@ -510,7 +529,7 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
       'ai:stream:start',
       'tool:execute:start',
     ];
-    
+
     return responseExpected.includes(messageType);
   }
 
@@ -584,7 +603,7 @@ export class WSClientReconnection extends EventEmitter<ReconnectionEvents> {
     this.clearTimeouts();
     this.disconnect();
     this.removeAllListeners();
-    
+
     // Clear pending promises
     for (const [id, pending] of this.pendingMessages) {
       clearTimeout(pending.timeout);

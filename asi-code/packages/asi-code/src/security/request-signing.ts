@@ -39,14 +39,14 @@ export interface VerificationResult {
  * Request signing and verification utility
  */
 export class RequestSigner {
-  private config: SigningConfig;
-  private usedNonces: Map<string, number> = new Map();
+  private readonly config: SigningConfig;
+  private readonly usedNonces: Map<string, number> = new Map();
 
   constructor(config: SigningConfig) {
     this.config = {
       timestampTolerance: 300, // 5 minutes default
       nonceWindow: 300, // 5 minutes default
-      ...config
+      ...config,
     };
 
     this.validateConfig();
@@ -61,11 +61,17 @@ export class RequestSigner {
       throw new Error('HMAC algorithms require a secret key');
     }
 
-    if (this.config.algorithm.startsWith('RSA') && (!this.config.privateKey || !this.config.publicKey)) {
+    if (
+      this.config.algorithm.startsWith('RSA') &&
+      (!this.config.privateKey || !this.config.publicKey)
+    ) {
       throw new Error('RSA algorithms require both private and public keys');
     }
 
-    if (this.config.algorithm.startsWith('ECDSA') && (!this.config.privateKey || !this.config.publicKey)) {
+    if (
+      this.config.algorithm.startsWith('ECDSA') &&
+      (!this.config.privateKey || !this.config.publicKey)
+    ) {
       throw new Error('ECDSA algorithms require both private and public keys');
     }
   }
@@ -91,7 +97,7 @@ export class RequestSigner {
         path,
         query,
         headers: this.normalizeHeaders(headers),
-        bodyHash: this.hashBody(body)
+        bodyHash: this.hashBody(body),
       };
 
       const stringToSign = this.createStringToSign(components);
@@ -102,14 +108,14 @@ export class RequestSigner {
         path,
         timestamp,
         nonce,
-        algorithm: this.config.algorithm
+        algorithm: this.config.algorithm,
       });
 
       return {
         signature,
         timestamp,
         nonce,
-        algorithm: this.config.algorithm
+        algorithm: this.config.algorithm,
       };
     } catch (error) {
       logger.error('Request signing failed', error);
@@ -136,7 +142,7 @@ export class RequestSigner {
       if (Math.abs(now - timestamp) > this.config.timestampTolerance) {
         return {
           isValid: false,
-          reason: `Request timestamp is outside tolerance window (${this.config.timestampTolerance}s)`
+          reason: `Request timestamp is outside tolerance window (${this.config.timestampTolerance}s)`,
         };
       }
 
@@ -144,7 +150,7 @@ export class RequestSigner {
       if (this.isNonceUsed(nonce, timestamp)) {
         return {
           isValid: false,
-          reason: 'Nonce has already been used (replay attack detected)'
+          reason: 'Nonce has already been used (replay attack detected)',
         };
       }
 
@@ -156,7 +162,7 @@ export class RequestSigner {
         path,
         query,
         headers: this.normalizeHeaders(headers),
-        bodyHash: this.hashBody(body)
+        bodyHash: this.hashBody(body),
       };
 
       // Check required headers
@@ -165,7 +171,7 @@ export class RequestSigner {
           if (!components.headers[requiredHeader.toLowerCase()]) {
             return {
               isValid: false,
-              reason: `Required header missing: ${requiredHeader}`
+              reason: `Required header missing: ${requiredHeader}`,
             };
           }
         }
@@ -178,12 +184,12 @@ export class RequestSigner {
       if (isValid) {
         // Mark nonce as used
         this.markNonceUsed(nonce, timestamp);
-        
+
         logger.debug('Request signature verified', {
           method,
           path,
           timestamp,
-          nonce
+          nonce,
         });
       } else {
         logger.warn('Request signature verification failed', {
@@ -191,20 +197,20 @@ export class RequestSigner {
           path,
           timestamp,
           nonce,
-          reason: 'Invalid signature'
+          reason: 'Invalid signature',
         });
       }
 
       return {
         isValid,
         reason: isValid ? undefined : 'Invalid signature',
-        components
+        components,
       };
     } catch (error) {
       logger.error('Request verification failed', error);
       return {
         isValid: false,
-        reason: 'Verification error'
+        reason: 'Verification error',
       };
     }
   }
@@ -219,7 +225,7 @@ export class RequestSigner {
       components.query,
       components.timestamp.toString(),
       components.nonce,
-      components.bodyHash
+      components.bodyHash,
     ];
 
     // Add normalized headers
@@ -261,7 +267,9 @@ export class RequestSigner {
           .digest('base64');
 
       default:
-        throw new Error(`Unsupported signing algorithm: ${this.config.algorithm}`);
+        throw new Error(
+          `Unsupported signing algorithm: ${this.config.algorithm}`
+        );
     }
   }
 
@@ -333,19 +341,21 @@ export class RequestSigner {
   /**
    * Normalize headers for consistent signing
    */
-  private normalizeHeaders(headers: Record<string, string>): Record<string, string> {
+  private normalizeHeaders(
+    headers: Record<string, string>
+  ): Record<string, string> {
     const normalized: Record<string, string> = {};
-    
+
     for (const [key, value] of Object.entries(headers)) {
       const normalizedKey = key.toLowerCase().trim();
       const normalizedValue = value.trim().replace(/\s+/g, ' ');
-      
+
       // Skip certain headers that can change in transit
       if (!this.isSkippedHeader(normalizedKey)) {
         normalized[normalizedKey] = normalizedValue;
       }
     }
-    
+
     return normalized;
   }
 
@@ -360,9 +370,9 @@ export class RequestSigner {
       'accept-encoding',
       'connection',
       'cache-control',
-      'pragma'
+      'pragma',
     ];
-    
+
     return skippedHeaders.includes(headerName);
   }
 
@@ -411,9 +421,9 @@ export class RequestSigner {
     }
 
     if (cleaned > 0) {
-      logger.debug('Cleaned up expired nonces', { 
-        cleaned, 
-        remaining: this.usedNonces.size 
+      logger.debug('Cleaned up expired nonces', {
+        cleaned,
+        remaining: this.usedNonces.size,
       });
     }
   }
@@ -434,18 +444,24 @@ export function createSigningMiddleware(config: SigningConfig) {
       const algorithm = c.req.header('x-signature-algorithm');
 
       if (!signature || !timestamp || !nonce) {
-        return c.json({
-          error: 'Missing signature headers',
-          required: ['x-signature', 'x-timestamp', 'x-nonce']
-        }, 401);
+        return c.json(
+          {
+            error: 'Missing signature headers',
+            required: ['x-signature', 'x-timestamp', 'x-nonce'],
+          },
+          401
+        );
       }
 
       if (algorithm && algorithm !== config.algorithm) {
-        return c.json({
-          error: 'Algorithm mismatch',
-          expected: config.algorithm,
-          received: algorithm
-        }, 401);
+        return c.json(
+          {
+            error: 'Algorithm mismatch',
+            expected: config.algorithm,
+            received: algorithm,
+          },
+          401
+        );
       }
 
       // Get request components
@@ -453,8 +469,11 @@ export function createSigningMiddleware(config: SigningConfig) {
       const path = c.req.path;
       const query = c.req.url.split('?')[1] || '';
       const headers = Object.fromEntries(
-        Object.entries(c.req.header()).filter(([key]) => 
-          !key.startsWith('x-signature') && !key.startsWith('x-timestamp') && !key.startsWith('x-nonce')
+        Object.entries(c.req.header()).filter(
+          ([key]) =>
+            !key.startsWith('x-signature') &&
+            !key.startsWith('x-timestamp') &&
+            !key.startsWith('x-nonce')
         )
       );
 
@@ -482,13 +501,16 @@ export function createSigningMiddleware(config: SigningConfig) {
           path,
           reason: result.reason,
           timestamp,
-          nonce
+          nonce,
         });
 
-        return c.json({
-          error: 'Invalid request signature',
-          reason: result.reason
-        }, 401);
+        return c.json(
+          {
+            error: 'Invalid request signature',
+            reason: result.reason,
+          },
+          401
+        );
       }
 
       // Store verification result for use in handlers
@@ -507,8 +529,8 @@ export function createSigningMiddleware(config: SigningConfig) {
  * Client helper for signing requests
  */
 export class SignedRequestClient {
-  private signer: RequestSigner;
-  private baseURL: string;
+  private readonly signer: RequestSigner;
+  private readonly baseURL: string;
 
   constructor(config: SigningConfig, baseURL: string) {
     this.signer = new RequestSigner(config);
@@ -529,7 +551,7 @@ export class SignedRequestClient {
   ): Promise<Response> {
     try {
       const url = new URL(path, this.baseURL);
-      
+
       // Add query parameters
       if (options.query) {
         for (const [key, value] of Object.entries(options.query)) {
@@ -541,7 +563,10 @@ export class SignedRequestClient {
       let body = '';
 
       // Serialize body
-      if (options.body && ['POST', 'PUT', 'PATCH'].includes(method.toUpperCase())) {
+      if (
+        options.body &&
+        ['POST', 'PUT', 'PATCH'].includes(method.toUpperCase())
+      ) {
         if (typeof options.body === 'object') {
           body = JSON.stringify(options.body);
           headers['Content-Type'] = 'application/json';
@@ -569,7 +594,7 @@ export class SignedRequestClient {
       return fetch(url.toString(), {
         method: method.toUpperCase(),
         headers,
-        body: body || undefined
+        body: body || undefined,
       });
     } catch (error) {
       logger.error('Signed request failed', error);
@@ -581,7 +606,10 @@ export class SignedRequestClient {
 /**
  * Generate key pair for asymmetric algorithms
  */
-export function generateKeyPair(algorithm: 'RSA' | 'ECDSA'): { privateKey: string; publicKey: string } {
+export function generateKeyPair(algorithm: 'RSA' | 'ECDSA'): {
+  privateKey: string;
+  publicKey: string;
+} {
   let keyPair: crypto.KeyPairSyncResult<string, string>;
 
   switch (algorithm) {
@@ -590,12 +618,12 @@ export function generateKeyPair(algorithm: 'RSA' | 'ECDSA'): { privateKey: strin
         modulusLength: 2048,
         publicKeyEncoding: {
           type: 'spki',
-          format: 'pem'
+          format: 'pem',
         },
         privateKeyEncoding: {
           type: 'pkcs8',
-          format: 'pem'
-        }
+          format: 'pem',
+        },
       });
       break;
 
@@ -604,12 +632,12 @@ export function generateKeyPair(algorithm: 'RSA' | 'ECDSA'): { privateKey: strin
         namedCurve: 'secp256k1',
         publicKeyEncoding: {
           type: 'spki',
-          format: 'pem'
+          format: 'pem',
         },
         privateKeyEncoding: {
           type: 'pkcs8',
-          format: 'pem'
-        }
+          format: 'pem',
+        },
       });
       break;
 
@@ -619,7 +647,7 @@ export function generateKeyPair(algorithm: 'RSA' | 'ECDSA'): { privateKey: strin
 
   return {
     privateKey: keyPair.privateKey,
-    publicKey: keyPair.publicKey
+    publicKey: keyPair.publicKey,
   };
 }
 

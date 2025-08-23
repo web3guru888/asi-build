@@ -1,12 +1,12 @@
 /**
  * WebSocket Event Types and Message Schemas
- * 
+ *
  * Comprehensive type definitions for WebSocket communication in ASI-Code.
  * Includes message types, event schemas, and connection management types.
  */
 
 // Base message types
-export type WSMessageType = 
+export type WSMessageType =
   // Connection management
   | 'connection:auth'
   | 'connection:ping'
@@ -14,43 +14,43 @@ export type WSMessageType =
   | 'connection:close'
   | 'connection:error'
   | 'connection:ready'
-  
+
   // Channel/Room management
   | 'channel:join'
   | 'channel:leave'
   | 'channel:message'
   | 'channel:broadcast'
   | 'channel:list'
-  
+
   // Subscription management
   | 'subscription:subscribe'
   | 'subscription:unsubscribe'
   | 'subscription:event'
   | 'subscription:list'
-  
+
   // AI streaming
   | 'ai:stream:start'
   | 'ai:stream:chunk'
   | 'ai:stream:end'
   | 'ai:stream:error'
-  
+
   // Tool execution
   | 'tool:execute:start'
   | 'tool:execute:progress'
   | 'tool:execute:result'
   | 'tool:execute:error'
   | 'tool:execute:end'
-  
+
   // Session events
   | 'session:update'
   | 'session:history'
   | 'session:clear'
-  
+
   // System events
   | 'system:status'
   | 'system:notification'
   | 'system:error'
-  
+
   // Custom events
   | 'custom:event';
 
@@ -272,10 +272,13 @@ export interface WSSystemStatusMessage extends WSBaseMessage {
   type: 'system:status';
   data: {
     status: 'healthy' | 'degraded' | 'error';
-    components: Record<string, {
-      status: string;
-      message?: string;
-    }>;
+    components: Record<
+      string,
+      {
+        status: string;
+        message?: string;
+      }
+    >;
     timestamp: number;
   };
 }
@@ -295,7 +298,11 @@ export interface WSSystemNotificationMessage extends WSBaseMessage {
 
 // Error message
 export interface WSErrorMessage extends WSBaseMessage {
-  type: 'connection:error' | 'ai:stream:error' | 'tool:execute:error' | 'system:error';
+  type:
+    | 'connection:error'
+    | 'ai:stream:error'
+    | 'tool:execute:error'
+    | 'system:error';
   data: {
     error: string;
     code?: string;
@@ -306,7 +313,7 @@ export interface WSErrorMessage extends WSBaseMessage {
 }
 
 // Union type of all message types
-export type WSMessage = 
+export type WSMessage =
   | WSAuthMessage
   | WSPingMessage
   | WSPongMessage
@@ -438,15 +445,27 @@ export interface WSMiddlewareContext {
   next: () => Promise<void>;
   error: (error: Error) => void;
   respond: (message: WSMessage) => Promise<void>;
-  broadcast: (message: WSMessage, filter?: (conn: WSConnectionState) => boolean) => Promise<void>;
+  broadcast: (
+    message: WSMessage,
+    filter?: (conn: WSConnectionState) => boolean
+  ) => Promise<void>;
 }
 
-export type WSMiddleware = (context: WSMiddlewareContext) => Promise<void> | void;
+export type WSMiddleware = (
+  context: WSMiddlewareContext
+) => Promise<void> | void;
 
 // Server events
 export interface WSServerEvents {
-  'connection:open': (connectionId: string, connection: WSConnectionState) => void;
-  'connection:close': (connectionId: string, code?: number, reason?: string) => void;
+  'connection:open': (
+    connectionId: string,
+    connection: WSConnectionState
+  ) => void;
+  'connection:close': (
+    connectionId: string,
+    code?: number,
+    reason?: string
+  ) => void;
   'connection:error': (connectionId: string, error: Error) => void;
   'connection:authenticated': (connectionId: string, userId: string) => void;
   'message:received': (connectionId: string, message: WSMessage) => void;

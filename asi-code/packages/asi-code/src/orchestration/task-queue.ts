@@ -1,11 +1,16 @@
 /**
  * Task Queue Implementation
- * 
+ *
  * Priority queue implementation for managing tasks in the orchestration system.
  * Provides thread-safe operations and priority-based task ordering.
  */
 
-import { Task, TaskQueue as ITaskQueue, TaskPriority, TaskStatus } from './types.js';
+import {
+  TaskQueue as ITaskQueue,
+  Task,
+  TaskPriority,
+  TaskStatus,
+} from './types.js';
 import { EventEmitter } from 'eventemitter3';
 import { Logger } from '../logging/index.js';
 
@@ -13,10 +18,10 @@ import { Logger } from '../logging/index.js';
  * Priority levels for internal sorting
  */
 const PRIORITY_LEVELS: Record<TaskPriority, number> = {
-  'critical': 0,
-  'high': 1,
-  'medium': 2,
-  'low': 3
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
 };
 
 /**
@@ -47,41 +52,42 @@ export interface QueueConfig {
 
 /**
  * Task Queue Implementation
- * 
+ *
  * Thread-safe priority queue that manages tasks by priority and creation time.
  * Tasks are sorted first by priority (critical > high > medium > low) and
  * then by creation time (older tasks first within the same priority).
  */
 export class TaskQueue extends EventEmitter implements ITaskQueue {
-  private tasks: Map<string, Task> = new Map();
-  private pendingTasks: Task[] = [];
-  private completedTasks: Map<string, Task> = new Map();
-  private failedTasks: Map<string, Task> = new Map();
-  private cancelledTasks: Map<string, Task> = new Map();
-  
+  private readonly tasks: Map<string, Task> = new Map();
+  private readonly pendingTasks: Task[] = [];
+  private readonly completedTasks: Map<string, Task> = new Map();
+  private readonly failedTasks: Map<string, Task> = new Map();
+  private readonly cancelledTasks: Map<string, Task> = new Map();
+
   private readonly config: Required<QueueConfig>;
   private readonly logger: Logger;
   private readonly mutex: Promise<void> = Promise.resolve();
   private cleanupTimer: NodeJS.Timer | null = null;
-  
+
   constructor(config: QueueConfig = {}) {
     super();
-    
+
     this.config = {
       maxSize: config.maxSize || 10000,
       enableStatistics: config.enableStatistics ?? true,
       cleanupInterval: config.cleanupInterval || 300000, // 5 minutes
       maxCompletedHistory: config.maxCompletedHistory || 1000,
-      logger: config.logger || new Logger({ component: 'TaskQueue', level: 'info' })
+      logger:
+        config.logger || new Logger({ component: 'TaskQueue', level: 'info' }),
     };
-    
+
     this.logger = this.config.logger;
     this.startCleanupTimer();
-    
+
     this.logger.info('TaskQueue initialized', {
       maxSize: this.config.maxSize,
       enableStatistics: this.config.enableStatistics,
-      cleanupInterval: this.config.cleanupInterval
+      cleanupInterval: this.config.cleanupInterval,
     });
   }
 
@@ -92,8 +98,13 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
     this.withLock(async () => {
       // Check queue size limit
       if (this.tasks.size >= this.config.maxSize) {
-        const error = new Error(`Queue is full. Maximum size: ${this.config.maxSize}`);
-        this.logger.error('Failed to add task - queue full', { taskId: task.id, maxSize: this.config.maxSize });
+        const error = new Error(
+          `Queue is full. Maximum size: ${this.config.maxSize}`
+        );
+        this.logger.error('Failed to add task - queue full', {
+          taskId: task.id,
+          maxSize: this.config.maxSize,
+        });
         throw error;
       }
 
@@ -102,8 +113,12 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
 
       // Check for duplicate task ID
       if (this.tasks.has(task.id)) {
-        const error = new Error(`Task with ID ${task.id} already exists in queue`);
-        this.logger.error('Failed to add task - duplicate ID', { taskId: task.id });
+        const error = new Error(
+          `Task with ID ${task.id} already exists in queue`
+        );
+        this.logger.error('Failed to add task - duplicate ID', {
+          taskId: task.id,
+        });
         throw error;
       }
 
@@ -114,25 +129,25 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
 
       // Add task to maps
       this.tasks.set(task.id, task);
-      
+
       // Add to pending queue if task is pending
       if (task.status === 'pending') {
         this.insertTaskInOrder(task);
-        this.logger.debug('Task added to pending queue', { 
-          taskId: task.id, 
-          priority: task.priority, 
-          queueSize: this.pendingTasks.length 
+        this.logger.debug('Task added to pending queue', {
+          taskId: task.id,
+          priority: task.priority,
+          queueSize: this.pendingTasks.length,
         });
       }
 
       this.emit('task:added', task);
-      
-      this.logger.info('Task added to queue', { 
-        taskId: task.id, 
+
+      this.logger.info('Task added to queue', {
+        taskId: task.id,
         type: task.type,
         priority: task.priority,
         totalTasks: this.tasks.size,
-        pendingTasks: this.pendingTasks.length
+        pendingTasks: this.pendingTasks.length,
       });
     });
   }
@@ -163,11 +178,11 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
       this.cancelledTasks.delete(taskId);
 
       this.emit('task:removed', task);
-      
-      this.logger.info('Task removed from queue', { 
+
+      this.logger.info('Task removed from queue', {
         taskId,
         totalTasks: this.tasks.size,
-        pendingTasks: this.pendingTasks.length
+        pendingTasks: this.pendingTasks.length,
       });
 
       return true;
@@ -192,11 +207,11 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
 
       // The first task in the array is the highest priority
       const task = this.pendingTasks[0];
-      
-      this.logger.debug('Retrieved next task', { 
-        taskId: task.id, 
+
+      this.logger.debug('Retrieved next task', {
+        taskId: task.id,
         priority: task.priority,
-        remainingPending: this.pendingTasks.length - 1
+        remainingPending: this.pendingTasks.length - 1,
       });
 
       return task;
@@ -237,7 +252,7 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
   clear(): void {
     this.withLock(async () => {
       const taskCount = this.tasks.size;
-      
+
       this.tasks.clear();
       this.pendingTasks.length = 0;
       this.completedTasks.clear();
@@ -245,7 +260,7 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
       this.cancelledTasks.clear();
 
       this.emit('queue:cleared');
-      
+
       this.logger.info('Queue cleared', { clearedTasks: taskCount });
     });
   }
@@ -253,11 +268,19 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
   /**
    * Update task status
    */
-  updateTaskStatus(taskId: string, status: TaskStatus, result?: any, error?: Error): boolean {
+  updateTaskStatus(
+    taskId: string,
+    status: TaskStatus,
+    result?: any,
+    error?: Error
+  ): boolean {
     return this.withLockSync(() => {
       const task = this.tasks.get(taskId);
       if (!task) {
-        this.logger.warn('Attempted to update status of non-existent task', { taskId, status });
+        this.logger.warn('Attempted to update status of non-existent task', {
+          taskId,
+          status,
+        });
         return false;
       }
 
@@ -268,7 +291,9 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
       switch (status) {
         case 'assigned':
           // Remove from pending queue when assigned
-          const pendingIndex = this.pendingTasks.findIndex(t => t.id === taskId);
+          const pendingIndex = this.pendingTasks.findIndex(
+            t => t.id === taskId
+          );
           if (pendingIndex >= 0) {
             this.pendingTasks.splice(pendingIndex, 1);
           }
@@ -310,12 +335,12 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
       }
 
       this.emit('task:status_changed', { task, oldStatus, newStatus: status });
-      
-      this.logger.debug('Task status updated', { 
-        taskId, 
-        oldStatus, 
+
+      this.logger.debug('Task status updated', {
+        taskId,
+        oldStatus,
         newStatus: status,
-        pendingCount: this.pendingTasks.length
+        pendingCount: this.pendingTasks.length,
       });
 
       return true;
@@ -326,7 +351,9 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
    * Get tasks by status
    */
   getTasksByStatus(status: TaskStatus): Task[] {
-    return Array.from(this.tasks.values()).filter(task => task.status === status);
+    return Array.from(this.tasks.values()).filter(
+      task => task.status === status
+    );
   }
 
   /**
@@ -360,11 +387,11 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
 
     const allTasks = Array.from(this.tasks.values());
     const now = Date.now();
-    
+
     // Calculate average wait time for completed tasks
     let totalWaitTime = 0;
     let waitTimeCount = 0;
-    
+
     for (const task of this.completedTasks.values()) {
       if (task.startedAt) {
         totalWaitTime += task.startedAt - task.createdAt;
@@ -384,7 +411,7 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
       critical: 0,
       high: 0,
       medium: 0,
-      low: 0
+      low: 0,
     };
 
     for (const task of this.pendingTasks) {
@@ -400,7 +427,7 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
       cancelledTasks: this.cancelledTasks.size,
       averageWaitTime: waitTimeCount > 0 ? totalWaitTime / waitTimeCount : 0,
       oldestTaskAge,
-      priorityDistribution
+      priorityDistribution,
     };
   }
 
@@ -416,10 +443,12 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
       if (this.completedTasks.size > maxHistory) {
         const toRemove = this.completedTasks.size - maxHistory;
         const entries = Array.from(this.completedTasks.entries());
-        
+
         // Sort by completion time and remove oldest
-        entries.sort((a, b) => (a[1].completedAt || 0) - (b[1].completedAt || 0));
-        
+        entries.sort(
+          (a, b) => (a[1].completedAt || 0) - (b[1].completedAt || 0)
+        );
+
         for (let i = 0; i < toRemove; i++) {
           const [taskId] = entries[i];
           this.completedTasks.delete(taskId);
@@ -432,9 +461,11 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
       if (this.failedTasks.size > maxHistory) {
         const toRemove = this.failedTasks.size - maxHistory;
         const entries = Array.from(this.failedTasks.entries());
-        
-        entries.sort((a, b) => (a[1].completedAt || 0) - (b[1].completedAt || 0));
-        
+
+        entries.sort(
+          (a, b) => (a[1].completedAt || 0) - (b[1].completedAt || 0)
+        );
+
         for (let i = 0; i < toRemove; i++) {
           const [taskId] = entries[i];
           this.failedTasks.delete(taskId);
@@ -447,9 +478,11 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
       if (this.cancelledTasks.size > maxHistory) {
         const toRemove = this.cancelledTasks.size - maxHistory;
         const entries = Array.from(this.cancelledTasks.entries());
-        
-        entries.sort((a, b) => (a[1].completedAt || 0) - (b[1].completedAt || 0));
-        
+
+        entries.sort(
+          (a, b) => (a[1].completedAt || 0) - (b[1].completedAt || 0)
+        );
+
         for (let i = 0; i < toRemove; i++) {
           const [taskId] = entries[i];
           this.cancelledTasks.delete(taskId);
@@ -460,7 +493,9 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
 
       if (cleanedCount > 0) {
         this.emit('queue:cleaned', { removedTasks: cleanedCount });
-        this.logger.info('Queue cleanup completed', { removedTasks: cleanedCount });
+        this.logger.info('Queue cleanup completed', {
+          removedTasks: cleanedCount,
+        });
       }
     });
   }
@@ -470,15 +505,15 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
    */
   destroy(): void {
     this.logger.info('Destroying TaskQueue');
-    
+
     if (this.cleanupTimer) {
       clearInterval(this.cleanupTimer);
       this.cleanupTimer = null;
     }
-    
+
     this.clear();
     this.removeAllListeners();
-    
+
     this.logger.info('TaskQueue destroyed');
   }
 
@@ -487,27 +522,30 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
    */
   private insertTaskInOrder(task: Task): void {
     const taskPriorityLevel = PRIORITY_LEVELS[task.priority];
-    
+
     // Find the correct position to insert the task
     let insertIndex = this.pendingTasks.length;
-    
+
     for (let i = 0; i < this.pendingTasks.length; i++) {
       const existingTask = this.pendingTasks[i];
       const existingPriorityLevel = PRIORITY_LEVELS[existingTask.priority];
-      
+
       // If new task has higher priority (lower number), insert here
       if (taskPriorityLevel < existingPriorityLevel) {
         insertIndex = i;
         break;
       }
-      
+
       // If same priority, sort by creation time (older first)
-      if (taskPriorityLevel === existingPriorityLevel && task.createdAt < existingTask.createdAt) {
+      if (
+        taskPriorityLevel === existingPriorityLevel &&
+        task.createdAt < existingTask.createdAt
+      ) {
         insertIndex = i;
         break;
       }
     }
-    
+
     this.pendingTasks.splice(insertIndex, 0, task);
   }
 
@@ -518,19 +556,19 @@ export class TaskQueue extends EventEmitter implements ITaskQueue {
     if (!task.id) {
       throw new Error('Task ID is required');
     }
-    
+
     if (!task.type) {
       throw new Error('Task type is required');
     }
-    
+
     if (!task.priority) {
       throw new Error('Task priority is required');
     }
-    
+
     if (!Object.keys(PRIORITY_LEVELS).includes(task.priority)) {
       throw new Error(`Invalid task priority: ${task.priority}`);
     }
-    
+
     if (!task.createdAt) {
       task.createdAt = Date.now();
     }

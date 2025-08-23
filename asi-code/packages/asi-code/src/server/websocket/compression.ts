@@ -1,6 +1,6 @@
 /**
  * WebSocket Compression and Binary Message Support
- * 
+ *
  * Provides compression and binary message handling for WebSocket connections.
  * Includes deflate compression, binary message support, and efficient data transfer.
  */
@@ -8,10 +8,10 @@
 import { createDeflate, createInflate } from 'zlib';
 import { Transform } from 'stream';
 import { nanoid } from 'nanoid';
-import type { 
-  WSMessage, 
+import type {
   WSBinaryMessage,
-  WSCompressionOptions 
+  WSCompressionOptions,
+  WSMessage,
 } from './types.js';
 
 export interface CompressionStats {
@@ -25,7 +25,7 @@ export interface CompressionStats {
 }
 
 export class WSCompressionManager {
-  private config: WSCompressionOptions;
+  private readonly config: WSCompressionOptions;
   private stats: CompressionStats = {
     messagesCompressed: 0,
     messagesDecompressed: 0,
@@ -57,7 +57,9 @@ export class WSCompressionManager {
     compressedSize: number;
   }> {
     if (!this.config.enabled) {
-      const buffer = Buffer.isBuffer(message) ? message : Buffer.from(message, 'utf8');
+      const buffer = Buffer.isBuffer(message)
+        ? message
+        : Buffer.from(message, 'utf8');
       return {
         data: buffer,
         compressed: false,
@@ -67,7 +69,9 @@ export class WSCompressionManager {
     }
 
     const startTime = Date.now();
-    const inputBuffer = Buffer.isBuffer(message) ? message : Buffer.from(message, 'utf8');
+    const inputBuffer = Buffer.isBuffer(message)
+      ? message
+      : Buffer.from(message, 'utf8');
     const originalSize = inputBuffer.length;
 
     if (originalSize < this.config.threshold) {
@@ -111,7 +115,10 @@ export class WSCompressionManager {
   /**
    * Decompress a message
    */
-  async decompressMessage(data: Buffer, wasCompressed: boolean): Promise<{
+  async decompressMessage(
+    data: Buffer,
+    wasCompressed: boolean
+  ): Promise<{
     data: Buffer;
     originalSize: number;
     decompressedSize: number;
@@ -176,12 +183,17 @@ export class WSCompressionManager {
   /**
    * Parse a potentially compressed WebSocket message
    */
-  async parseCompressedMessage(data: Buffer, headers?: Record<string, any>): Promise<WSMessage> {
-    const wasCompressed = headers?.['x-compressed'] === true || headers?.['content-encoding'] === 'deflate';
-    
+  async parseCompressedMessage(
+    data: Buffer,
+    headers?: Record<string, any>
+  ): Promise<WSMessage> {
+    const wasCompressed =
+      headers?.['x-compressed'] === true ||
+      headers?.['content-encoding'] === 'deflate';
+
     const result = await this.decompressMessage(data, wasCompressed);
     const messageStr = result.data.toString('utf8');
-    
+
     return JSON.parse(messageStr);
   }
 
@@ -219,7 +231,7 @@ export class WSCompressionManager {
         memLevel: this.config.memLevel,
       });
 
-      deflateStream.on('data', (chunk) => {
+      deflateStream.on('data', chunk => {
         chunks.push(chunk);
       });
 
@@ -227,7 +239,7 @@ export class WSCompressionManager {
         resolve(Buffer.concat(chunks));
       });
 
-      deflateStream.on('error', (error) => {
+      deflateStream.on('error', error => {
         reject(error);
       });
 
@@ -246,7 +258,7 @@ export class WSCompressionManager {
         windowBits: this.config.windowBits,
       });
 
-      inflateStream.on('data', (chunk) => {
+      inflateStream.on('data', chunk => {
         chunks.push(chunk);
       });
 
@@ -254,7 +266,7 @@ export class WSCompressionManager {
         resolve(Buffer.concat(chunks));
       });
 
-      inflateStream.on('error', (error) => {
+      inflateStream.on('error', error => {
         reject(error);
       });
 
@@ -268,8 +280,8 @@ export class WSCompressionManager {
    */
   private updateAverageCompressionTime(time: number): void {
     const count = this.stats.messagesCompressed;
-    this.stats.averageCompressionTime = 
-      ((this.stats.averageCompressionTime * (count - 1)) + time) / count;
+    this.stats.averageCompressionTime =
+      (this.stats.averageCompressionTime * (count - 1) + time) / count;
   }
 
   /**
@@ -277,8 +289,8 @@ export class WSCompressionManager {
    */
   private updateAverageDecompressionTime(time: number): void {
     const count = this.stats.messagesDecompressed;
-    this.stats.averageDecompressionTime = 
-      ((this.stats.averageDecompressionTime * (count - 1)) + time) / count;
+    this.stats.averageDecompressionTime =
+      (this.stats.averageDecompressionTime * (count - 1) + time) / count;
   }
 
   /**
@@ -286,27 +298,33 @@ export class WSCompressionManager {
    */
   private updateCompressionRatio(): void {
     if (this.stats.bytesBeforeCompression > 0) {
-      this.stats.compressionRatio = 
+      this.stats.compressionRatio =
         this.stats.bytesAfterCompression / this.stats.bytesBeforeCompression;
     }
   }
 }
 
 export class WSBinaryManager {
-  private config: {
+  private readonly config: {
     maxSize: number;
     allowedTypes: string[];
     checksumEnabled: boolean;
   };
 
-  constructor(config: {
-    maxSize?: number;
-    allowedTypes?: string[];
-    checksumEnabled?: boolean;
-  } = {}) {
+  constructor(
+    config: {
+      maxSize?: number;
+      allowedTypes?: string[];
+      checksumEnabled?: boolean;
+    } = {}
+  ) {
     this.config = {
       maxSize: 10 * 1024 * 1024, // 10MB
-      allowedTypes: ['application/octet-stream', 'application/json', 'text/plain'],
+      allowedTypes: [
+        'application/octet-stream',
+        'application/json',
+        'text/plain',
+      ],
       checksumEnabled: true,
       ...config,
     };
@@ -335,10 +353,14 @@ export class WSBinaryManager {
     }
 
     if (buffer.length > this.config.maxSize) {
-      throw new Error(`Binary message too large: ${buffer.length} > ${this.config.maxSize}`);
+      throw new Error(
+        `Binary message too large: ${buffer.length} > ${this.config.maxSize}`
+      );
     }
 
-    const checksum = this.config.checksumEnabled ? this.calculateChecksum(buffer) : undefined;
+    const checksum = this.config.checksumEnabled
+      ? this.calculateChecksum(buffer)
+      : undefined;
 
     return {
       id: nanoid(),
@@ -362,7 +384,7 @@ export class WSBinaryManager {
     valid: boolean;
   } {
     const buffer = this.decodeData(message.data, message.format);
-    
+
     // Verify checksum if present
     let valid = true;
     if (message.checksum && this.config.checksumEnabled) {
@@ -388,7 +410,10 @@ export class WSBinaryManager {
    * Validate binary message type
    */
   validateBinaryType(type: string): boolean {
-    return this.config.allowedTypes.length === 0 || this.config.allowedTypes.includes(type);
+    return (
+      this.config.allowedTypes.length === 0 ||
+      this.config.allowedTypes.includes(type)
+    );
   }
 
   /**
@@ -399,7 +424,7 @@ export class WSBinaryManager {
     chunkSize: number = 64 * 1024 // 64KB chunks
   ): WSBinaryMessage[] {
     const buffer = this.decodeData(message.data, message.format);
-    
+
     if (buffer.length <= chunkSize) {
       return [message];
     }
@@ -418,7 +443,9 @@ export class WSBinaryManager {
         format: 'buffer',
         data: chunkBuffer,
         size: chunkBuffer.length,
-        checksum: this.config.checksumEnabled ? this.calculateChecksum(chunkBuffer) : undefined,
+        checksum: this.config.checksumEnabled
+          ? this.calculateChecksum(chunkBuffer)
+          : undefined,
         metadata: {
           ...message.metadata,
           isChunk: true,
@@ -477,7 +504,9 @@ export class WSBinaryManager {
       format: 'buffer',
       data: reassembledBuffer,
       size: reassembledBuffer.length,
-      checksum: this.config.checksumEnabled ? this.calculateChecksum(reassembledBuffer) : undefined,
+      checksum: this.config.checksumEnabled
+        ? this.calculateChecksum(reassembledBuffer)
+        : undefined,
       metadata: {
         ...firstChunk.metadata,
         isChunk: false,
@@ -489,12 +518,18 @@ export class WSBinaryManager {
   /**
    * Encode data based on format
    */
-  private encodeData(buffer: Buffer, format: 'buffer' | 'arraybuffer' | 'base64'): any {
+  private encodeData(
+    buffer: Buffer,
+    format: 'buffer' | 'arraybuffer' | 'base64'
+  ): any {
     switch (format) {
       case 'buffer':
         return buffer;
       case 'arraybuffer':
-        return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+        return buffer.buffer.slice(
+          buffer.byteOffset,
+          buffer.byteOffset + buffer.byteLength
+        );
       case 'base64':
         return buffer.toString('base64');
       default:
@@ -505,7 +540,10 @@ export class WSBinaryManager {
   /**
    * Decode data based on format
    */
-  private decodeData(data: any, format: 'buffer' | 'arraybuffer' | 'base64'): Buffer {
+  private decodeData(
+    data: any,
+    format: 'buffer' | 'arraybuffer' | 'base64'
+  ): Buffer {
     switch (format) {
       case 'buffer':
         return Buffer.isBuffer(data) ? data : Buffer.from(data);
@@ -523,14 +561,14 @@ export class WSBinaryManager {
    */
   private calculateChecksum(buffer: Buffer): string {
     // Simple CRC32 implementation
-    let crc = 0xFFFFFFFF;
+    let crc = 0xffffffff;
     const table = this.getCRC32Table();
 
     for (let i = 0; i < buffer.length; i++) {
-      crc = table[(crc ^ buffer[i]) & 0xFF] ^ (crc >>> 8);
+      crc = table[(crc ^ buffer[i]) & 0xff] ^ (crc >>> 8);
     }
 
-    return ((crc ^ 0xFFFFFFFF) >>> 0).toString(16);
+    return ((crc ^ 0xffffffff) >>> 0).toString(16);
   }
 
   /**
@@ -538,11 +576,11 @@ export class WSBinaryManager {
    */
   private getCRC32Table(): Uint32Array {
     const table = new Uint32Array(256);
-    
+
     for (let i = 0; i < 256; i++) {
       let crc = i;
       for (let j = 0; j < 8; j++) {
-        crc = (crc & 1) ? (0xEDB88320 ^ (crc >>> 1)) : (crc >>> 1);
+        crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1;
       }
       table[i] = crc;
     }
@@ -568,15 +606,15 @@ export class WSMessageUtils {
    */
   static estimateCompressionSavings(data: string | Buffer): number {
     const input = typeof data === 'string' ? data : data.toString();
-    
+
     // Simple heuristic: count repeated patterns
     const uniqueChars = new Set(input).size;
     const totalChars = input.length;
-    
+
     if (totalChars === 0) return 0;
-    
+
     // Higher redundancy = better compression
-    const redundancy = 1 - (uniqueChars / totalChars);
+    const redundancy = 1 - uniqueChars / totalChars;
     return Math.min(redundancy * 0.7, 0.8); // Max 80% compression
   }
 

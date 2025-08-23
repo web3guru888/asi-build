@@ -2,7 +2,7 @@
 
 /**
  * API Endpoint Test Suite
- * 
+ *
  * Tests the enhanced tool API endpoints by starting a server and making HTTP requests
  */
 
@@ -26,7 +26,7 @@ async function testAPIEndpoints() {
       defaultTimeout: 30000,
       autoRegisterBuiltIns: true,
       enableToolValidation: true,
-      enableVersioning: true
+      enableVersioning: true,
     });
 
     const sessionStorage = createSessionStorage('memory');
@@ -38,11 +38,16 @@ async function testAPIEndpoints() {
     const serverConfig = {
       ...defaultServerConfig,
       port: 3004, // Use a different port
-      host: 'localhost'
+      host: 'localhost',
     };
 
-    server = createASIServer(serverConfig, sessionManager, providerManager, toolManager);
-    
+    server = createASIServer(
+      serverConfig,
+      sessionManager,
+      providerManager,
+      toolManager
+    );
+
     // Add enhanced tool routes
     setupEnhancedToolRoutes(server.app, server);
 
@@ -52,7 +57,7 @@ async function testAPIEndpoints() {
 
     // Test endpoints
     const baseUrl = 'http://localhost:3004';
-    
+
     // Test 1: List tools
     console.log('📋 Testing GET /api/tools...');
     try {
@@ -60,7 +65,9 @@ async function testAPIEndpoints() {
       const data = await response.json();
       console.log(`   ✅ Status: ${response.status}`);
       console.log(`   ✅ Tools found: ${data.tools?.length || 0}`);
-      console.log(`   ✅ Categories: ${Object.keys(data.categories || {}).join(', ')}\n`);
+      console.log(
+        `   ✅ Categories: ${Object.keys(data.categories || {}).join(', ')}\n`
+      );
     } catch (error) {
       console.error(`   ❌ Failed: ${(error as Error).message}\n`);
     }
@@ -72,7 +79,9 @@ async function testAPIEndpoints() {
       const data = await response.json();
       console.log(`   ✅ Status: ${response.status}`);
       console.log(`   ✅ Discovery info for ${data.tools?.length || 0} tools`);
-      console.log(`   ✅ System info available: ${data.systemInfo ? 'Yes' : 'No'}\n`);
+      console.log(
+        `   ✅ System info available: ${data.systemInfo ? 'Yes' : 'No'}\n`
+      );
     } catch (error) {
       console.error(`   ❌ Failed: ${(error as Error).message}\n`);
     }
@@ -95,7 +104,9 @@ async function testAPIEndpoints() {
       const response = await fetch(`${baseUrl}/api/tools/documentation`);
       const data = await response.json();
       console.log(`   ✅ Status: ${response.status}`);
-      console.log(`   ✅ Documentation for ${data.documentation?.length || 0} tools\n`);
+      console.log(
+        `   ✅ Documentation for ${data.documentation?.length || 0} tools\n`
+      );
     } catch (error) {
       console.error(`   ❌ Failed: ${(error as Error).message}\n`);
     }
@@ -109,7 +120,7 @@ async function testAPIEndpoints() {
         body: JSON.stringify({
           parameters: {
             path: '.',
-            maxResults: 10
+            maxResults: 10,
           },
           context: {
             sessionId: 'test-session',
@@ -117,15 +128,19 @@ async function testAPIEndpoints() {
             permissions: ['read_files'],
             workingDirectory: process.cwd(),
             environment: {},
-            metadata: {}
-          }
-        })
+            metadata: {},
+          },
+        }),
       });
       const data = await response.json();
       console.log(`   ✅ Status: ${response.status}`);
       console.log(`   ✅ Execution success: ${data.result?.success || false}`);
-      console.log(`   ✅ Items found: ${data.result?.data?.items?.length || 0}`);
-      console.log(`   ✅ Execution ID: ${data.metadata?.executionId || 'N/A'}\n`);
+      console.log(
+        `   ✅ Items found: ${data.result?.data?.items?.length || 0}`
+      );
+      console.log(
+        `   ✅ Execution ID: ${data.metadata?.executionId || 'N/A'}\n`
+      );
     } catch (error) {
       console.error(`   ❌ Failed: ${(error as Error).message}\n`);
     }
@@ -139,14 +154,18 @@ async function testAPIEndpoints() {
         body: JSON.stringify({
           parameters: {
             path: './package.json',
-            encoding: 'utf8'
-          }
-        })
+            encoding: 'utf8',
+          },
+        }),
       });
       const data = await response.json();
       console.log(`   ✅ Status: ${response.status}`);
-      console.log(`   ✅ Validation result: ${data.validation?.isValid ? 'VALID' : 'INVALID'}`);
-      console.log(`   ✅ Parameters: ${data.parameters?.join(', ') || 'N/A'}\n`);
+      console.log(
+        `   ✅ Validation result: ${data.validation?.isValid ? 'VALID' : 'INVALID'}`
+      );
+      console.log(
+        `   ✅ Parameters: ${data.parameters?.join(', ') || 'N/A'}\n`
+      );
     } catch (error) {
       console.error(`   ❌ Failed: ${(error as Error).message}\n`);
     }
@@ -163,15 +182,15 @@ async function testAPIEndpoints() {
               name: 'write',
               parameters: {
                 path: './api-test.txt',
-                content: 'API test file content'
-              }
+                content: 'API test file content',
+              },
             },
             {
               name: 'read',
               parameters: {
-                path: './api-test.txt'
-              }
-            }
+                path: './api-test.txt',
+              },
+            },
           ],
           context: {
             sessionId: 'batch-test-session',
@@ -179,10 +198,10 @@ async function testAPIEndpoints() {
             permissions: ['read_files', 'write_files'],
             workingDirectory: process.cwd(),
             environment: {},
-            metadata: {}
+            metadata: {},
           },
-          stopOnError: true
-        })
+          stopOnError: true,
+        }),
       });
       const data = await response.json();
       console.log(`   ✅ Status: ${response.status}`);
@@ -208,7 +227,6 @@ async function testAPIEndpoints() {
     }
 
     console.log('🎉 API endpoint tests completed successfully!');
-
   } catch (error) {
     console.error('❌ API endpoint tests failed:', error);
   } finally {
@@ -222,7 +240,7 @@ async function testAPIEndpoints() {
 }
 
 // Run the API tests
-testAPIEndpoints().catch((error) => {
+testAPIEndpoints().catch(error => {
   console.error('❌ API test suite failed:', error);
   process.exit(1);
 });

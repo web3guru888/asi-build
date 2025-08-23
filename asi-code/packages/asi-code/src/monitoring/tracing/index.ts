@@ -15,12 +15,12 @@ import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { 
-  trace, 
-  context, 
+  Span, 
+  SpanKind, 
   SpanStatusCode, 
-  SpanKind,
-  Span,
-  Tracer 
+  Tracer,
+  context,
+  trace 
 } from '@opentelemetry/api';
 import type { MonitoringConfig } from '../index.js';
 import { nanoid } from 'nanoid';
@@ -38,9 +38,9 @@ export interface TracingService {
 
 export class JaegerTracingService implements TracingService {
   private sdk: NodeSDK;
-  private tracer: Tracer;
-  private config: MonitoringConfig['jaeger'];
-  private serviceName: string;
+  private readonly tracer: Tracer;
+  private readonly config: MonitoringConfig['jaeger'];
+  private readonly serviceName: string;
   
   constructor(config: MonitoringConfig['jaeger']) {
     this.config = config;
@@ -223,7 +223,7 @@ export class JaegerTracingService implements TracingService {
 
 // Trace sampling configuration
 export class TraceSampler {
-  private config: MonitoringConfig['jaeger'];
+  private readonly config: MonitoringConfig['jaeger'];
   
   constructor(config: MonitoringConfig['jaeger']) {
     this.config = config;

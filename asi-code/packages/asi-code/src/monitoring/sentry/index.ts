@@ -54,9 +54,9 @@ export interface ErrorMetrics {
 }
 
 export class SentryErrorTracker extends EventEmitter {
-  private config: MonitoringConfig['sentry'];
+  private readonly config: MonitoringConfig['sentry'];
   private initialized = false;
-  private errorMetrics: ErrorMetrics = {
+  private readonly errorMetrics: ErrorMetrics = {
     totalErrors: 0,
     errorsByType: {},
     errorsByComponent: {},
@@ -138,7 +138,7 @@ export class SentryErrorTracker extends EventEmitter {
   
   private filterBreadcrumb(breadcrumb: Sentry.Breadcrumb): Sentry.Breadcrumb | null {
     // Filter sensitive information from breadcrumbs
-    if (breadcrumb.data && breadcrumb.data.url) {
+    if (breadcrumb.data?.url) {
       // Remove sensitive query parameters
       const url = new URL(breadcrumb.data.url);
       url.searchParams.delete('api_key');

@@ -1,6 +1,6 @@
 /**
  * Consciousness Engine - Advanced AI awareness and context management
- * 
+ *
  * Implements consciousness-aware processing that adapts behavior based on
  * context, user interaction patterns, and system state.
  */
@@ -43,21 +43,36 @@ export interface ConsciousnessMemory {
 export interface ConsciousnessEngine extends EventEmitter {
   config: ConsciousnessConfig;
   initialize(provider: Provider): Promise<void>;
-  processMessage(message: KennyMessage, context: KennyContext): Promise<KennyMessage>;
-  updateState(context: KennyContext, interaction?: any): Promise<ConsciousnessState>;
+  processMessage(
+    message: KennyMessage,
+    context: KennyContext
+  ): Promise<KennyMessage>;
+  updateState(
+    context: KennyContext,
+    interaction?: any
+  ): Promise<ConsciousnessState>;
   getState(contextId: string): Promise<ConsciousnessState | null>;
-  addMemory(memory: Omit<ConsciousnessMemory, 'id' | 'createdAt'>): Promise<string>;
-  retrieveMemories(contextId: string, type?: string, limit?: number): Promise<ConsciousnessMemory[]>;
+  addMemory(
+    memory: Omit<ConsciousnessMemory, 'id' | 'createdAt'>
+  ): Promise<string>;
+  retrieveMemories(
+    contextId: string,
+    type?: string,
+    limit?: number
+  ): Promise<ConsciousnessMemory[]>;
   cleanup(): Promise<void>;
 }
 
-export class DefaultConsciousnessEngine extends EventEmitter implements ConsciousnessEngine {
+export class DefaultConsciousnessEngine
+  extends EventEmitter
+  implements ConsciousnessEngine
+{
   public config: ConsciousnessConfig;
-  
+
   private provider: Provider | null = null;
-  private states = new Map<string, ConsciousnessState>();
-  private memories = new Map<string, ConsciousnessMemory>();
-  private contextPatterns = new Map<string, any>();
+  private readonly states = new Map<string, ConsciousnessState>();
+  private readonly memories = new Map<string, ConsciousnessMemory>();
+  private readonly contextPatterns = new Map<string, any>();
   private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor(config: ConsciousnessConfig) {
@@ -71,14 +86,17 @@ export class DefaultConsciousnessEngine extends EventEmitter implements Consciou
     this.emit('consciousness:initialized', { provider: provider.name });
   }
 
-  async processMessage(message: KennyMessage, context: KennyContext): Promise<KennyMessage> {
+  async processMessage(
+    message: KennyMessage,
+    context: KennyContext
+  ): Promise<KennyMessage> {
     if (!this.config.enabled || !this.provider) {
       // Pass through without consciousness processing
       return {
         ...message,
         type: 'assistant',
         content: `Echo: ${message.content}`,
-        metadata: { consciousness: false }
+        metadata: { consciousness: false },
       };
     }
 
@@ -86,22 +104,30 @@ export class DefaultConsciousnessEngine extends EventEmitter implements Consciou
     const state = await this.updateState(context, { message });
 
     // Retrieve relevant memories
-    const relevantMemories = await this.retrieveMemories(context.id, undefined, 5);
-    
+    const relevantMemories = await this.retrieveMemories(
+      context.id,
+      undefined,
+      5
+    );
+
     // Build consciousness-aware prompt
-    const systemPrompt = this.buildSystemPrompt(state, relevantMemories, context);
+    const systemPrompt = this.buildSystemPrompt(
+      state,
+      relevantMemories,
+      context
+    );
     const conversationHistory = this.buildConversationHistory(context, message);
 
     // Generate response with consciousness
     const providerMessages: ProviderMessage[] = [
       { role: 'system', content: systemPrompt },
       ...conversationHistory,
-      { role: 'user', content: message.content }
+      { role: 'user', content: message.content },
     ];
 
     try {
       const response = await this.provider.generate(providerMessages);
-      
+
       // Create consciousness-enhanced response
       const consciousResponse: KennyMessage = {
         id: `cons_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -114,22 +140,22 @@ export class DefaultConsciousnessEngine extends EventEmitter implements Consciou
             state,
             memoriesUsed: relevantMemories.length,
             awarenessLevel: state.awareness,
-            engagementLevel: state.engagement
+            engagementLevel: state.engagement,
           },
           provider: {
             model: response.model,
-            usage: response.usage
-          }
-        }
+            usage: response.usage,
+          },
+        },
       };
 
       // Learn from interaction
       await this.learnFromInteraction(message, consciousResponse, context);
 
-      this.emit('consciousness:response', { 
-        input: message, 
-        output: consciousResponse, 
-        state 
+      this.emit('consciousness:response', {
+        input: message,
+        output: consciousResponse,
+        state,
       });
 
       return consciousResponse;
@@ -139,31 +165,36 @@ export class DefaultConsciousnessEngine extends EventEmitter implements Consciou
     }
   }
 
-  async updateState(context: KennyContext, interaction?: any): Promise<ConsciousnessState> {
+  async updateState(
+    context: KennyContext,
+    interaction?: any
+  ): Promise<ConsciousnessState> {
     const existingState = this.states.get(context.id);
     const now = new Date();
 
     // Calculate base state
-    let level = context.consciousness.level;
+    const level = context.consciousness.level;
     let awareness = existingState?.awareness || 50;
     let engagement = existingState?.engagement || 50;
     let adaptability = existingState?.adaptability || 50;
-    let coherence = existingState?.coherence || 50;
+    const coherence = existingState?.coherence || 50;
 
     if (interaction) {
       // Adjust based on interaction type and content
       if (interaction.message) {
         const messageLength = interaction.message.content.length;
-        const complexity = this.calculateComplexity(interaction.message.content);
-        
+        const complexity = this.calculateComplexity(
+          interaction.message.content
+        );
+
         // Update awareness based on message complexity
-        awareness = Math.min(100, awareness + (complexity * 5));
-        
+        awareness = Math.min(100, awareness + complexity * 5);
+
         // Update engagement based on message length and type
         if (messageLength > 100) {
           engagement = Math.min(100, engagement + 10);
         }
-        
+
         // Update adaptability based on conversation patterns
         const patterns = this.contextPatterns.get(context.id) || [];
         if (patterns.length > 3) {
@@ -173,7 +204,9 @@ export class DefaultConsciousnessEngine extends EventEmitter implements Consciou
 
       // Apply consciousness decay over time
       if (existingState) {
-        const hoursSinceLastUpdate = (now.getTime() - existingState.timestamp.getTime()) / (1000 * 60 * 60);
+        const hoursSinceLastUpdate =
+          (now.getTime() - existingState.timestamp.getTime()) /
+          (1000 * 60 * 60);
         if (hoursSinceLastUpdate > 1) {
           const decay = Math.min(10, hoursSinceLastUpdate);
           awareness = Math.max(30, awareness - decay);
@@ -183,17 +216,23 @@ export class DefaultConsciousnessEngine extends EventEmitter implements Consciou
     }
 
     const newState: ConsciousnessState = {
-      level: Math.min(100, level + (awareness + engagement + adaptability + coherence) / 400 * 10),
+      level: Math.min(
+        100,
+        level + ((awareness + engagement + adaptability + coherence) / 400) * 10
+      ),
       awareness,
       engagement,
       adaptability,
       coherence,
-      timestamp: now
+      timestamp: now,
     };
 
     this.states.set(context.id, newState);
-    this.emit('consciousness:state_updated', { contextId: context.id, state: newState });
-    
+    this.emit('consciousness:state_updated', {
+      contextId: context.id,
+      state: newState,
+    });
+
     return newState;
   }
 
@@ -201,25 +240,35 @@ export class DefaultConsciousnessEngine extends EventEmitter implements Consciou
     return this.states.get(contextId) || null;
   }
 
-  async addMemory(memory: Omit<ConsciousnessMemory, 'id' | 'createdAt'>): Promise<string> {
+  async addMemory(
+    memory: Omit<ConsciousnessMemory, 'id' | 'createdAt'>
+  ): Promise<string> {
     const id = `mem_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const now = new Date();
-    
+
     const fullMemory: ConsciousnessMemory = {
       ...memory,
       id,
       createdAt: now,
       lastAccessed: now,
-      expiresAt: memory.expiresAt || new Date(now.getTime() + (this.config.memoryRetentionHours * 60 * 60 * 1000))
+      expiresAt:
+        memory.expiresAt ||
+        new Date(
+          now.getTime() + this.config.memoryRetentionHours * 60 * 60 * 1000
+        ),
     };
 
     this.memories.set(id, fullMemory);
     this.emit('consciousness:memory_added', { memory: fullMemory });
-    
+
     return id;
   }
 
-  async retrieveMemories(contextId: string, type?: string, limit = 10): Promise<ConsciousnessMemory[]> {
+  async retrieveMemories(
+    contextId: string,
+    type?: string,
+    limit = 10
+  ): Promise<ConsciousnessMemory[]> {
     const now = new Date();
     const memories: ConsciousnessMemory[] = [];
 
@@ -248,7 +297,11 @@ export class DefaultConsciousnessEngine extends EventEmitter implements Consciou
     return memories.slice(0, limit);
   }
 
-  private buildSystemPrompt(state: ConsciousnessState, memories: ConsciousnessMemory[], context: KennyContext): string {
+  private buildSystemPrompt(
+    state: ConsciousnessState,
+    memories: ConsciousnessMemory[],
+    context: KennyContext
+  ): string {
     const personality = Object.entries(this.config.personalityTraits)
       .map(([trait, value]) => `${trait}: ${value}/100`)
       .join(', ');
@@ -282,7 +335,10 @@ ${memories.map(m => `- ${m.type}: ${JSON.stringify(m.content)}`).join('\n')}
     return prompt;
   }
 
-  private buildConversationHistory(context: KennyContext, currentMessage: KennyMessage): ProviderMessage[] {
+  private buildConversationHistory(
+    context: KennyContext,
+    currentMessage: KennyMessage
+  ): ProviderMessage[] {
     // This would typically pull from session history
     // For now, return empty array as we don't have access to session here
     return [];
@@ -292,23 +348,27 @@ ${memories.map(m => `- ${m.type}: ${JSON.stringify(m.content)}`).join('\n')}
     const words = content.split(/\s+/).length;
     const sentences = content.split(/[.!?]+/).length;
     const avgWordsPerSentence = words / Math.max(1, sentences);
-    
+
     // Normalize to 0-10 scale
-    return Math.min(10, Math.max(0, (words * 0.01) + (avgWordsPerSentence * 0.1)));
+    return Math.min(10, Math.max(0, words * 0.01 + avgWordsPerSentence * 0.1));
   }
 
-  private async learnFromInteraction(input: KennyMessage, output: KennyMessage, context: KennyContext): Promise<void> {
+  private async learnFromInteraction(
+    input: KennyMessage,
+    output: KennyMessage,
+    context: KennyContext
+  ): Promise<void> {
     // Store interaction pattern
     await this.addMemory({
       type: 'interaction',
       content: {
         input: input.content.substring(0, 200),
         output: output.content.substring(0, 200),
-        timestamp: new Date()
+        timestamp: new Date(),
       },
       importance: 60,
       lastAccessed: new Date(),
-      associatedContext: context.id
+      associatedContext: context.id,
     });
 
     // Update context patterns
@@ -316,21 +376,24 @@ ${memories.map(m => `- ${m.type}: ${JSON.stringify(m.content)}`).join('\n')}
     patterns.push({
       type: input.type,
       length: input.content.length,
-      timestamp: input.timestamp
+      timestamp: input.timestamp,
     });
-    
+
     // Keep only recent patterns
     if (patterns.length > this.config.contextWindowSize) {
       patterns.splice(0, patterns.length - this.config.contextWindowSize);
     }
-    
+
     this.contextPatterns.set(context.id, patterns);
   }
 
   private startCleanupTimer(): void {
-    this.cleanupInterval = setInterval(async () => {
-      await this.cleanupExpiredMemories();
-    }, 60 * 60 * 1000); // Every hour
+    this.cleanupInterval = setInterval(
+      async () => {
+        await this.cleanupExpiredMemories();
+      },
+      60 * 60 * 1000
+    ); // Every hour
   }
 
   private async cleanupExpiredMemories(): Promise<void> {
@@ -345,7 +408,9 @@ ${memories.map(m => `- ${m.type}: ${JSON.stringify(m.content)}`).join('\n')}
     }
 
     if (expiredMemories.length > 0) {
-      this.emit('consciousness:memories_cleaned', { expired: expiredMemories.length });
+      this.emit('consciousness:memories_cleaned', {
+        expired: expiredMemories.length,
+      });
     }
   }
 
@@ -364,7 +429,9 @@ ${memories.map(m => `- ${m.type}: ${JSON.stringify(m.content)}`).join('\n')}
 }
 
 // Factory function
-export function createConsciousnessEngine(config: ConsciousnessConfig): ConsciousnessEngine {
+export function createConsciousnessEngine(
+  config: ConsciousnessConfig
+): ConsciousnessEngine {
   return new DefaultConsciousnessEngine(config);
 }
 
@@ -382,6 +449,6 @@ export const defaultConsciousnessConfig: ConsciousnessConfig = {
     helpfulness: 90,
     creativity: 70,
     analytical: 85,
-    empathy: 75
-  }
+    empathy: 75,
+  },
 };

@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document describes the implementation of two critical components for the ASI-Code orchestration system:
+This document describes the implementation of two critical components for the ASI-Code orchestration
+system:
 
 1. **AgentRegistry** - Manages agent registration, discovery, and health monitoring
 2. **LoadBalancer** - Handles intelligent task distribution and load balancing
@@ -10,28 +11,33 @@ This document describes the implementation of two critical components for the AS
 ## AgentRegistry Implementation
 
 ### Location
+
 `src/orchestration/agent-registry.ts`
 
 ### Key Features
 
 #### Agent Management
+
 - **Registration**: Thread-safe agent registration with proper indexing
 - **Discovery**: Find agents by capability, type, availability, or specific criteria
 - **Health Monitoring**: Automatic health checks with configurable intervals
 - **Statistics**: Comprehensive agent statistics and metrics
 
 #### Thread Safety
+
 - Uses locks for concurrent operations
 - Prevents race conditions during registration/unregistration
 - Safe for multi-threaded environments
 
 #### Health Monitoring
+
 - Configurable health check intervals (default: 30 seconds)
 - Automatic detection of unhealthy agents
 - Recovery detection and notification
 - Performance-based health evaluation
 
 #### Indexing
+
 - Capability-based indexing for fast lookups
 - Type-based indexing for agent categorization
 - Status-based indexing for availability queries
@@ -42,24 +48,25 @@ This document describes the implementation of two critical components for the AS
 ```typescript
 interface AgentRegistry {
   // Core methods
-  register(agent: Agent): void
-  unregister(agentId: string): void
-  get(agentId: string): Agent | undefined
-  
+  register(agent: Agent): void;
+  unregister(agentId: string): void;
+  get(agentId: string): Agent | undefined;
+
   // Discovery methods
-  findByCapability(capability: string): Agent[]
-  findByType(type: AgentType): Agent[]
-  findAvailable(): Agent[]
-  getAll(): Agent[]
-  
+  findByCapability(capability: string): Agent[];
+  findByType(type: AgentType): Agent[];
+  findAvailable(): Agent[];
+  getAll(): Agent[];
+
   // Advanced methods
-  findBestAgent(task: Task): Agent | undefined
-  getAgentHealth(agentId: string): 'healthy' | 'unhealthy' | 'unknown' | undefined
-  getStats(): RegistryStats
+  findBestAgent(task: Task): Agent | undefined;
+  getAgentHealth(agentId: string): 'healthy' | 'unhealthy' | 'unknown' | undefined;
+  getStats(): RegistryStats;
 }
 ```
 
 ### Events
+
 - `agent:registered` - When agent is registered
 - `agent:unregistered` - When agent is unregistered
 - `agent:health_failed` - When agent health check fails
@@ -69,11 +76,13 @@ interface AgentRegistry {
 ## LoadBalancer Implementation
 
 ### Location
+
 `src/orchestration/load-balancer.ts`
 
 ### Key Features
 
 #### Multiple Balancing Strategies
+
 - **Round Robin**: Simple round-robin distribution
 - **Least Loaded**: Assigns to agent with lowest load
 - **Capability Based**: Matches based on capability requirements
@@ -82,18 +91,21 @@ interface AgentRegistry {
 - **Hybrid**: Combines multiple factors with configurable weights
 
 #### Smart Task Matching
+
 - Analyzes task requirements vs agent capabilities
 - Considers resource constraints
 - Factors in agent performance history
 - Supports preferred agent assignments
 
 #### Load Calculation
+
 - Multi-factor load assessment
 - Configurable load factors (task count, resource utilization, response time, error rate)
 - Performance-based load adjustments
 - Real-time load monitoring
 
 #### Rebalancing
+
 - Automatic load imbalance detection
 - Intelligent task redistribution
 - Configurable rebalancing thresholds
@@ -104,17 +116,17 @@ interface AgentRegistry {
 ```typescript
 interface LoadBalancer {
   // Core methods
-  selectAgent(task: Task, agents: Agent[]): Agent | undefined
-  getLoad(agent: Agent): number
-  rebalance(agents: Agent[], tasks: Task[]): Map<string, string[]>
-  
+  selectAgent(task: Task, agents: Agent[]): Agent | undefined;
+  getLoad(agent: Agent): number;
+  rebalance(agents: Agent[], tasks: Task[]): Map<string, string[]>;
+
   // Configuration
-  updateConfig(config: Partial<LoadBalancerConfig>): void
-  
+  updateConfig(config: Partial<LoadBalancerConfig>): void;
+
   // Monitoring
-  getStats(): LoadBalancerStats
-  trackPerformance(agent: Agent): void
-  getPerformanceHistory(agentId: string): PerformanceHistory
+  getStats(): LoadBalancerStats;
+  trackPerformance(agent: Agent): void;
+  getPerformanceHistory(agentId: string): PerformanceHistory;
 }
 ```
 
@@ -122,28 +134,29 @@ interface LoadBalancer {
 
 ```typescript
 interface LoadBalancerConfig {
-  strategy: LoadBalancingStrategy
+  strategy: LoadBalancingStrategy;
   weights?: {
-    performance?: number
-    capacity?: number
-    capability?: number
-    resource?: number
-  }
+    performance?: number;
+    capacity?: number;
+    capability?: number;
+    resource?: number;
+  };
   loadFactors?: {
-    taskCount?: number
-    resourceUtilization?: number
-    responseTime?: number
-    errorRate?: number
-  }
+    taskCount?: number;
+    resourceUtilization?: number;
+    responseTime?: number;
+    errorRate?: number;
+  };
   rebalanceThresholds?: {
-    maxLoadImbalance?: number
-    minIdleAgents?: number
-    maxQueueDepth?: number
-  }
+    maxLoadImbalance?: number;
+    minIdleAgents?: number;
+    maxQueueDepth?: number;
+  };
 }
 ```
 
 ### Events
+
 - `agent:selected` - When agent is selected for task
 - `rebalance:completed` - When rebalancing is completed
 - `config:updated` - When configuration is updated
@@ -163,8 +176,8 @@ const loadBalancer = new LoadBalancer({
     performance: 0.3,
     capacity: 0.25,
     capability: 0.25,
-    resource: 0.2
-  }
+    resource: 0.2,
+  },
 });
 
 // Register agents
@@ -175,10 +188,7 @@ const availableAgents = registry.findAvailable();
 const selectedAgent = loadBalancer.selectAgent(task, availableAgents);
 
 // Rebalance if needed
-const rebalanceMap = loadBalancer.rebalance(
-  registry.getAll(), 
-  pendingTasks
-);
+const rebalanceMap = loadBalancer.rebalance(registry.getAll(), pendingTasks);
 ```
 
 ### Advanced Usage with Monitoring
@@ -190,7 +200,7 @@ registry.on('agent:health_failed', (agentId, failures) => {
   // Handle unhealthy agent
 });
 
-loadBalancer.on('agent:selected', (selection) => {
+loadBalancer.on('agent:selected', selection => {
   console.log(`Agent ${selection.agent} selected for task ${selection.task}`);
   console.log(`Score: ${selection.score}, Breakdown:`, selection.breakdown);
 });
@@ -210,6 +220,7 @@ const loadBalancerStats = loadBalancer.getStats();
 ## Performance Characteristics
 
 ### AgentRegistry
+
 - **Registration**: O(1) average case with indexing
 - **Lookup by ID**: O(1)
 - **Lookup by capability**: O(k) where k is number of agents with capability
@@ -217,9 +228,10 @@ const loadBalancerStats = loadBalancer.getStats();
 - **Memory**: O(n) where n is number of agents
 
 ### LoadBalancer
+
 - **Agent selection**: O(n log n) for sorting-based strategies
 - **Load calculation**: O(1) per agent
-- **Rebalancing**: O(n*m) where n is agents and m is tasks
+- **Rebalancing**: O(n\*m) where n is agents and m is tasks
 - **Memory**: O(n) for agent history tracking
 
 ## Thread Safety
@@ -234,11 +246,13 @@ Both implementations are designed to be thread-safe:
 ## Testing
 
 Test files are provided:
+
 - `test-implementations.ts` - Comprehensive integration tests
-- `test-simple.ts` - Basic functionality tests  
+- `test-simple.ts` - Basic functionality tests
 - `test-exports.ts` - Import/export verification
 
 Run tests with:
+
 ```bash
 npx tsc --noEmit --skipLibCheck src/orchestration/agent-registry.ts src/orchestration/load-balancer.ts
 ```
@@ -256,6 +270,7 @@ The implementations integrate seamlessly with the existing ASI-Code orchestratio
 ## Future Enhancements
 
 Potential improvements:
+
 1. **Persistent storage**: Save agent registry state
 2. **Distributed mode**: Support for multi-node deployments
 3. **Machine learning**: AI-based load balancing optimization
@@ -265,7 +280,8 @@ Potential improvements:
 
 ## Conclusion
 
-Both AgentRegistry and LoadBalancer provide robust, production-ready implementations that form the core of the ASI-Code agent orchestration system. They are designed for:
+Both AgentRegistry and LoadBalancer provide robust, production-ready implementations that form the
+core of the ASI-Code agent orchestration system. They are designed for:
 
 - **Scalability**: Handle hundreds of agents efficiently
 - **Reliability**: Comprehensive error handling and recovery

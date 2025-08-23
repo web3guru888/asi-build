@@ -1,6 +1,6 @@
 /**
  * Session Management System - Main session exports
- * 
+ *
  * Exports session management components, storage systems,
  * and utilities for the ASI-Code system.
  */
@@ -10,14 +10,12 @@ export * from './session.js';
 export * from './session-manager.js';
 export * from './storage.js';
 
-// Legacy exports for backward compatibility  
-export {
-  DefaultSession
-} from './session.js';
+// Legacy exports for backward compatibility
+export { DefaultSession } from './session.js';
 
 export {
   DefaultSessionManager,
-  createSessionManager
+  createSessionManager,
 } from './session-manager.js';
 
 export {
@@ -25,7 +23,7 @@ export {
   SQLiteSessionStorage,
   createMemorySessionStorage,
   createSQLiteSessionStorage,
-  createSessionStorage
+  createSessionStorage,
 } from './storage.js';
 
 // Re-export types

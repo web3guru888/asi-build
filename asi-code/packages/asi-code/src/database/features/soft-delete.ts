@@ -1,6 +1,6 @@
 /**
  * Soft Delete Implementation
- * 
+ *
  * Provides comprehensive soft delete functionality with:
  * - Automatic soft delete column management
  * - Query filtering for soft deleted records
@@ -38,16 +38,16 @@ export interface SoftDeleteMetrics {
 }
 
 export class SoftDeleteManager {
-  private adapter: DatabaseAdapter;
-  private logger: Logger;
-  private config: SoftDeleteConfig;
-  private relations = new Map<string, SoftDeleteRelation[]>();
+  private readonly adapter: DatabaseAdapter;
+  private readonly logger: Logger;
+  private readonly config: SoftDeleteConfig;
+  private readonly relations = new Map<string, SoftDeleteRelation[]>();
   private metrics: SoftDeleteMetrics = {
     totalSoftDeleted: 0,
     restoredRecords: 0,
     permanentlyDeleted: 0,
     cascadeDeletes: 0,
-    cleanupOperations: 0
+    cleanupOperations: 0,
   };
 
   constructor(adapter: DatabaseAdapter, logger: Logger) {
@@ -59,7 +59,7 @@ export class SoftDeleteManager {
       defaultValue: adapter.config.softDelete.defaultValue,
       deletedValue: adapter.config.softDelete.deletedValue,
       cascadeDeletes: true,
-      retentionPeriod: 90 // 90 days default
+      retentionPeriod: 90, // 90 days default
     };
   }
 
@@ -75,7 +75,7 @@ export class SoftDeleteManager {
     try {
       this.logger.info('Initializing soft delete system', {
         columnName: this.config.columnName,
-        deletedValue: this.config.deletedValue
+        deletedValue: this.config.deletedValue,
       });
 
       // Ensure all tables have soft delete column
@@ -98,17 +98,20 @@ export class SoftDeleteManager {
     try {
       // Get all tables
       const tables = await this.getAllTables();
-      
+
       for (const tableName of tables) {
-        const hasColumn = await this.adapter.hasColumn(tableName, this.config.columnName);
-        
+        const hasColumn = await this.adapter.hasColumn(
+          tableName,
+          this.config.columnName
+        );
+
         if (!hasColumn) {
           this.logger.debug('Adding soft delete column to table', {
             table: tableName,
-            column: this.config.columnName
+            column: this.config.columnName,
           });
 
-          await this.adapter.knex.schema.alterTable(tableName, (table) => {
+          await this.adapter.knex.schema.alterTable(tableName, table => {
             if (this.config.deletedValue instanceof Date) {
               table.timestamp(this.config.columnName).nullable();
             } else if (typeof this.config.deletedValue === 'string') {
@@ -142,7 +145,7 @@ export class SoftDeleteManager {
         AND table_type = 'BASE TABLE'
         AND table_name NOT LIKE 'knex_%'
       `);
-      
+
       return result.rows.map(row => row.table_name);
     } catch (error) {
       this.logger.error('Failed to get table names', { error });
@@ -184,12 +187,12 @@ export class SoftDeleteManager {
         this.relations.get(parentTable)!.push({
           table: childTable,
           foreignKey,
-          cascade: true
+          cascade: true,
         });
       }
 
       this.logger.debug('Loaded table relations for cascade deletes', {
-        relations: this.relations.size
+        relations: this.relations.size,
       });
     } catch (error) {
       this.logger.error('Failed to load table relations', { error });
@@ -237,11 +240,12 @@ export class SoftDeleteManager {
     try {
       this.logger.debug('Performing soft delete', {
         table: tableName,
-        conditions: whereConditions
+        conditions: whereConditions,
       });
 
       // Get records to be deleted for cascade operations
-      const recordsToDelete = await this.adapter.knex(tableName)
+      const recordsToDelete = await this.adapter
+        .knex(tableName)
         .where(whereConditions)
         .whereNull(this.config.columnName);
 
@@ -250,15 +254,18 @@ export class SoftDeleteManager {
       }
 
       // Perform soft delete
-      const deletedValue = this.config.deletedValue instanceof Date ? 
-        new Date() : this.config.deletedValue;
+      const deletedValue =
+        this.config.deletedValue instanceof Date
+          ? new Date()
+          : this.config.deletedValue;
 
-      const result = await this.adapter.knex(tableName)
+      const result = await this.adapter
+        .knex(tableName)
         .where(whereConditions)
         .whereNull(this.config.columnName)
         .update({
           [this.config.columnName]: deletedValue,
-          updated_at: new Date()
+          updated_at: new Date(),
         });
 
       // Cascade soft delete to related records
@@ -272,14 +279,14 @@ export class SoftDeleteManager {
       this.logger.info('Soft delete completed', {
         table: tableName,
         recordsDeleted: result,
-        executionTime
+        executionTime,
       });
 
       return result;
     } catch (error) {
       this.logger.error('Soft delete failed', {
         table: tableName,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -294,10 +301,11 @@ export class SoftDeleteManager {
     try {
       this.logger.debug('Performing hard delete', {
         table: tableName,
-        conditions: whereConditions
+        conditions: whereConditions,
       });
 
-      const result = await this.adapter.knex(tableName)
+      const result = await this.adapter
+        .knex(tableName)
         .where(whereConditions)
         .del();
 
@@ -307,14 +315,14 @@ export class SoftDeleteManager {
       this.logger.info('Hard delete completed', {
         table: tableName,
         recordsDeleted: result,
-        executionTime
+        executionTime,
       });
 
       return result;
     } catch (error) {
       this.logger.error('Hard delete failed', {
         table: tableName,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -333,15 +341,16 @@ export class SoftDeleteManager {
     try {
       this.logger.debug('Restoring soft deleted records', {
         table: tableName,
-        conditions: whereConditions
+        conditions: whereConditions,
       });
 
-      const result = await this.adapter.knex(tableName)
+      const result = await this.adapter
+        .knex(tableName)
         .where(whereConditions)
         .whereNotNull(this.config.columnName)
         .update({
           [this.config.columnName]: this.config.defaultValue,
-          updated_at: new Date()
+          updated_at: new Date(),
         });
 
       const executionTime = Date.now() - startTime;
@@ -350,14 +359,14 @@ export class SoftDeleteManager {
       this.logger.info('Restore completed', {
         table: tableName,
         recordsRestored: result,
-        executionTime
+        executionTime,
       });
 
       return result;
     } catch (error) {
       this.logger.error('Restore failed', {
         table: tableName,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -379,38 +388,43 @@ export class SoftDeleteManager {
       if (!relation.cascade) continue;
 
       try {
-        const parentIds = parentRecords.map(record => record.id).filter(Boolean);
+        const parentIds = parentRecords
+          .map(record => record.id)
+          .filter(Boolean);
         if (parentIds.length === 0) continue;
 
         this.logger.debug('Cascade soft deleting related records', {
           parentTable,
           childTable: relation.table,
           foreignKey: relation.foreignKey,
-          parentIds: parentIds.length
+          parentIds: parentIds.length,
         });
 
-        const deletedValue = this.config.deletedValue instanceof Date ? 
-          new Date() : this.config.deletedValue;
+        const deletedValue =
+          this.config.deletedValue instanceof Date
+            ? new Date()
+            : this.config.deletedValue;
 
-        const result = await this.adapter.knex(relation.table)
+        const result = await this.adapter
+          .knex(relation.table)
           .whereIn(relation.foreignKey, parentIds)
           .whereNull(this.config.columnName)
           .update({
             [this.config.columnName]: deletedValue,
-            updated_at: new Date()
+            updated_at: new Date(),
           });
 
         this.metrics.cascadeDeletes += result;
 
         this.logger.debug('Cascade soft delete completed', {
           childTable: relation.table,
-          recordsDeleted: result
+          recordsDeleted: result,
         });
       } catch (error) {
         this.logger.error('Cascade soft delete failed', {
           parentTable,
           childTable: relation.table,
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -430,26 +444,28 @@ export class SoftDeleteManager {
 
     try {
       const [data, countResult] = await Promise.all([
-        this.adapter.knex(tableName)
+        this.adapter
+          .knex(tableName)
           .whereNotNull(this.config.columnName)
           .limit(limit)
           .offset(offset)
           .orderBy(this.config.columnName, 'desc'),
-        
-        this.adapter.knex(tableName)
+
+        this.adapter
+          .knex(tableName)
           .whereNotNull(this.config.columnName)
           .count('* as total')
-          .first()
+          .first(),
       ]);
 
       return {
         data,
-        total: parseInt(countResult.total, 10)
+        total: parseInt(countResult.total, 10),
       };
     } catch (error) {
       this.logger.error('Failed to get soft deleted records', {
         table: tableName,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -473,7 +489,7 @@ export class SoftDeleteManager {
     this.logger.info('Starting soft delete cleanup', {
       retentionDays,
       cutoffDate,
-      specificTable: tableName
+      specificTable: tableName,
     });
 
     const results: { [tableName: string]: number } = {};
@@ -484,10 +500,14 @@ export class SoftDeleteManager {
       for (const table of tablesToClean) {
         try {
           // Check if table has soft delete column
-          const hasColumn = await this.adapter.hasColumn(table, this.config.columnName);
+          const hasColumn = await this.adapter.hasColumn(
+            table,
+            this.config.columnName
+          );
           if (!hasColumn) continue;
 
-          let query = this.adapter.knex(table)
+          let query = this.adapter
+            .knex(table)
             .whereNotNull(this.config.columnName);
 
           // Add date filter based on deleted value type
@@ -505,7 +525,7 @@ export class SoftDeleteManager {
           if (deletedCount > 0) {
             this.logger.info('Cleaned up soft deleted records', {
               table,
-              recordsDeleted: deletedCount
+              recordsDeleted: deletedCount,
             });
           }
 
@@ -513,7 +533,7 @@ export class SoftDeleteManager {
         } catch (error) {
           this.logger.error('Cleanup failed for table', {
             table,
-            error: error.message
+            error: error.message,
           });
           results[table] = 0;
         }
@@ -521,7 +541,10 @@ export class SoftDeleteManager {
 
       this.logger.info('Soft delete cleanup completed', {
         tablesProcessed: Object.keys(results).length,
-        totalRecordsDeleted: Object.values(results).reduce((sum, count) => sum + count, 0)
+        totalRecordsDeleted: Object.values(results).reduce(
+          (sum, count) => sum + count,
+          0
+        ),
       });
 
       return results;
@@ -547,7 +570,7 @@ export class SoftDeleteManager {
         totalRecords: 0,
         activeRecords: 0,
         softDeletedRecords: 0,
-        deletionRate: 0
+        deletionRate: 0,
       };
     }
 
@@ -562,7 +585,10 @@ export class SoftDeleteManager {
         let softDeletedRecords = 0;
 
         for (const table of tables) {
-          const hasColumn = await this.adapter.hasColumn(table, this.config.columnName);
+          const hasColumn = await this.adapter.hasColumn(
+            table,
+            this.config.columnName
+          );
           if (!hasColumn) continue;
 
           const stats = await this.getTableStatistics(table);
@@ -571,14 +597,14 @@ export class SoftDeleteManager {
           softDeletedRecords += stats.softDeletedRecords;
         }
 
-        const deletionRate = totalRecords > 0 ? 
-          (softDeletedRecords / totalRecords) * 100 : 0;
+        const deletionRate =
+          totalRecords > 0 ? (softDeletedRecords / totalRecords) * 100 : 0;
 
         return {
           totalRecords,
           activeRecords,
           softDeletedRecords,
-          deletionRate
+          deletionRate,
         };
       }
     } catch (error) {
@@ -597,38 +623,53 @@ export class SoftDeleteManager {
     softDeletedRecords: number;
     deletionRate: number;
   }> {
-    const hasColumn = await this.adapter.hasColumn(tableName, this.config.columnName);
-    
+    const hasColumn = await this.adapter.hasColumn(
+      tableName,
+      this.config.columnName
+    );
+
     if (!hasColumn) {
-      const totalResult = await this.adapter.knex(tableName).count('* as total').first();
+      const totalResult = await this.adapter
+        .knex(tableName)
+        .count('* as total')
+        .first();
       const total = parseInt(totalResult.total, 10);
-      
+
       return {
         table: tableName,
         totalRecords: total,
         activeRecords: total,
         softDeletedRecords: 0,
-        deletionRate: 0
+        deletionRate: 0,
       };
     }
 
     const [totalResult, activeResult, deletedResult] = await Promise.all([
       this.adapter.knex(tableName).count('* as total').first(),
-      this.adapter.knex(tableName).whereNull(this.config.columnName).count('* as active').first(),
-      this.adapter.knex(tableName).whereNotNull(this.config.columnName).count('* as deleted').first()
+      this.adapter
+        .knex(tableName)
+        .whereNull(this.config.columnName)
+        .count('* as active')
+        .first(),
+      this.adapter
+        .knex(tableName)
+        .whereNotNull(this.config.columnName)
+        .count('* as deleted')
+        .first(),
     ]);
 
     const totalRecords = parseInt(totalResult.total, 10);
     const activeRecords = parseInt(activeResult.active, 10);
     const softDeletedRecords = parseInt(deletedResult.deleted, 10);
-    const deletionRate = totalRecords > 0 ? (softDeletedRecords / totalRecords) * 100 : 0;
+    const deletionRate =
+      totalRecords > 0 ? (softDeletedRecords / totalRecords) * 100 : 0;
 
     return {
       table: tableName,
       totalRecords,
       activeRecords,
       softDeletedRecords,
-      deletionRate
+      deletionRate,
     };
   }
 
@@ -639,14 +680,14 @@ export class SoftDeleteManager {
     if (!this.relations.has(parentTable)) {
       this.relations.set(parentTable, []);
     }
-    
+
     this.relations.get(parentTable)!.push(relation);
-    
+
     this.logger.debug('Registered soft delete relation', {
       parentTable,
       childTable: relation.table,
       foreignKey: relation.foreignKey,
-      cascade: relation.cascade
+      cascade: relation.cascade,
     });
   }
 
@@ -666,7 +707,7 @@ export class SoftDeleteManager {
       restoredRecords: 0,
       permanentlyDeleted: 0,
       cascadeDeletes: 0,
-      cleanupOperations: 0
+      cleanupOperations: 0,
     };
   }
 

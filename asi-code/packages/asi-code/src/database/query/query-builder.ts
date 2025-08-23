@@ -1,6 +1,6 @@
 /**
  * Query Builder Abstraction
- * 
+ *
  * Provides a high-level query building interface with:
  * - Type-safe query construction
  * - Automatic soft delete handling
@@ -12,7 +12,12 @@
  */
 
 import { Knex } from 'knex';
-import { DatabaseAdapter, QueryBuilderOptions, SoftDeleteQuery, QueryMetrics } from '../types';
+import {
+  DatabaseAdapter,
+  QueryBuilderOptions,
+  QueryMetrics,
+  SoftDeleteQuery,
+} from '../types';
 import { Logger } from '../../logging';
 
 export interface QueryExecutionOptions {
@@ -47,10 +52,10 @@ export interface PaginatedResult<T> {
 }
 
 export class QueryBuilder {
-  private adapter: DatabaseAdapter;
-  private logger: Logger;
+  private readonly adapter: DatabaseAdapter;
+  private readonly logger: Logger;
   private queryMetrics: QueryMetrics[] = [];
-  private cache = new Map<string, { data: any; expires: number }>();
+  private readonly cache = new Map<string, { data: any; expires: number }>();
 
   constructor(adapter: DatabaseAdapter, logger: Logger) {
     this.adapter = adapter;
@@ -60,29 +65,42 @@ export class QueryBuilder {
   /**
    * Create a new query for a table
    */
-  table(tableName: string, options: QueryBuilderOptions = { table: tableName }): TableQueryBuilder {
-    return new TableQueryBuilder(this.adapter, this.logger, tableName, options, this);
+  table(
+    tableName: string,
+    options: QueryBuilderOptions = { table: tableName }
+  ): TableQueryBuilder {
+    return new TableQueryBuilder(
+      this.adapter,
+      this.logger,
+      tableName,
+      options,
+      this
+    );
   }
 
   /**
    * Execute raw SQL query
    */
-  async raw(sql: string, bindings?: any[], options: QueryExecutionOptions = {}): Promise<any> {
+  async raw(
+    sql: string,
+    bindings?: any[],
+    options: QueryExecutionOptions = {}
+  ): Promise<any> {
     const startTime = Date.now();
-    
+
     try {
       // Add query timeout if specified
       let query = this.adapter.knex.raw(sql, bindings);
-      
+
       if (options.timeout) {
         query = query.timeout(options.timeout);
       }
 
       const result = await query;
-      
+
       const executionTime = Date.now() - startTime;
       this.recordQueryMetrics(sql, 'OTHER', executionTime, true);
-      
+
       if (options.explain) {
         await this.explainQuery(sql, bindings);
       }
@@ -90,7 +108,13 @@ export class QueryBuilder {
       return result;
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      this.recordQueryMetrics(sql, 'OTHER', executionTime, false, error.message);
+      this.recordQueryMetrics(
+        sql,
+        'OTHER',
+        executionTime,
+        false,
+        error.message
+      );
       throw error;
     }
   }
@@ -100,10 +124,13 @@ export class QueryBuilder {
    */
   private async explainQuery(sql: string, bindings?: any[]): Promise<void> {
     try {
-      const explainResult = await this.adapter.knex.raw(`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${sql}`, bindings);
+      const explainResult = await this.adapter.knex.raw(
+        `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${sql}`,
+        bindings
+      );
       this.logger.debug('Query execution plan', {
         sql: sql.substring(0, 100) + '...',
-        plan: explainResult.rows[0]['QUERY PLAN']
+        plan: explainResult.rows[0]['QUERY PLAN'],
       });
     } catch (error) {
       this.logger.warn('Failed to explain query', { error: error.message });
@@ -126,7 +153,7 @@ export class QueryBuilder {
       executionTime,
       timestamp: new Date(),
       success,
-      error
+      error,
     };
 
     this.queryMetrics.push(metric);
@@ -137,12 +164,14 @@ export class QueryBuilder {
     }
 
     // Log slow queries
-    if (this.adapter.config.monitoring.slowQueryThreshold && 
-        executionTime > this.adapter.config.monitoring.slowQueryThreshold) {
+    if (
+      this.adapter.config.monitoring.slowQueryThreshold &&
+      executionTime > this.adapter.config.monitoring.slowQueryThreshold
+    ) {
       this.logger.warn('Slow query detected', {
         query: query.substring(0, 200),
         executionTime,
-        threshold: this.adapter.config.monitoring.slowQueryThreshold
+        threshold: this.adapter.config.monitoring.slowQueryThreshold,
       });
     }
   }
@@ -181,7 +210,7 @@ export class QueryBuilder {
   private setCachedResult(key: string, data: any, ttl: number): void {
     this.cache.set(key, {
       data,
-      expires: Date.now() + ttl
+      expires: Date.now() + ttl,
     });
   }
 
@@ -194,12 +223,12 @@ export class QueryBuilder {
 }
 
 export class TableQueryBuilder {
-  private adapter: DatabaseAdapter;
-  private logger: Logger;
-  private tableName: string;
-  private options: QueryBuilderOptions;
+  private readonly adapter: DatabaseAdapter;
+  private readonly logger: Logger;
+  private readonly tableName: string;
+  private readonly options: QueryBuilderOptions;
   private query: Knex.QueryBuilder;
-  private queryBuilder: QueryBuilder;
+  private readonly queryBuilder: QueryBuilder;
 
   constructor(
     adapter: DatabaseAdapter,
@@ -315,7 +344,10 @@ export class TableQueryBuilder {
    * Add full-text search condition
    */
   whereFullText(column: string, searchTerm: string): this {
-    this.query = this.query.whereRaw(`to_tsvector('english', ??) @@ plainto_tsquery('english', ?)`, [column, searchTerm]);
+    this.query = this.query.whereRaw(
+      `to_tsvector('english', ??) @@ plainto_tsquery('english', ?)`,
+      [column, searchTerm]
+    );
     return this;
   }
 
@@ -334,7 +366,12 @@ export class TableQueryBuilder {
   /**
    * Add left join
    */
-  leftJoin(table: string, first: string, operator?: string, second?: string): this {
+  leftJoin(
+    table: string,
+    first: string,
+    operator?: string,
+    second?: string
+  ): this {
     if (arguments.length === 3) {
       this.query = this.query.leftJoin(table, first, operator);
     } else {
@@ -388,7 +425,7 @@ export class TableQueryBuilder {
    */
   async first(options: QueryExecutionOptions = {}): Promise<any | null> {
     const startTime = Date.now();
-    
+
     try {
       // Check cache
       if (options.cache?.enabled) {
@@ -400,13 +437,13 @@ export class TableQueryBuilder {
       }
 
       let query = this.query.first();
-      
+
       if (options.timeout) {
         query = query.timeout(options.timeout);
       }
 
       const result = await query;
-      
+
       // Cache result if enabled
       if (options.cache?.enabled && result) {
         const cacheKey = options.cache.key || this.getCacheKey('first');
@@ -415,8 +452,13 @@ export class TableQueryBuilder {
       }
 
       const executionTime = Date.now() - startTime;
-      this.queryBuilder['recordQueryMetrics'](this.query.toString(), 'SELECT', executionTime, true);
-      
+      this.queryBuilder['recordQueryMetrics'](
+        this.query.toString(),
+        'SELECT',
+        executionTime,
+        true
+      );
+
       if (options.explain) {
         await this.queryBuilder['explainQuery'](this.query.toString());
       }
@@ -424,7 +466,13 @@ export class TableQueryBuilder {
       return result || null;
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      this.queryBuilder['recordQueryMetrics'](this.query.toString(), 'SELECT', executionTime, false, error.message);
+      this.queryBuilder['recordQueryMetrics'](
+        this.query.toString(),
+        'SELECT',
+        executionTime,
+        false,
+        error.message
+      );
       throw error;
     }
   }
@@ -434,7 +482,7 @@ export class TableQueryBuilder {
    */
   async get(options: QueryExecutionOptions = {}): Promise<any[]> {
     const startTime = Date.now();
-    
+
     try {
       // Check cache
       if (options.cache?.enabled) {
@@ -446,13 +494,13 @@ export class TableQueryBuilder {
       }
 
       let query = this.query;
-      
+
       if (options.timeout) {
         query = query.timeout(options.timeout);
       }
 
       const results = await query;
-      
+
       // Cache results if enabled
       if (options.cache?.enabled) {
         const cacheKey = options.cache.key || this.getCacheKey('get');
@@ -461,8 +509,13 @@ export class TableQueryBuilder {
       }
 
       const executionTime = Date.now() - startTime;
-      this.queryBuilder['recordQueryMetrics'](this.query.toString(), 'SELECT', executionTime, true);
-      
+      this.queryBuilder['recordQueryMetrics'](
+        this.query.toString(),
+        'SELECT',
+        executionTime,
+        true
+      );
+
       if (options.explain) {
         await this.queryBuilder['explainQuery'](this.query.toString());
       }
@@ -470,7 +523,13 @@ export class TableQueryBuilder {
       return results;
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      this.queryBuilder['recordQueryMetrics'](this.query.toString(), 'SELECT', executionTime, false, error.message);
+      this.queryBuilder['recordQueryMetrics'](
+        this.query.toString(),
+        'SELECT',
+        executionTime,
+        false,
+        error.message
+      );
       throw error;
     }
   }
@@ -478,26 +537,33 @@ export class TableQueryBuilder {
   /**
    * Get paginated results
    */
-  async paginate(paginationOptions: PaginationOptions, options: QueryExecutionOptions = {}): Promise<PaginatedResult<any>> {
+  async paginate(
+    paginationOptions: PaginationOptions,
+    options: QueryExecutionOptions = {}
+  ): Promise<PaginatedResult<any>> {
     const { page, limit, orderBy, orderDirection = 'asc' } = paginationOptions;
-    
+
     // Get total count
-    const countQuery = this.query.clone().clearSelect().clearOrder().count('* as total');
+    const countQuery = this.query
+      .clone()
+      .clearSelect()
+      .clearOrder()
+      .count('* as total');
     const countResult = await countQuery.first();
     const total = parseInt(countResult.total, 10);
-    
+
     // Apply pagination
     const offset = (page - 1) * limit;
     let dataQuery = this.query.clone().limit(limit).offset(offset);
-    
+
     if (orderBy) {
       dataQuery = dataQuery.orderBy(orderBy, orderDirection);
     }
 
     const data = await dataQuery;
-    
+
     const totalPages = Math.ceil(total / limit);
-    
+
     return {
       data,
       pagination: {
@@ -506,32 +572,40 @@ export class TableQueryBuilder {
         total,
         totalPages,
         hasNextPage: page < totalPages,
-        hasPrevPage: page > 1
-      }
+        hasPrevPage: page > 1,
+      },
     };
   }
 
   /**
    * Insert data
    */
-  async insert(data: any | any[], options: QueryExecutionOptions = {}): Promise<any> {
+  async insert(
+    data: any | any[],
+    options: QueryExecutionOptions = {}
+  ): Promise<any> {
     const startTime = Date.now();
-    
+
     try {
       // Add audit fields if enabled
       const processedData = this.addAuditFields(data, 'INSERT');
-      
+
       let query = this.adapter.knex(this.tableName).insert(processedData);
-      
+
       if (options.timeout) {
         query = query.timeout(options.timeout);
       }
 
       const result = await query.returning('*');
-      
+
       const executionTime = Date.now() - startTime;
-      this.queryBuilder['recordQueryMetrics'](query.toString(), 'INSERT', executionTime, true);
-      
+      this.queryBuilder['recordQueryMetrics'](
+        query.toString(),
+        'INSERT',
+        executionTime,
+        true
+      );
+
       // Record audit log if enabled
       if (this.options.audit && this.adapter.config.audit.enabled) {
         await this.recordAuditLog('INSERT', result, null, processedData);
@@ -540,7 +614,13 @@ export class TableQueryBuilder {
       return result;
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      this.queryBuilder['recordQueryMetrics']('INSERT', 'INSERT', executionTime, false, error.message);
+      this.queryBuilder['recordQueryMetrics'](
+        'INSERT',
+        'INSERT',
+        executionTime,
+        false,
+        error.message
+      );
       throw error;
     }
   }
@@ -550,35 +630,52 @@ export class TableQueryBuilder {
    */
   async update(data: any, options: QueryExecutionOptions = {}): Promise<any> {
     const startTime = Date.now();
-    
+
     try {
       // Get old values for audit
-      const oldValues = this.options.audit && this.adapter.config.audit.enabled ? 
-        await this.query.clone() : null;
+      const oldValues =
+        this.options.audit && this.adapter.config.audit.enabled
+          ? await this.query.clone()
+          : null;
 
       // Add audit fields
       const processedData = this.addAuditFields(data, 'UPDATE');
-      
+
       let query = this.query.clone().update(processedData);
-      
+
       if (options.timeout) {
         query = query.timeout(options.timeout);
       }
 
       const result = await query.returning('*');
-      
+
       const executionTime = Date.now() - startTime;
-      this.queryBuilder['recordQueryMetrics'](query.toString(), 'UPDATE', executionTime, true);
-      
+      this.queryBuilder['recordQueryMetrics'](
+        query.toString(),
+        'UPDATE',
+        executionTime,
+        true
+      );
+
       // Record audit log if enabled
-      if (this.options.audit && this.adapter.config.audit.enabled && oldValues) {
+      if (
+        this.options.audit &&
+        this.adapter.config.audit.enabled &&
+        oldValues
+      ) {
         await this.recordAuditLog('UPDATE', result, oldValues, processedData);
       }
 
       return result;
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      this.queryBuilder['recordQueryMetrics']('UPDATE', 'UPDATE', executionTime, false, error.message);
+      this.queryBuilder['recordQueryMetrics'](
+        'UPDATE',
+        'UPDATE',
+        executionTime,
+        false,
+        error.message
+      );
       throw error;
     }
   }
@@ -586,39 +683,54 @@ export class TableQueryBuilder {
   /**
    * Delete data (soft delete if enabled)
    */
-  async delete(options: QueryExecutionOptions & { force?: boolean } = {}): Promise<number> {
+  async delete(
+    options: QueryExecutionOptions & { force?: boolean } = {}
+  ): Promise<number> {
     const startTime = Date.now();
-    
+
     try {
       let result: number;
-      
+
       if (this.adapter.config.softDelete.enabled && !options.force) {
         // Soft delete
         const softDeleteData = {
-          [this.adapter.config.softDelete.columnName]: this.adapter.config.softDelete.deletedValue instanceof Date ? 
-            new Date() : this.adapter.config.softDelete.deletedValue
+          [this.adapter.config.softDelete.columnName]:
+            this.adapter.config.softDelete.deletedValue instanceof Date
+              ? new Date()
+              : this.adapter.config.softDelete.deletedValue,
         };
-        
+
         const updateResult = await this.update(softDeleteData, options);
         result = Array.isArray(updateResult) ? updateResult.length : 1;
       } else {
         // Hard delete
         let query = this.query.clone().del();
-        
+
         if (options.timeout) {
           query = query.timeout(options.timeout);
         }
 
         result = await query;
       }
-      
+
       const executionTime = Date.now() - startTime;
-      this.queryBuilder['recordQueryMetrics']('DELETE', 'DELETE', executionTime, true);
-      
+      this.queryBuilder['recordQueryMetrics'](
+        'DELETE',
+        'DELETE',
+        executionTime,
+        true
+      );
+
       return result;
     } catch (error) {
       const executionTime = Date.now() - startTime;
-      this.queryBuilder['recordQueryMetrics']('DELETE', 'DELETE', executionTime, false, error.message);
+      this.queryBuilder['recordQueryMetrics'](
+        'DELETE',
+        'DELETE',
+        executionTime,
+        false,
+        error.message
+      );
       throw error;
     }
   }
@@ -632,16 +744,20 @@ export class TableQueryBuilder {
     }
 
     const restoreData = {
-      [this.adapter.config.softDelete.columnName]: this.adapter.config.softDelete.defaultValue
+      [this.adapter.config.softDelete.columnName]:
+        this.adapter.config.softDelete.defaultValue,
     };
-    
+
     return await this.update(restoreData, options);
   }
 
   /**
    * Count records
    */
-  async count(column = '*', options: QueryExecutionOptions = {}): Promise<number> {
+  async count(
+    column = '*',
+    options: QueryExecutionOptions = {}
+  ): Promise<number> {
     const result = await this.query.clone().count(`${column} as total`).first();
     return parseInt(result.total, 10);
   }
@@ -663,18 +779,18 @@ export class TableQueryBuilder {
     }
 
     const now = new Date();
-    
+
     if (Array.isArray(data)) {
       return data.map(item => ({
         ...item,
         updated_at: now,
-        ...(operation === 'INSERT' && { created_at: now })
+        ...(operation === 'INSERT' && { created_at: now }),
       }));
     } else {
       return {
         ...data,
         updated_at: now,
-        ...(operation === 'INSERT' && { created_at: now })
+        ...(operation === 'INSERT' && { created_at: now }),
       };
     }
   }
@@ -694,7 +810,7 @@ export class TableQueryBuilder {
       this.logger.debug('Recording audit log', {
         table: this.tableName,
         operation,
-        recordsAffected: Array.isArray(newValues) ? newValues.length : 1
+        recordsAffected: Array.isArray(newValues) ? newValues.length : 1,
       });
     } catch (error) {
       this.logger.error('Failed to record audit log', { error });

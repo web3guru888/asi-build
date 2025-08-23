@@ -2,7 +2,7 @@
 
 /**
  * ASI-Code CLI - Command Line Interface
- * 
+ *
  * Main CLI entry point for the ASI-Code system.
  */
 
@@ -20,55 +20,78 @@ import { createConfigManager } from '../config/config-manager.js';
 import { createEventBus } from '../bus/index.js';
 import { createProviderManager } from '../provider/index.js';
 import { createToolManager } from '../tool/index.js';
-import { createSessionStorage, createSessionManager } from '../session/index.js';
-import { createConsciousnessEngine, defaultConsciousnessConfig } from '../consciousness/index.js';
+import {
+  createSessionManager,
+  createSessionStorage,
+} from '../session/index.js';
+import {
+  createConsciousnessEngine,
+  defaultConsciousnessConfig,
+} from '../consciousness/index.js';
 import { createAgentManager } from '../agent/index.js';
 import { createPermissionManager } from '../permission/index.js';
 import { createSATEngine } from '../sat/index.js';
 import { createASIServer, defaultServerConfig } from '../server/index.js';
 
-import type { ProviderConfig, ASICodeConfig } from '../index.js';
+import type { ASICodeConfig, ProviderConfig } from '../config/config-types.js';
 
 const program = new Command();
 
 // Read package.json for version
 let packageJson: any = {};
 try {
-  const packagePath = join(import.meta.url.replace('file://', '').replace('/src/cli/index.js', ''), '../../package.json');
+  const packagePath = join(
+    import.meta.url.replace('file://', '').replace('/src/cli/index.js', ''),
+    '../../package.json'
+  );
   packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
 } catch (error) {
-  packageJson = { version: '0.1.0' };
+  packageJson = { version: '0.2.0' };
 }
 
 program
   .name('asi-code')
-  .description('ASI-Code - Advanced Software Intelligence Code Generation and Analysis Platform')
-  .version(packageJson.version || '0.1.0');
+  .description(
+    'ASI-Code - Advanced Software Intelligence Code Generation and Analysis Platform'
+  )
+  .version(packageJson.version || '0.2.0');
 
 // Initialize command
 program
   .command('init')
   .description('Initialize ASI-Code in the current directory')
-  .option('-p, --provider <provider>', 'AI provider (anthropic|openai)', 'anthropic')
+  .option(
+    '-p, --provider <provider>',
+    'AI provider (anthropic|openai)',
+    'anthropic'
+  )
   .option('-m, --model <model>', 'AI model to use')
   .option('-k, --api-key <key>', 'API key for the provider')
-  .action(async (options) => {
+  .action(async options => {
     const spinner = ora('Initializing ASI-Code...').start();
-    
+
     try {
       const configManager = createConfigManager();
-      
+
       // Set provider configuration
       const providerConfig: ProviderConfig = {
         name: 'default',
         type: options.provider,
-        apiKey: options.apiKey || process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || '',
-        model: options.model || (options.provider === 'anthropic' ? 'claude-3-sonnet-20240229' : 'gpt-4')
+        apiKey:
+          options.apiKey ||
+          process.env.ANTHROPIC_API_KEY ||
+          process.env.OPENAI_API_KEY ||
+          '',
+        model:
+          options.model ||
+          (options.provider === 'anthropic'
+            ? 'claude-3-sonnet-20240229'
+            : 'gpt-4'),
       };
 
       configManager.set('providers.default', providerConfig);
       await configManager.save('./asi-code.config.yml');
-      
+
       spinner.succeed('ASI-Code initialized successfully!');
       console.log(chalk.green('Configuration saved to asi-code.config.yml'));
       console.log(chalk.blue('Run "asi-code start" to start the server'));
@@ -85,10 +108,14 @@ program
   .description('Start the ASI-Code server')
   .option('-p, --port <port>', 'Server port', '3000')
   .option('-h, --host <host>', 'Server host', 'localhost')
-  .option('-c, --config <config>', 'Configuration file', './asi-code.config.yml')
-  .action(async (options) => {
+  .option(
+    '-c, --config <config>',
+    'Configuration file',
+    './asi-code.config.yml'
+  )
+  .action(async options => {
     const spinner = ora('Starting ASI-Code server...').start();
-    
+
     try {
       // Load configuration
       const configManager = createConfigManager();
@@ -105,12 +132,16 @@ program
       const toolManager = createToolManager();
       const sessionStorage = createSessionStorage('memory');
       const sessionManager = createSessionManager(sessionStorage);
-      const consciousnessEngine = createConsciousnessEngine(defaultConsciousnessConfig);
+      const consciousnessEngine = createConsciousnessEngine(
+        defaultConsciousnessConfig
+      );
       const agentManager = createAgentManager();
       const permissionManager = createPermissionManager();
 
       // Register providers from config
-      const defaultProvider = configManager.get('providers.default') as ProviderConfig;
+      const defaultProvider = configManager.get(
+        'providers.default'
+      ) as ProviderConfig;
       if (defaultProvider) {
         await providerManager.register(defaultProvider);
         await consciousnessEngine.initialize(providerManager.get('default')!);
@@ -120,11 +151,16 @@ program
       const serverConfig = {
         ...defaultServerConfig,
         port: parseInt(options.port),
-        host: options.host
+        host: options.host,
       };
 
-      const server = createASIServer(serverConfig, sessionManager, providerManager, toolManager);
-      
+      const server = createASIServer(
+        serverConfig,
+        sessionManager,
+        providerManager,
+        toolManager
+      );
+
       // Setup event listeners
       server.on('server:started', ({ host, port }) => {
         spinner.succeed(`ASI-Code server started on http://${host}:${port}`);
@@ -158,7 +194,6 @@ program
         await eventBus.cleanup();
         process.exit(0);
       });
-
     } catch (error) {
       spinner.fail('Failed to start ASI-Code server');
       console.error(chalk.red((error as Error).message));
@@ -169,24 +204,28 @@ program
 // Analyze project command
 program
   .command('analyze')
-  .description('Analyze project architecture with SAT (Software Architecture Taskforce)')
+  .description(
+    'Analyze project architecture with SAT (Software Architecture Taskforce)'
+  )
   .argument('[path]', 'Project path to analyze', '.')
   .option('-o, --output <file>', 'Output file for analysis results')
   .option('-f, --format <format>', 'Output format (json|yaml|text)', 'text')
   .action(async (path, options) => {
     const spinner = ora('Analyzing project architecture...').start();
-    
+
     try {
       const satEngine = createSATEngine();
       const analysis = await satEngine.analyzeProject(path);
-      
+
       spinner.succeed('Architecture analysis completed');
-      
+
       // Display results
       console.log(chalk.blue('\n🏗️  Architecture Analysis Results\n'));
       console.log(chalk.green(`Project: ${analysis.projectPath}`));
-      console.log(chalk.green(`Analysis time: ${analysis.timestamp.toISOString()}\n`));
-      
+      console.log(
+        chalk.green(`Analysis time: ${analysis.timestamp.toISOString()}\n`)
+      );
+
       // Patterns
       console.log(chalk.blue('📋 Detected Patterns:'));
       if (analysis.patterns.length > 0) {
@@ -198,33 +237,37 @@ program
       } else {
         console.log(chalk.yellow('  No clear patterns detected'));
       }
-      
+
       // Metrics
       console.log(chalk.blue('\n📊 Code Metrics:'));
-      console.log(`  • Lines of Code: ${analysis.metrics.linesOfCode.toLocaleString()}`);
-      console.log(`  • Cyclomatic Complexity: ${analysis.metrics.cyclomaticComplexity}`);
+      console.log(
+        `  • Lines of Code: ${analysis.metrics.linesOfCode.toLocaleString()}`
+      );
+      console.log(
+        `  • Cyclomatic Complexity: ${analysis.metrics.cyclomaticComplexity}`
+      );
       console.log(`  • Dependencies: ${analysis.metrics.dependencies.length}`);
       console.log(`  • Coupling: ${analysis.metrics.coupling}`);
       console.log(`  • Cohesion: ${analysis.metrics.cohesion}%`);
-      
+
       // Recommendations
       console.log(chalk.blue('\n💡 Recommendations:'));
       analysis.recommendations.forEach(rec => {
         console.log(`  • ${rec}`);
       });
-      
+
       // Save to file if requested
       if (options.output) {
-        const content = options.format === 'json' 
-          ? JSON.stringify(analysis, null, 2)
-          : options.format === 'yaml'
-            ? require('yaml').stringify(analysis)
-            : `Architecture Analysis Report\n\n${JSON.stringify(analysis, null, 2)}`;
-        
+        const content =
+          options.format === 'json'
+            ? JSON.stringify(analysis, null, 2)
+            : options.format === 'yaml'
+              ? require('yaml').stringify(analysis)
+              : `Architecture Analysis Report\n\n${JSON.stringify(analysis, null, 2)}`;
+
         require('fs').writeFileSync(options.output, content);
         console.log(chalk.green(`\nResults saved to ${options.output}`));
       }
-      
     } catch (error) {
       spinner.fail('Architecture analysis failed');
       console.error(chalk.red((error as Error).message));
@@ -260,9 +303,7 @@ providerCmd
   });
 
 // Tool management commands
-const toolCmd = program
-  .command('tool')
-  .description('Manage tools');
+const toolCmd = program.command('tool').description('Manage tools');
 
 toolCmd
   .command('list')
@@ -271,17 +312,21 @@ toolCmd
     console.log(chalk.blue('Available Tools:'));
     const toolManager = createToolManager();
     const tools = toolManager.list();
-    
+
     tools.forEach(tool => {
       console.log(`  • ${chalk.green(tool.name)} - ${tool.description}`);
-      console.log(`    ${chalk.gray(`Category: ${tool.category}, Version: ${tool.version}`)}`);
+      console.log(
+        `    ${chalk.gray(`Category: ${tool.category}, Version: ${tool.version}`)}`
+      );
     });
   });
 
 // Version command (already handled by commander)
 
 // Main function for external use
-export async function main(args: string[] = process.argv.slice(2)): Promise<void> {
+export async function main(
+  args: string[] = process.argv.slice(2)
+): Promise<void> {
   try {
     await program.parseAsync(args);
   } catch (error) {

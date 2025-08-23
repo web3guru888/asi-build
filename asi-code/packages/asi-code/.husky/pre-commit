@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run version consistency check
+echo "🔍 Checking version consistency..."
+npm run version:check
+
+# Run linting and formatting on staged files
+npx lint-staged

@@ -1,6 +1,6 @@
 /**
  * Language Server Protocol (LSP) Implementation
- * 
+ *
  * Provides LSP support for ASI-Code integration with editors and IDEs.
  */
 
@@ -22,7 +22,7 @@ export class DefaultLSPServer extends EventEmitter implements LSPServer {
 
   async start(): Promise<void> {
     if (this.running) return;
-    
+
     // TODO: Implement LSP server startup
     this.running = true;
     this.emit('lsp:started');
@@ -30,7 +30,7 @@ export class DefaultLSPServer extends EventEmitter implements LSPServer {
 
   async stop(): Promise<void> {
     if (!this.running) return;
-    
+
     // TODO: Implement LSP server shutdown
     this.running = false;
     this.emit('lsp:stopped');

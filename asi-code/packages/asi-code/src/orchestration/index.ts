@@ -1,6 +1,6 @@
 /**
  * ASI-Code Agent Orchestration System
- * 
+ *
  * Export main orchestration components and utilities
  */
 
@@ -21,20 +21,20 @@ export { AgentRegistry } from './agent-registry.js';
 export { LoadBalancer } from './load-balancer.js';
 
 // Agent Factory
-export { 
-  AgentFactory, 
-  defaultAgentFactory, 
-  createAgent, 
+export {
+  AgentFactory,
+  defaultAgentFactory,
+  createAgent,
   createFromTemplate,
   type AgentTemplate,
   type AgentPoolConfig,
   type DependencyContainer,
-  type AgentCreationOptions
+  type AgentCreationOptions,
 } from './agent-factory.js';
 
 // Task Builder
-export { 
-  TaskBuilder, 
+export {
+  TaskBuilder,
   WorkflowBuilder,
   createTask,
   createTaskFromTemplate,
@@ -42,12 +42,20 @@ export {
   createTaskPipeline,
   type TaskTemplate,
   type WorkflowConfig,
-  type SubtaskConfig
+  type SubtaskConfig,
 } from './task-builder.js';
 
 // Communication & Coordination
-export { MessageBus, getOrchestrationMessageBus, resetOrchestrationMessageBus } from './message-bus.js';
-export { OrchestrationCoordinationProtocol, getCoordinationProtocol, resetCoordinationProtocol } from './coordination-protocol.js';
+export {
+  MessageBus,
+  getOrchestrationMessageBus,
+  resetOrchestrationMessageBus,
+} from './message-bus.js';
+export {
+  OrchestrationCoordinationProtocol,
+  getCoordinationProtocol,
+  resetCoordinationProtocol,
+} from './coordination-protocol.js';
 
 // Types
 export * from './types.js';
@@ -62,7 +70,7 @@ export async function createOrchestrationSystem(config?: {
 }) {
   const { Orchestrator } = await import('./orchestrator.js');
   const orchestrator = new Orchestrator(config?.logger);
-  
+
   // Create additional supervisors if requested
   const supervisorCount = config?.supervisors || 1;
   for (let i = 1; i < supervisorCount; i++) {
@@ -72,11 +80,11 @@ export async function createOrchestrationSystem(config?: {
       capabilities: ['task-decomposition', 'agent-management'],
       maxConcurrentTasks: 100,
       metadata: {
-        initialWorkers: config?.workersPerSupervisor || 3
-      }
+        initialWorkers: config?.workersPerSupervisor || 3,
+      },
     });
   }
-  
+
   return orchestrator;
 }
 

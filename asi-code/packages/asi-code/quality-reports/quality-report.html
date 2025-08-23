@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASI-Code Quality Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .score { font-size: 48px; font-weight: bold; color: #ef4444; }
+        .grade { font-size: 24px; margin-top: 10px; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #e5e7eb; border-radius: 6px; }
+        .passed { background-color: #f0fdf4; border-color: #22c55e; }
+        .failed { background-color: #fef2f2; border-color: #ef4444; }
+        .metric { display: flex; justify-content: space-between; margin: 10px 0; }
+        .metric-label { font-weight: bold; }
+        .metric-value { color: #6b7280; }
+        .issues { margin-top: 15px; }
+        .issue { background: #fef2f2; padding: 8px 12px; margin: 5px 0; border-radius: 4px; border-left: 4px solid #ef4444; }
+        .timestamp { text-align: center; color: #6b7280; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ASI-Code Quality Report</h1>
+            <div class="score">0/100</div>
+            <div class="grade">Grade: F</div>
+        </div>
+        
+        <div class="section failed">
+            <h2>ESLint Analysis</h2>
+            
+                <div class="metric">
+                    <span class="metric-label">Status:</span>
+                    <span class="metric-value">❌ Failed</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Errors:</span>
+                    <span class="metric-value">-1</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Warnings:</span>
+                    <span class="metric-value">undefined</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Fixable Issues:</span>
+                    <span class="metric-value">undefined</span>
+                </div>
+            
+        </div>
+        
+        <div class="section failed">
+            <h2>TypeScript Analysis</h2>
+            
+                <div class="metric">
+                    <span class="metric-label">Status:</span>
+                    <span class="metric-value">❌ Failed</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Type Errors:</span>
+                    <span class="metric-value">0</span>
+                </div>
+            
+        </div>
+        
+        <div class="section failed">
+            <h2>Security Analysis</h2>
+            
+                <div class="metric">
+                    <span class="metric-label">Status:</span>
+                    <span class="metric-value">❌ Failed</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Critical:</span>
+                    <span class="metric-value">3</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">High:</span>
+                    <span class="metric-value">12</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Moderate:</span>
+                    <span class="metric-value">12</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Low:</span>
+                    <span class="metric-value">3</span>
+                </div>
+            
+        </div>
+        
+        
+            <div class="section failed">
+                <h2>Issues to Address</h2>
+                <div class="issues">
+                    <div class="issue">0 TypeScript errors</div><div class="issue">3 critical security vulnerabilities</div><div class="issue">12 high security vulnerabilities</div>
+                </div>
+            </div>
+        
+        
+        <div class="timestamp">
+            Generated: 2025-08-22T20:58:05.001Z
+        </div>
+    </div>
+</body>
+</html>

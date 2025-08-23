@@ -1,6 +1,6 @@
 /**
  * ASI-Code HTTP/SSE Server - Main server exports
- * 
+ *
  * Exports server components, middleware, routes, and utilities
  * for the ASI-Code system.
  */
@@ -11,11 +11,12 @@ export * from './routes.js';
 export * from './middleware.js';
 
 // Legacy exports for backward compatibility
-export { 
-  createASIServer, 
+export {
+  createASIServer,
+  createServer,
   defaultServerConfig,
   DefaultASIServer,
-  SSEConnectionManager 
+  SSEConnectionManager,
 } from './server.js';
 
 // Re-export types

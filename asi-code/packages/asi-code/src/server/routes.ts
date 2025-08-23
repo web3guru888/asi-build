@@ -1,6 +1,6 @@
 /**
  * Route Definitions and Handlers
- * 
+ *
  * HTTP API endpoints for ASI-Code server including health checks,
  * session management, provider interactions, and SSE events.
  */
@@ -12,16 +12,16 @@ import type { KennyMessage } from '../kenny/index.js';
 
 export function setupRoutes(app: Hono, server: DefaultASIServer): void {
   // Health check endpoint
-  app.get('/health', (c) => {
-    return c.json({ 
-      status: 'ok', 
+  app.get('/health', c => {
+    return c.json({
+      status: 'ok',
       timestamp: new Date().toISOString(),
-      connections: server.sseManager.getConnectionCount()
+      connections: server.sseManager.getConnectionCount(),
     });
   });
 
   // Models endpoint (alias for providers)
-  app.get('/models', (c) => {
+  app.get('/models', c => {
     const providers = server.getProviderManager().list();
     return c.json({ models: providers, providers });
   });
@@ -46,17 +46,17 @@ function setupSessionRoutes(app: Hono, server: DefaultASIServer): void {
   const sessionManager = server.getSessionManager();
 
   // Create new session
-  app.post('/api/sessions', async (c) => {
+  app.post('/api/sessions', async c => {
     try {
       const body = await c.req.json();
       const { userId, config } = body;
-      
+
       const session = await sessionManager.createSession(userId, config);
       server.emit('session:created', { sessionId: session.data.id, userId });
-      
-      return c.json({ 
+
+      return c.json({
         sessionId: session.data.id,
-        kennyContext: session.data.kennyContext
+        kennyContext: session.data.kennyContext,
       });
     } catch (error) {
       return c.json({ error: (error as Error).message }, 400);
@@ -64,15 +64,15 @@ function setupSessionRoutes(app: Hono, server: DefaultASIServer): void {
   });
 
   // Get session by ID
-  app.get('/api/sessions/:id', async (c) => {
+  app.get('/api/sessions/:id', async c => {
     try {
       const sessionId = c.req.param('id');
       const session = await sessionManager.getSession(sessionId);
-      
+
       if (!session) {
         return c.json({ error: 'Session not found' }, 404);
       }
-      
+
       return c.json({
         session: {
           id: session.data.id,
@@ -80,8 +80,8 @@ function setupSessionRoutes(app: Hono, server: DefaultASIServer): void {
           kennyContext: session.data.kennyContext,
           messageCount: session.data.messages.length,
           createdAt: session.data.createdAt,
-          lastActivity: session.data.lastActivity
-        }
+          lastActivity: session.data.lastActivity,
+        },
       });
     } catch (error) {
       return c.json({ error: (error as Error).message }, 400);
@@ -89,7 +89,7 @@ function setupSessionRoutes(app: Hono, server: DefaultASIServer): void {
   });
 
   // Delete session
-  app.delete('/api/sessions/:id', async (c) => {
+  app.delete('/api/sessions/:id', async c => {
     try {
       const sessionId = c.req.param('id');
       await sessionManager.deleteSession(sessionId);
@@ -101,12 +101,12 @@ function setupSessionRoutes(app: Hono, server: DefaultASIServer): void {
   });
 
   // Add message to session
-  app.post('/api/sessions/:id/messages', async (c) => {
+  app.post('/api/sessions/:id/messages', async c => {
     try {
       const sessionId = c.req.param('id');
       const body = await c.req.json();
       const { content, type = 'user', metadata } = body;
-      
+
       const session = await sessionManager.getSession(sessionId);
       if (!session) {
         return c.json({ error: 'Session not found' }, 404);
@@ -118,7 +118,7 @@ function setupSessionRoutes(app: Hono, server: DefaultASIServer): void {
         content,
         timestamp: new Date(),
         context: session.data.kennyContext,
-        metadata
+        metadata,
       };
 
       session.addMessage(message);
@@ -135,11 +135,13 @@ function setupSessionRoutes(app: Hono, server: DefaultASIServer): void {
   });
 
   // Get session messages
-  app.get('/api/sessions/:id/messages', async (c) => {
+  app.get('/api/sessions/:id/messages', async c => {
     try {
       const sessionId = c.req.param('id');
-      const limit = c.req.query('limit') ? parseInt(c.req.query('limit')!) : undefined;
-      
+      const limit = c.req.query('limit')
+        ? parseInt(c.req.query('limit')!)
+        : undefined;
+
       const session = await sessionManager.getSession(sessionId);
       if (!session) {
         return c.json({ error: 'Session not found' }, 404);
@@ -153,7 +155,7 @@ function setupSessionRoutes(app: Hono, server: DefaultASIServer): void {
   });
 
   // List sessions for a user
-  app.get('/api/sessions', async (c) => {
+  app.get('/api/sessions', async c => {
     try {
       const userId = c.req.query('userId');
       const sessions = await sessionManager.listSessions(userId);
@@ -168,13 +170,13 @@ function setupProviderRoutes(app: Hono, server: DefaultASIServer): void {
   const providerManager = server.getProviderManager();
 
   // List available providers
-  app.get('/api/providers', (c) => {
+  app.get('/api/providers', c => {
     const providers = providerManager.list();
     return c.json({ providers });
   });
 
   // Generate using a specific provider
-  app.post('/api/providers/:name/generate', async (c) => {
+  app.post('/api/providers/:name/generate', async c => {
     try {
       const providerName = c.req.param('name');
       const body = await c.req.json();
@@ -187,7 +189,7 @@ function setupProviderRoutes(app: Hono, server: DefaultASIServer): void {
 
       const response = await provider.generate(messages, options);
       server.emit('generation:completed', { provider: providerName, response });
-      
+
       return c.json({ response });
     } catch (error) {
       return c.json({ error: (error as Error).message }, 400);
@@ -195,11 +197,11 @@ function setupProviderRoutes(app: Hono, server: DefaultASIServer): void {
   });
 
   // Get provider capabilities
-  app.get('/api/providers/:name', (c) => {
+  app.get('/api/providers/:name', c => {
     try {
       const providerName = c.req.param('name');
       const provider = providerManager.get(providerName);
-      
+
       if (!provider) {
         return c.json({ error: 'Provider not found' }, 404);
       }
@@ -207,7 +209,7 @@ function setupProviderRoutes(app: Hono, server: DefaultASIServer): void {
       return c.json({
         name: providerName,
         capabilities: (provider as any).getCapabilities?.() || {},
-        config: (provider as any).config || {}
+        config: (provider as any).config || {},
       });
     } catch (error) {
       return c.json({ error: (error as Error).message }, 400);
@@ -219,13 +221,13 @@ function setupToolRoutes(app: Hono, server: DefaultASIServer): void {
   const toolManager = server.getToolManager();
 
   // List available tools
-  app.get('/api/tools', (c) => {
+  app.get('/api/tools', c => {
     const tools = toolManager.list();
     return c.json({ tools });
   });
 
   // Execute a tool
-  app.post('/api/tools/:name/execute', async (c) => {
+  app.post('/api/tools/:name/execute', async c => {
     try {
       const toolName = c.req.param('name');
       const body = await c.req.json();
@@ -233,7 +235,7 @@ function setupToolRoutes(app: Hono, server: DefaultASIServer): void {
 
       const result = await toolManager.execute(toolName, parameters, context);
       server.emit('tool:executed', { tool: toolName, result });
-      
+
       return c.json({ result });
     } catch (error) {
       return c.json({ error: (error as Error).message }, 400);
@@ -241,11 +243,11 @@ function setupToolRoutes(app: Hono, server: DefaultASIServer): void {
   });
 
   // Get tool schema
-  app.get('/api/tools/:name', (c) => {
+  app.get('/api/tools/:name', c => {
     try {
       const toolName = c.req.param('name');
       const tool = toolManager.get(toolName);
-      
+
       if (!tool) {
         return c.json({ error: 'Tool not found' }, 404);
       }
@@ -253,7 +255,8 @@ function setupToolRoutes(app: Hono, server: DefaultASIServer): void {
       return c.json({
         name: toolName,
         schema: (tool as any).getSchema?.() || {},
-        description: (tool as any).getDescription?.() || 'No description available'
+        description:
+          (tool as any).getDescription?.() || 'No description available',
       });
     } catch (error) {
       return c.json({ error: (error as Error).message }, 400);
@@ -263,12 +266,12 @@ function setupToolRoutes(app: Hono, server: DefaultASIServer): void {
 
 function setupSSERoutes(app: Hono, server: DefaultASIServer): void {
   // Server-Sent Events endpoint
-  app.get('/api/events', async (c) => {
+  app.get('/api/events', async c => {
     const connectionId = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     return new Response(
       new ReadableStream({
-        start: (controller) => {
+        start: controller => {
           // Setup SSE headers
           const encoder = new TextEncoder();
           const writer = controller;
@@ -285,22 +288,22 @@ function setupSSERoutes(app: Hono, server: DefaultASIServer): void {
             server.sseManager.removeConnection(connectionId);
             controller.close();
           });
-        }
+        },
       }),
       {
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
+          Connection: 'keep-alive',
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'Cache-Control'
-        }
+          'Access-Control-Allow-Headers': 'Cache-Control',
+        },
       }
     );
   });
 
   // Endpoint to send custom events
-  app.post('/api/events/broadcast', async (c) => {
+  app.post('/api/events/broadcast', async c => {
     try {
       const body = await c.req.json();
       const { event, data, connectionId } = body;
@@ -320,7 +323,7 @@ function setupSSERoutes(app: Hono, server: DefaultASIServer): void {
 
 function setupStaticRoutes(app: Hono): void {
   // Static file serving
-  app.get('/static/*', async (c) => {
+  app.get('/static/*', async c => {
     const filePath = c.req.param('*');
     if (!filePath) {
       return c.notFound();

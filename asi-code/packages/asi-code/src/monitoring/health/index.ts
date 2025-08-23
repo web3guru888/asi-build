@@ -48,11 +48,11 @@ export interface HealthChecker {
 }
 
 export class ASICodeHealthService extends EventEmitter {
-  private config: MonitoringConfig['health'];
-  private checkers: Map<string, HealthChecker> = new Map();
+  private readonly config: MonitoringConfig['health'];
+  private readonly checkers: Map<string, HealthChecker> = new Map();
   private lastHealthStatus: HealthStatus;
   private checkInterval: NodeJS.Timeout | null = null;
-  private startTime: number = Date.now();
+  private readonly startTime: number = Date.now();
   
   constructor(config: MonitoringConfig['health']) {
     super();

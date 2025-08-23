@@ -92,7 +92,7 @@ export interface ReportingEndpoint {
 }
 
 type PermissionsPolicyDirective = '*' | 'self' | 'none' | string[];
-type ReferrerPolicyValue = 
+type ReferrerPolicyValue =
   | 'no-referrer'
   | 'no-referrer-when-downgrade'
   | 'origin'
@@ -106,12 +106,12 @@ type ReferrerPolicyValue =
  * Security headers middleware
  */
 export class SecurityHeaders {
-  private config: SecurityHeadersConfig;
+  private readonly config: SecurityHeadersConfig;
 
   constructor(config: SecurityHeadersConfig = {}) {
     this.config = {
       ...this.getDefaultConfig(),
-      ...config
+      ...config,
     };
   }
 
@@ -134,9 +134,9 @@ export class SecurityHeaders {
           'base-uri': ["'self'"],
           'form-action': ["'self'"],
           'frame-ancestors': ["'none'"],
-          'upgrade-insecure-requests': true
+          'upgrade-insecure-requests': true,
         },
-        reportOnly: false
+        reportOnly: false,
       },
       cors: {
         origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
@@ -148,19 +148,19 @@ export class SecurityHeaders {
           'X-API-Key',
           'X-Requested-With',
           'Accept',
-          'Origin'
+          'Origin',
         ],
         exposedHeaders: [
           'X-RateLimit-Limit',
           'X-RateLimit-Remaining',
-          'X-RateLimit-Reset'
+          'X-RateLimit-Reset',
         ],
-        maxAge: 86400
+        maxAge: 86400,
       },
       hsts: {
         maxAge: 31536000, // 1 year
         includeSubDomains: true,
-        preload: true
+        preload: true,
       },
       frameOptions: 'DENY',
       contentTypeOptions: true,
@@ -173,8 +173,8 @@ export class SecurityHeaders {
         gyroscope: 'none',
         magnetometer: 'none',
         payment: 'none',
-        usb: 'none'
-      }
+        usb: 'none',
+      },
     };
   }
 
@@ -186,7 +186,7 @@ export class SecurityHeaders {
       try {
         // Set security headers
         this.setSecurityHeaders(c);
-        
+
         await next();
       } catch (error) {
         logger.error('Security headers middleware error', error);
@@ -276,8 +276,10 @@ export class SecurityHeaders {
     }
 
     const cspValue = directives.join('; ');
-    const headerName = csp.reportOnly ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
-    
+    const headerName = csp.reportOnly
+      ? 'Content-Security-Policy-Report-Only'
+      : 'Content-Security-Policy';
+
     c.header(headerName, cspValue);
   }
 
@@ -286,22 +288,25 @@ export class SecurityHeaders {
    */
   private setHSTSHeader(c: Context, hsts: HSTSConfig): void {
     let hstsValue = `max-age=${hsts.maxAge}`;
-    
+
     if (hsts.includeSubDomains) {
       hstsValue += '; includeSubDomains';
     }
-    
+
     if (hsts.preload) {
       hstsValue += '; preload';
     }
-    
+
     c.header('Strict-Transport-Security', hstsValue);
   }
 
   /**
    * Set Permissions Policy header
    */
-  private setPermissionsPolicyHeader(c: Context, policy: PermissionsPolicyConfig): void {
+  private setPermissionsPolicyHeader(
+    c: Context,
+    policy: PermissionsPolicyConfig
+  ): void {
     const directives: string[] = [];
 
     for (const [feature, value] of Object.entries(policy)) {
@@ -312,9 +317,9 @@ export class SecurityHeaders {
       } else if (value === 'none') {
         directives.push(`${feature}=()`);
       } else if (Array.isArray(value)) {
-        const origins = value.map(origin => 
-          origin === 'self' ? 'self' : `"${origin}"`
-        ).join(' ');
+        const origins = value
+          .map(origin => (origin === 'self' ? 'self' : `"${origin}"`))
+          .join(' ');
         directives.push(`${feature}=(${origins})`);
       }
     }
@@ -327,14 +332,19 @@ export class SecurityHeaders {
   /**
    * Set reporting endpoints
    */
-  private setReportingEndpoints(c: Context, endpoints: ReportingEndpoint[]): void {
-    const reportingValue = endpoints.map(endpoint => {
-      let value = `"${endpoint.name}"="${endpoint.url}"`;
-      if (endpoint.includeSubdomains) {
-        value += '; include_subdomains';
-      }
-      return value;
-    }).join(', ');
+  private setReportingEndpoints(
+    c: Context,
+    endpoints: ReportingEndpoint[]
+  ): void {
+    const reportingValue = endpoints
+      .map(endpoint => {
+        let value = `"${endpoint.name}"="${endpoint.url}"`;
+        if (endpoint.includeSubdomains) {
+          value += '; include_subdomains';
+        }
+        return value;
+      })
+      .join(', ');
 
     c.header('Report-To', reportingValue);
   }
@@ -345,7 +355,8 @@ export class SecurityHeaders {
  */
 export function createCORSMiddleware(config?: CORSConfig) {
   const corsConfig = {
-    origin: config?.origin || process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin:
+      config?.origin || process.env.CORS_ORIGIN || 'http://localhost:3000',
     credentials: config?.credentials ?? true,
     methods: config?.methods || ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: config?.allowedHeaders || [
@@ -354,14 +365,14 @@ export function createCORSMiddleware(config?: CORSConfig) {
       'X-API-Key',
       'X-Requested-With',
       'Accept',
-      'Origin'
+      'Origin',
     ],
     exposedHeaders: config?.exposedHeaders || [
       'X-RateLimit-Limit',
       'X-RateLimit-Remaining',
-      'X-RateLimit-Reset'
+      'X-RateLimit-Reset',
     ],
-    maxAge: config?.maxAge || 86400
+    maxAge: config?.maxAge || 86400,
   };
 
   return cors(corsConfig);
@@ -370,7 +381,9 @@ export function createCORSMiddleware(config?: CORSConfig) {
 /**
  * Create CSP middleware for different environments
  */
-export function createCSPMiddleware(environment: 'development' | 'production' | 'test') {
+export function createCSPMiddleware(
+  environment: 'development' | 'production' | 'test'
+) {
   const baseCSP: CSPConfig = {
     directives: {
       'default-src': ["'self'"],
@@ -378,8 +391,8 @@ export function createCSPMiddleware(environment: 'development' | 'production' | 
       'form-action': ["'self'"],
       'frame-ancestors': ["'none'"],
       'object-src': ["'none'"],
-      'upgrade-insecure-requests': true
-    }
+      'upgrade-insecure-requests': true,
+    },
   };
 
   switch (environment) {
@@ -389,13 +402,18 @@ export function createCSPMiddleware(environment: 'development' | 'production' | 
           ...baseCSP,
           directives: {
             ...baseCSP.directives,
-            'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'localhost:*'],
+            'script-src': [
+              "'self'",
+              "'unsafe-inline'",
+              "'unsafe-eval'",
+              'localhost:*',
+            ],
             'style-src': ["'self'", "'unsafe-inline'"],
             'img-src': ["'self'", 'data:', 'localhost:*'],
-            'connect-src': ["'self'", 'localhost:*', 'ws:', 'wss:']
+            'connect-src': ["'self'", 'localhost:*', 'ws:', 'wss:'],
           },
-          reportOnly: true
-        }
+          reportOnly: true,
+        },
       });
 
     case 'production':
@@ -407,11 +425,11 @@ export function createCSPMiddleware(environment: 'development' | 'production' | 
             'script-src': ["'self'"],
             'style-src': ["'self'"],
             'img-src': ["'self'", 'data:', 'https:'],
-            'connect-src': ["'self'", 'https:']
+            'connect-src': ["'self'", 'https:'],
           },
           reportOnly: false,
-          reportUri: '/api/csp-report'
-        }
+          reportUri: '/api/csp-report',
+        },
       });
 
     case 'test':
@@ -423,10 +441,10 @@ export function createCSPMiddleware(environment: 'development' | 'production' | 
             'script-src': ["'self'", "'unsafe-inline'"],
             'style-src': ["'self'", "'unsafe-inline'"],
             'img-src': ["'self'", 'data:'],
-            'connect-src': ["'self'"]
+            'connect-src': ["'self'"],
           },
-          reportOnly: true
-        }
+          reportOnly: true,
+        },
       });
 
     default:
@@ -442,12 +460,12 @@ export function createAPISecurityHeaders() {
     contentSecurityPolicy: {
       directives: {
         'default-src': ["'none'"],
-        'frame-ancestors': ["'none'"]
-      }
+        'frame-ancestors': ["'none'"],
+      },
     },
     frameOptions: 'DENY',
     contentTypeOptions: true,
-    referrerPolicy: 'no-referrer'
+    referrerPolicy: 'no-referrer',
   });
 }
 
@@ -469,11 +487,11 @@ export const SecurityHeaderPresets = {
         'form-action': ["'none'"],
         'frame-ancestors': ["'none'"],
         'upgrade-insecure-requests': true,
-        'block-all-mixed-content': true
-      }
+        'block-all-mixed-content': true,
+      },
     },
     frameOptions: 'DENY',
-    referrerPolicy: 'no-referrer'
+    referrerPolicy: 'no-referrer',
   }),
 
   moderate: new SecurityHeaders({
@@ -487,10 +505,10 @@ export const SecurityHeaderPresets = {
         'font-src': ["'self'", 'https:'],
         'object-src': ["'none'"],
         'frame-ancestors': ["'none'"],
-        'upgrade-insecure-requests': true
-      }
+        'upgrade-insecure-requests': true,
+      },
     },
-    frameOptions: 'SAMEORIGIN'
+    frameOptions: 'SAMEORIGIN',
   }),
 
   relaxed: new SecurityHeaders({
@@ -502,10 +520,10 @@ export const SecurityHeaderPresets = {
         'img-src': ["'self'", 'data:', 'https:', 'http:'],
         'connect-src': ["'self'", 'https:', 'wss:'],
         'font-src': ["'self'", 'https:'],
-        'frame-ancestors': ["'self'"]
-      }
-    }
-  })
+        'frame-ancestors': ["'self'"],
+      },
+    },
+  }),
 };
 
 /**
@@ -515,11 +533,11 @@ export function handleCSPReport() {
   return async (c: Context) => {
     try {
       const report = await c.req.json();
-      
+
       logger.warn('CSP violation reported', {
         report,
         userAgent: c.req.header('user-agent'),
-        ip: c.req.header('x-forwarded-for') || c.env?.remoteAddr
+        ip: c.req.header('x-forwarded-for') || c.env?.remoteAddr,
       });
 
       return c.json({ status: 'received' }, 204);

@@ -1,6 +1,6 @@
 /**
  * Default ASI-Code Configuration
- * 
+ *
  * Comprehensive default configuration for the ASI-Code system.
  * This configuration provides sensible defaults for all system components.
  */
@@ -9,7 +9,7 @@ import { ASICodeConfig } from './config-types.js';
 
 /**
  * Default ASI-Code configuration
- * 
+ *
  * This configuration is designed to work out-of-the-box for development
  * and can be overridden for production deployments.
  */
@@ -34,7 +34,7 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
         enabled: true,
         level: 'info',
         format: 'pretty',
-        options: {}
+        options: {},
       },
       {
         type: 'file',
@@ -42,9 +42,9 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
         level: 'debug',
         format: 'json',
         options: {
-          filename: './logs/asi-code.log'
-        }
-      }
+          filename: './logs/asi-code.log',
+        },
+      },
     ],
     maxFileSize: 100, // 100MB
     maxFiles: 5,
@@ -54,8 +54,8 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
     colorize: true,
     metadata: {
       service: 'asi-code',
-      version: '0.2.0'
-    }
+      version: '0.2.0',
+    },
   },
 
   // Provider configurations
@@ -74,9 +74,10 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
         enabled: true,
         requestsPerSecond: 2,
         requestsPerMinute: 100,
-        requestsPerHour: 1000
+        requestsPerHour: 1000,
       },
-      systemPrompt: 'You are ASI-Code, an advanced AI assistant specialized in software development and system architecture.'
+      systemPrompt:
+        'You are ASI-Code, an advanced AI assistant specialized in software development and system architecture.',
     },
     openai: {
       enabled: false,
@@ -91,9 +92,9 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
         enabled: true,
         requestsPerSecond: 1,
         requestsPerMinute: 50,
-        requestsPerHour: 500
-      }
-    }
+        requestsPerHour: 500,
+      },
+    },
   },
 
   // Kenny Integration configuration
@@ -111,13 +112,13 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
       empathy: 80,
       precision: 92,
       innovation: 78,
-      patience: 85
+      patience: 85,
     },
     behaviorConfig: {
       responseStyle: 'adaptive',
       verbosity: 'adaptive',
-      proactiveness: 75
-    }
+      proactiveness: 75,
+    },
   },
 
   // Consciousness configuration
@@ -136,14 +137,14 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
       empathy: 80,
       precision: 92,
       innovation: 78,
-      patience: 85
+      patience: 85,
     },
     learningConfig: {
       enabled: true,
       adaptationRate: 0.05,
       memoryConsolidationInterval: 30, // 30 minutes
-      experienceWeighting: 0.8
-    }
+      experienceWeighting: 0.8,
+    },
   },
 
   // Session configuration
@@ -153,17 +154,17 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
     persistHistory: true,
     storageProvider: 'file',
     storageConfig: {
-      filePath: './data/sessions'
+      filePath: './data/sessions',
     },
     compression: {
       enabled: true,
       algorithm: 'gzip',
-      level: 6
+      level: 6,
     },
     encryption: {
       enabled: false,
-      algorithm: 'aes-256-gcm'
-    }
+      algorithm: 'aes-256-gcm',
+    },
   },
 
   // Server configuration
@@ -171,18 +172,18 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
     port: 3000,
     host: 'localhost',
     ssl: {
-      enabled: false
+      enabled: false,
     },
     cors: {
       origin: ['http://localhost:3000', 'http://localhost:3001'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     },
     auth: {
       enabled: false,
       type: 'jwt',
-      expiresIn: '24h'
+      expiresIn: '24h',
     },
     middleware: {
       compression: true,
@@ -191,63 +192,63 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
         enabled: true,
         windowMs: 15 * 60 * 1000, // 15 minutes
         max: 1000, // limit each IP to 1000 requests per windowMs
-        message: 'Too many requests from this IP, please try again later.'
+        message: 'Too many requests from this IP, please try again later.',
       },
-      requestLogging: true
+      requestLogging: true,
     },
     static: {
       enabled: true,
       path: './public',
-      maxAge: 86400000 // 1 day
+      maxAge: 86400000, // 1 day
     },
     websocket: {
       enabled: true,
       path: '/ws',
-      maxConnections: 1000,
+      maxConnections: 10000,
       heartbeat: {
         enabled: true,
-        interval: 30000, // 30 seconds
-        timeout: 5000 // 5 seconds
+        interval: 60000, // 60 seconds for scale
+        timeout: 10000, // 10 seconds
       },
       compression: {
         enabled: true,
         threshold: 1024,
-        level: 6
+        level: 6,
       },
       auth: {
         enabled: false,
         type: 'jwt',
-        timeout: 300
+        timeout: 300,
       },
       rateLimiting: {
         enabled: true,
-        messagesPerSecond: 10,
-        messagesPerMinute: 100,
-        bytesPerSecond: 1024
+        messagesPerSecond: 50, // Increased for high-scale
+        messagesPerMinute: 1000, // Increased for high-scale
+        bytesPerSecond: 10240, // 10KB per second
       },
       messageQueue: {
         enabled: true,
-        maxSize: 1000,
+        maxSize: 5000, // Increased queue size for scale
         persistence: false,
-        ttl: 300
+        ttl: 300,
       },
       channels: {
         enabled: true,
         maxChannelsPerConnection: 10,
-        channelNamePattern: '^[a-zA-Z0-9_-]+$'
+        channelNamePattern: '^[a-zA-Z0-9_-]+$',
       },
       binary: {
         enabled: false,
         maxSize: 1048576, // 1MB
-        allowedTypes: ['application/octet-stream']
+        allowedTypes: ['application/octet-stream'],
       },
       reconnection: {
         enabled: true,
         maxRetries: 5,
         backoffMultiplier: 1.5,
-        maxBackoffTime: 30000
-      }
-    }
+        maxBackoffTime: 30000,
+      },
+    },
   },
 
   // Tools configuration
@@ -261,40 +262,40 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
       networkAccess: false,
       systemInfo: true,
       processManagement: false,
-      databaseAccess: false
+      databaseAccess: false,
     },
     sandbox: {
       enabled: true,
       timeout: 30, // 30 seconds
       memoryLimit: 512, // 512MB
       cpuLimit: 80, // 80%
-      networkIsolation: true
+      networkIsolation: true,
     },
     registry: {
       autoRegister: true,
       loadPaths: ['./tools', './plugins/tools'],
-      enableVersioning: true
-    }
+      enableVersioning: true,
+    },
   },
 
   // Storage configuration
   storage: {
     provider: 'file',
     options: {
-      filePath: './data/storage'
+      filePath: './data/storage',
     },
     encryption: {
-      enabled: false
+      enabled: false,
     },
     backup: {
       enabled: true,
       interval: 60, // 1 hour
       retention: 7, // 7 days
-      location: './backups'
-    }
+      location: './backups',
+    },
   },
 
-  // Database configuration  
+  // Database configuration
   database: {
     host: process.env.DATABASE_HOST || 'localhost',
     port: parseInt(process.env.DATABASE_PORT || '5432'),
@@ -309,13 +310,13 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
       destroyTimeoutMillis: 5000,
       idleTimeoutMillis: 30000,
       reapIntervalMillis: 1000,
-      createRetryIntervalMillis: 100
+      createRetryIntervalMillis: 100,
     },
     retry: {
       maxAttempts: 3,
       initialDelayMs: 1000,
       maxDelayMs: 10000,
-      exponentialBackoff: true
+      exponentialBackoff: true,
     },
     migrations: {
       directory: './src/database/migrations',
@@ -323,47 +324,47 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
       extension: '.ts',
       loadExtensions: ['.ts', '.js'],
       disableTransactions: false,
-      sortDirsSeparately: false
+      sortDirsSeparately: false,
     },
     seeds: {
       directory: './src/database/seeds',
       loadExtensions: ['.ts', '.js'],
-      recursive: true
+      recursive: true,
     },
     audit: {
       enabled: true,
       tableName: 'audit_log',
       trackChanges: true,
       trackDeletes: true,
-      excludeTables: ['knex_migrations']
+      excludeTables: ['knex_migrations'],
     },
     softDelete: {
       enabled: true,
       columnName: 'deleted_at',
       defaultValue: null,
-      deletedValue: new Date()
+      deletedValue: new Date(),
     },
     monitoring: {
       enabled: true,
       slowQueryThreshold: 1000,
       logQueries: false,
-      trackMetrics: true
+      trackMetrics: true,
     },
     backup: {
       enabled: true,
       schedule: '0 2 * * *',
       retention: 30,
       location: './backups/database',
-      compression: true
+      compression: true,
     },
     cleanup: {
       enabled: true,
       schedule: '0 3 * * 0',
       retentionPeriods: {
         audit_log: 365,
-        sessions: 30
-      }
-    }
+        sessions: 30,
+      },
+    },
   },
 
   // Performance configuration
@@ -371,32 +372,32 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
     monitoring: {
       enabled: true,
       metricsInterval: 30, // 30 seconds
-      healthCheckInterval: 60 // 60 seconds
+      healthCheckInterval: 60, // 60 seconds
     },
     caching: {
       enabled: true,
       provider: 'memory',
       ttl: 3600, // 1 hour
-      maxSize: 100 // 100MB
+      maxSize: 100, // 100MB
     },
     optimization: {
       lazyLoading: true,
       preloadModules: ['kenny', 'consciousness', 'tools'],
       memoryThreshold: 1024, // 1GB
-      gcStrategy: 'default'
-    }
+      gcStrategy: 'default',
+    },
   },
 
   // Security configuration
   security: {
     encryption: {
       algorithm: 'aes-256-gcm',
-      keySize: 256
+      keySize: 256,
     },
     authentication: {
       required: false,
       methods: ['jwt', 'basic'],
-      sessionTimeout: 60 // 1 hour
+      sessionTimeout: 60, // 1 hour
     },
     authorization: {
       enabled: false,
@@ -404,14 +405,14 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
       roleHierarchy: {
         admin: ['user', 'moderator'],
         moderator: ['user'],
-        user: []
-      }
+        user: [],
+      },
     },
     audit: {
       enabled: true,
       logLevel: 'detailed',
-      retention: 30 // 30 days
-    }
+      retention: 30, // 30 days
+    },
   },
 
   // Development configuration
@@ -421,25 +422,25 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
       enabled: true,
       level: 'verbose',
       breakpoints: false,
-      profiling: false
+      profiling: false,
     },
     hotReload: {
       enabled: true,
       watchPaths: ['./src'],
-      excludePaths: ['./node_modules', './dist', './logs', './data']
+      excludePaths: ['./node_modules', './dist', './logs', './data'],
     },
     testing: {
       mockEnabled: true,
       testDataPath: './test/data',
-      coverageEnabled: false
-    }
+      coverageEnabled: false,
+    },
   },
 
   // Plugin system
   plugins: {
     enabled: true,
     loadPaths: ['./plugins', './node_modules/@asi-code/plugins'],
-    autoLoad: true
+    autoLoad: true,
   },
 
   // External integrations
@@ -448,34 +449,34 @@ export const DEFAULT_ASI_CONFIG: ASICodeConfig = {
       enabled: false,
       config: {
         webhooks: false,
-        apiVersion: '2022-11-28'
-      }
+        apiVersion: '2022-11-28',
+      },
     },
     slack: {
       enabled: false,
       config: {
         botToken: '',
-        signingSecret: ''
-      }
+        signingSecret: '',
+      },
     },
     discord: {
       enabled: false,
       config: {
         botToken: '',
-        clientId: ''
-      }
-    }
-  }
+        clientId: '',
+      },
+    },
+  },
 } as const;
 
 /**
  * Production configuration overrides
- * 
+ *
  * These settings are recommended for production deployments.
  */
 export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
   environment: 'production',
-  
+
   logging: {
     level: 'info',
     format: 'json',
@@ -487,11 +488,11 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
         level: 'info',
         format: 'json',
         options: {
-          filename: '/var/log/asi-code/asi-code.log'
-        }
-      }
+          filename: '/var/log/asi-code/asi-code.log',
+        },
+      },
     ],
-    colorize: false
+    colorize: false,
   },
 
   server: {
@@ -500,19 +501,19 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
     ssl: {
       enabled: true,
       certFile: '/etc/ssl/certs/asi-code.crt',
-      keyFile: '/etc/ssl/private/asi-code.key'
+      keyFile: '/etc/ssl/private/asi-code.key',
     },
     cors: {
       origin: ['*'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      allowedHeaders: ['Content-Type', 'Authorization']
+      allowedHeaders: ['Content-Type', 'Authorization'],
     },
     auth: {
       enabled: true,
       type: 'jwt',
       secretKey: 'production-secret',
-      expiresIn: '24h'
+      expiresIn: '24h',
     },
     middleware: {
       compression: true,
@@ -521,12 +522,12 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
       rateLimiting: {
         enabled: true,
         windowMs: 15 * 60 * 1000,
-        max: 100 // More restrictive in production
-      }
+        max: 100, // More restrictive in production
+      },
     },
     static: {
       enabled: false,
-      path: './public'
+      path: './public',
     },
     websocket: {
       enabled: true,
@@ -535,47 +536,47 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
       heartbeat: {
         enabled: true,
         interval: 30000,
-        timeout: 10000
+        timeout: 10000,
       },
       compression: {
         enabled: true,
         threshold: 512,
-        level: 9
+        level: 9,
       },
       auth: {
         enabled: true,
         type: 'jwt',
-        timeout: 300
+        timeout: 300,
       },
       rateLimiting: {
         enabled: true,
         messagesPerSecond: 5,
         messagesPerMinute: 50,
-        bytesPerSecond: 512
+        bytesPerSecond: 512,
       },
       messageQueue: {
         enabled: true,
         maxSize: 500,
         persistence: true,
-        ttl: 600
+        ttl: 600,
       },
       channels: {
         enabled: false,
         maxChannelsPerConnection: 5,
-        channelNamePattern: '^[a-zA-Z0-9_-]+$'
+        channelNamePattern: '^[a-zA-Z0-9_-]+$',
       },
       binary: {
         enabled: false,
         maxSize: 1048576, // 1MB
-        allowedTypes: ['application/octet-stream']
+        allowedTypes: ['application/octet-stream'],
       },
       reconnection: {
         enabled: true,
         maxRetries: 3,
         backoffMultiplier: 2.0,
-        maxBackoffTime: 60000
-      }
-    }
+        maxBackoffTime: 60000,
+      },
+    },
   },
 
   tools: {
@@ -584,12 +585,12 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
     sandbox: {
       enabled: true,
       timeout: 30000,
-      memoryLimit: 256
+      memoryLimit: 256,
     },
     registry: {
       autoRegister: true,
       loadPaths: ['./tools'],
-      enableVersioning: true
+      enableVersioning: true,
     },
     permissions: {
       fileAccess: true,
@@ -597,8 +598,8 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
       networkAccess: false,
       systemInfo: false,
       processManagement: false,
-      databaseAccess: false
-    }
+      databaseAccess: false,
+    },
   },
 
   storage: {
@@ -607,45 +608,45 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
     options: {
       database: 'asi_code_prod',
       maxConnections: 50,
-      connectionTimeout: 30000
+      connectionTimeout: 30000,
     },
     encryption: {
       enabled: true,
       algorithm: 'aes-256-gcm',
-      keyFile: '/etc/asi-code/encryption.key'
+      keyFile: '/etc/asi-code/encryption.key',
     },
     backup: {
       enabled: true,
       interval: 60, // minutes
       retention: 30, // days
-      location: '/backup/asi-code'
-    }
+      location: '/backup/asi-code',
+    },
   },
 
   security: {
     authentication: {
       required: true,
       methods: ['api-key', 'oauth2'],
-      sessionTimeout: 3600
+      sessionTimeout: 3600,
     },
     authorization: {
       enabled: true,
       defaultRole: 'user',
       roleHierarchy: {
         admin: ['user'],
-        user: []
-      }
+        user: [],
+      },
     },
     encryption: {
       algorithm: 'aes-256-gcm',
       keySize: 256,
-      keyRotationInterval: 168 // weekly
+      keyRotationInterval: 168, // weekly
     },
     audit: {
       enabled: true,
       logLevel: 'detailed',
-      retention: 90
-    }
+      retention: 90,
+    },
   },
 
   development: {
@@ -654,35 +655,35 @@ export const PRODUCTION_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
       enabled: false,
       level: 'basic',
       breakpoints: false,
-      profiling: false
+      profiling: false,
     },
     hotReload: {
       enabled: false,
       watchPaths: ['src/**'],
-      excludePaths: ['node_modules/**']
+      excludePaths: ['node_modules/**'],
     },
     testing: {
       mockEnabled: false,
-      coverageEnabled: false
-    }
-  }
+      coverageEnabled: false,
+    },
+  },
 } as const;
 
 /**
  * Test configuration overrides
- * 
+ *
  * These settings are optimized for testing environments.
  */
 export const TEST_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
   environment: 'test',
-  
+
   logging: {
     level: 'silent',
     format: 'simple',
     enabled: false,
     outputs: [],
     includeTimestamp: false,
-    colorize: false
+    colorize: false,
   },
 
   session: {
@@ -693,13 +694,13 @@ export const TEST_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
     compression: {
       enabled: false,
       algorithm: 'gzip',
-      level: 6
+      level: 6,
     },
     encryption: {
       enabled: false,
       algorithm: 'aes-256-gcm',
-      keyDerivation: 'pbkdf2'
-    }
+      keyDerivation: 'pbkdf2',
+    },
   },
 
   server: {
@@ -709,26 +710,26 @@ export const TEST_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
       enabled: false,
       certFile: '',
       keyFile: '',
-      caFile: ''
+      caFile: '',
     },
     cors: {
       origin: ['*'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      allowedHeaders: ['Content-Type', 'Authorization']
+      allowedHeaders: ['Content-Type', 'Authorization'],
     },
     middleware: {
       compression: false,
       helmet: false,
       requestLogging: false,
-      rateLimiting: { enabled: false }
+      rateLimiting: { enabled: false },
     },
     static: {
       enabled: false,
-      path: '/static'
+      path: '/static',
     },
     auth: {
-      enabled: false
+      enabled: false,
     },
     websocket: {
       enabled: false,
@@ -737,47 +738,47 @@ export const TEST_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
       heartbeat: {
         enabled: false,
         interval: 30000,
-        timeout: 5000
+        timeout: 5000,
       },
       compression: {
         enabled: false,
         threshold: 1024,
-        level: 1
+        level: 1,
       },
       auth: {
         enabled: false,
         type: 'jwt',
-        timeout: 60
+        timeout: 60,
       },
       rateLimiting: {
         enabled: false,
         messagesPerSecond: 100,
         messagesPerMinute: 1000,
-        bytesPerSecond: 10240
+        bytesPerSecond: 10240,
       },
       messageQueue: {
         enabled: false,
         maxSize: 100,
         persistence: false,
-        ttl: 60
+        ttl: 60,
       },
       channels: {
         enabled: false,
         maxChannelsPerConnection: 1,
-        channelNamePattern: '^test.*'
+        channelNamePattern: '^test.*',
       },
       binary: {
         enabled: false,
         maxSize: 1048576, // 1MB
-        allowedTypes: ['application/octet-stream']
+        allowedTypes: ['application/octet-stream'],
       },
       reconnection: {
         enabled: false,
         maxRetries: 1,
         backoffMultiplier: 1.0,
-        maxBackoffTime: 1000
-      }
-    }
+        maxBackoffTime: 1000,
+      },
+    },
   },
 
   storage: {
@@ -785,32 +786,32 @@ export const TEST_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
     encryption: {
       enabled: false,
       algorithm: 'aes-256-gcm',
-      keyFile: ''
+      keyFile: '',
     },
     backup: {
       enabled: false,
       interval: 1440, // minutes (24h)
-      retention: 7 // days
-    }
+      retention: 7, // days
+    },
   },
 
   performance: {
     monitoring: {
       enabled: false,
       metricsInterval: 30000,
-      healthCheckInterval: 60000
+      healthCheckInterval: 60000,
     },
     caching: {
       enabled: false,
       provider: 'memory',
-      ttl: 300000
+      ttl: 300000,
     },
     optimization: {
       lazyLoading: false,
       preloadModules: [],
       memoryThreshold: 512,
-      gcStrategy: 'default'
-    }
+      gcStrategy: 'default',
+    },
   },
 
   development: {
@@ -819,26 +820,28 @@ export const TEST_CONFIG_OVERRIDES: Partial<ASICodeConfig> = {
       enabled: true,
       level: 'basic',
       breakpoints: false,
-      profiling: false
+      profiling: false,
     },
     hotReload: {
       enabled: false,
       watchPaths: ['src/**'],
-      excludePaths: ['node_modules/**']
+      excludePaths: ['node_modules/**'],
     },
     testing: {
       mockEnabled: true,
-      coverageEnabled: true
-    }
-  }
+      coverageEnabled: true,
+    },
+  },
 } as const;
 
 /**
  * Environment-specific configuration getter
  */
-export function getEnvironmentConfig(environment?: string): Partial<ASICodeConfig> {
+export function getEnvironmentConfig(
+  environment?: string
+): Partial<ASICodeConfig> {
   const env = environment || process.env.NODE_ENV || 'development';
-  
+
   switch (env) {
     case 'production':
       return PRODUCTION_CONFIG_OVERRIDES;
@@ -862,27 +865,27 @@ export function getDefaultConfig(environment?: string): ASICodeConfig {
     // Deep merge for nested objects
     logging: {
       ...DEFAULT_ASI_CONFIG.logging,
-      ...(envConfig.logging || {})
+      ...(envConfig.logging || {}),
     },
     server: {
       ...DEFAULT_ASI_CONFIG.server,
-      ...(envConfig.server || {})
+      ...(envConfig.server || {}),
     },
     tools: {
       ...DEFAULT_ASI_CONFIG.tools,
-      ...(envConfig.tools || {})
+      ...(envConfig.tools || {}),
     },
     storage: {
       ...DEFAULT_ASI_CONFIG.storage,
-      ...(envConfig.storage || {})
+      ...(envConfig.storage || {}),
     },
     security: {
       ...DEFAULT_ASI_CONFIG.security,
-      ...(envConfig.security || {})
+      ...(envConfig.security || {}),
     },
     development: {
       ...DEFAULT_ASI_CONFIG.development,
-      ...(envConfig.development || {})
-    }
+      ...(envConfig.development || {}),
+    },
   } as ASICodeConfig;
 }

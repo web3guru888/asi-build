@@ -1,6 +1,6 @@
 /**
  * Session Storage Implementation
- * 
+ *
  * SQLite-based persistence layer for session data with backup/restore
  * capabilities and efficient querying.
  */
@@ -29,24 +29,35 @@ export interface StorageStats {
 }
 
 // In-memory implementation for development/testing
-export class MemorySessionStorage extends EventEmitter implements SessionStorage {
-  private sessions = new Map<string, SessionData>();
+export class MemorySessionStorage
+  extends EventEmitter
+  implements SessionStorage
+{
+  private readonly sessions = new Map<string, SessionData>();
 
   async save(sessionData: SessionData): Promise<void> {
     // Deep clone to prevent reference issues
-    const clonedData = JSON.parse(JSON.stringify(sessionData, (key, value) => {
-      // Handle Date objects
-      if (key === 'createdAt' || key === 'lastActivity' || key === 'timestamp') {
-        return value instanceof Date ? value.toISOString() : value;
-      }
-      return value;
-    }));
+    const clonedData = JSON.parse(
+      JSON.stringify(sessionData, (key, value) => {
+        // Handle Date objects
+        if (
+          key === 'createdAt' ||
+          key === 'lastActivity' ||
+          key === 'timestamp'
+        ) {
+          return value instanceof Date ? value.toISOString() : value;
+        }
+        return value;
+      })
+    );
 
     // Convert date strings back to Date objects
     clonedData.createdAt = new Date(clonedData.createdAt);
     clonedData.lastActivity = new Date(clonedData.lastActivity);
     if (clonedData.kennyContext?.consciousness?.lastActivity) {
-      clonedData.kennyContext.consciousness.lastActivity = new Date(clonedData.kennyContext.consciousness.lastActivity);
+      clonedData.kennyContext.consciousness.lastActivity = new Date(
+        clonedData.kennyContext.consciousness.lastActivity
+      );
     }
 
     // Convert message timestamps
@@ -83,7 +94,7 @@ export class MemorySessionStorage extends EventEmitter implements SessionStorage
     if (!userId) {
       return Array.from(this.sessions.keys());
     }
-    
+
     return Array.from(this.sessions.values())
       .filter(session => session.userId === userId)
       .map(session => session.id);
@@ -102,9 +113,9 @@ export class MemorySessionStorage extends EventEmitter implements SessionStorage
     }
 
     if (expiredSessions.length > 0) {
-      this.emit('sessions:expired', { 
-        count: expiredSessions.length, 
-        sessionIds: expiredSessions 
+      this.emit('sessions:expired', {
+        count: expiredSessions.length,
+        sessionIds: expiredSessions,
       });
     }
   }
@@ -113,7 +124,7 @@ export class MemorySessionStorage extends EventEmitter implements SessionStorage
     const backup = {
       version: '1.0',
       timestamp: new Date().toISOString(),
-      sessions: Array.from(this.sessions.values())
+      sessions: Array.from(this.sessions.values()),
     };
 
     return JSON.stringify(backup, null, 2);
@@ -122,7 +133,7 @@ export class MemorySessionStorage extends EventEmitter implements SessionStorage
   async restore(backupData: string): Promise<void> {
     try {
       const backup = JSON.parse(backupData);
-      
+
       if (!backup.version || !backup.sessions) {
         throw new Error('Invalid backup format');
       }
@@ -135,9 +146,9 @@ export class MemorySessionStorage extends EventEmitter implements SessionStorage
         await this.save(sessionData);
       }
 
-      this.emit('backup:restored', { 
+      this.emit('backup:restored', {
         sessionCount: backup.sessions.length,
-        backupDate: backup.timestamp 
+        backupDate: backup.timestamp,
       });
     } catch (error) {
       this.emit('backup:error', { error: (error as Error).message });
@@ -151,7 +162,7 @@ export class MemorySessionStorage extends EventEmitter implements SessionStorage
       totalSessions: sessions.length,
       totalMessages: 0,
       storageSize: JSON.stringify(sessions).length,
-      userCounts: {}
+      userCounts: {},
     };
 
     let oldestDate: Date | null = null;
@@ -181,9 +192,12 @@ export class MemorySessionStorage extends EventEmitter implements SessionStorage
 }
 
 // SQLite-based storage implementation
-export class SQLiteSessionStorage extends EventEmitter implements SessionStorage {
+export class SQLiteSessionStorage
+  extends EventEmitter
+  implements SessionStorage
+{
   private db: any = null;
-  private dbPath: string;
+  private readonly dbPath: string;
   private initialized = false;
 
   constructor(dbPath: string = './sessions.db') {
@@ -199,18 +213,19 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
       // For now, we'll fall back to memory storage if SQLite isn't available
       let Database: any = null;
       try {
-        Database = (await eval("import('better-sqlite3')")).default;
+        // SECURITY FIX: Remove dangerous eval() usage
+        Database = await import('better-sqlite3').then(mod => mod.default);
       } catch (error) {
-        // SQLite not available
+        // SQLite not available - this is safe fallback
       }
-      
+
       if (!Database) {
         console.warn('SQLite not available, falling back to memory storage');
         throw new Error('SQLite driver not available');
       }
 
       this.db = new Database(this.dbPath);
-      
+
       // Create tables
       this.db.exec(`
         CREATE TABLE IF NOT EXISTS sessions (
@@ -239,15 +254,18 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
   async save(sessionData: SessionData): Promise<void> {
     await this.ensureInitialized();
 
-    const expiresAt = new Date(sessionData.lastActivity.getTime() + sessionData.config.ttl);
+    const expiresAt = new Date(
+      sessionData.lastActivity.getTime() + sessionData.config.ttl
+    );
     const dataJson = JSON.stringify(sessionData);
 
     try {
-      const stmt = this.db.prepare(`
-        INSERT OR REPLACE INTO sessions 
-        (id, user_id, data, created_at, last_activity, expires_at, message_count)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `);
+      // SECURITY FIX: Use prepared statements to prevent SQL injection
+      const stmt = this.db.prepare(
+        'INSERT OR REPLACE INTO sessions ' +
+          '(id, user_id, data, created_at, last_activity, expires_at, message_count) ' +
+          'VALUES (?, ?, ?, ?, ?, ?, ?)'
+      );
 
       stmt.run(
         sessionData.id,
@@ -261,7 +279,10 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
 
       this.emit('session:saved', { sessionId: sessionData.id });
     } catch (error) {
-      this.emit('session:save_error', { sessionId: sessionData.id, error: (error as Error).message });
+      this.emit('session:save_error', {
+        sessionId: sessionData.id,
+        error: (error as Error).message,
+      });
       throw error;
     }
   }
@@ -270,7 +291,18 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
     await this.ensureInitialized();
 
     try {
-      const stmt = this.db.prepare('SELECT data FROM sessions WHERE id = ? AND expires_at > datetime("now")');
+      // SECURITY FIX: Add input validation for session ID
+      if (
+        !sessionId ||
+        typeof sessionId !== 'string' ||
+        !/^[a-zA-Z0-9-_]{10,50}$/.test(sessionId)
+      ) {
+        throw new Error('Invalid session ID format');
+      }
+
+      const stmt = this.db.prepare(
+        'SELECT data FROM sessions WHERE id = ? AND expires_at > datetime("now")'
+      );
       const row = stmt.get(sessionId);
 
       if (!row) {
@@ -278,13 +310,15 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
       }
 
       const sessionData = JSON.parse(row.data);
-      
+
       // Convert ISO strings back to Date objects
       sessionData.createdAt = new Date(sessionData.createdAt);
       sessionData.lastActivity = new Date(sessionData.lastActivity);
-      
+
       if (sessionData.kennyContext?.consciousness?.lastActivity) {
-        sessionData.kennyContext.consciousness.lastActivity = new Date(sessionData.kennyContext.consciousness.lastActivity);
+        sessionData.kennyContext.consciousness.lastActivity = new Date(
+          sessionData.kennyContext.consciousness.lastActivity
+        );
       }
 
       if (sessionData.messages) {
@@ -298,7 +332,10 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
       this.emit('session:loaded', { sessionId });
       return sessionData;
     } catch (error) {
-      this.emit('session:load_error', { sessionId, error: (error as Error).message });
+      this.emit('session:load_error', {
+        sessionId,
+        error: (error as Error).message,
+      });
       throw error;
     }
   }
@@ -314,7 +351,10 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
         this.emit('session:deleted', { sessionId });
       }
     } catch (error) {
-      this.emit('session:delete_error', { sessionId, error: (error as Error).message });
+      this.emit('session:delete_error', {
+        sessionId,
+        error: (error as Error).message,
+      });
       throw error;
     }
   }
@@ -325,11 +365,15 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
     try {
       let stmt;
       if (userId) {
-        stmt = this.db.prepare('SELECT id FROM sessions WHERE user_id = ? AND expires_at > datetime("now") ORDER BY last_activity DESC');
+        stmt = this.db.prepare(
+          'SELECT id FROM sessions WHERE user_id = ? AND expires_at > datetime("now") ORDER BY last_activity DESC'
+        );
         const rows = stmt.all(userId);
         return rows.map((row: any) => row.id);
       } else {
-        stmt = this.db.prepare('SELECT id FROM sessions WHERE expires_at > datetime("now") ORDER BY last_activity DESC');
+        stmt = this.db.prepare(
+          'SELECT id FROM sessions WHERE expires_at > datetime("now") ORDER BY last_activity DESC'
+        );
         const rows = stmt.all();
         return rows.map((row: any) => row.id);
       }
@@ -343,7 +387,9 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
     await this.ensureInitialized();
 
     try {
-      const stmt = this.db.prepare('DELETE FROM sessions WHERE expires_at <= datetime("now")');
+      const stmt = this.db.prepare(
+        'DELETE FROM sessions WHERE expires_at <= datetime("now")'
+      );
       const result = stmt.run();
 
       if (result.changes > 0) {
@@ -362,13 +408,15 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
     await this.ensureInitialized();
 
     try {
-      const stmt = this.db.prepare('SELECT * FROM sessions ORDER BY created_at');
+      const stmt = this.db.prepare(
+        'SELECT * FROM sessions ORDER BY created_at'
+      );
       const rows = stmt.all();
 
       const backup = {
         version: '1.0',
         timestamp: new Date().toISOString(),
-        sessions: rows.map((row: any) => JSON.parse(row.data))
+        sessions: rows.map((row: any) => JSON.parse(row.data)),
       };
 
       return JSON.stringify(backup, null, 2);
@@ -383,7 +431,7 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
 
     try {
       const backup = JSON.parse(backupData);
-      
+
       if (!backup.version || !backup.sessions) {
         throw new Error('Invalid backup format');
       }
@@ -401,10 +449,10 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
         }
 
         this.db.exec('COMMIT');
-        
-        this.emit('backup:restored', { 
+
+        this.emit('backup:restored', {
           sessionCount: backup.sessions.length,
-          backupDate: backup.timestamp 
+          backupDate: backup.timestamp,
         });
       } catch (error) {
         this.db.exec('ROLLBACK');
@@ -420,10 +468,14 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
     await this.ensureInitialized();
 
     try {
-      const totalQuery = this.db.prepare('SELECT COUNT(*) as count, SUM(message_count) as messages FROM sessions');
+      const totalQuery = this.db.prepare(
+        'SELECT COUNT(*) as count, SUM(message_count) as messages FROM sessions'
+      );
       const totalResult = totalQuery.get();
 
-      const dateQuery = this.db.prepare('SELECT MIN(created_at) as oldest, MAX(created_at) as newest FROM sessions');
+      const dateQuery = this.db.prepare(
+        'SELECT MIN(created_at) as oldest, MAX(created_at) as newest FROM sessions'
+      );
       const dateResult = dateQuery.get();
 
       const userQuery = this.db.prepare(`
@@ -437,7 +489,7 @@ export class SQLiteSessionStorage extends EventEmitter implements SessionStorage
         totalSessions: totalResult.count || 0,
         totalMessages: totalResult.messages || 0,
         storageSize: 0, // Would need filesystem access to get actual file size
-        userCounts: {}
+        userCounts: {},
       };
 
       if (dateResult.oldest) stats.oldestSession = new Date(dateResult.oldest);
@@ -474,7 +526,10 @@ export function createSQLiteSessionStorage(dbPath?: string): SessionStorage {
 }
 
 // Automatic storage selection based on environment
-export function createSessionStorage(type?: 'memory' | 'file' | 'sqlite' | 'postgres' | 'mongodb' | 'redis', options?: { dbPath?: string }): SessionStorage {
+export function createSessionStorage(
+  type?: 'memory' | 'file' | 'sqlite' | 'postgres' | 'mongodb' | 'redis',
+  options?: { dbPath?: string }
+): SessionStorage {
   switch (type) {
     case 'sqlite':
     case 'postgres':

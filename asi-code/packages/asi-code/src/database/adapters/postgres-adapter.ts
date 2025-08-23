@@ -1,20 +1,25 @@
 /**
  * PostgreSQL Database Adapter
- * 
+ *
  * Provides a unified interface for PostgreSQL operations using Knex.js
  * with additional ASI-Code specific functionality.
  */
 
 import knex, { Knex } from 'knex';
-import { DatabaseConfig, DatabaseAdapter, PerformanceMetrics, ConnectionError } from '../types';
+import {
+  ConnectionError,
+  DatabaseAdapter,
+  DatabaseConfig,
+  PerformanceMetrics,
+} from '../types';
 import { Logger } from '../../logging';
 
 export class PostgresAdapter implements DatabaseAdapter {
   public knex!: Knex;
   public config: DatabaseConfig;
-  private logger: Logger;
+  private readonly logger: Logger;
   private connected = false;
-  private metrics: {
+  private readonly metrics: {
     queriesExecuted: number;
     queriesFailed: number;
     transactionsStarted: number;
@@ -32,7 +37,7 @@ export class PostgresAdapter implements DatabaseAdapter {
       transactionsStarted: 0,
       transactionsCommitted: 0,
       transactionsRolledBack: 0,
-      connectionCount: 0
+      connectionCount: 0,
     };
 
     this.initializeKnex();
@@ -50,12 +55,14 @@ export class PostgresAdapter implements DatabaseAdapter {
         database: this.config.database,
         user: this.config.username,
         password: this.config.password,
-        ssl: this.config.ssl?.enabled ? {
-          rejectUnauthorized: this.config.ssl.rejectUnauthorized ?? true,
-          ca: this.config.ssl.ca,
-          cert: this.config.ssl.cert,
-          key: this.config.ssl.key
-        } : false
+        ssl: this.config.ssl?.enabled
+          ? {
+              rejectUnauthorized: this.config.ssl.rejectUnauthorized ?? true,
+              ca: this.config.ssl.ca,
+              cert: this.config.ssl.cert,
+              key: this.config.ssl.key,
+            }
+          : false,
       },
       pool: {
         min: this.config.pool.min,
@@ -66,7 +73,7 @@ export class PostgresAdapter implements DatabaseAdapter {
         idleTimeoutMillis: this.config.pool.idleTimeoutMillis,
         reapIntervalMillis: this.config.pool.reapIntervalMillis,
         createRetryIntervalMillis: this.config.pool.createRetryIntervalMillis,
-        propagateCreateError: false
+        propagateCreateError: false,
       },
       migrations: {
         directory: this.config.migrations.directory,
@@ -75,15 +82,15 @@ export class PostgresAdapter implements DatabaseAdapter {
         extension: this.config.migrations.extension,
         loadExtensions: this.config.migrations.loadExtensions,
         disableTransactions: this.config.migrations.disableTransactions,
-        sortDirsSeparately: this.config.migrations.sortDirsSeparately
+        sortDirsSeparately: this.config.migrations.sortDirsSeparately,
       },
       seeds: {
         directory: this.config.seeds.directory,
         loadExtensions: this.config.seeds.loadExtensions,
-        recursive: this.config.seeds.recursive
+        recursive: this.config.seeds.recursive,
       },
       debug: this.config.monitoring.logQueries,
-      asyncStackTraces: true
+      asyncStackTraces: true,
     };
 
     this.knex = knex(knexConfig);
@@ -95,14 +102,14 @@ export class PostgresAdapter implements DatabaseAdapter {
    */
   private setupEventHandlers(): void {
     // Query event handling
-    this.knex.on('query', (queryData) => {
+    this.knex.on('query', queryData => {
       this.metrics.queriesExecuted++;
-      
+
       if (this.config.monitoring.logQueries) {
         this.logger.debug('Executing query', {
           sql: queryData.sql,
           bindings: queryData.bindings,
-          method: queryData.method
+          method: queryData.method,
         });
       }
     });
@@ -112,7 +119,9 @@ export class PostgresAdapter implements DatabaseAdapter {
         this.logger.debug('Query completed', {
           sql: queryData.sql,
           rowCount: Array.isArray(response) ? response.length : 1,
-          executionTime: queryData.__knexQueryUid ? Date.now() - queryData.__knexQueryStartTime : 0
+          executionTime: queryData.__knexQueryUid
+            ? Date.now() - queryData.__knexQueryStartTime
+            : 0,
         });
       }
     });
@@ -122,7 +131,7 @@ export class PostgresAdapter implements DatabaseAdapter {
       this.logger.error('Query failed', {
         error: error.message,
         sql: queryData.sql,
-        bindings: queryData.bindings
+        bindings: queryData.bindings,
       });
     });
 
@@ -148,16 +157,20 @@ export class PostgresAdapter implements DatabaseAdapter {
   async connect(): Promise<void> {
     try {
       this.logger.info('Connecting to PostgreSQL database');
-      
+
       // Test the connection
       await this.knex.raw('SELECT 1 as connection_test');
       this.connected = true;
-      
+
       this.logger.info('Successfully connected to PostgreSQL database');
     } catch (error) {
       this.logger.error('Failed to connect to database', { error });
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new ConnectionError(`Failed to connect to database: ${errorMessage}`, error instanceof Error ? error : undefined);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      throw new ConnectionError(
+        `Failed to connect to database: ${errorMessage}`,
+        error instanceof Error ? error : undefined
+      );
     }
   }
 
@@ -167,10 +180,10 @@ export class PostgresAdapter implements DatabaseAdapter {
   async disconnect(): Promise<void> {
     try {
       this.logger.info('Disconnecting from PostgreSQL database');
-      
+
       await this.knex.destroy();
       this.connected = false;
-      
+
       this.logger.info('Successfully disconnected from PostgreSQL database');
     } catch (error) {
       this.logger.error('Error during database disconnection', { error });
@@ -193,24 +206,27 @@ export class PostgresAdapter implements DatabaseAdapter {
       const startTime = Date.now();
       const result = await this.knex.raw(sql, params || []);
       const executionTime = Date.now() - startTime;
-      
-      if (this.config.monitoring.slowQueryThreshold && 
-          executionTime > this.config.monitoring.slowQueryThreshold) {
+
+      if (
+        this.config.monitoring.slowQueryThreshold &&
+        executionTime > this.config.monitoring.slowQueryThreshold
+      ) {
         this.logger.warn('Slow query detected', {
           sql,
           params,
           executionTime,
-          threshold: this.config.monitoring.slowQueryThreshold
+          threshold: this.config.monitoring.slowQueryThreshold,
         });
       }
-      
+
       return result;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.logger.error('Query execution failed', {
         error: errorMessage,
         sql,
-        params
+        params,
       });
       throw error;
     }
@@ -219,16 +235,19 @@ export class PostgresAdapter implements DatabaseAdapter {
   /**
    * Execute a transaction
    */
-  async transaction<T>(callback: (trx: Knex.Transaction) => Promise<T>): Promise<T> {
+  async transaction<T>(
+    callback: (trx: Knex.Transaction) => Promise<T>
+  ): Promise<T> {
     this.metrics.transactionsStarted++;
-    
+
     try {
       const result = await this.knex.transaction(callback);
       this.metrics.transactionsCommitted++;
       return result;
     } catch (error) {
       this.metrics.transactionsRolledBack++;
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.logger.error('Transaction rolled back', { error: errorMessage });
       throw error;
     }
@@ -242,7 +261,7 @@ export class PostgresAdapter implements DatabaseAdapter {
       const startTime = Date.now();
       await this.knex.raw('SELECT 1 as health_check');
       const responseTime = Date.now() - startTime;
-      
+
       this.logger.debug('Database health check passed', { responseTime });
       return true;
     } catch (error) {
@@ -261,7 +280,7 @@ export class PostgresAdapter implements DatabaseAdapter {
         active: this.knex.client.pool.numUsed(),
         idle: this.knex.client.pool.numFree(),
         waiting: this.knex.client.pool.numPendingAcquires(),
-        max: this.knex.client.pool.max
+        max: this.knex.client.pool.max,
       };
 
       // Get database stats
@@ -279,14 +298,14 @@ export class PostgresAdapter implements DatabaseAdapter {
           successful: this.metrics.queriesExecuted - this.metrics.queriesFailed,
           failed: this.metrics.queriesFailed,
           averageExecutionTime: 0, // TODO: Calculate average
-          slowQueries: 0 // TODO: Track slow queries
+          slowQueries: 0, // TODO: Track slow queries
         },
         transactions: {
           active: 0, // TODO: Track active transactions
           committed: this.metrics.transactionsCommitted,
           rolledBack: this.metrics.transactionsRolledBack,
-          deadlocks: 0 // TODO: Query pg_stat_database for deadlocks
-        }
+          deadlocks: 0, // TODO: Query pg_stat_database for deadlocks
+        },
       };
     } catch (error) {
       this.logger.error('Failed to get database metrics', { error });
@@ -301,7 +320,10 @@ export class PostgresAdapter implements DatabaseAdapter {
     try {
       return await this.knex.schema.hasTable(tableName);
     } catch (error) {
-      this.logger.error('Failed to check table existence', { error, tableName });
+      this.logger.error('Failed to check table existence', {
+        error,
+        tableName,
+      });
       throw error;
     }
   }
@@ -313,7 +335,11 @@ export class PostgresAdapter implements DatabaseAdapter {
     try {
       return await this.knex.schema.hasColumn(tableName, columnName);
     } catch (error) {
-      this.logger.error('Failed to check column existence', { error, tableName, columnName });
+      this.logger.error('Failed to check column existence', {
+        error,
+        tableName,
+        columnName,
+      });
       throw error;
     }
   }
@@ -323,7 +349,8 @@ export class PostgresAdapter implements DatabaseAdapter {
    */
   async getTableInfo(tableName: string): Promise<any> {
     try {
-      const result = await this.knex.raw(`
+      const result = await this.knex.raw(
+        `
         SELECT 
           column_name,
           data_type,
@@ -335,8 +362,10 @@ export class PostgresAdapter implements DatabaseAdapter {
         FROM information_schema.columns 
         WHERE table_name = ? AND table_schema = current_schema()
         ORDER BY ordinal_position
-      `, [tableName]);
-      
+      `,
+        [tableName]
+      );
+
       return result.rows;
     } catch (error) {
       this.logger.error('Failed to get table info', { error, tableName });
@@ -368,7 +397,9 @@ export class PostgresAdapter implements DatabaseAdapter {
   /**
    * Execute a schema operation
    */
-  async executeSchema(callback: (schema: Knex.SchemaBuilder) => void): Promise<void> {
+  async executeSchema(
+    callback: (schema: Knex.SchemaBuilder) => void
+  ): Promise<void> {
     try {
       await this.knex.schema.raw('BEGIN');
       await callback(this.knex.schema);

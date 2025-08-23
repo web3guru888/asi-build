@@ -1,22 +1,30 @@
 /**
  * ASI-Code Orchestration Coordination Protocol
- * 
+ *
  * Implementation of distributed coordination mechanisms including
  * leader election, consensus, synchronization, and failure detection.
  */
 
 import { EventEmitter } from 'eventemitter3';
-import { Agent, CoordinationProtocol, AgentMessage } from './types.js';
+import { Agent, AgentMessage, CoordinationProtocol } from './types.js';
 import { getOrchestrationMessageBus } from './message-bus.js';
 
 // Leader election algorithms
-export type LeaderElectionAlgorithm = 'bully' | 'ring' | 'raft' | 'weight_based';
+export type LeaderElectionAlgorithm =
+  | 'bully'
+  | 'ring'
+  | 'raft'
+  | 'weight_based';
 
 // Consensus mechanisms
 export type ConsensusAlgorithm = 'raft' | 'pbft' | 'majority' | 'unanimous';
 
 // Synchronization modes
-export type SynchronizationMode = 'barrier' | 'phase' | 'logical_clock' | 'vector_clock';
+export type SynchronizationMode =
+  | 'barrier'
+  | 'phase'
+  | 'logical_clock'
+  | 'vector_clock';
 
 // Coordination state
 export interface CoordinationState {
@@ -110,13 +118,16 @@ export interface CoordinationProtocolConfig {
   };
 }
 
-export class OrchestrationCoordinationProtocol extends EventEmitter implements CoordinationProtocol {
-  private state: CoordinationState;
-  private leaderElectionState: LeaderElectionState;
-  private failureDetector: FailureDetector;
-  private config: CoordinationProtocolConfig;
-  private messageBus = getOrchestrationMessageBus();
-  private timers = new Map<string, NodeJS.Timeout>();
+export class OrchestrationCoordinationProtocol
+  extends EventEmitter
+  implements CoordinationProtocol
+{
+  private readonly state: CoordinationState;
+  private readonly leaderElectionState: LeaderElectionState;
+  private readonly failureDetector: FailureDetector;
+  private readonly config: CoordinationProtocolConfig;
+  private readonly messageBus = getOrchestrationMessageBus();
+  private readonly timers = new Map<string, NodeJS.Timeout>();
 
   constructor(config?: Partial<CoordinationProtocolConfig>) {
     super();
@@ -126,23 +137,23 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
         algorithm: 'bully',
         heartbeatInterval: 5000,
         electionTimeout: 10000,
-        retryInterval: 2000
+        retryInterval: 2000,
       },
       consensus: {
         defaultAlgorithm: 'majority',
         proposalTimeout: 30000,
-        minParticipants: 1
+        minParticipants: 1,
       },
       synchronization: {
         defaultMode: 'barrier',
-        barrierTimeout: 60000
+        barrierTimeout: 60000,
       },
       failureDetection: {
         heartbeatInterval: 3000,
         timeoutThreshold: 10000,
-        suspicionThreshold: 6000
+        suspicionThreshold: 6000,
       },
-      ...config
+      ...config,
     };
 
     this.state = {
@@ -150,7 +161,7 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
       epoch: 0,
       participants: new Set(),
       synchronizationBarriers: new Map(),
-      consensusProposals: new Map()
+      consensusProposals: new Map(),
     };
 
     this.leaderElectionState = {
@@ -158,7 +169,7 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
       term: 0,
       electionInProgress: false,
       lastElectionTime: 0,
-      candidates: new Map()
+      candidates: new Map(),
     };
 
     this.failureDetector = {
@@ -167,7 +178,7 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
       suspicionThreshold: this.config.failureDetection.suspicionThreshold,
       lastHeartbeats: new Map(),
       suspectedAgents: new Set(),
-      failedAgents: new Set()
+      failedAgents: new Set(),
     };
 
     this.setupMessageHandlers();
@@ -198,7 +209,9 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
       case 'weight_based':
         return this.weightBasedElection(agents);
       default:
-        throw new Error(`Unknown leader election algorithm: ${this.config.leaderElection.algorithm}`);
+        throw new Error(
+          `Unknown leader election algorithm: ${this.config.leaderElection.algorithm}`
+        );
     }
   }
 
@@ -215,28 +228,32 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
       arrived: new Set(),
       mode: this.config.synchronization.defaultMode,
       createdAt: Date.now(),
-      timeout: Date.now() + this.config.synchronization.barrierTimeout
+      timeout: Date.now() + this.config.synchronization.barrierTimeout,
     };
 
     this.state.synchronizationBarriers.set(barrierId, barrier);
 
     // Notify all participants about the synchronization barrier
-    await this.messageBus.multicast({
-      type: 'coordination',
-      from: 'coordination-protocol',
-      to: 'multicast',
-      payload: {
-        action: 'synchronization_barrier',
-        barrierId,
-        participants: participantIds,
-        timeout: barrier.timeout
-      }
-    }, participantIds);
+    await this.messageBus.multicast(
+      {
+        type: 'coordination',
+        from: 'coordination-protocol',
+        to: 'multicast',
+        payload: {
+          action: 'synchronization_barrier',
+          barrierId,
+          participants: participantIds,
+          timeout: barrier.timeout,
+        },
+      },
+      participantIds
+    );
 
     // Wait for all participants to arrive at the barrier
     return new Promise((resolve, reject) => {
       const checkBarrier = () => {
-        const currentBarrier = this.state.synchronizationBarriers.get(barrierId);
+        const currentBarrier =
+          this.state.synchronizationBarriers.get(barrierId);
         if (!currentBarrier) {
           reject(new Error('Synchronization barrier was removed'));
           return;
@@ -244,11 +261,17 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
 
         if (currentBarrier.arrived.size === currentBarrier.participants.size) {
           this.state.synchronizationBarriers.delete(barrierId);
-          this.emit('synchronization:completed', { barrierId, participants: participantIds });
+          this.emit('synchronization:completed', {
+            barrierId,
+            participants: participantIds,
+          });
           resolve();
         } else if (Date.now() > currentBarrier.timeout) {
           this.state.synchronizationBarriers.delete(barrierId);
-          this.emit('synchronization:timeout', { barrierId, participants: participantIds });
+          this.emit('synchronization:timeout', {
+            barrierId,
+            participants: participantIds,
+          });
           reject(new Error('Synchronization timeout'));
         }
       };
@@ -266,23 +289,26 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
    */
   async broadcast(message: AgentMessage, agents: Agent[]): Promise<void> {
     const agentIds = agents.map(agent => agent.id);
-    
-    // Use message bus for reliable delivery
-    await this.messageBus.multicast({
-      type: message.type,
-      from: message.from,
-      to: 'broadcast',
-      payload: {
-        originalMessage: message,
-        broadcast: true,
-        targets: agentIds
-      }
-    }, agentIds);
 
-    this.emit('broadcast:sent', { 
-      messageId: message.id, 
+    // Use message bus for reliable delivery
+    await this.messageBus.multicast(
+      {
+        type: message.type,
+        from: message.from,
+        to: 'broadcast',
+        payload: {
+          originalMessage: message,
+          broadcast: true,
+          targets: agentIds,
+        },
+      },
+      agentIds
+    );
+
+    this.emit('broadcast:sent', {
+      messageId: message.id,
       targets: agentIds,
-      messageType: message.type 
+      messageType: message.type,
     });
   }
 
@@ -291,7 +317,9 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
    */
   async consensus(proposal: any, agents: Agent[]): Promise<boolean> {
     if (agents.length < this.config.consensus.minParticipants) {
-      throw new Error(`Insufficient participants for consensus (need ${this.config.consensus.minParticipants}, got ${agents.length})`);
+      throw new Error(
+        `Insufficient participants for consensus (need ${this.config.consensus.minParticipants}, got ${agents.length})`
+      );
     }
 
     const proposalId = `prop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -305,24 +333,27 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
       votes: new Map(),
       status: 'pending',
       createdAt: Date.now(),
-      timeout: Date.now() + this.config.consensus.proposalTimeout
+      timeout: Date.now() + this.config.consensus.proposalTimeout,
     };
 
     this.state.consensusProposals.set(proposalId, consensusProposal);
 
     // Send proposal to all participants
-    await this.messageBus.multicast({
-      type: 'coordination',
-      from: 'coordination-protocol',
-      to: 'multicast',
-      payload: {
-        action: 'consensus_proposal',
-        proposalId,
-        proposal,
-        algorithm: consensusProposal.algorithm,
-        timeout: consensusProposal.timeout
-      }
-    }, participantIds);
+    await this.messageBus.multicast(
+      {
+        type: 'coordination',
+        from: 'coordination-protocol',
+        to: 'multicast',
+        payload: {
+          action: 'consensus_proposal',
+          proposalId,
+          proposal,
+          algorithm: consensusProposal.algorithm,
+          timeout: consensusProposal.timeout,
+        },
+      },
+      participantIds
+    );
 
     // Wait for consensus
     return new Promise((resolve, reject) => {
@@ -345,13 +376,13 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
         if (result !== null) {
           currentProposal.status = result ? 'accepted' : 'rejected';
           this.state.consensusProposals.delete(proposalId);
-          
+
           if (result) {
             this.emit('consensus:accepted', { proposalId, proposal });
           } else {
             this.emit('consensus:rejected', { proposalId, proposal });
           }
-          
+
           resolve(result);
         }
       };
@@ -374,9 +405,9 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
       priority: weight,
       weight,
       isAlive: true,
-      lastHeartbeat: Date.now()
+      lastHeartbeat: Date.now(),
     });
-    
+
     this.failureDetector.lastHeartbeats.set(agentId, Date.now());
     this.emit('agent:added', { agentId, weight });
   }
@@ -444,30 +475,32 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
     );
   }
 
-  private async handleCoordinationMessage(message: AgentMessage): Promise<void> {
+  private async handleCoordinationMessage(
+    message: AgentMessage
+  ): Promise<void> {
     const { payload } = message;
 
     switch (payload.action) {
       case 'heartbeat':
         this.handleHeartbeat(message.from);
         break;
-        
+
       case 'election_start':
         await this.handleElectionStart(payload);
         break;
-        
+
       case 'election_victory':
         this.handleElectionVictory(message.from, payload);
         break;
-        
+
       case 'synchronization_arrived':
         this.handleSynchronizationArrived(payload);
         break;
-        
+
       case 'consensus_vote':
         this.handleConsensusVote(payload);
         break;
-        
+
       default:
         this.emit('message:unknown', { message, action: payload.action });
     }
@@ -502,8 +535,8 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
   private handleSynchronizationArrived(payload: any): void {
     const { barrierId, agentId } = payload;
     const barrier = this.state.synchronizationBarriers.get(barrierId);
-    
-    if (barrier && barrier.participants.has(agentId)) {
+
+    if (barrier?.participants.has(agentId)) {
       barrier.arrived.add(agentId);
       this.emit('synchronization:agent_arrived', { barrierId, agentId });
     }
@@ -512,16 +545,20 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
   private handleConsensusVote(payload: any): void {
     const { proposalId, vote, voter } = payload;
     const proposal = this.state.consensusProposals.get(proposalId);
-    
+
     if (proposal) {
       proposal.votes.set(voter, {
         voter,
         decision: vote.decision,
         reason: vote.reason,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
-      
-      this.emit('consensus:vote_received', { proposalId, voter, decision: vote.decision });
+
+      this.emit('consensus:vote_received', {
+        proposalId,
+        voter,
+        decision: vote.decision,
+      });
     }
   }
 
@@ -545,9 +582,9 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
   private ringElection(agents: Agent[]): Agent {
     // Ring algorithm: agents are arranged in a logical ring
     // For simplicity, we'll use a sorted approach
-    const aliveAgents = agents.filter(agent => 
-      !this.failureDetector.failedAgents.has(agent.id)
-    ).sort((a, b) => a.id.localeCompare(b.id));
+    const aliveAgents = agents
+      .filter(agent => !this.failureDetector.failedAgents.has(agent.id))
+      .sort((a, b) => a.id.localeCompare(b.id));
 
     if (aliveAgents.length === 0) {
       throw new Error('No alive agents for ring election');
@@ -563,8 +600,8 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
   private raftElection(agents: Agent[]): Agent {
     // Simplified Raft leader election
     // In real Raft, this would involve terms, log consistency, etc.
-    const aliveAgents = agents.filter(agent => 
-      !this.failureDetector.failedAgents.has(agent.id)
+    const aliveAgents = agents.filter(
+      agent => !this.failureDetector.failedAgents.has(agent.id)
     );
 
     if (aliveAgents.length === 0) {
@@ -574,7 +611,7 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
     // Simple implementation: random selection among candidates
     const randomIndex = Math.floor(Math.random() * aliveAgents.length);
     const leader = aliveAgents[randomIndex];
-    
+
     this.leaderElectionState.term++;
     this.setLeader(leader.id);
     return leader;
@@ -587,10 +624,10 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
 
     for (const agent of agents) {
       if (this.failureDetector.failedAgents.has(agent.id)) continue;
-      
+
       const candidate = this.leaderElectionState.candidates.get(agent.id);
       const weight = candidate?.weight || 1;
-      
+
       if (weight > bestWeight) {
         bestWeight = weight;
         bestAgent = agent;
@@ -601,31 +638,37 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
     return bestAgent;
   }
 
-  private evaluateConsensus(proposal: ConsensusProposal, participantIds: string[]): boolean | null {
+  private evaluateConsensus(
+    proposal: ConsensusProposal,
+    participantIds: string[]
+  ): boolean | null {
     const totalParticipants = participantIds.length;
     const currentVotes = proposal.votes.size;
 
     switch (proposal.algorithm) {
       case 'majority':
         if (currentVotes >= Math.floor(totalParticipants / 2) + 1) {
-          const acceptVotes = Array.from(proposal.votes.values())
-            .filter(vote => vote.decision === 'accept').length;
+          const acceptVotes = Array.from(proposal.votes.values()).filter(
+            vote => vote.decision === 'accept'
+          ).length;
           return acceptVotes > totalParticipants / 2;
         }
         break;
 
       case 'unanimous':
         if (currentVotes === totalParticipants) {
-          return Array.from(proposal.votes.values())
-            .every(vote => vote.decision === 'accept');
+          return Array.from(proposal.votes.values()).every(
+            vote => vote.decision === 'accept'
+          );
         }
         break;
 
       case 'raft':
         // Simplified Raft consensus
         if (currentVotes >= Math.floor(totalParticipants / 2) + 1) {
-          const acceptVotes = Array.from(proposal.votes.values())
-            .filter(vote => vote.decision === 'accept').length;
+          const acceptVotes = Array.from(proposal.votes.values()).filter(
+            vote => vote.decision === 'accept'
+          ).length;
           return acceptVotes >= Math.floor(totalParticipants / 2) + 1;
         }
         break;
@@ -634,8 +677,9 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
         // Simplified PBFT (would need 2f+1 where f is max faulty nodes)
         const requiredVotes = Math.floor((totalParticipants - 1) / 3) * 2 + 1;
         if (currentVotes >= requiredVotes) {
-          const acceptVotes = Array.from(proposal.votes.values())
-            .filter(vote => vote.decision === 'accept').length;
+          const acceptVotes = Array.from(proposal.votes.values()).filter(
+            vote => vote.decision === 'accept'
+          ).length;
           return acceptVotes >= requiredVotes;
         }
         break;
@@ -652,27 +696,29 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
     this.leaderElectionState.lastElectionTime = Date.now();
     this.state.term++;
 
-    this.emit('leader:elected', { 
-      leaderId, 
-      previousLeader, 
+    this.emit('leader:elected', {
+      leaderId,
+      previousLeader,
       term: this.state.term,
-      algorithm: this.config.leaderElection.algorithm 
+      algorithm: this.config.leaderElection.algorithm,
     });
   }
 
   private isValidLeader(leaderId: string, term: number): boolean {
-    return term >= this.leaderElectionState.term && 
-           this.state.participants.has(leaderId) &&
-           !this.failureDetector.failedAgents.has(leaderId);
+    return (
+      term >= this.leaderElectionState.term &&
+      this.state.participants.has(leaderId) &&
+      !this.failureDetector.failedAgents.has(leaderId)
+    );
   }
 
   private triggerLeaderElection(): void {
     if (this.leaderElectionState.electionInProgress) return;
 
     this.leaderElectionState.electionInProgress = true;
-    this.emit('leader:election_started', { 
+    this.emit('leader:election_started', {
       algorithm: this.config.leaderElection.algorithm,
-      term: this.leaderElectionState.term + 1 
+      term: this.leaderElectionState.term + 1,
     });
 
     // The actual election would be triggered by submitting agents
@@ -682,22 +728,25 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
   private startFailureDetection(): void {
     const detectionTimer = setInterval(() => {
       const now = Date.now();
-      
-      for (const [agentId, lastHeartbeat] of this.failureDetector.lastHeartbeats) {
+
+      for (const [agentId, lastHeartbeat] of this.failureDetector
+        .lastHeartbeats) {
         const timeSinceHeartbeat = now - lastHeartbeat;
-        
+
         if (timeSinceHeartbeat > this.failureDetector.timeoutThreshold) {
           if (!this.failureDetector.failedAgents.has(agentId)) {
             this.failureDetector.failedAgents.add(agentId);
             this.emit('agent:failed', { agentId, timeSinceHeartbeat });
-            
+
             // Trigger leader election if failed agent was the leader
             if (this.state.leaderId === agentId) {
               this.state.leaderId = undefined;
               this.triggerLeaderElection();
             }
           }
-        } else if (timeSinceHeartbeat > this.failureDetector.suspicionThreshold) {
+        } else if (
+          timeSinceHeartbeat > this.failureDetector.suspicionThreshold
+        ) {
           if (!this.failureDetector.suspectedAgents.has(agentId)) {
             this.failureDetector.suspectedAgents.add(agentId);
             this.emit('agent:suspected', { agentId, timeSinceHeartbeat });
@@ -711,14 +760,19 @@ export class OrchestrationCoordinationProtocol extends EventEmitter implements C
 }
 
 // Default instance
-let coordinationProtocolInstance: OrchestrationCoordinationProtocol | null = null;
+let coordinationProtocolInstance: OrchestrationCoordinationProtocol | null =
+  null;
 
 /**
  * Get the global coordination protocol instance
  */
-export function getCoordinationProtocol(config?: Partial<CoordinationProtocolConfig>): OrchestrationCoordinationProtocol {
+export function getCoordinationProtocol(
+  config?: Partial<CoordinationProtocolConfig>
+): OrchestrationCoordinationProtocol {
   if (!coordinationProtocolInstance) {
-    coordinationProtocolInstance = new OrchestrationCoordinationProtocol(config);
+    coordinationProtocolInstance = new OrchestrationCoordinationProtocol(
+      config
+    );
   }
   return coordinationProtocolInstance;
 }

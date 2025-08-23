@@ -1,15 +1,15 @@
 /**
  * Structured Logger
- * 
+ *
  * Advanced logging system with multiple levels, structured output,
  * context management, and integration with the ASI-Code system.
  */
 
 import { EventEmitter } from 'eventemitter3';
-import { writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
+import { appendFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { dirname, resolve } from 'path';
-import { LogEntry, BaseFormatter, DEFAULT_FORMATTERS } from './formatters.js';
-import { LoggingConfig, LogOutput } from '../config/config-types.js';
+import { BaseFormatter, DEFAULT_FORMATTERS, LogEntry } from './formatters';
+import { LogOutput, LoggingConfig } from '../config/config-types';
 
 // Log levels with numeric values for filtering
 export const LOG_LEVELS = {
@@ -17,7 +17,7 @@ export const LOG_LEVELS = {
   info: 1,
   warn: 2,
   error: 3,
-  silent: 4
+  silent: 4,
 } as const;
 
 export type LogLevel = keyof typeof LOG_LEVELS;
@@ -67,7 +67,7 @@ export class ConsoleTransport implements LogTransport {
 
   write(entry: LogEntry): void {
     const formatted = this.formatter.format(entry);
-    
+
     if (entry.level === 'error') {
       console.error(formatted);
     } else if (entry.level === 'warn') {
@@ -143,7 +143,7 @@ export class FileTransport implements LogTransport {
       for (let i = this.maxFiles - 1; i >= 1; i--) {
         const oldFile = `${this.filePath}.${i}`;
         const newFile = `${this.filePath}.${i + 1}`;
-        
+
         if (existsSync(oldFile)) {
           if (i === this.maxFiles - 1) {
             // Delete the oldest file
@@ -183,7 +183,11 @@ export class StreamTransport implements LogTransport {
   readonly formatter: BaseFormatter;
   private readonly stream: NodeJS.WritableStream;
 
-  constructor(stream: NodeJS.WritableStream, level: LogLevel = 'info', formatter?: BaseFormatter) {
+  constructor(
+    stream: NodeJS.WritableStream,
+    level: LogLevel = 'info',
+    formatter?: BaseFormatter
+  ) {
     this.level = level;
     this.formatter = formatter || DEFAULT_FORMATTERS.json;
     this.stream = stream;
@@ -191,7 +195,7 @@ export class StreamTransport implements LogTransport {
 
   write(entry: LogEntry): void {
     const formatted = this.formatter.format(entry) + '\n';
-    
+
     if (this.stream.writable) {
       this.stream.write(formatted);
     }
@@ -211,7 +215,7 @@ export class StreamTransport implements LogTransport {
   }
 
   close(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if (this.stream.writable) {
         this.stream.end(() => resolve());
       } else {
@@ -232,7 +236,7 @@ export class HTTPTransport implements LogTransport {
   private readonly headers: Record<string, string>;
   private readonly batchSize: number;
   private readonly flushInterval: number;
-  private batch: LogEntry[] = [];
+  private readonly batch: LogEntry[] = [];
   private flushTimer?: NodeJS.Timeout;
 
   constructor(
@@ -256,7 +260,7 @@ export class HTTPTransport implements LogTransport {
 
   write(entry: LogEntry): void {
     this.batch.push(entry);
-    
+
     if (this.batch.length >= this.batchSize) {
       this.flush();
     }
@@ -274,11 +278,13 @@ export class HTTPTransport implements LogTransport {
       const response = await fetch(this.url, {
         method: 'POST',
         headers: this.headers,
-        body: JSON.stringify({ logs: payload })
+        body: JSON.stringify({ logs: payload }),
       });
 
       if (!response.ok) {
-        console.error(`HTTP transport failed: ${response.status} ${response.statusText}`);
+        console.error(
+          `HTTP transport failed: ${response.status} ${response.statusText}`
+        );
         // Re-add entries to batch for retry (simple strategy)
         this.batch.unshift(...entries);
       }
@@ -319,12 +325,12 @@ export class Logger extends EventEmitter {
     info: 0,
     warn: 0,
     error: 0,
-    total: 0
+    total: 0,
   };
 
   constructor(options: LoggerOptions = {}) {
     super();
-    
+
     this.level = options.level || 'info';
     this.context = { ...options.context };
     this.transports = options.transports || [new ConsoleTransport()];
@@ -349,11 +355,11 @@ export class Logger extends EventEmitter {
         ...context,
         metadata: {
           ...this.context.metadata,
-          ...context.metadata
-        }
+          ...context.metadata,
+        },
       },
       transports: this.transports,
-      enableMetrics: this.enableMetrics
+      enableMetrics: this.enableMetrics,
     });
   }
 
@@ -388,7 +394,12 @@ export class Logger extends EventEmitter {
   /**
    * Core logging method
    */
-  private log(level: LogLevel, message: string, metadata?: Record<string, any>, error?: Error): void {
+  private log(
+    level: LogLevel,
+    message: string,
+    metadata?: Record<string, any>,
+    error?: Error
+  ): void {
     // Check if this log level should be processed
     if (LOG_LEVELS[level] < LOG_LEVELS[this.level]) {
       return;
@@ -412,9 +423,9 @@ export class Logger extends EventEmitter {
       component: this.context.component,
       metadata: {
         ...this.context.metadata,
-        ...metadata
+        ...metadata,
       },
-      error
+      error,
     };
 
     // Write to all transports that accept this log level
@@ -426,7 +437,10 @@ export class Logger extends EventEmitter {
           if (result && typeof result.catch === 'function') {
             result.catch(error => {
               console.error(`Transport ${transport.name} failed:`, error);
-              this.emit('transport.error', { transport: transport.name, error });
+              this.emit('transport.error', {
+                transport: transport.name,
+                error,
+              });
             });
           }
         } catch (error) {
@@ -472,7 +486,7 @@ export class Logger extends EventEmitter {
     if (index >= 0) {
       const transport = this.transports[index];
       this.transports.splice(index, 1);
-      
+
       // Close transport if it supports it
       if (transport.close) {
         const closeResult = transport.close();
@@ -507,7 +521,7 @@ export class Logger extends EventEmitter {
       .map(transport => transport.close!());
 
     await Promise.allSettled(closePromises);
-    
+
     this.removeAllListeners();
   }
 
@@ -536,7 +550,9 @@ export class Logger extends EventEmitter {
 /**
  * Create transports from configuration
  */
-export function createTransportsFromConfig(outputs: LogOutput[]): LogTransport[] {
+export function createTransportsFromConfig(
+  outputs: LogOutput[]
+): LogTransport[] {
   const transports: LogTransport[] = [];
 
   for (const output of outputs) {
@@ -545,7 +561,9 @@ export function createTransportsFromConfig(outputs: LogOutput[]): LogTransport[]
     }
 
     const level = output.level || 'info';
-    const formatter = output.format ? DEFAULT_FORMATTERS[output.format as keyof typeof DEFAULT_FORMATTERS] : undefined;
+    const formatter = output.format
+      ? DEFAULT_FORMATTERS[output.format as keyof typeof DEFAULT_FORMATTERS]
+      : undefined;
 
     switch (output.type) {
       case 'console':
@@ -554,36 +572,38 @@ export function createTransportsFromConfig(outputs: LogOutput[]): LogTransport[]
 
       case 'file':
         if (output.options?.filename) {
-          transports.push(new FileTransport(
-            output.options.filename,
-            level,
-            formatter,
-            output.options.maxFileSize,
-            output.options.maxFiles
-          ));
+          transports.push(
+            new FileTransport(
+              output.options.filename,
+              level,
+              formatter,
+              output.options.maxFileSize,
+              output.options.maxFiles
+            )
+          );
         }
         break;
 
       case 'http':
         if (output.options?.url) {
-          transports.push(new HTTPTransport(
-            output.options.url,
-            level,
-            formatter,
-            output.options.headers,
-            output.options.batchSize,
-            output.options.flushInterval
-          ));
+          transports.push(
+            new HTTPTransport(
+              output.options.url,
+              level,
+              formatter,
+              output.options.headers,
+              output.options.batchSize,
+              output.options.flushInterval
+            )
+          );
         }
         break;
 
       case 'stream':
         if (output.options?.stream) {
-          transports.push(new StreamTransport(
-            output.options.stream,
-            level,
-            formatter
-          ));
+          transports.push(
+            new StreamTransport(output.options.stream, level, formatter)
+          );
         }
         break;
 
@@ -598,13 +618,16 @@ export function createTransportsFromConfig(outputs: LogOutput[]): LogTransport[]
 /**
  * Create logger from configuration
  */
-export function createLogger(config: LoggingConfig, context?: LogContext): Logger {
+export function createLogger(
+  config: LoggingConfig,
+  context?: LogContext
+): Logger {
   const transports = createTransportsFromConfig(config.outputs);
-  
+
   return new Logger({
     level: config.level,
     context,
     transports,
-    enableMetrics: true
+    enableMetrics: true,
   });
 }

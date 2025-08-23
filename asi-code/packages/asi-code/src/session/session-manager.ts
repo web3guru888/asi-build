@@ -1,13 +1,13 @@
 /**
  * Session Manager Implementation
- * 
+ *
  * Manages session lifecycle, creation, retrieval, deletion, and cleanup
  * for the ASI-Code system with Kenny Integration Pattern support.
  */
 
 import { EventEmitter } from 'eventemitter3';
 import { nanoid } from 'nanoid';
-import { Session, DefaultSession } from './session.js';
+import { DefaultSession, Session } from './session.js';
 import type { SessionStorage } from './storage.js';
 import type { KennyContext } from '../kenny/index.js';
 
@@ -30,40 +30,49 @@ export interface SessionData {
 }
 
 export interface SessionManager extends EventEmitter {
-  createSession(userId?: string, config?: Partial<SessionConfig>): Promise<Session>;
-  getSession(sessionId: string): Promise<Session | null>;
-  deleteSession(sessionId: string): Promise<void>;
+  createSession(
+    userId?: string,
+    config?: Partial<SessionConfig>
+  ): Promise<Session>;
+  getSession(sessionId: string, userId?: string): Promise<Session | null>;
+  deleteSession(sessionId: string, userId?: string): Promise<void>;
   listSessions(userId?: string): Promise<string[]>;
   saveSession(sessionId: string): Promise<void>;
   cleanup(): Promise<void>;
   getActiveSessionCount(): number;
 }
 
-export class DefaultSessionManager extends EventEmitter implements SessionManager {
-  private sessions = new Map<string, Session>();
-  private storage: SessionStorage;
+export class DefaultSessionManager
+  extends EventEmitter
+  implements SessionManager
+{
+  private readonly sessions = new Map<string, Session>();
+  private readonly storage: SessionStorage;
   private cleanupInterval: NodeJS.Timeout | null = null;
-  private defaultConfig: SessionConfig = {
+  private readonly defaultConfig: SessionConfig = {
     maxMessages: 100,
     ttl: 24 * 60 * 60 * 1000, // 24 hours
     persistHistory: true,
-    storageProvider: 'sqlite'
+    storageProvider: 'sqlite',
   };
 
   constructor(storage: SessionStorage) {
     super();
     this.storage = storage;
     this.startCleanupTimer();
-    
+
     // Handle graceful shutdown
     process.on('SIGINT', () => this.cleanup());
     process.on('SIGTERM', () => this.cleanup());
   }
 
-  async createSession(userId?: string, config?: Partial<SessionConfig>): Promise<Session> {
+  async createSession(
+    userId?: string,
+    config?: Partial<SessionConfig>
+  ): Promise<Session> {
     const sessionConfig = { ...this.defaultConfig, ...config };
     const sessionId = nanoid();
-    
+
     // Create Kenny context for session
     const kennyContext: KennyContext = {
       id: `ctx_${sessionId}`,
@@ -72,13 +81,13 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
       metadata: {
         createdAt: new Date().toISOString(),
         userAgent: 'ASI-Code/1.0',
-        sessionType: 'interactive'
+        sessionType: 'interactive',
       },
       consciousness: {
         level: 1,
         state: 'active',
-        lastActivity: new Date()
-      }
+        lastActivity: new Date(),
+      },
     };
 
     const sessionData: SessionData = {
@@ -89,11 +98,11 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
       metadata: {
         version: '1.0',
         capabilities: ['chat', 'tools', 'memory'],
-        preferences: {}
+        preferences: {},
       },
       createdAt: new Date(),
       lastActivity: new Date(),
-      config: sessionConfig
+      config: sessionConfig,
     };
 
     const session = new DefaultSession(sessionData);
@@ -112,26 +121,42 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
       }
     }
 
-    this.emit('session:created', { 
-      sessionId, 
-      userId, 
-      kennyContextId: kennyContext.id 
+    this.emit('session:created', {
+      sessionId,
+      userId,
+      kennyContextId: kennyContext.id,
     });
-    
+
     return session;
   }
 
-  async getSession(sessionId: string): Promise<Session | null> {
+  async getSession(
+    sessionId: string,
+    userId?: string
+  ): Promise<Session | null> {
+    // SECURITY FIX: Add session ID validation
+    if (
+      !sessionId ||
+      typeof sessionId !== 'string' ||
+      !/^[a-zA-Z0-9-_]{10,50}$/.test(sessionId)
+    ) {
+      throw new Error('Invalid session ID format');
+    }
+
     // Try memory cache first
     let session = this.sessions.get(sessionId);
     if (session && !session.isExpired()) {
+      // SECURITY FIX: Validate session ownership if userId provided
+      if (userId && session.data.userId !== userId) {
+        throw new Error('Unauthorized access to session');
+      }
       // Update last access
       session.data.lastActivity = new Date();
       return session;
     }
 
     // Remove expired session from memory
-    if (session && session.isExpired()) {
+    if (session?.isExpired()) {
       this.sessions.delete(sessionId);
       this.emit('session:expired', { sessionId });
     }
@@ -142,25 +167,34 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
       if (sessionData) {
         // Check if stored session is expired
         const now = Date.now();
-        const expiry = sessionData.lastActivity.getTime() + sessionData.config.ttl;
-        
+        const expiry =
+          sessionData.lastActivity.getTime() + sessionData.config.ttl;
+
         if (now > expiry) {
           await this.storage.delete(sessionId);
           this.emit('session:expired', { sessionId });
           return null;
         }
 
+        // SECURITY FIX: Validate session ownership before restoring
+        if (userId && sessionData.userId !== userId) {
+          throw new Error('Unauthorized access to session');
+        }
+        
         // Create session from stored data
         session = new DefaultSession(sessionData);
         this.sessions.set(sessionId, session);
         this.setupSessionEventHandlers(session);
-        
+
         this.emit('session:restored', { sessionId });
         return session;
       }
     } catch (error) {
       console.error(`Failed to load session ${sessionId}:`, error);
-      this.emit('session:load_error', { sessionId, error: (error as Error).message });
+      this.emit('session:load_error', {
+        sessionId,
+        error: (error as Error).message,
+      });
     }
 
     return null;
@@ -168,7 +202,7 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
 
   async deleteSession(sessionId: string): Promise<void> {
     const session = this.sessions.get(sessionId);
-    
+
     if (session) {
       try {
         await session.cleanup();
@@ -182,7 +216,10 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
     try {
       await this.storage.delete(sessionId);
     } catch (error) {
-      console.error(`Failed to delete session ${sessionId} from storage:`, error);
+      console.error(
+        `Failed to delete session ${sessionId} from storage:`,
+        error
+      );
     }
 
     this.emit('session:deleted', { sessionId });
@@ -197,14 +234,14 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
       const memorySessions = Array.from(this.sessions.values())
         .filter(session => !userId || session.data.userId === userId)
         .map(session => session.data.id);
-      
+
       return memorySessions;
     }
   }
 
   async saveSession(sessionId: string): Promise<void> {
     const session = this.sessions.get(sessionId);
-    if (!session || !session.data.config.persistHistory) {
+    if (!session?.data.config.persistHistory) {
       return;
     }
 
@@ -215,7 +252,10 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
       this.emit('session:saved', { sessionId });
     } catch (error) {
       console.error(`Failed to save session ${sessionId}:`, error);
-      this.emit('session:save_error', { sessionId, error: (error as Error).message });
+      this.emit('session:save_error', {
+        sessionId,
+        error: (error as Error).message,
+      });
       throw error;
     }
   }
@@ -234,7 +274,7 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
       total: 0,
       active: 0,
       expired: 0,
-      byUser: {} as Record<string, number>
+      byUser: {} as Record<string, number>,
     };
 
     try {
@@ -246,7 +286,7 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
           stats.expired++;
         } else {
           stats.active++;
-          
+
           const userId = session.data.userId || 'anonymous';
           stats.byUser[userId] = (stats.byUser[userId] || 0) + 1;
         }
@@ -259,32 +299,47 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
   }
 
   private setupSessionEventHandlers(session: Session): void {
-    session.on('message:added', (data) => {
-      this.emit('session:message_added', { ...data, sessionId: session.data.id });
+    session.on('message:added', data => {
+      this.emit('session:message_added', {
+        ...data,
+        sessionId: session.data.id,
+      });
     });
 
-    session.on('context:updated', (data) => {
-      this.emit('session:context_updated', { ...data, sessionId: session.data.id });
+    session.on('context:updated', data => {
+      this.emit('session:context_updated', {
+        ...data,
+        sessionId: session.data.id,
+      });
     });
 
-    session.on('metadata:updated', (data) => {
-      this.emit('session:metadata_updated', { ...data, sessionId: session.data.id });
+    session.on('metadata:updated', data => {
+      this.emit('session:metadata_updated', {
+        ...data,
+        sessionId: session.data.id,
+      });
     });
 
-    session.on('messages:trimmed', (data) => {
-      this.emit('session:messages_trimmed', { ...data, sessionId: session.data.id });
+    session.on('messages:trimmed', data => {
+      this.emit('session:messages_trimmed', {
+        ...data,
+        sessionId: session.data.id,
+      });
     });
   }
 
   private startCleanupTimer(): void {
     // Run cleanup every 5 minutes
-    this.cleanupInterval = setInterval(async () => {
-      try {
-        await this.cleanupExpiredSessions();
-      } catch (error) {
-        console.error('Error during scheduled cleanup:', error);
-      }
-    }, 5 * 60 * 1000);
+    this.cleanupInterval = setInterval(
+      async () => {
+        try {
+          await this.cleanupExpiredSessions();
+        } catch (error) {
+          console.error('Error during scheduled cleanup:', error);
+        }
+      },
+      5 * 60 * 1000
+    );
   }
 
   private async cleanupExpiredSessions(): Promise<void> {
@@ -312,10 +367,10 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
     }
 
     if (expiredSessions.length > 0) {
-      this.emit('sessions:cleaned', { 
-        expired: expiredSessions.length, 
+      this.emit('sessions:cleaned', {
+        expired: expiredSessions.length,
         sessionIds: expiredSessions,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
     }
   }
@@ -327,12 +382,18 @@ export class DefaultSessionManager extends EventEmitter implements SessionManage
     }
 
     // Cleanup all active sessions
-    const sessionCleanupPromises = Array.from(this.sessions.values()).map(session => 
-      session.cleanup().catch(error => 
-        console.error(`Error cleaning up session ${session.data.id}:`, error)
-      )
+    const sessionCleanupPromises = Array.from(this.sessions.values()).map(
+      session =>
+        session
+          .cleanup()
+          .catch(error =>
+            console.error(
+              `Error cleaning up session ${session.data.id}:`,
+              error
+            )
+          )
     );
-    
+
     await Promise.all(sessionCleanupPromises);
     this.sessions.clear();
 

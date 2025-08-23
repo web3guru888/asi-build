@@ -1,14 +1,27 @@
 /**
  * Delete Tool - Safe file and directory deletion with confirmations
- * 
+ *
  * Provides secure deletion functionality with backup options,
  * permission checks, and recovery mechanisms.
  */
 
-import { unlink, rmdir, stat, access, readdir, copyFile, mkdir } from 'fs/promises';
+import {
+  access,
+  copyFile,
+  mkdir,
+  readdir,
+  rmdir,
+  stat,
+  unlink,
+} from 'fs/promises';
 import { constants } from 'fs';
-import { resolve, normalize, dirname, basename, extname, join } from 'path';
-import { BaseTool, ToolDefinition, ToolExecutionContext, ToolResult } from '../base-tool.js';
+import { basename, dirname, extname, join, normalize, resolve } from 'path';
+import {
+  BaseTool,
+  ToolDefinition,
+  ToolExecutionContext,
+  ToolResult,
+} from '../base-tool.js';
 
 export interface DeleteOptions {
   recursive?: boolean;
@@ -35,7 +48,8 @@ export class DeleteTool extends BaseTool {
   constructor() {
     const definition: ToolDefinition = {
       name: 'delete',
-      description: 'Safely delete files and directories with backup and confirmation options',
+      description:
+        'Safely delete files and directories with backup and confirmation options',
       parameters: [
         {
           name: 'path',
@@ -45,41 +59,43 @@ export class DeleteTool extends BaseTool {
           validation: {
             custom: (value: string) => {
               if (!value.trim()) return 'Path cannot be empty';
-              if (value.length > 500) return 'Path too long (max 500 characters)';
+              if (value.length > 500)
+                return 'Path too long (max 500 characters)';
               return true;
-            }
-          }
+            },
+          },
         },
         {
           name: 'recursive',
           type: 'boolean',
           description: 'Delete directories recursively',
-          default: false
+          default: false,
         },
         {
           name: 'force',
           type: 'boolean',
           description: 'Force deletion without additional safety checks',
-          default: false
+          default: false,
         },
         {
           name: 'createBackup',
           type: 'boolean',
           description: 'Create backup before deletion',
-          default: true
+          default: true,
         },
         {
           name: 'dryRun',
           type: 'boolean',
-          description: 'Preview what would be deleted without actually deleting',
-          default: false
+          description:
+            'Preview what would be deleted without actually deleting',
+          default: false,
         },
         {
           name: 'confirmDangerous',
           type: 'boolean',
           description: 'Confirm deletion of potentially dangerous files',
-          default: false
-        }
+          default: false,
+        },
       ],
       category: 'file',
       version: '1.0.0',
@@ -92,24 +108,24 @@ export class DeleteTool extends BaseTool {
           description: 'Delete a file with backup',
           parameters: {
             path: './temp.txt',
-            createBackup: true
-          }
+            createBackup: true,
+          },
         },
         {
           description: 'Preview directory deletion',
           parameters: {
             path: './temp-folder',
             recursive: true,
-            dryRun: true
-          }
-        }
-      ]
+            dryRun: true,
+          },
+        },
+      ],
     };
 
     super(definition);
 
     this.maxFileSize = 100 * 1024 * 1024; // 100MB
-    
+
     // Critical system paths that should never be deleted
     this.blockedPaths = new Set([
       '/',
@@ -125,47 +141,67 @@ export class DeleteTool extends BaseTool {
       '/root',
       '/home',
       process.cwd(),
-      dirname(process.execPath)
+      dirname(process.execPath),
     ]);
 
     // File extensions that require extra confirmation
     this.dangerousExtensions = new Set([
-      '.exe', '.msi', '.dmg', '.pkg', '.deb', '.rpm',
-      '.sh', '.bat', '.cmd', '.ps1',
-      '.db', '.sqlite', '.sql'
+      '.exe',
+      '.msi',
+      '.dmg',
+      '.pkg',
+      '.deb',
+      '.rpm',
+      '.sh',
+      '.bat',
+      '.cmd',
+      '.ps1',
+      '.db',
+      '.sqlite',
+      '.sql',
     ]);
   }
 
-  async execute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<ToolResult> {
+  async execute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<ToolResult> {
     const {
       path: inputPath,
       recursive = false,
       force = false,
       createBackup = true,
       dryRun = false,
-      confirmDangerous = false
+      confirmDangerous = false,
     } = parameters;
 
     const startTime = Date.now();
 
     try {
       // Normalize path
-      const normalizedPath = this.normalizePath(inputPath, context.workingDirectory);
-      
+      const normalizedPath = this.normalizePath(
+        inputPath,
+        context.workingDirectory
+      );
+
       // Security and safety checks
-      const safetyCheck = await this.performSafetyCheck(normalizedPath, {
-        recursive,
-        force,
-        confirmDangerous
-      }, context);
-      
+      const safetyCheck = await this.performSafetyCheck(
+        normalizedPath,
+        {
+          recursive,
+          force,
+          confirmDangerous,
+        },
+        context
+      );
+
       if (!safetyCheck.safe) {
         return {
           success: false,
           error: `Deletion denied: ${safetyCheck.reason}`,
           performance: {
-            executionTime: Date.now() - startTime
-          }
+            executionTime: Date.now() - startTime,
+          },
         };
       }
 
@@ -180,16 +216,20 @@ export class DeleteTool extends BaseTool {
             success: false,
             error: 'Path does not exist',
             performance: {
-              executionTime: Date.now() - startTime
-            }
+              executionTime: Date.now() - startTime,
+            },
           };
         }
         throw error;
       }
 
       // Analyze what will be deleted
-      const analysisResult = await this.analyzeDeleteTarget(normalizedPath, pathStats, recursive);
-      
+      const analysisResult = await this.analyzeDeleteTarget(
+        normalizedPath,
+        pathStats,
+        recursive
+      );
+
       if (dryRun) {
         return {
           success: true,
@@ -201,31 +241,35 @@ export class DeleteTool extends BaseTool {
               type: pathStats.isDirectory() ? 'directory' : 'file',
               size: analysisResult.totalSize,
               itemCount: analysisResult.itemCount,
-              hasSubdirectories: analysisResult.hasSubdirectories
-            }
+              hasSubdirectories: analysisResult.hasSubdirectories,
+            },
           },
           performance: {
-            executionTime: Date.now() - startTime
-          }
+            executionTime: Date.now() - startTime,
+          },
         };
       }
 
       let backupPath: string | undefined;
-      
+
       // Create backup if requested and not a dry run
       if (createBackup && !dryRun) {
         backupPath = await this.createBackup(normalizedPath, pathStats);
       }
 
       // Perform the deletion
-      const deleteResult = await this.performDeletion(normalizedPath, pathStats, { recursive });
+      const deleteResult = await this.performDeletion(
+        normalizedPath,
+        pathStats,
+        { recursive }
+      );
 
       this.emit('executed', {
         path: normalizedPath,
         type: deleteResult.type,
         backupCreated: !!backupPath,
         itemsDeleted: deleteResult.itemsDeleted,
-        success: true
+        success: true,
       });
 
       return {
@@ -233,29 +277,32 @@ export class DeleteTool extends BaseTool {
         data: {
           ...deleteResult,
           backupPath,
-          analysis: analysisResult
+          analysis: analysisResult,
         },
         performance: {
           executionTime: Date.now() - startTime,
-          resourcesAccessed: [normalizedPath, ...(backupPath ? [backupPath] : [])]
-        }
+          resourcesAccessed: [
+            normalizedPath,
+            ...(backupPath ? [backupPath] : []),
+          ],
+        },
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
       this.emit('error', {
         path: inputPath,
         error: errorMessage,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       });
 
       return {
         success: false,
         error: `Deletion failed: ${errorMessage}`,
         performance: {
-          executionTime: Date.now() - startTime
-        }
+          executionTime: Date.now() - startTime,
+        },
       };
     }
   }
@@ -275,7 +322,10 @@ export class DeleteTool extends BaseTool {
     // Check for critical system paths
     const normalizedPath = targetPath.toLowerCase();
     for (const blockedPath of this.blockedPaths) {
-      if (normalizedPath === blockedPath.toLowerCase() || normalizedPath.startsWith(blockedPath.toLowerCase() + '/')) {
+      if (
+        normalizedPath === blockedPath.toLowerCase() ||
+        normalizedPath.startsWith(blockedPath.toLowerCase() + '/')
+      ) {
         return { safe: false, reason: 'Cannot delete system critical paths' };
       }
     }
@@ -288,7 +338,9 @@ export class DeleteTool extends BaseTool {
     // Check if path is within allowed directories
     if (context.metadata?.allowedDirectories) {
       const allowedDirs = context.metadata.allowedDirectories as string[];
-      const isAllowed = allowedDirs.some(dir => targetPath.startsWith(resolve(dir)));
+      const isAllowed = allowedDirs.some(dir =>
+        targetPath.startsWith(resolve(dir))
+      );
       if (!isAllowed) {
         return { safe: false, reason: 'Path is outside allowed directories' };
       }
@@ -297,7 +349,10 @@ export class DeleteTool extends BaseTool {
     // Check for dangerous file extensions
     const ext = extname(targetPath).toLowerCase();
     if (this.dangerousExtensions.has(ext) && !options.confirmDangerous) {
-      return { safe: false, reason: `Dangerous file type '${ext}' requires confirmDangerous=true` };
+      return {
+        safe: false,
+        reason: `Dangerous file type '${ext}' requires confirmDangerous=true`,
+      };
     }
 
     // Check if trying to delete current working directory
@@ -313,7 +368,11 @@ export class DeleteTool extends BaseTool {
         if (stats.isDirectory() && options.recursive) {
           const items = await readdir(targetPath);
           if (items.length > 10) {
-            return { safe: false, reason: 'Large directory deletion requires dangerous_operations permission' };
+            return {
+              safe: false,
+              reason:
+                'Large directory deletion requires dangerous_operations permission',
+            };
           }
         }
       } catch (error) {
@@ -338,7 +397,11 @@ export class DeleteTool extends BaseTool {
       itemCount: 0,
       totalSize: 0,
       hasSubdirectories: false,
-      items: [] as Array<{ path: string; type: 'file' | 'directory'; size: number }>
+      items: [] as Array<{
+        path: string;
+        type: 'file' | 'directory';
+        size: number;
+      }>,
     };
 
     if (stats.isFile()) {
@@ -347,7 +410,7 @@ export class DeleteTool extends BaseTool {
       result.items.push({
         path: targetPath,
         type: 'file',
-        size: stats.size
+        size: stats.size,
       });
     } else if (stats.isDirectory()) {
       await this.analyzeDirectory(targetPath, result, recursive, 0);
@@ -366,19 +429,19 @@ export class DeleteTool extends BaseTool {
 
     try {
       const items = await readdir(dirPath);
-      
+
       for (const item of items) {
         const itemPath = join(dirPath, item);
         try {
           const itemStats = await stat(itemPath);
-          
+
           if (itemStats.isFile()) {
             result.itemCount++;
             result.totalSize += itemStats.size;
             result.items.push({
               path: itemPath,
               type: 'file',
-              size: itemStats.size
+              size: itemStats.size,
             });
           } else if (itemStats.isDirectory()) {
             result.hasSubdirectories = true;
@@ -386,11 +449,16 @@ export class DeleteTool extends BaseTool {
             result.items.push({
               path: itemPath,
               type: 'directory',
-              size: 0
+              size: 0,
             });
-            
+
             if (recursive) {
-              await this.analyzeDirectory(itemPath, result, recursive, depth + 1);
+              await this.analyzeDirectory(
+                itemPath,
+                result,
+                recursive,
+                depth + 1
+              );
             }
           }
         } catch (error) {
@@ -425,19 +493,22 @@ export class DeleteTool extends BaseTool {
     return backupPath;
   }
 
-  private async backupDirectory(sourcePath: string, backupPath: string): Promise<void> {
+  private async backupDirectory(
+    sourcePath: string,
+    backupPath: string
+  ): Promise<void> {
     await mkdir(backupPath, { recursive: true });
-    
+
     try {
       const items = await readdir(sourcePath);
-      
+
       for (const item of items) {
         const sourceeItemPath = join(sourcePath, item);
         const backupItemPath = join(backupPath, item);
-        
+
         try {
           const itemStats = await stat(sourceeItemPath);
-          
+
           if (itemStats.isFile()) {
             await copyFile(sourceeItemPath, backupItemPath);
           } else if (itemStats.isDirectory()) {
@@ -465,22 +536,28 @@ export class DeleteTool extends BaseTool {
         type: 'file',
         deleted: true,
         size: stats.size,
-        itemsDeleted: 1
+        itemsDeleted: 1,
       };
     } else if (stats.isDirectory()) {
-      const itemsDeleted = await this.deleteDirectory(targetPath, options.recursive);
+      const itemsDeleted = await this.deleteDirectory(
+        targetPath,
+        options.recursive
+      );
       return {
         path: targetPath,
         type: 'directory',
         deleted: true,
-        itemsDeleted
+        itemsDeleted,
       };
     }
 
     throw new Error('Unknown file type');
   }
 
-  private async deleteDirectory(dirPath: string, recursive: boolean): Promise<number> {
+  private async deleteDirectory(
+    dirPath: string,
+    recursive: boolean
+  ): Promise<number> {
     let itemsDeleted = 0;
 
     if (!recursive) {
@@ -491,13 +568,13 @@ export class DeleteTool extends BaseTool {
 
     try {
       const items = await readdir(dirPath);
-      
+
       // Delete all contents first
       for (const item of items) {
         const itemPath = join(dirPath, item);
         try {
           const itemStats = await stat(itemPath);
-          
+
           if (itemStats.isFile()) {
             await unlink(itemPath);
             itemsDeleted++;
@@ -525,14 +602,19 @@ export class DeleteTool extends BaseTool {
     return itemsDeleted;
   }
 
-  async beforeExecute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<void> {
+  async beforeExecute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<void> {
     await super.beforeExecute(parameters, context);
-    
+
     if (!context.permissions.includes('delete_files')) {
       throw new Error('Delete tool requires delete_files permission');
     }
 
-    console.log(`[DeleteTool] Deleting ${parameters.path} for user ${context.userId} (dryRun: ${parameters.dryRun || false})`);
+    console.log(
+      `[DeleteTool] Deleting ${parameters.path} for user ${context.userId} (dryRun: ${parameters.dryRun || false})`
+    );
   }
 }
 

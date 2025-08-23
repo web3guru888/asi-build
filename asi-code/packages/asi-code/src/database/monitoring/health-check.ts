@@ -6,7 +6,7 @@ import { DatabaseAdapter, HealthCheckResult } from '../types';
 import { Logger } from '../../logging';
 
 export class DatabaseHealthCheck {
-  constructor(private adapter: DatabaseAdapter, private logger: Logger) {}
+  constructor(private readonly adapter: DatabaseAdapter, private readonly logger: Logger) {}
 
   async performHealthCheck(): Promise<HealthCheckResult> {
     const startTime = Date.now();

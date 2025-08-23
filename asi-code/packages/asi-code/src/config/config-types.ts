@@ -1,6 +1,6 @@
 /**
  * Configuration Type Definitions
- * 
+ *
  * Comprehensive type definitions for all ASI-Code configuration options.
  * These types ensure type safety and provide IntelliSense support for configuration.
  */
@@ -285,7 +285,13 @@ export interface ToolsConfig {
 
 // Storage configuration
 export interface StorageConfig {
-  readonly provider: 'memory' | 'file' | 'sqlite' | 'postgres' | 'mongodb' | 'redis';
+  readonly provider:
+    | 'memory'
+    | 'file'
+    | 'sqlite'
+    | 'postgres'
+    | 'mongodb'
+    | 'redis';
   readonly connectionString?: string;
   readonly options?: {
     readonly database?: string;
@@ -381,7 +387,7 @@ export interface ASICodeConfig extends BaseConfig {
   readonly dataDirectory: string;
   readonly cacheDirectory: string;
   readonly configPath?: string;
-  
+
   // Core systems
   readonly logging: LoggingConfig;
   readonly providers: ProvidersConfig;
@@ -391,12 +397,12 @@ export interface ASICodeConfig extends BaseConfig {
   readonly server: ServerConfig;
   readonly tools: ToolsConfig;
   readonly storage: StorageConfig;
-  
+
   // Additional systems
   readonly performance: PerformanceConfig;
   readonly security: SecurityConfig;
   readonly development: DevelopmentConfig;
-  
+
   // Extension points
   readonly plugins?: {
     readonly enabled: boolean;
@@ -404,14 +410,14 @@ export interface ASICodeConfig extends BaseConfig {
     readonly autoLoad: boolean;
     readonly [pluginName: string]: any;
   };
-  
+
   readonly integrations?: {
     readonly [integrationName: string]: {
       readonly enabled: boolean;
       readonly config: Record<string, any>;
     };
   };
-  
+
   // Custom configuration sections
   readonly [key: string]: any;
 }
@@ -466,18 +472,19 @@ export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 
-export type ConfigPath<T, K extends keyof T = keyof T> = 
-  K extends string 
-    ? T[K] extends object 
-      ? `${K}` | `${K}.${ConfigPath<T[K]>}`
-      : `${K}`
-    : never;
+export type ConfigPath<T, K extends keyof T = keyof T> = K extends string
+  ? T[K] extends object
+    ? `${K}` | `${K}.${ConfigPath<T[K]>}`
+    : `${K}`
+  : never;
 
-export type ConfigValue<T, P extends string> = 
-  P extends `${infer K}.${infer Rest}`
-    ? K extends keyof T
-      ? ConfigValue<T[K], Rest>
-      : never
-    : P extends keyof T
-      ? T[P]
-      : never;
+export type ConfigValue<
+  T,
+  P extends string,
+> = P extends `${infer K}.${infer Rest}`
+  ? K extends keyof T
+    ? ConfigValue<T[K], Rest>
+    : never
+  : P extends keyof T
+    ? T[P]
+    : never;

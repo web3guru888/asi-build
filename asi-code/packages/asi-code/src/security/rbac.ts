@@ -51,9 +51,9 @@ export interface AuthorizationContext {
  * Role-Based Access Control (RBAC) Manager
  */
 export class RBACManager {
-  private permissions: Map<string, Permission> = new Map();
-  private roles: Map<string, Role> = new Map();
-  private userRoleCache: Map<string, Set<string>> = new Map();
+  private readonly permissions: Map<string, Permission> = new Map();
+  private readonly roles: Map<string, Role> = new Map();
+  private readonly userRoleCache: Map<string, Set<string>> = new Map();
   private auditLog: Array<{
     userId: string;
     action: string;
@@ -79,68 +79,68 @@ export class RBACManager {
         name: 'System Administration',
         resource: '*',
         action: '*',
-        description: 'Full system access'
+        description: 'Full system access',
       },
       {
         id: 'user.read',
         name: 'Read Users',
         resource: 'user',
-        action: 'read'
+        action: 'read',
       },
       {
         id: 'user.write',
         name: 'Write Users',
         resource: 'user',
-        action: 'write'
+        action: 'write',
       },
       {
         id: 'user.delete',
         name: 'Delete Users',
         resource: 'user',
-        action: 'delete'
+        action: 'delete',
       },
       {
         id: 'session.read',
         name: 'Read Sessions',
         resource: 'session',
-        action: 'read'
+        action: 'read',
       },
       {
         id: 'session.write',
         name: 'Write Sessions',
         resource: 'session',
-        action: 'write'
+        action: 'write',
       },
       {
         id: 'session.delete',
         name: 'Delete Sessions',
         resource: 'session',
-        action: 'delete'
+        action: 'delete',
       },
       {
         id: 'tool.execute',
         name: 'Execute Tools',
         resource: 'tool',
-        action: 'execute'
+        action: 'execute',
       },
       {
         id: 'file.read',
         name: 'Read Files',
         resource: 'file',
-        action: 'read'
+        action: 'read',
       },
       {
         id: 'file.write',
         name: 'Write Files',
         resource: 'file',
-        action: 'write'
+        action: 'write',
       },
       {
         id: 'api.access',
         name: 'API Access',
         resource: 'api',
-        action: 'access'
-      }
+        action: 'access',
+      },
     ];
 
     systemPermissions.forEach(permission => {
@@ -154,51 +154,60 @@ export class RBACManager {
         name: 'Super Administrator',
         description: 'Full system access',
         permissions: ['system.admin'],
-        isSystem: true
+        isSystem: true,
       },
       {
         id: 'admin',
         name: 'Administrator',
         description: 'Administrative access',
         permissions: [
-          'user.read', 'user.write', 'user.delete',
-          'session.read', 'session.write', 'session.delete',
-          'tool.execute', 'file.read', 'file.write',
-          'api.access'
+          'user.read',
+          'user.write',
+          'user.delete',
+          'session.read',
+          'session.write',
+          'session.delete',
+          'tool.execute',
+          'file.read',
+          'file.write',
+          'api.access',
         ],
-        isSystem: true
+        isSystem: true,
       },
       {
         id: 'developer',
         name: 'Developer',
         description: 'Development access',
         permissions: [
-          'session.read', 'session.write',
-          'tool.execute', 'file.read', 'file.write',
-          'api.access'
+          'session.read',
+          'session.write',
+          'tool.execute',
+          'file.read',
+          'file.write',
+          'api.access',
         ],
-        isSystem: true
+        isSystem: true,
       },
       {
         id: 'user',
         name: 'Regular User',
         description: 'Basic user access',
         permissions: [
-          'session.read', 'session.write',
-          'tool.execute', 'file.read',
-          'api.access'
+          'session.read',
+          'session.write',
+          'tool.execute',
+          'file.read',
+          'api.access',
         ],
-        isSystem: true
+        isSystem: true,
       },
       {
         id: 'readonly',
         name: 'Read Only',
         description: 'Read-only access',
-        permissions: [
-          'session.read', 'file.read', 'api.access'
-        ],
-        isSystem: true
-      }
+        permissions: ['session.read', 'file.read', 'api.access'],
+        isSystem: true,
+      },
     ];
 
     systemRoles.forEach(role => {
@@ -213,7 +222,10 @@ export class RBACManager {
    */
   addPermission(permission: Permission): void {
     this.permissions.set(permission.id, permission);
-    logger.debug('Permission added', { permissionId: permission.id, permission });
+    logger.debug('Permission added', {
+      permissionId: permission.id,
+      permission,
+    });
   }
 
   /**
@@ -278,13 +290,15 @@ export class RBACManager {
 
     const collectPermissions = (currentRoleId: string) => {
       if (visitedRoles.has(currentRoleId)) {
-        logger.warn('Circular role inheritance detected', { roleId: currentRoleId });
+        logger.warn('Circular role inheritance detected', {
+          roleId: currentRoleId,
+        });
         return;
       }
 
       visitedRoles.add(currentRoleId);
       const role = this.roles.get(currentRoleId);
-      
+
       if (!role) {
         logger.warn('Role not found', { roleId: currentRoleId });
         return;
@@ -314,7 +328,7 @@ export class RBACManager {
    */
   hasPermission(user: User, permissionId: string): boolean {
     const userPermissions = this.getUserPermissions(user);
-    
+
     // Check for exact permission
     if (userPermissions.has(permissionId)) {
       return true;
@@ -342,12 +356,15 @@ export class RBACManager {
    */
   authorize(context: AuthorizationContext): AuthorizationResult {
     const { user, resource, action, resourceData, environment } = context;
-    
+
     try {
       // Find matching permissions
-      const matchingPermissions = this.findMatchingPermissions(resource, action);
+      const matchingPermissions = this.findMatchingPermissions(
+        resource,
+        action
+      );
       const userPermissions = this.getUserPermissions(user);
-      
+
       // Check if user has any matching permission
       for (const permission of matchingPermissions) {
         if (this.hasPermission(user, permission.id)) {
@@ -359,31 +376,31 @@ export class RBACManager {
               resourceData,
               environment
             );
-            
+
             if (!conditionResult.allowed) {
               this.logAuthorizationAttempt(user.id, action, resource, false, {
                 reason: conditionResult.reason,
-                permission: permission.id
+                permission: permission.id,
               });
-              
+
               return {
                 allowed: false,
                 reason: conditionResult.reason,
                 requiredPermissions: [permission.id],
-                userPermissions: Array.from(userPermissions)
+                userPermissions: Array.from(userPermissions),
               };
             }
           }
 
           // Permission granted
           this.logAuthorizationAttempt(user.id, action, resource, true, {
-            permission: permission.id
+            permission: permission.id,
           });
 
           return {
             allowed: true,
             requiredPermissions: [permission.id],
-            userPermissions: Array.from(userPermissions)
+            userPermissions: Array.from(userPermissions),
           };
         }
       }
@@ -391,27 +408,31 @@ export class RBACManager {
       // No matching permissions found
       this.logAuthorizationAttempt(user.id, action, resource, false, {
         reason: 'No matching permissions',
-        requiredPermissions: matchingPermissions.map(p => p.id)
+        requiredPermissions: matchingPermissions.map(p => p.id),
       });
 
       return {
         allowed: false,
         reason: 'Insufficient permissions',
         requiredPermissions: matchingPermissions.map(p => p.id),
-        userPermissions: Array.from(userPermissions)
+        userPermissions: Array.from(userPermissions),
       };
-
     } catch (error) {
-      logger.error('Authorization error', { user: user.id, resource, action, error });
-      
+      logger.error('Authorization error', {
+        user: user.id,
+        resource,
+        action,
+        error,
+      });
+
       this.logAuthorizationAttempt(user.id, action, resource, false, {
         reason: 'Authorization error',
-        error: error.message
+        error: error.message,
       });
 
       return {
         allowed: false,
-        reason: 'Authorization error'
+        reason: 'Authorization error',
       };
     }
   }
@@ -419,7 +440,10 @@ export class RBACManager {
   /**
    * Find permissions matching resource and action
    */
-  private findMatchingPermissions(resource: string, action: string): Permission[] {
+  private findMatchingPermissions(
+    resource: string,
+    action: string
+  ): Permission[] {
     const matches: Permission[] = [];
 
     this.permissions.forEach(permission => {
@@ -460,9 +484,13 @@ export class RBACManager {
     resourceData?: any,
     environment?: Record<string, any>
   ): { allowed: boolean; reason?: string } {
-    
     for (const condition of conditions) {
-      const result = this.evaluateCondition(condition, user, resourceData, environment);
+      const result = this.evaluateCondition(
+        condition,
+        user,
+        resourceData,
+        environment
+      );
       if (!result.allowed) {
         return result;
       }
@@ -480,10 +508,9 @@ export class RBACManager {
     resourceData?: any,
     environment?: Record<string, any>
   ): { allowed: boolean; reason?: string } {
-    
     // Get field value from context
     let fieldValue: any;
-    
+
     if (condition.field.startsWith('user.')) {
       const field = condition.field.replace('user.', '');
       fieldValue = user.attributes?.[field] ?? user[field as keyof User];
@@ -498,27 +525,41 @@ export class RBACManager {
     }
 
     // Evaluate condition
-    const allowed = this.evaluateOperator(fieldValue, condition.operator, condition.value);
-    
+    const allowed = this.evaluateOperator(
+      fieldValue,
+      condition.operator,
+      condition.value
+    );
+
     return {
       allowed,
-      reason: allowed ? undefined : `Condition failed: ${condition.field} ${condition.operator} ${condition.value}`
+      reason: allowed
+        ? undefined
+        : `Condition failed: ${condition.field} ${condition.operator} ${condition.value}`,
     };
   }
 
   /**
    * Evaluate operator
    */
-  private evaluateOperator(fieldValue: any, operator: string, conditionValue: any): boolean {
+  private evaluateOperator(
+    fieldValue: any,
+    operator: string,
+    conditionValue: any
+  ): boolean {
     switch (operator) {
       case 'eq':
         return fieldValue === conditionValue;
       case 'ne':
         return fieldValue !== conditionValue;
       case 'in':
-        return Array.isArray(conditionValue) && conditionValue.includes(fieldValue);
+        return (
+          Array.isArray(conditionValue) && conditionValue.includes(fieldValue)
+        );
       case 'nin':
-        return Array.isArray(conditionValue) && !conditionValue.includes(fieldValue);
+        return (
+          Array.isArray(conditionValue) && !conditionValue.includes(fieldValue)
+        );
       case 'gt':
         return fieldValue > conditionValue;
       case 'lt':
@@ -541,7 +582,7 @@ export class RBACManager {
   middleware(resource: string, action: string) {
     return async (c: Context, next: Next) => {
       const user = c.get('user') || c.get('currentUser');
-      
+
       if (!user) {
         return c.json({ error: 'Authentication required' }, 401);
       }
@@ -555,21 +596,24 @@ export class RBACManager {
           method: c.req.method,
           path: c.req.path,
           userAgent: c.req.header('user-agent'),
-          ip: c.req.header('x-forwarded-for') || c.env?.remoteAddr
-        }
+          ip: c.req.header('x-forwarded-for') || c.env?.remoteAddr,
+        },
       });
 
       if (!authResult.allowed) {
-        return c.json({
-          error: 'Forbidden',
-          message: authResult.reason || 'Insufficient permissions',
-          requiredPermissions: authResult.requiredPermissions
-        }, 403);
+        return c.json(
+          {
+            error: 'Forbidden',
+            message: authResult.reason || 'Insufficient permissions',
+            requiredPermissions: authResult.requiredPermissions,
+          },
+          403
+        );
       }
 
       // Store authorization result for potential use in handlers
       c.set('authResult', authResult);
-      
+
       await next();
     };
   }
@@ -590,7 +634,7 @@ export class RBACManager {
       resource,
       allowed,
       timestamp: new Date(),
-      context
+      context,
     };
 
     this.auditLog.push(logEntry);
@@ -625,14 +669,17 @@ export class RBACManager {
    * Schedule cleanup of old audit logs
    */
   private scheduleCleanup(): void {
-    setInterval(() => {
-      const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days
-      this.auditLog = this.auditLog.filter(entry => entry.timestamp > cutoff);
-      
-      logger.debug('RBAC audit log cleanup completed', { 
-        remainingEntries: this.auditLog.length 
-      });
-    }, 24 * 60 * 60 * 1000); // Daily
+    setInterval(
+      () => {
+        const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days
+        this.auditLog = this.auditLog.filter(entry => entry.timestamp > cutoff);
+
+        logger.debug('RBAC audit log cleanup completed', {
+          remainingEntries: this.auditLog.length,
+        });
+      },
+      24 * 60 * 60 * 1000
+    ); // Daily
   }
 
   /**
@@ -641,16 +688,21 @@ export class RBACManager {
   exportConfiguration(): { permissions: Permission[]; roles: Role[] } {
     return {
       permissions: Array.from(this.permissions.values()),
-      roles: Array.from(this.roles.values())
+      roles: Array.from(this.roles.values()),
     };
   }
 
   /**
    * Import permissions and roles from backup
    */
-  importConfiguration(config: { permissions: Permission[]; roles: Role[] }): void {
+  importConfiguration(config: {
+    permissions: Permission[];
+    roles: Role[];
+  }): void {
     // Clear existing non-system data
-    const systemPermissions = Array.from(this.permissions.values()).filter(p => p.id.startsWith('system.') || p.id.includes('.'));
+    const systemPermissions = Array.from(this.permissions.values()).filter(
+      p => p.id.startsWith('system.') || p.id.includes('.')
+    );
     const systemRoles = Array.from(this.roles.values()).filter(r => r.isSystem);
 
     this.permissions.clear();
@@ -666,7 +718,7 @@ export class RBACManager {
 
     logger.info('RBAC configuration imported', {
       permissions: config.permissions.length,
-      roles: config.roles.length
+      roles: config.roles.length,
     });
   }
 }

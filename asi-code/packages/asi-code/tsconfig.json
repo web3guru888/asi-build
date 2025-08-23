@@ -7,12 +7,35 @@
     "declarationMap": true,
     "sourceMap": true,
     "module": "ESNext",
-    "target": "ES2020",
-    "moduleResolution": "node",
+    "target": "ES2022",
+    "moduleResolution": "bundler",
+    "downlevelIteration": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    
+    // Strict Type Checking
     "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    
+    // Additional Checks
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    
+    // Code Quality
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "types": ["node", "bun-types"]

@@ -1,18 +1,18 @@
 /**
  * ASI-Code Agent Registry Implementation
- * 
+ *
  * Manages agent registration, discovery, and health monitoring.
  * Provides thread-safe operations for agent lifecycle management.
  */
 
 import { EventEmitter } from 'eventemitter3';
-import { 
-  Agent, 
-  AgentRegistry as IAgentRegistry, 
-  AgentType, 
-  AgentStatus,
+import {
+  Agent,
   AgentMetrics,
-  Task
+  AgentStatus,
+  AgentType,
+  AgentRegistry as IAgentRegistry,
+  Task,
 } from './types.js';
 
 interface AgentRecord {
@@ -24,12 +24,12 @@ interface AgentRecord {
 }
 
 export class AgentRegistry extends EventEmitter implements IAgentRegistry {
-  private agents = new Map<string, AgentRecord>();
-  private capabilityIndex = new Map<string, Set<string>>();
-  private typeIndex = new Map<AgentType, Set<string>>();
-  private statusIndex = new Map<AgentStatus, Set<string>>();
+  private readonly agents = new Map<string, AgentRecord>();
+  private readonly capabilityIndex = new Map<string, Set<string>>();
+  private readonly typeIndex = new Map<AgentType, Set<string>>();
+  private readonly statusIndex = new Map<AgentStatus, Set<string>>();
   private readonly lock = new Map<string, Promise<void>>();
-  
+
   // Health monitoring configuration
   private healthCheckInterval: NodeJS.Timer | null = null;
   private readonly healthCheckIntervalMs = 30000; // 30 seconds
@@ -56,7 +56,7 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
         registeredAt: Date.now(),
         lastHealthCheck: Date.now(),
         healthStatus: 'unknown',
-        consecutiveHealthFailures: 0
+        consecutiveHealthFailures: 0,
       };
 
       this.agents.set(agent.id, record);
@@ -124,10 +124,12 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
     const idleAgents = this.statusIndex.get('idle') || new Set();
     return Array.from(idleAgents)
       .map(id => this.agents.get(id))
-      .filter((record): record is AgentRecord => 
-        record !== undefined && 
-        record.healthStatus === 'healthy' &&
-        record.agent.currentTasks.size < record.agent.config.maxConcurrentTasks
+      .filter(
+        (record): record is AgentRecord =>
+          record !== undefined &&
+          record.healthStatus === 'healthy' &&
+          record.agent.currentTasks.size <
+            record.agent.config.maxConcurrentTasks
       )
       .map(record => record.agent);
   }
@@ -144,11 +146,9 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
    */
   findBestAgent(task: Task): Agent | undefined {
     const candidates = this.findAvailable();
-    
+
     // Filter by required capabilities
-    const capableAgents = candidates.filter(agent => 
-      agent.canHandle(task)
-    );
+    const capableAgents = candidates.filter(agent => agent.canHandle(task));
 
     if (capableAgents.length === 0) {
       return undefined;
@@ -157,7 +157,7 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
     // Score agents based on performance and load
     const scoredAgents = capableAgents.map(agent => ({
       agent,
-      score: this.calculateAgentScore(agent, task)
+      score: this.calculateAgentScore(agent, task),
     }));
 
     // Sort by score (higher is better)
@@ -169,7 +169,9 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
   /**
    * Get agent health status
    */
-  getAgentHealth(agentId: string): 'healthy' | 'unhealthy' | 'unknown' | undefined {
+  getAgentHealth(
+    agentId: string
+  ): 'healthy' | 'unhealthy' | 'unknown' | undefined {
     return this.agents.get(agentId)?.healthStatus;
   }
 
@@ -188,22 +190,39 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
       agentsByType: {} as Record<AgentType, number>,
       agentsByStatus: {} as Record<AgentStatus, number>,
       healthyAgents: 0,
-      availableAgents: 0
+      availableAgents: 0,
     };
 
     // Initialize counts
-    const agentTypes: AgentType[] = ['supervisor', 'worker', 'specialist', 'coordinator', 'analyzer', 'executor', 'monitor', 'validator'];
-    const agentStatuses: AgentStatus[] = ['idle', 'busy', 'working', 'waiting', 'error', 'terminated', 'suspended'];
-    
-    agentTypes.forEach(type => stats.agentsByType[type] = 0);
-    agentStatuses.forEach(status => stats.agentsByStatus[status] = 0);
+    const agentTypes: AgentType[] = [
+      'supervisor',
+      'worker',
+      'specialist',
+      'coordinator',
+      'analyzer',
+      'executor',
+      'monitor',
+      'validator',
+    ];
+    const agentStatuses: AgentStatus[] = [
+      'idle',
+      'busy',
+      'working',
+      'waiting',
+      'error',
+      'terminated',
+      'suspended',
+    ];
+
+    agentTypes.forEach(type => (stats.agentsByType[type] = 0));
+    agentStatuses.forEach(status => (stats.agentsByStatus[status] = 0));
 
     // Count agents
     this.agents.forEach(record => {
       const agent = record.agent;
       stats.agentsByType[agent.config.type]++;
       stats.agentsByStatus[agent.status]++;
-      
+
       if (record.healthStatus === 'healthy') {
         stats.healthyAgents++;
       }
@@ -251,13 +270,19 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
   /**
    * Check health of a specific agent
    */
-  private async checkAgentHealth(agentId: string, record: AgentRecord): Promise<void> {
+  private async checkAgentHealth(
+    agentId: string,
+    record: AgentRecord
+  ): Promise<void> {
     try {
       const healthCheckStart = Date.now();
-      
+
       // Create a timeout promise
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Health check timeout')), this.healthCheckTimeoutMs);
+        setTimeout(
+          () => reject(new Error('Health check timeout')),
+          this.healthCheckTimeoutMs
+        );
       });
 
       // Get agent metrics with timeout
@@ -266,9 +291,9 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
 
       // Check if agent is responding and healthy
       const isHealthy = this.evaluateAgentHealth(metrics, record.agent);
-      
+
       record.lastHealthCheck = Date.now();
-      
+
       if (isHealthy) {
         if (record.healthStatus !== 'healthy') {
           record.healthStatus = 'healthy';
@@ -279,17 +304,24 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
         record.consecutiveHealthFailures++;
         if (record.consecutiveHealthFailures >= this.maxConsecutiveFailures) {
           record.healthStatus = 'unhealthy';
-          this.emit('agent:health_failed', agentId, record.consecutiveHealthFailures);
+          this.emit(
+            'agent:health_failed',
+            agentId,
+            record.consecutiveHealthFailures
+          );
         }
       }
-
     } catch (error) {
       record.consecutiveHealthFailures++;
       record.lastHealthCheck = Date.now();
-      
+
       if (record.consecutiveHealthFailures >= this.maxConsecutiveFailures) {
         record.healthStatus = 'unhealthy';
-        this.emit('agent:health_failed', agentId, record.consecutiveHealthFailures);
+        this.emit(
+          'agent:health_failed',
+          agentId,
+          record.consecutiveHealthFailures
+        );
       }
     }
   }
@@ -339,12 +371,14 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
     score *= metrics.performance.successRate;
 
     // Factor in current load (lower load = higher score)
-    const loadFactor = agent.currentTasks.size / agent.config.maxConcurrentTasks;
-    score *= (1 - loadFactor);
+    const loadFactor =
+      agent.currentTasks.size / agent.config.maxConcurrentTasks;
+    score *= 1 - loadFactor;
 
     // Factor in performance (faster = higher score)
     if (metrics.performance.averageTaskDuration > 0) {
-      const performanceFactor = 1 / (metrics.performance.averageTaskDuration / 1000); // Convert to seconds
+      const performanceFactor =
+        1 / (metrics.performance.averageTaskDuration / 1000); // Convert to seconds
       score *= Math.min(performanceFactor, 2); // Cap at 2x multiplier
     }
 
@@ -382,7 +416,6 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
         this.statusIndex.set(agent.status, new Set());
       }
       this.statusIndex.get(agent.status)!.add(agentId);
-
     } else {
       // Remove from capability index
       agent.getCapabilities().forEach(capability => {
@@ -411,19 +444,22 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
    */
   private setupAgentListeners(agent: Agent): void {
     // Listen for status changes to update indices
-    agent.on('status:changed', (oldStatus: AgentStatus, newStatus: AgentStatus) => {
-      this.statusIndex.get(oldStatus)?.delete(agent.id);
-      if (this.statusIndex.get(oldStatus)?.size === 0) {
-        this.statusIndex.delete(oldStatus);
-      }
+    agent.on(
+      'status:changed',
+      (oldStatus: AgentStatus, newStatus: AgentStatus) => {
+        this.statusIndex.get(oldStatus)?.delete(agent.id);
+        if (this.statusIndex.get(oldStatus)?.size === 0) {
+          this.statusIndex.delete(oldStatus);
+        }
 
-      if (!this.statusIndex.has(newStatus)) {
-        this.statusIndex.set(newStatus, new Set());
-      }
-      this.statusIndex.get(newStatus)!.add(agent.id);
+        if (!this.statusIndex.has(newStatus)) {
+          this.statusIndex.set(newStatus, new Set());
+        }
+        this.statusIndex.get(newStatus)!.add(agent.id);
 
-      this.emit('agent:status_changed', agent.id, newStatus);
-    });
+        this.emit('agent:status_changed', agent.id, newStatus);
+      }
+    );
 
     // Listen for task completion
     agent.on('task:completed', (taskId: string) => {
@@ -448,7 +484,10 @@ export class AgentRegistry extends EventEmitter implements IAgentRegistry {
   /**
    * Thread-safe operation execution
    */
-  private async withLock<T>(key: string, operation: () => Promise<T> | T): Promise<T> {
+  private async withLock<T>(
+    key: string,
+    operation: () => Promise<T> | T
+  ): Promise<T> {
     // Wait for any existing lock
     while (this.lock.has(key)) {
       await this.lock.get(key);

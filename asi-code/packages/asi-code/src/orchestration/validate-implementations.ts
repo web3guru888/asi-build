@@ -1,18 +1,18 @@
 /**
  * Validation script for AgentFactory and TaskBuilder implementations
- * 
+ *
  * Simple validation to ensure both implementations are correctly implemented
  * and work with the existing type system.
  */
 
-import { 
-  AgentFactory, 
-  TaskBuilder, 
-  WorkflowBuilder,
+import {
+  AgentFactory,
   type AgentTemplate,
-  type TaskTemplate
+  TaskBuilder,
+  type TaskTemplate,
+  WorkflowBuilder,
 } from './index.js';
-import { AgentConfig, Task, AgentType } from './types.js';
+import { AgentConfig, AgentType, Task } from './types.js';
 
 /**
  * Validate AgentFactory implementation
@@ -31,10 +31,10 @@ function validateAgentFactory(): boolean {
       type: 'worker',
       baseConfig: {
         capabilities: ['testing'],
-        maxConcurrentTasks: 1
+        maxConcurrentTasks: 1,
       },
       description: 'Test template',
-      tags: ['test']
+      tags: ['test'],
     };
 
     factory.registerTemplate(testTemplate);
@@ -52,7 +52,7 @@ function validateAgentFactory(): boolean {
       minSize: 1,
       maxSize: 5,
       idleTimeout: 60000,
-      recycleThreshold: 10
+      recycleThreshold: 10,
     });
     console.log('✓ Pool configuration works');
 
@@ -70,7 +70,6 @@ function validateAgentFactory(): boolean {
 
     console.log('✓ AgentFactory validation completed successfully');
     return true;
-
   } catch (error) {
     console.error('✗ AgentFactory validation failed:', error);
     return false;
@@ -103,7 +102,7 @@ function validateTaskBuilder(): boolean {
       .withDependencies([task.id])
       .build();
 
-    if (!dependentTask.dependencies || !dependentTask.dependencies.includes(task.id)) {
+    if (!dependentTask.dependencies?.includes(task.id)) {
       throw new Error('Task dependencies failed');
     }
     console.log('✓ Task dependencies work');
@@ -114,10 +113,10 @@ function validateTaskBuilder(): boolean {
       type: 'testing',
       baseConfig: {
         description: 'Test template task',
-        priority: 'medium'
+        priority: 'medium',
       },
       description: 'Test task template',
-      tags: ['test']
+      tags: ['test'],
     };
 
     TaskBuilder.registerTemplate(testTemplate);
@@ -143,7 +142,8 @@ function validateTaskBuilder(): boolean {
       .withDescription('Original task')
       .withPriority('high');
 
-    const clonedBuilder = originalBuilder.clone()
+    const clonedBuilder = originalBuilder
+      .clone()
       .withDescription('Cloned task')
       .withPriority('medium');
 
@@ -158,7 +158,7 @@ function validateTaskBuilder(): boolean {
     // Test validation
     try {
       new TaskBuilder('invalid')
-        .withDescription('')  // Empty description should fail
+        .withDescription('') // Empty description should fail
         .build();
       throw new Error('Validation should have failed');
     } catch (validationError) {
@@ -174,22 +174,25 @@ function validateTaskBuilder(): boolean {
       .buildWithSubtasks([
         {
           type: 'processing',
-          description: 'Subtask 1'
+          description: 'Subtask 1',
         },
         {
           type: 'analysis',
-          description: 'Subtask 2'
-        }
+          description: 'Subtask 2',
+        },
       ]);
 
-    if (subtasks.length !== 2 || !parentTask.subtasks || parentTask.subtasks.length !== 2) {
+    if (
+      subtasks.length !== 2 ||
+      !parentTask.subtasks ||
+      parentTask.subtasks.length !== 2
+    ) {
       throw new Error('Subtask creation failed');
     }
     console.log('✓ Subtask creation works');
 
     console.log('✓ TaskBuilder validation completed successfully');
     return true;
-
   } catch (error) {
     console.error('✗ TaskBuilder validation failed:', error);
     return false;
@@ -206,14 +209,16 @@ function validateWorkflowBuilder(): boolean {
     // Test workflow creation
     const workflow = new WorkflowBuilder('test-workflow', {
       description: 'Test workflow',
-      parallel: false
+      parallel: false,
     });
 
-    const task1 = workflow.createTask('task1', 'processing')
+    const task1 = workflow
+      .createTask('task1', 'processing')
       .withDescription('First task')
       .withInput({ data: 'test' });
 
-    const task2 = workflow.createTask('task2', 'analysis')
+    const task2 = workflow
+      .createTask('task2', 'analysis')
       .withDescription('Second task');
 
     workflow.addDependency('task1', 'task2');
@@ -226,7 +231,11 @@ function validateWorkflowBuilder(): boolean {
     console.log('✓ Basic workflow creation works');
 
     // Test workflow with coordinator
-    const { coordinatorTask, tasks: coordTasks, dependencies: coordDeps } = workflow.buildWithCoordinator();
+    const {
+      coordinatorTask,
+      tasks: coordTasks,
+      dependencies: coordDeps,
+    } = workflow.buildWithCoordinator();
 
     if (!coordinatorTask || coordTasks.length !== 2) {
       throw new Error('Workflow coordinator creation failed');
@@ -235,7 +244,6 @@ function validateWorkflowBuilder(): boolean {
 
     console.log('✓ WorkflowBuilder validation completed successfully');
     return true;
-
   } catch (error) {
     console.error('✗ WorkflowBuilder validation failed:', error);
     return false;
@@ -254,7 +262,7 @@ function validateTypeCompatibility(): boolean {
       name: 'TestAgent',
       type: 'worker' as AgentType,
       capabilities: ['testing'],
-      maxConcurrentTasks: 1
+      maxConcurrentTasks: 1,
     };
 
     // This should compile without errors
@@ -277,7 +285,7 @@ function validateTypeCompatibility(): boolean {
       type: 'worker',
       baseConfig: agentConfig,
       description: 'Type test',
-      tags: ['test']
+      tags: ['test'],
     };
 
     const taskTemplate: TaskTemplate = {
@@ -285,17 +293,16 @@ function validateTypeCompatibility(): boolean {
       type: 'testing',
       baseConfig: {
         description: 'Type test task',
-        priority: 'medium'
+        priority: 'medium',
       },
       description: 'Type test',
-      tags: ['test']
+      tags: ['test'],
     };
 
     console.log('✓ Template type compatibility confirmed');
 
     console.log('✓ Type compatibility validation completed successfully');
     return true;
-
   } catch (error) {
     console.error('✗ Type compatibility validation failed:', error);
     return false;
@@ -306,13 +313,15 @@ function validateTypeCompatibility(): boolean {
  * Run all validation tests
  */
 export function validateImplementations(): boolean {
-  console.log('=== Validating AgentFactory and TaskBuilder Implementations ===\n');
+  console.log(
+    '=== Validating AgentFactory and TaskBuilder Implementations ===\n'
+  );
 
   const results = [
     validateAgentFactory(),
     validateTaskBuilder(),
     validateWorkflowBuilder(),
-    validateTypeCompatibility()
+    validateTypeCompatibility(),
   ];
 
   const allPassed = results.every(result => result);
@@ -321,7 +330,9 @@ export function validateImplementations(): boolean {
     console.log('\n✓ All validations passed successfully!');
     console.log('✓ AgentFactory implementation is complete and working');
     console.log('✓ TaskBuilder implementation is complete and working');
-    console.log('✓ Both implementations integrate correctly with existing types');
+    console.log(
+      '✓ Both implementations integrate correctly with existing types'
+    );
     console.log('✓ Factory pattern for agent creation is implemented');
     console.log('✓ Fluent API for task building is implemented');
     console.log('✓ Agent templates and pooling are functional');

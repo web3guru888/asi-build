@@ -1,6 +1,6 @@
 /**
  * Permission Types - Comprehensive type definitions for the permission system
- * 
+ *
  * Defines all types, interfaces, and enums used throughout the permission
  * and security system in ASI-Code.
  */
@@ -10,7 +10,7 @@ export enum PermissionLevel {
   WRITE = 'write',
   EXECUTE = 'execute',
   ADMIN = 'admin',
-  SUPER_ADMIN = 'super_admin'
+  SUPER_ADMIN = 'super_admin',
 }
 
 export enum SafetyLevel {
@@ -19,7 +19,7 @@ export enum SafetyLevel {
   MODERATE = 'moderate',
   HIGH_RISK = 'high-risk',
   DANGEROUS = 'dangerous',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 export enum ResourceType {
@@ -32,7 +32,7 @@ export enum ResourceType {
   TOOL = 'tool',
   SESSION = 'session',
   USER = 'user',
-  CONFIGURATION = 'configuration'
+  CONFIGURATION = 'configuration',
 }
 
 export interface Permission {
@@ -147,7 +147,7 @@ export enum UserStatus {
   SUSPENDED = 'suspended',
   PENDING_APPROVAL = 'pending_approval',
   LOCKED = 'locked',
-  ARCHIVED = 'archived'
+  ARCHIVED = 'archived',
 }
 
 export interface UserProfile {
@@ -198,7 +198,7 @@ export enum SessionStatus {
   IDLE = 'idle',
   EXPIRED = 'expired',
   TERMINATED = 'terminated',
-  SUSPENDED = 'suspended'
+  SUSPENDED = 'suspended',
 }
 
 export interface SessionConstraints {
@@ -290,16 +290,40 @@ export interface SecurityRule {
 }
 
 export interface RuleCondition {
-  type: 'permission' | 'role' | 'user' | 'resource' | 'time' | 'rate' | 'content' | 'custom';
+  type:
+    | 'permission'
+    | 'role'
+    | 'user'
+    | 'resource'
+    | 'time'
+    | 'rate'
+    | 'content'
+    | 'custom';
   field?: string;
-  operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'regex' | 'greater_than' | 'less_than' | 'in' | 'not_in';
+  operator:
+    | 'equals'
+    | 'not_equals'
+    | 'contains'
+    | 'not_contains'
+    | 'regex'
+    | 'greater_than'
+    | 'less_than'
+    | 'in'
+    | 'not_in';
   value: any;
   caseSensitive?: boolean;
   negate?: boolean;
 }
 
 export interface RuleAction {
-  type: 'allow' | 'deny' | 'require_approval' | 'log_warning' | 'rate_limit' | 'elevate' | 'custom';
+  type:
+    | 'allow'
+    | 'deny'
+    | 'require_approval'
+    | 'log_warning'
+    | 'rate_limit'
+    | 'elevate'
+    | 'custom';
   parameters?: Record<string, any>;
   message?: string;
   severity?: 'info' | 'warning' | 'error' | 'critical';
@@ -321,7 +345,7 @@ export enum EnforcementLevel {
   ADVISORY = 'advisory',
   WARNING = 'warning',
   BLOCKING = 'blocking',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 export interface SafetyProtocol {
@@ -339,7 +363,13 @@ export interface SafetyProtocol {
 }
 
 export interface SafetyTrigger {
-  type: 'permission_escalation' | 'multiple_failures' | 'suspicious_pattern' | 'resource_threshold' | 'time_anomaly' | 'custom';
+  type:
+    | 'permission_escalation'
+    | 'multiple_failures'
+    | 'suspicious_pattern'
+    | 'resource_threshold'
+    | 'time_anomaly'
+    | 'custom';
   conditions: RuleCondition[];
   threshold?: number;
   timeWindow?: number;
@@ -347,7 +377,14 @@ export interface SafetyTrigger {
 }
 
 export interface SafetyAction {
-  type: 'block_user' | 'suspend_session' | 'require_approval' | 'notify_admin' | 'log_incident' | 'rate_limit' | 'custom';
+  type:
+    | 'block_user'
+    | 'suspend_session'
+    | 'require_approval'
+    | 'notify_admin'
+    | 'log_incident'
+    | 'rate_limit'
+    | 'custom';
   parameters?: Record<string, any>;
   priority: number;
   enabled: boolean;
@@ -390,7 +427,9 @@ export interface PermissionStats {
 }
 
 // Built-in permission definitions
-export const BUILT_IN_PERMISSIONS: Readonly<Omit<Permission, 'createdAt' | 'updatedAt'>[]> = [
+export const BUILT_IN_PERMISSIONS: Readonly<
+  Omit<Permission, 'createdAt' | 'updatedAt'>[]
+> = [
   {
     id: 'read_files',
     name: 'Read Files',
@@ -399,7 +438,7 @@ export const BUILT_IN_PERMISSIONS: Readonly<Omit<Permission, 'createdAt' | 'upda
     level: PermissionLevel.READ,
     safetyLevel: SafetyLevel.SAFE,
     resourceType: ResourceType.FILE,
-    version: '1.0.0'
+    version: '1.0.0',
   },
   {
     id: 'write_files',
@@ -409,7 +448,7 @@ export const BUILT_IN_PERMISSIONS: Readonly<Omit<Permission, 'createdAt' | 'upda
     level: PermissionLevel.WRITE,
     safetyLevel: SafetyLevel.MODERATE,
     resourceType: ResourceType.FILE,
-    version: '1.0.0'
+    version: '1.0.0',
   },
   {
     id: 'execute_commands',
@@ -419,7 +458,7 @@ export const BUILT_IN_PERMISSIONS: Readonly<Omit<Permission, 'createdAt' | 'upda
     level: PermissionLevel.EXECUTE,
     safetyLevel: SafetyLevel.HIGH_RISK,
     resourceType: ResourceType.SYSTEM,
-    version: '1.0.0'
+    version: '1.0.0',
   },
   {
     id: 'manage_users',
@@ -429,7 +468,7 @@ export const BUILT_IN_PERMISSIONS: Readonly<Omit<Permission, 'createdAt' | 'upda
     level: PermissionLevel.ADMIN,
     safetyLevel: SafetyLevel.HIGH_RISK,
     resourceType: ResourceType.USER,
-    version: '1.0.0'
+    version: '1.0.0',
   },
   {
     id: 'manage_permissions',
@@ -439,7 +478,7 @@ export const BUILT_IN_PERMISSIONS: Readonly<Omit<Permission, 'createdAt' | 'upda
     level: PermissionLevel.ADMIN,
     safetyLevel: SafetyLevel.DANGEROUS,
     resourceType: ResourceType.CONFIGURATION,
-    version: '1.0.0'
+    version: '1.0.0',
   },
   {
     id: 'network_access',
@@ -449,7 +488,7 @@ export const BUILT_IN_PERMISSIONS: Readonly<Omit<Permission, 'createdAt' | 'upda
     level: PermissionLevel.EXECUTE,
     safetyLevel: SafetyLevel.MODERATE,
     resourceType: ResourceType.NETWORK,
-    version: '1.0.0'
+    version: '1.0.0',
   },
   {
     id: 'tool_execution',
@@ -459,7 +498,7 @@ export const BUILT_IN_PERMISSIONS: Readonly<Omit<Permission, 'createdAt' | 'upda
     level: PermissionLevel.EXECUTE,
     safetyLevel: SafetyLevel.MODERATE,
     resourceType: ResourceType.TOOL,
-    version: '1.0.0'
+    version: '1.0.0',
   },
   {
     id: 'dangerous_operations',
@@ -469,67 +508,91 @@ export const BUILT_IN_PERMISSIONS: Readonly<Omit<Permission, 'createdAt' | 'upda
     level: PermissionLevel.ADMIN,
     safetyLevel: SafetyLevel.DANGEROUS,
     resourceType: ResourceType.SYSTEM,
-    version: '1.0.0'
-  }
+    version: '1.0.0',
+  },
 ];
 
 // Built-in role definitions
-export const BUILT_IN_ROLES: Readonly<Omit<Role, 'createdAt' | 'updatedAt'>[]> = [
-  {
-    id: 'guest',
-    name: 'Guest',
-    description: 'Limited access for unauthenticated users',
-    permissions: [],
-    safetyLevel: SafetyLevel.SAFE,
-    isBuiltIn: true,
-    version: '1.0.0'
-  },
-  {
-    id: 'user',
-    name: 'User',
-    description: 'Basic user with read access',
-    permissions: ['read_files'],
-    safetyLevel: SafetyLevel.SAFE,
-    isBuiltIn: true,
-    version: '1.0.0'
-  },
-  {
-    id: 'developer',
-    name: 'Developer',
-    description: 'Developer with file and tool access',
-    permissions: ['read_files', 'write_files', 'tool_execution'],
-    safetyLevel: SafetyLevel.MODERATE,
-    isBuiltIn: true,
-    version: '1.0.0'
-  },
-  {
-    id: 'power_user',
-    name: 'Power User',
-    description: 'Advanced user with system access',
-    permissions: ['read_files', 'write_files', 'tool_execution', 'execute_commands', 'network_access'],
-    safetyLevel: SafetyLevel.HIGH_RISK,
-    isBuiltIn: true,
-    version: '1.0.0'
-  },
-  {
-    id: 'admin',
-    name: 'Administrator',
-    description: 'System administrator with full access',
-    permissions: ['read_files', 'write_files', 'tool_execution', 'execute_commands', 'network_access', 'manage_users', 'dangerous_operations'],
-    safetyLevel: SafetyLevel.DANGEROUS,
-    isBuiltIn: true,
-    version: '1.0.0'
-  },
-  {
-    id: 'super_admin',
-    name: 'Super Administrator',
-    description: 'Super administrator with unrestricted access',
-    permissions: ['read_files', 'write_files', 'tool_execution', 'execute_commands', 'network_access', 'manage_users', 'manage_permissions', 'dangerous_operations'],
-    safetyLevel: SafetyLevel.CRITICAL,
-    isBuiltIn: true,
-    version: '1.0.0'
-  }
-];
+export const BUILT_IN_ROLES: Readonly<Omit<Role, 'createdAt' | 'updatedAt'>[]> =
+  [
+    {
+      id: 'guest',
+      name: 'Guest',
+      description: 'Limited access for unauthenticated users',
+      permissions: [],
+      safetyLevel: SafetyLevel.SAFE,
+      isBuiltIn: true,
+      version: '1.0.0',
+    },
+    {
+      id: 'user',
+      name: 'User',
+      description: 'Basic user with read access',
+      permissions: ['read_files'],
+      safetyLevel: SafetyLevel.SAFE,
+      isBuiltIn: true,
+      version: '1.0.0',
+    },
+    {
+      id: 'developer',
+      name: 'Developer',
+      description: 'Developer with file and tool access',
+      permissions: ['read_files', 'write_files', 'tool_execution'],
+      safetyLevel: SafetyLevel.MODERATE,
+      isBuiltIn: true,
+      version: '1.0.0',
+    },
+    {
+      id: 'power_user',
+      name: 'Power User',
+      description: 'Advanced user with system access',
+      permissions: [
+        'read_files',
+        'write_files',
+        'tool_execution',
+        'execute_commands',
+        'network_access',
+      ],
+      safetyLevel: SafetyLevel.HIGH_RISK,
+      isBuiltIn: true,
+      version: '1.0.0',
+    },
+    {
+      id: 'admin',
+      name: 'Administrator',
+      description: 'System administrator with full access',
+      permissions: [
+        'read_files',
+        'write_files',
+        'tool_execution',
+        'execute_commands',
+        'network_access',
+        'manage_users',
+        'dangerous_operations',
+      ],
+      safetyLevel: SafetyLevel.DANGEROUS,
+      isBuiltIn: true,
+      version: '1.0.0',
+    },
+    {
+      id: 'super_admin',
+      name: 'Super Administrator',
+      description: 'Super administrator with unrestricted access',
+      permissions: [
+        'read_files',
+        'write_files',
+        'tool_execution',
+        'execute_commands',
+        'network_access',
+        'manage_users',
+        'manage_permissions',
+        'dangerous_operations',
+      ],
+      safetyLevel: SafetyLevel.CRITICAL,
+      isBuiltIn: true,
+      version: '1.0.0',
+    },
+  ];
 
 // Error types
 export class PermissionError extends Error {

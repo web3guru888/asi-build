@@ -12,15 +12,14 @@ console.log('✅ Direct imports successful');
 try {
   const registry = new AgentRegistry();
   console.log('✅ AgentRegistry instantiated:', registry.constructor.name);
-  
+
   const loadBalancer = new LoadBalancer();
   console.log('✅ LoadBalancer instantiated:', loadBalancer.constructor.name);
-  
+
   console.log('✅ Both implementations are working correctly!');
-  
+
   // Clean up
   registry.destroy();
-  
 } catch (error) {
   console.error('❌ Error during instantiation:', error);
 }

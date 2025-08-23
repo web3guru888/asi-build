@@ -1,12 +1,12 @@
 /**
  * Kenny Integration Pattern (KIP) - Core implementation
- * 
+ *
  * The Kenny Integration Pattern provides a standardized approach for integrating
  * AI capabilities into software systems through a consciousness-aware architecture.
  */
 
 import { EventEmitter } from 'eventemitter3';
-import type { ASICodeConfig } from '../index.js';
+import type { ASICodeConfig } from '../config/config-types.js';
 
 export interface KennyContext {
   id: string;
@@ -33,14 +33,20 @@ export interface KennyIntegrationPattern extends EventEmitter {
   initialize(config: ASICodeConfig): Promise<void>;
   process(message: KennyMessage): Promise<KennyMessage>;
   createContext(sessionId: string, userId?: string): KennyContext;
-  updateContext(contextId: string, updates: Partial<KennyContext>): Promise<void>;
+  updateContext(
+    contextId: string,
+    updates: Partial<KennyContext>
+  ): Promise<void>;
   getContext(contextId: string): Promise<KennyContext | null>;
   cleanup(): Promise<void>;
 }
 
-export class DefaultKennyIntegration extends EventEmitter implements KennyIntegrationPattern {
+export class DefaultKennyIntegration
+  extends EventEmitter
+  implements KennyIntegrationPattern
+{
   private config: ASICodeConfig | null = null;
-  private contexts = new Map<string, KennyContext>();
+  private readonly contexts = new Map<string, KennyContext>();
 
   async initialize(config: ASICodeConfig): Promise<void> {
     this.config = config;
@@ -71,8 +77,8 @@ export class DefaultKennyIntegration extends EventEmitter implements KennyIntegr
       context: message.context,
       metadata: {
         processed: true,
-        originalMessageId: message.id
-      }
+        originalMessageId: message.id,
+      },
     };
 
     this.emit('message:processed', { original: message, response });
@@ -88,8 +94,8 @@ export class DefaultKennyIntegration extends EventEmitter implements KennyIntegr
       consciousness: {
         level: 1,
         state: 'active',
-        lastActivity: new Date()
-      }
+        lastActivity: new Date(),
+      },
     };
 
     this.contexts.set(context.id, context);
@@ -97,7 +103,10 @@ export class DefaultKennyIntegration extends EventEmitter implements KennyIntegr
     return context;
   }
 
-  async updateContext(contextId: string, updates: Partial<KennyContext>): Promise<void> {
+  async updateContext(
+    contextId: string,
+    updates: Partial<KennyContext>
+  ): Promise<void> {
     const context = this.contexts.get(contextId);
     if (!context) {
       throw new Error(`Context not found: ${contextId}`);
@@ -125,7 +134,6 @@ export function createKennyIntegration(): KennyIntegrationPattern {
 }
 
 // Export types
-export type { ASICodeConfig };
 
 // Re-export all core components
 export * from './integration.js';

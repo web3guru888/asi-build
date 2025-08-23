@@ -36,7 +36,7 @@ Development: http://localhost:3000
 
 ```
 Current Version: v1
-Base Path: /api/v1
+Base Path: /api
 ```
 
 ## Authentication
@@ -59,7 +59,7 @@ X-Session-ID: session-uuid-here
 ```bash
 curl -H "Authorization: Bearer asi_key_abc123" \
      -H "Content-Type: application/json" \
-     https://api.asi-code.dev/api/v1/sessions
+     https://api.asi-code.dev/api/sessions
 ```
 
 ## REST API
@@ -86,52 +86,27 @@ Check system health status.
 }
 ```
 
-#### GET /api/v1/status
+#### GET /models
 
-Get detailed system status.
+Get available AI models.
 
 **Response:**
 ```json
 {
-  "system": {
-    "status": "operational",
-    "version": "1.0.0",
-    "buildDate": "2024-01-15T09:00:00.000Z",
-    "uptime": 3600000
-  },
-  "components": {
-    "kenny": {
-      "status": "healthy",
-      "activeContexts": 42,
-      "messagesProcessed": 1234
-    },
-    "consciousness": {
-      "status": "healthy",
-      "activeStates": 15,
-      "memoryUsage": "24MB"
-    },
-    "providers": {
-      "status": "healthy",
-      "available": ["anthropic", "openai"],
-      "defaultProvider": "anthropic"
-    },
-    "tools": {
-      "status": "healthy",
-      "registered": 12,
-      "executionsToday": 567
+  "models": [
+    {
+      "name": "claude-3-sonnet-20240229",
+      "provider": "anthropic",
+      "capabilities": ["text-generation", "function-calling"],
+      "status": "available"
     }
-  },
-  "performance": {
-    "avgResponseTime": 120,
-    "requestsPerSecond": 45,
-    "errorRate": 0.01
-  }
+  ]
 }
 ```
 
 ### Session Management
 
-#### POST /api/v1/sessions
+#### POST /api/sessions
 
 Create a new session.
 
@@ -184,7 +159,7 @@ Create a new session.
 }
 ```
 
-#### GET /api/v1/sessions
+#### GET /api/sessions
 
 List user sessions.
 
@@ -219,7 +194,7 @@ List user sessions.
 }
 ```
 
-#### GET /api/v1/sessions/:sessionId
+#### GET /api/sessions/:sessionId
 
 Get session details.
 
@@ -256,39 +231,8 @@ Get session details.
 }
 ```
 
-#### PUT /api/v1/sessions/:sessionId
 
-Update session configuration.
-
-**Request:**
-```json
-{
-  "metadata": {
-    "name": "Updated Session Name"
-  },
-  "config": {
-    "consciousness": {
-      "personalityTraits": {
-        "creativity": 90
-      }
-    }
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "id": "session_abc123",
-  "updatedAt": "2024-01-15T10:40:00.000Z",
-  "changes": [
-    "metadata.name",
-    "config.consciousness.personalityTraits.creativity"
-  ]
-}
-```
-
-#### DELETE /api/v1/sessions/:sessionId
+#### DELETE /api/sessions/:sessionId
 
 Delete a session.
 
@@ -303,7 +247,7 @@ Delete a session.
 
 ### Message Processing
 
-#### POST /api/v1/sessions/:sessionId/messages
+#### POST /api/sessions/:sessionId/messages
 
 Send a message to a session.
 
@@ -337,7 +281,7 @@ Send a message to a session.
 }
 ```
 
-#### GET /api/v1/sessions/:sessionId/messages
+#### GET /api/sessions/:sessionId/messages
 
 Get message history.
 
@@ -400,67 +344,10 @@ Get message history.
 }
 ```
 
-#### GET /api/v1/messages/:messageId
-
-Get specific message details.
-
-**Response:**
-```json
-{
-  "id": "message_ghi789",
-  "sessionId": "session_abc123",
-  "type": "assistant",
-  "content": "I'll help you create a React authentication component...",
-  "timestamp": "2024-01-15T10:50:03.000Z",
-  "status": "completed",
-  "metadata": {
-    "consciousness": {
-      "level": 47,
-      "awareness": 80,
-      "engagement": 85,
-      "memoriesUsed": 3,
-      "adaptationRate": 0.15
-    },
-    "provider": {
-      "name": "anthropic",
-      "model": "claude-3-sonnet-20240229",
-      "usage": {
-        "inputTokens": 45,
-        "outputTokens": 234,
-        "cost": 0.0012
-      }
-    },
-    "processingTime": 2800,
-    "qualityMetrics": {
-      "relevance": 0.95,
-      "helpfulness": 0.92,
-      "accuracy": 0.98
-    }
-  },
-  "toolExecutions": [
-    {
-      "id": "execution_123",
-      "toolName": "write",
-      "params": {
-        "filePath": "./src/components/AuthComponent.tsx",
-        "content": "import React from 'react'..."
-      },
-      "status": "completed",
-      "startTime": "2024-01-15T10:50:02.000Z",
-      "endTime": "2024-01-15T10:50:02.500Z",
-      "result": {
-        "success": true,
-        "filesCreated": ["./src/components/AuthComponent.tsx"],
-        "bytesWritten": 1024
-      }
-    }
-  ]
-}
-```
 
 ### Tool Management
 
-#### GET /api/v1/tools
+#### GET /api/tools
 
 List available tools.
 
@@ -517,7 +404,7 @@ List available tools.
 }
 ```
 
-#### POST /api/v1/tools/:toolName/execute
+#### POST /api/tools/:name/execute
 
 Execute a tool directly (outside of a session context).
 
@@ -560,7 +447,7 @@ Execute a tool directly (outside of a session context).
 
 ### Provider Management
 
-#### GET /api/v1/providers
+#### GET /api/providers
 
 List configured providers.
 
@@ -599,35 +486,6 @@ List configured providers.
 }
 ```
 
-#### POST /api/v1/providers/:providerName/test
-
-Test provider connectivity and capabilities.
-
-**Response:**
-```json
-{
-  "providerName": "anthropic",
-  "status": "healthy",
-  "responseTime": 245,
-  "capabilities": {
-    "textGeneration": true,
-    "functionCalling": true,
-    "codeGeneration": true
-  },
-  "limits": {
-    "available": true,
-    "remaining": {
-      "requestsPerMinute": 58,
-      "requestsPerDay": 987
-    }
-  },
-  "testMessage": {
-    "sent": "Hello, this is a test message",
-    "received": "Hello! I received your test message successfully.",
-    "responseTime": 1200
-  }
-}
-```
 
 ## WebSocket API
 
@@ -1135,7 +993,7 @@ const result = await toolManager.execute('custom-tool', {
 
 Configuration can be updated at runtime through the API:
 
-#### GET /api/v1/config
+#### GET /api/config
 
 Get current configuration.
 
@@ -1168,7 +1026,7 @@ Get current configuration.
 }
 ```
 
-#### PUT /api/v1/config
+#### PUT /api/config
 
 Update configuration.
 
@@ -1294,9 +1152,9 @@ Default rate limits per API key:
 
 | Endpoint | Limit |
 |----------|-------|
-| `/api/v1/sessions` | 100 requests/hour |
-| `/api/v1/messages` | 1000 requests/hour |
-| `/api/v1/tools/*/execute` | 500 requests/hour |
+| `/api/sessions` | 100 requests/hour |
+| `/api/messages` | 1000 requests/hour |
+| `/api/tools/*/execute` | 500 requests/hour |
 | WebSocket connections | 10 concurrent |
 | Message streaming | 50 messages/minute |
 
@@ -1333,7 +1191,7 @@ X-RateLimit-Window: 3600
 ### Complete Session Workflow
 
 ```javascript
-const API_BASE = 'https://api.asi-code.dev/api/v1';
+const API_BASE = 'https://api.asi-code.dev/api';
 const API_KEY = 'your-api-key';
 
 async function createAndUseSession() {
@@ -1589,7 +1447,7 @@ const toolManager = createToolManager();
 toolManager.register(new DatabaseQueryTool());
 
 // Client-side usage
-const response = await fetch('/api/v1/tools/database-query/execute', {
+const response = await fetch('/api/tools/database-query/execute', {
   method: 'POST',
   headers: {
     'Authorization': 'Bearer your-api-key',

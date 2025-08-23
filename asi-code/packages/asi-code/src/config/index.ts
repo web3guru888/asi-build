@@ -1,6 +1,6 @@
 /**
  * Configuration System - Enhanced Centralized Configuration Management
- * 
+ *
  * Comprehensive configuration system with environment variable support,
  * validation, file watching, and Kenny Integration Pattern support.
  */
@@ -10,7 +10,7 @@ export {
   ConfigManager,
   createConfigManager,
   createValidationSchema,
-  DEFAULT_VALIDATION_SCHEMA
+  DEFAULT_VALIDATION_SCHEMA,
 } from './config-manager.js';
 
 // Configuration types
@@ -39,7 +39,7 @@ export type {
   ConfigFactoryOptions,
   DeepPartial,
   ConfigPath,
-  ConfigValue
+  ConfigValue,
 } from './config-types.js';
 
 // Default configurations
@@ -48,12 +48,20 @@ export {
   PRODUCTION_CONFIG_OVERRIDES,
   TEST_CONFIG_OVERRIDES,
   getEnvironmentConfig,
-  getDefaultConfig
+  getDefaultConfig,
 } from './default-config.js';
 
-import { ConfigManager, createConfigManager, DEFAULT_VALIDATION_SCHEMA } from './config-manager.js';
+import {
+  ConfigManager,
+  DEFAULT_VALIDATION_SCHEMA,
+  createConfigManager,
+} from './config-manager.js';
 import { DEFAULT_ASI_CONFIG, getDefaultConfig } from './default-config.js';
-import { ASICodeConfig, ConfigFactoryOptions, ConfigLoadOptions } from './config-types.js';
+import {
+  ASICodeConfig,
+  ConfigFactoryOptions,
+  ConfigLoadOptions,
+} from './config-types.js';
 import { BaseSubsystem } from '../kenny/base-subsystem.js';
 import { KennyIntegration } from '../kenny/integration.js';
 
@@ -65,17 +73,19 @@ let globalConfigManager: ConfigManager | null = null;
 /**
  * Initialize global configuration system
  */
-export function initializeConfig(options?: ConfigLoadOptions): Promise<ConfigManager> {
+export function initializeConfig(
+  options?: ConfigLoadOptions
+): Promise<ConfigManager> {
   if (globalConfigManager) {
     throw new Error('Configuration system is already initialized');
   }
 
   globalConfigManager = createConfigManager(DEFAULT_VALIDATION_SCHEMA);
-  
+
   if (options) {
     return globalConfigManager.load(options).then(() => globalConfigManager!);
   }
-  
+
   return Promise.resolve(globalConfigManager);
 }
 
@@ -84,7 +94,9 @@ export function initializeConfig(options?: ConfigLoadOptions): Promise<ConfigMan
  */
 export function getConfigManager(): ConfigManager {
   if (!globalConfigManager) {
-    throw new Error('Configuration system not initialized. Call initializeConfig() first.');
+    throw new Error(
+      'Configuration system not initialized. Call initializeConfig() first.'
+    );
   }
   return globalConfigManager;
 }
@@ -125,14 +137,14 @@ export class ConfigSystemFactory {
     options?: ConfigFactoryOptions
   ): Promise<ConfigManager> {
     const configSubsystem = new ConfigManagerSubsystem();
-    
+
     // Register with Kenny Integration
     await kennyIntegration.registerSubsystem(configSubsystem);
-    
+
     // Initialize the subsystem
     await configSubsystem.initialize(options || {});
     await configSubsystem.start();
-    
+
     // Get the config manager instance
     const configManager = configSubsystem.getConfigManager();
     if (!configManager) {
@@ -150,9 +162,11 @@ export class ConfigSystemFactory {
   /**
    * Create standalone configuration manager
    */
-  static createStandalone(options?: ConfigFactoryOptions): Promise<ConfigManager> {
+  static createStandalone(
+    options?: ConfigFactoryOptions
+  ): Promise<ConfigManager> {
     const configManager = createConfigManager(DEFAULT_VALIDATION_SCHEMA);
-    
+
     if (options?.configPath) {
       const loadOptions: ConfigLoadOptions = {
         validateSchema: options.validateOnCreate !== false,
@@ -161,12 +175,12 @@ export class ConfigSystemFactory {
         configPaths: [options.configPath],
         environmentPrefix: 'ASI_CODE_',
         strict: false,
-        watch: options.autoWatch || false
+        watch: options.autoWatch || false,
       };
-      
+
       return configManager.load(loadOptions).then(() => configManager);
     }
-    
+
     return Promise.resolve(configManager);
   }
 
@@ -188,7 +202,7 @@ export class ConfigSystemFactory {
       environment: 'production',
       configPath,
       validateOnCreate: true,
-      autoWatch: false
+      autoWatch: false,
     });
   }
 
@@ -214,20 +228,26 @@ export class ConfigManagerSubsystem extends BaseSubsystem {
       id: 'config-manager',
       name: 'Configuration Manager',
       version: '1.0.0',
-      description: 'Central configuration management system'
+      description: 'Central configuration management system',
     });
   }
 
   protected async onInitialize(config: Record<string, any>): Promise<void> {
     try {
       this.configManager = await ConfigSystemFactory.createStandalone(config);
-      
+
       // Forward events
-      this.configManager.on('error', (error) => this.emit('error', error));
-      this.configManager.on('loaded', (event) => this.emit('config.loaded', event));
-      this.configManager.on('updated', (event) => this.emit('config.updated', event));
-      this.configManager.on('validated', (event) => this.emit('config.validated', event));
-      
+      this.configManager.on('error', error => this.emit('error', error));
+      this.configManager.on('loaded', event =>
+        this.emit('config.loaded', event)
+      );
+      this.configManager.on('updated', event =>
+        this.emit('config.updated', event)
+      );
+      this.configManager.on('validated', event =>
+        this.emit('config.validated', event)
+      );
+
       this.emit('initialized', { config });
     } catch (error) {
       this.emit('error', error);
@@ -249,7 +269,9 @@ export class ConfigManagerSubsystem extends BaseSubsystem {
 
   async start(): Promise<void> {
     if (this.status !== 'ready') {
-      throw new Error('Config Manager subsystem must be initialized before starting');
+      throw new Error(
+        'Config Manager subsystem must be initialized before starting'
+      );
     }
 
     this.status = 'running';
@@ -280,29 +302,29 @@ export class ConfigManagerSubsystem extends BaseSubsystem {
       return {
         status: 'unhealthy' as const,
         message: 'Config Manager not initialized',
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     }
 
     try {
       const config = this.configManager.getAll();
       const isValid = this.configManager.validate();
-      
+
       return {
-        status: isValid ? 'healthy' as const : 'degraded' as const,
+        status: isValid ? ('healthy' as const) : ('degraded' as const),
         message: `Config Manager running - ${Object.keys(config).length} config keys loaded`,
         timestamp: new Date(),
         details: {
           configKeys: Object.keys(config).length,
           isValid,
-          environment: config.environment || 'unknown'
-        }
+          environment: config.environment || 'unknown',
+        },
       };
     } catch (error) {
       return {
         status: 'unhealthy' as const,
         message: `Config Manager error: ${error instanceof Error ? error.message : String(error)}`,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     }
   }
@@ -317,8 +339,9 @@ export class ConfigManagerSubsystem extends BaseSubsystem {
  */
 export const CONFIG_PRESETS = {
   development: () => ConfigSystemFactory.createDevelopmentConfig(),
-  production: (configPath: string) => ConfigSystemFactory.createProductionConfig(configPath),
-  test: () => ConfigSystemFactory.createTestConfig()
+  production: (configPath: string) =>
+    ConfigSystemFactory.createProductionConfig(configPath),
+  test: () => ConfigSystemFactory.createTestConfig(),
 };
 
 // Export factory as default

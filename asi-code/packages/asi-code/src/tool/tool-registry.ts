@@ -1,6 +1,6 @@
 /**
  * Tool Registry - Central management system for tools in ASI-Code
- * 
+ *
  * Integrates with the Kenny Integration Pattern to provide a comprehensive
  * tool management system with permission checking, lifecycle management,
  * and event-driven architecture.
@@ -11,7 +11,12 @@ import { getKennyIntegration } from '../kenny/integration.js';
 import { BaseSubsystem } from '../kenny/base-subsystem.js';
 import { ResourceType } from '../permission/permission-types.js';
 import type { PermissionManager } from '../permission/permission-manager.js';
-import type { BaseTool, ToolDefinition, ToolExecutionContext, ToolResult } from './base-tool.js';
+import type {
+  BaseTool,
+  ToolDefinition,
+  ToolExecutionContext,
+  ToolResult,
+} from './base-tool.js';
 
 export interface ToolRegistryConfig {
   permissionManager?: PermissionManager;
@@ -58,29 +63,34 @@ export interface ToolExecutionInfo {
  * Integrates with Kenny Integration Pattern as a subsystem
  */
 export class ToolRegistry extends BaseSubsystem {
-  private tools = new Map<string, ToolRegistryEntry>();
-  private executions = new Map<string, ToolExecutionInfo>();
-  private executionQueue: Array<() => Promise<void>> = [];
-  private runningExecutions = new Set<string>();
-  
+  private readonly tools = new Map<string, ToolRegistryEntry>();
+  private readonly executions = new Map<string, ToolExecutionInfo>();
+  private readonly executionQueue: Array<() => Promise<void>> = [];
+  private readonly runningExecutions = new Set<string>();
+
   private permissionManager?: PermissionManager;
-  public config: Required<Omit<ToolRegistryConfig, 'permissionManager'>> & { permissionManager?: PermissionManager };
+  public config: Required<Omit<ToolRegistryConfig, 'permissionManager'>> & {
+    permissionManager?: PermissionManager;
+  };
   private executionId = 0;
 
   constructor(config: ToolRegistryConfig = {}) {
-    super({
-      id: 'tool-registry',
-      name: 'Tool Registry',
-      description: 'Central management system for tools',
-      version: '1.0.0'
-    }, []);
+    super(
+      {
+        id: 'tool-registry',
+        name: 'Tool Registry',
+        description: 'Central management system for tools',
+        version: '1.0.0',
+      },
+      []
+    );
 
     this.config = {
       permissionManager: config.permissionManager,
       enableMetrics: config.enableMetrics ?? true,
       enableCaching: config.enableCaching ?? true,
       maxConcurrentExecutions: config.maxConcurrentExecutions ?? 10,
-      defaultTimeout: config.defaultTimeout ?? 300000 // 5 minutes
+      defaultTimeout: config.defaultTimeout ?? 300000, // 5 minutes
     };
   }
 
@@ -106,10 +116,10 @@ export class ToolRegistry extends BaseSubsystem {
 
   async stop(): Promise<void> {
     // Wait for all running executions to complete or timeout
-    const timeoutPromise = new Promise<void>(resolve => 
-      setTimeout(resolve, 30000) // 30 second graceful shutdown timeout
+    const timeoutPromise = new Promise<void>(
+      resolve => setTimeout(resolve, 30000) // 30 second graceful shutdown timeout
     );
-    
+
     const executionsPromise = Promise.all(
       Array.from(this.runningExecutions).map(id => {
         const execution = this.executions.get(id);
@@ -121,20 +131,23 @@ export class ToolRegistry extends BaseSubsystem {
     );
 
     await Promise.race([executionsPromise, timeoutPromise]);
-    
+
     this.status = 'stopped';
     this.emit('stopped');
   }
 
   async shutdown(): Promise<void> {
     await this.stop();
-    
+
     // Clean up all tools
     for (const entry of this.tools.values()) {
       try {
         await entry.tool.cleanup();
       } catch (error) {
-        console.error(`Error cleaning up tool ${entry.definition.name}:`, error);
+        console.error(
+          `Error cleaning up tool ${entry.definition.name}:`,
+          error
+        );
       }
     }
 
@@ -142,7 +155,7 @@ export class ToolRegistry extends BaseSubsystem {
     this.executions.clear();
     this.executionQueue.length = 0;
     this.runningExecutions.clear();
-    
+
     this.status = 'stopped';
     this.emit('shutdown');
   }
@@ -152,7 +165,7 @@ export class ToolRegistry extends BaseSubsystem {
    */
   async register(tool: BaseTool, tags: string[] = []): Promise<void> {
     const toolName = tool.definition.name;
-    
+
     if (this.tools.has(toolName)) {
       throw new Error(`Tool ${toolName} is already registered`);
     }
@@ -171,7 +184,7 @@ export class ToolRegistry extends BaseSubsystem {
         lastExecuted: new Date(),
       },
       status: 'active',
-      tags
+      tags,
     };
 
     this.tools.set(toolName, entry);
@@ -181,15 +194,13 @@ export class ToolRegistry extends BaseSubsystem {
 
     // Emit registration event to Kenny Integration
     const kenny = getKennyIntegration();
-    await kenny.getMessageBus().publishSubsystem(
-      'tool.registered',
-      this.metadata.id,
-      {
+    await kenny
+      .getMessageBus()
+      .publishSubsystem('tool.registered', this.metadata.id, {
         toolName,
         definition: tool.definition,
-        tags
-      }
-    );
+        tags,
+      });
 
     this.emit('tool.registered', { tool: entry });
   }
@@ -224,11 +235,9 @@ export class ToolRegistry extends BaseSubsystem {
 
     // Emit unregistration event
     const kenny = getKennyIntegration();
-    await kenny.getMessageBus().publishSubsystem(
-      'tool.unregistered',
-      this.metadata.id,
-      { toolName }
-    );
+    await kenny
+      .getMessageBus()
+      .publishSubsystem('tool.unregistered', this.metadata.id, { toolName });
 
     this.emit('tool.unregistered', { toolName });
   }
@@ -250,27 +259,27 @@ export class ToolRegistry extends BaseSubsystem {
     status?: 'active' | 'disabled' | 'deprecated';
   }): ToolDefinition[] {
     const entries = Array.from(this.tools.values());
-    
+
     let filteredEntries = entries;
-    
+
     if (filters?.category) {
-      filteredEntries = filteredEntries.filter(entry => 
-        entry.definition.category === filters.category
+      filteredEntries = filteredEntries.filter(
+        entry => entry.definition.category === filters.category
       );
     }
-    
+
     if (filters?.tags?.length) {
       filteredEntries = filteredEntries.filter(entry =>
         filters.tags!.some(tag => entry.tags.includes(tag))
       );
     }
-    
+
     if (filters?.status) {
-      filteredEntries = filteredEntries.filter(entry =>
-        entry.status === filters.status
+      filteredEntries = filteredEntries.filter(
+        entry => entry.status === filters.status
       );
     }
-    
+
     return filteredEntries.map(entry => entry.definition);
   }
 
@@ -278,15 +287,15 @@ export class ToolRegistry extends BaseSubsystem {
    * Execute a tool with permission checking and monitoring
    */
   async execute(
-    toolName: string, 
-    parameters: Record<string, any>, 
+    toolName: string,
+    parameters: Record<string, any>,
     context: ToolExecutionContext
   ): Promise<ToolResult> {
     const entry = this.tools.get(toolName);
     if (!entry || entry.status !== 'active') {
       return {
         success: false,
-        error: `Tool ${toolName} not found or not active`
+        error: `Tool ${toolName} not found or not active`,
       };
     }
 
@@ -302,17 +311,17 @@ export class ToolRegistry extends BaseSubsystem {
           timestamp: new Date(),
           metadata: {
             toolName,
-            category: entry.definition.category
-          }
+            category: entry.definition.category,
+          },
         },
-        permissionId: 'tool_execution'
+        permissionId: 'tool_execution',
       });
       const hasPermission = permissionResult.granted;
 
       if (!hasPermission) {
         return {
           success: false,
-          error: `Permission denied for tool ${toolName}`
+          error: `Permission denied for tool ${toolName}`,
         };
       }
     }
@@ -321,7 +330,7 @@ export class ToolRegistry extends BaseSubsystem {
     if (!entry.tool.validate(parameters)) {
       return {
         success: false,
-        error: `Invalid parameters for tool ${toolName}`
+        error: `Invalid parameters for tool ${toolName}`,
       };
     }
 
@@ -329,7 +338,7 @@ export class ToolRegistry extends BaseSubsystem {
     if (this.runningExecutions.size >= this.config.maxConcurrentExecutions) {
       return {
         success: false,
-        error: 'Maximum concurrent executions reached'
+        error: 'Maximum concurrent executions reached',
       };
     }
 
@@ -341,7 +350,7 @@ export class ToolRegistry extends BaseSubsystem {
       parameters,
       context,
       startTime: new Date(),
-      status: 'running'
+      status: 'running',
     };
 
     this.executions.set(executionId, executionInfo);
@@ -350,17 +359,22 @@ export class ToolRegistry extends BaseSubsystem {
     try {
       // Emit execution start event
       const kenny = getKennyIntegration();
-      await kenny.getMessageBus().publishSubsystem(
-        'tool.execution.start',
-        this.metadata.id,
-        { executionId, toolName, parameters: Object.keys(parameters) }
-      );
+      await kenny
+        .getMessageBus()
+        .publishSubsystem('tool.execution.start', this.metadata.id, {
+          executionId,
+          toolName,
+          parameters: Object.keys(parameters),
+        });
 
       this.emit('execution.start', { executionId, toolName, parameters });
 
       // Execute the tool with timeout
-      const timeoutPromise = new Promise<ToolResult>((_, reject) => 
-        setTimeout(() => reject(new Error('Execution timeout')), this.config.defaultTimeout)
+      const timeoutPromise = new Promise<ToolResult>((_, reject) =>
+        setTimeout(
+          () => reject(new Error('Execution timeout')),
+          this.config.defaultTimeout
+        )
       );
 
       const executionPromise = entry.tool.execute(parameters, context);
@@ -377,26 +391,26 @@ export class ToolRegistry extends BaseSubsystem {
       }
 
       // Emit completion event
-      await kenny.getMessageBus().publishSubsystem(
-        'tool.execution.complete',
-        this.metadata.id,
-        { 
-          executionId, 
-          toolName, 
+      await kenny
+        .getMessageBus()
+        .publishSubsystem('tool.execution.complete', this.metadata.id, {
+          executionId,
+          toolName,
           success: result.success,
-          executionTime: executionInfo.endTime.getTime() - executionInfo.startTime.getTime()
-        }
-      );
+          executionTime:
+            executionInfo.endTime.getTime() - executionInfo.startTime.getTime(),
+        });
 
       this.emit('execution.complete', { executionId, toolName, result });
 
       return result;
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
       // Update execution info
-      executionInfo.status = errorMessage === 'Execution timeout' ? 'timeout' : 'failed';
+      executionInfo.status =
+        errorMessage === 'Execution timeout' ? 'timeout' : 'failed';
       executionInfo.endTime = new Date();
       executionInfo.error = errorMessage;
 
@@ -407,19 +421,24 @@ export class ToolRegistry extends BaseSubsystem {
 
       // Emit error event
       const kenny = getKennyIntegration();
-      await kenny.getMessageBus().publishSubsystem(
-        'tool.execution.error',
-        this.metadata.id,
-        { executionId, toolName, error: errorMessage }
-      );
+      await kenny
+        .getMessageBus()
+        .publishSubsystem('tool.execution.error', this.metadata.id, {
+          executionId,
+          toolName,
+          error: errorMessage,
+        });
 
-      this.emit('execution.error', { executionId, toolName, error: errorMessage });
+      this.emit('execution.error', {
+        executionId,
+        toolName,
+        error: errorMessage,
+      });
 
       return {
         success: false,
-        error: errorMessage
+        error: errorMessage,
       };
-
     } finally {
       this.runningExecutions.delete(executionId);
     }
@@ -431,9 +450,9 @@ export class ToolRegistry extends BaseSubsystem {
   getMetrics(toolName?: string): ToolExecutionMetrics | ToolExecutionMetrics[] {
     if (toolName) {
       const entry = this.tools.get(toolName);
-      return entry ? entry.metrics : null as any;
+      return entry ? entry.metrics : (null as any);
     }
-    
+
     return Array.from(this.tools.values()).map(entry => entry.metrics);
   }
 
@@ -462,11 +481,12 @@ export class ToolRegistry extends BaseSubsystem {
 
     // Emit cancellation event
     const kenny = getKennyIntegration();
-    await kenny.getMessageBus().publishSubsystem(
-      'tool.execution.cancelled',
-      this.metadata.id,
-      { executionId, toolName: execution.toolName }
-    );
+    await kenny
+      .getMessageBus()
+      .publishSubsystem('tool.execution.cancelled', this.metadata.id, {
+        executionId,
+        toolName: execution.toolName,
+      });
 
     this.emit('execution.cancelled', { executionId });
     return true;
@@ -476,38 +496,46 @@ export class ToolRegistry extends BaseSubsystem {
    * Health check for the tool registry
    */
   async healthCheck() {
-    const healthyTools = Array.from(this.tools.values())
-      .filter(entry => entry.status === 'active').length;
-    
+    const healthyTools = Array.from(this.tools.values()).filter(
+      entry => entry.status === 'active'
+    ).length;
+
     const runningExecutions = this.runningExecutions.size;
-    
+
     return {
-      status: (this.status === 'running' ? 'healthy' : 'unhealthy') as 'healthy' | 'unhealthy' | 'degraded',
+      status: (this.status === 'running' ? 'healthy' : 'unhealthy') as
+        | 'healthy'
+        | 'unhealthy'
+        | 'degraded',
       message: `${healthyTools} active tools, ${runningExecutions} running executions`,
       timestamp: new Date(),
       details: {
         totalTools: this.tools.size,
         activeTools: healthyTools,
         runningExecutions,
-        queuedExecutions: this.executionQueue.length
-      }
+        queuedExecutions: this.executionQueue.length,
+      },
     };
   }
 
   private setupToolEventForwarding(tool: BaseTool): void {
     const events = ['executed', 'error'];
-    
+
     events.forEach(eventName => {
-      tool.on(eventName, (data) => {
+      tool.on(eventName, data => {
         this.emit(`tool.${eventName}`, {
           toolName: tool.definition.name,
-          data
+          data,
         });
       });
     });
   }
 
-  private updateMetrics(entry: ToolRegistryEntry, execution: ToolExecutionInfo, success: boolean): void {
+  private updateMetrics(
+    entry: ToolRegistryEntry,
+    execution: ToolExecutionInfo,
+    success: boolean
+  ): void {
     const metrics = entry.metrics;
     const executionTime = execution.endTime
       ? execution.endTime.getTime() - execution.startTime.getTime()
@@ -515,7 +543,8 @@ export class ToolRegistry extends BaseSubsystem {
 
     metrics.executionCount++;
     metrics.totalExecutionTime += executionTime;
-    metrics.averageExecutionTime = metrics.totalExecutionTime / metrics.executionCount;
+    metrics.averageExecutionTime =
+      metrics.totalExecutionTime / metrics.executionCount;
     metrics.lastExecuted = execution.startTime;
 
     if (success) {
@@ -529,7 +558,7 @@ export class ToolRegistry extends BaseSubsystem {
   }
 
   private async waitForExecution(executionId: string): Promise<void> {
-    return new Promise<void>((resolve) => {
+    return new Promise<void>(resolve => {
       const checkStatus = () => {
         const execution = this.executions.get(executionId);
         if (!execution || execution.status !== 'running') {

@@ -1,18 +1,18 @@
 /**
  * Test file for AgentFactory and TaskBuilder implementations
- * 
+ *
  * Comprehensive tests to ensure both implementations are working correctly
  * and integrate properly with existing types.
  */
 
-import { 
-  AgentFactory, 
-  TaskBuilder, 
+import {
+  AgentFactory,
+  TaskBuilder,
   WorkflowBuilder,
   createAgent,
   createFromTemplate,
   createTask,
-  createTaskFromTemplate
+  createTaskFromTemplate,
 } from './index.js';
 import { AgentConfig, Task, TaskPriority } from './types.js';
 import { Logger } from '../logging/index.js';
@@ -25,7 +25,7 @@ async function testAgentFactory(): Promise<void> {
 
   const logger = new Logger({
     level: 'info',
-    context: { component: 'AgentFactoryTest' }
+    context: { component: 'AgentFactoryTest' },
   });
 
   const factory = new AgentFactory({ logger });
@@ -36,7 +36,7 @@ async function testAgentFactory(): Promise<void> {
       name: 'TestWorker',
       type: 'worker',
       capabilities: ['task-execution', 'processing'],
-      maxConcurrentTasks: 3
+      maxConcurrentTasks: 3,
     };
 
     const worker = await factory.createAgent(workerConfig);
@@ -44,7 +44,7 @@ async function testAgentFactory(): Promise<void> {
 
     // Test template-based creation
     const templateWorker = await factory.createFromTemplate('basic-worker', {
-      name: 'TemplateWorker'
+      name: 'TemplateWorker',
     });
     console.log(`✓ Created template-based worker: ${templateWorker.id}`);
 
@@ -53,7 +53,7 @@ async function testAgentFactory(): Promise<void> {
       name: 'ClusterWorker',
       type: 'worker',
       capabilities: ['processing'],
-      maxConcurrentTasks: 2
+      maxConcurrentTasks: 2,
     });
     console.log(`✓ Created agent cluster with ${cluster.length} agents`);
 
@@ -62,13 +62,15 @@ async function testAgentFactory(): Promise<void> {
       minSize: 1,
       maxSize: 5,
       idleTimeout: 60000,
-      recycleThreshold: 10
+      recycleThreshold: 10,
     });
     console.log('✓ Configured agent pooling');
 
     // Test pool statistics
     const stats = factory.getPoolStats();
-    console.log(`✓ Pool stats: ${Array.from(stats.entries()).length} pool types`);
+    console.log(
+      `✓ Pool stats: ${Array.from(stats.entries()).length} pool types`
+    );
 
     // Test template registration
     factory.registerTemplate({
@@ -76,10 +78,10 @@ async function testAgentFactory(): Promise<void> {
       type: 'specialist',
       baseConfig: {
         capabilities: ['testing'],
-        maxConcurrentTasks: 1
+        maxConcurrentTasks: 1,
       },
       description: 'Test template',
-      tags: ['test']
+      tags: ['test'],
     });
     console.log('✓ Registered custom template');
 
@@ -88,7 +90,7 @@ async function testAgentFactory(): Promise<void> {
       name: 'HelperWorker',
       type: 'worker',
       capabilities: ['testing'],
-      maxConcurrentTasks: 1
+      maxConcurrentTasks: 1,
     });
     console.log(`✓ Created agent using helper function: ${helperWorker.id}`);
 
@@ -96,7 +98,6 @@ async function testAgentFactory(): Promise<void> {
     await factory.clearPools();
     await factory.shutdown();
     console.log('✓ AgentFactory cleanup completed');
-
   } catch (error) {
     console.error('✗ AgentFactory test failed:', error);
     throw error;
@@ -129,7 +130,7 @@ async function testTaskBuilder(): Promise<void> {
       .withDependencies([basicTask.id])
       .withConstraints({
         requiredCapabilities: ['analysis'],
-        parallelizable: false
+        parallelizable: false,
       })
       .build();
 
@@ -144,16 +145,16 @@ async function testTaskBuilder(): Promise<void> {
         priority: 'medium',
         constraints: {
           requiredCapabilities: ['processing'],
-          maxExecutionTime: 15000
-        }
+          maxExecutionTime: 15000,
+        },
       },
       description: 'Template for test processing',
-      tags: ['test', 'template']
+      tags: ['test', 'template'],
     });
 
     const templateTask = new TaskBuilder()
       .fromTemplate('test-processing', {
-        description: 'Custom template task'
+        description: 'Custom template task',
       })
       .withMetadataProperty('custom', 'value')
       .build();
@@ -168,43 +169,55 @@ async function testTaskBuilder(): Promise<void> {
         {
           type: 'processing',
           description: 'Subtask 1',
-          input: { step: 1 }
+          input: { step: 1 },
         },
         {
           type: 'analysis',
           description: 'Subtask 2',
-          dependencies: [/* would reference subtask 1 */],
-          priority: 'high'
-        }
+          dependencies: [
+            /* would reference subtask 1 */
+          ],
+          priority: 'high',
+        },
       ]);
 
     console.log(`✓ Created parent task with ${subtasks.length} subtasks`);
-    console.log(`  Parent: ${parentTask.id}, Subtasks: ${parentTask.subtasks?.join(', ')}`);
+    console.log(
+      `  Parent: ${parentTask.id}, Subtasks: ${parentTask.subtasks?.join(', ')}`
+    );
 
     // Test workflow builder
     const workflow = new WorkflowBuilder('test-workflow', {
       description: 'Test workflow',
-      parallel: false
+      parallel: false,
     });
 
-    const task1 = workflow.createTask('task1', 'processing')
+    const task1 = workflow
+      .createTask('task1', 'processing')
       .withDescription('First task in workflow')
       .withInput({ stage: 1 });
 
-    const task2 = workflow.createTask('task2', 'analysis')
+    const task2 = workflow
+      .createTask('task2', 'analysis')
       .withDescription('Second task in workflow')
       .withInput({ stage: 2 });
 
     workflow.addDependency('task1', 'task2');
 
-    const { coordinatorTask, tasks, dependencies } = workflow.buildWithCoordinator();
+    const { coordinatorTask, tasks, dependencies } =
+      workflow.buildWithCoordinator();
 
     console.log(`✓ Created workflow with coordinator`);
     console.log(`  Coordinator: ${coordinatorTask.id}`);
-    console.log(`  Tasks: ${tasks.length}, Dependencies: ${dependencies.length}`);
+    console.log(
+      `  Tasks: ${tasks.length}, Dependencies: ${dependencies.length}`
+    );
 
     // Test helper functions
-    const helperTask = createTask('testing', 'Helper task created with utility function')
+    const helperTask = createTask(
+      'testing',
+      'Helper task created with utility function'
+    )
       .withPriority('low')
       .build();
 
@@ -213,9 +226,11 @@ async function testTaskBuilder(): Promise<void> {
     // Test task validation
     try {
       new TaskBuilder('invalid')
-        .withDescription('')  // Empty description should fail
+        .withDescription('') // Empty description should fail
         .build();
-      console.log('✗ Task validation failed - empty description should have been caught');
+      console.log(
+        '✗ Task validation failed - empty description should have been caught'
+      );
     } catch (error) {
       console.log('✓ Task validation working - caught empty description');
     }
@@ -228,18 +243,21 @@ async function testTaskBuilder(): Promise<void> {
       .withDescription('Cloned task')
       .withPriority('medium');
 
-    const originalTask = clonedBuilder.reset('processing')
+    const originalTask = clonedBuilder
+      .reset('processing')
       .withDescription('Original task')
       .withPriority('high')
       .build();
 
-    const clonedTask = clonedBuilder.clone()
+    const clonedTask = clonedBuilder
+      .clone()
       .withDescription('Cloned task')
       .withPriority('medium')
       .build();
 
-    console.log(`✓ Task cloning works: original=${originalTask.id}, clone=${clonedTask.id}`);
-
+    console.log(
+      `✓ Task cloning works: original=${originalTask.id}, clone=${clonedTask.id}`
+    );
   } catch (error) {
     console.error('✗ TaskBuilder test failed:', error);
     throw error;
@@ -255,20 +273,22 @@ async function testIntegration(): Promise<void> {
   try {
     const logger = new Logger({
       level: 'info',
-      context: { component: 'IntegrationTest' }
+      context: { component: 'IntegrationTest' },
     });
 
     const factory = new AgentFactory({ logger });
 
     // Create a workflow with tasks
     const workflow = new WorkflowBuilder('integration-test');
-    
-    workflow.createTask('data-prep', 'processing')
+
+    workflow
+      .createTask('data-prep', 'processing')
       .withDescription('Prepare data for analysis')
       .withRequiredCapabilities(['data-processing'])
       .withInput({ dataset: 'test-data' });
 
-    workflow.createTask('analysis', 'analysis')
+    workflow
+      .createTask('analysis', 'analysis')
       .withDescription('Analyze prepared data')
       .withRequiredCapabilities(['analysis', 'pattern-recognition'])
       .withInput({ algorithm: 'ml-analysis' });
@@ -280,18 +300,21 @@ async function testIntegration(): Promise<void> {
     // Create appropriate agents for the tasks
     const dataWorker = await factory.createFromTemplate('basic-worker', {
       name: 'DataWorker',
-      capabilities: ['data-processing', 'task-execution']
+      capabilities: ['data-processing', 'task-execution'],
     });
 
-    const analysisSpecialist = await factory.createFromTemplate('specialist-analyzer', {
-      name: 'AnalysisSpecialist'
-    });
+    const analysisSpecialist = await factory.createFromTemplate(
+      'specialist-analyzer',
+      {
+        name: 'AnalysisSpecialist',
+      }
+    );
 
     const coordinator = await factory.createAgent({
       name: 'WorkflowCoordinator',
       type: 'coordinator',
       capabilities: ['coordination', 'workflow-management'],
-      maxConcurrentTasks: 10
+      maxConcurrentTasks: 10,
     });
 
     console.log(`✓ Created agents for workflow:`);
@@ -315,11 +338,12 @@ async function testIntegration(): Promise<void> {
       console.log(`✓ Coordinator can handle coordination task`);
     }
 
-    console.log(`✓ Integration test successful - workflow with ${tasks.length} tasks and compatible agents created`);
+    console.log(
+      `✓ Integration test successful - workflow with ${tasks.length} tasks and compatible agents created`
+    );
 
     // Cleanup
     await factory.shutdown();
-
   } catch (error) {
     console.error('✗ Integration test failed:', error);
     throw error;
@@ -331,16 +355,17 @@ async function testIntegration(): Promise<void> {
  */
 export async function runAgentFactoryTaskBuilderTests(): Promise<void> {
   console.log('=== AgentFactory and TaskBuilder Tests ===');
-  
+
   try {
     await testAgentFactory();
     await testTaskBuilder();
     await testIntegration();
-    
+
     console.log('\n✓ All tests passed successfully!');
-    console.log('✓ AgentFactory and TaskBuilder implementations are working correctly');
+    console.log(
+      '✓ AgentFactory and TaskBuilder implementations are working correctly'
+    );
     console.log('✓ Both files integrate properly with existing types');
-    
   } catch (error) {
     console.error('\n✗ Tests failed:', error);
     throw error;
@@ -348,11 +373,7 @@ export async function runAgentFactoryTaskBuilderTests(): Promise<void> {
 }
 
 // Export test functions for external use
-export {
-  testAgentFactory,
-  testTaskBuilder,
-  testIntegration
-};
+export { testAgentFactory, testTaskBuilder, testIntegration };
 
 // Run tests if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -361,7 +382,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       console.log('\nTest execution completed successfully');
       process.exit(0);
     })
-    .catch((error) => {
+    .catch(error => {
       console.error('\nTest execution failed:', error);
       process.exit(1);
     });

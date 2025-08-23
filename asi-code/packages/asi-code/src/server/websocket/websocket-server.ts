@@ -1,6 +1,6 @@
 /**
  * WebSocket Server Integration
- * 
+ *
  * Integrates WebSocket functionality with the existing Hono server,
  * providing real-time communication capabilities for ASI-Code.
  */
@@ -13,13 +13,9 @@ import { EventEmitter } from 'eventemitter3';
 
 import { WSConnectionManager } from './connection-manager.js';
 import { WSMessageQueue } from './message-queue.js';
-import { WSCompressionManager, WSBinaryManager } from './compression.js';
+import { WSBinaryManager, WSCompressionManager } from './compression.js';
 import { createDefaultMiddlewareStack } from './middleware.js';
-import type { 
-  WSMessage, 
-  WSServerEvents,
-  WSConnectionState 
-} from './types.js';
+import type { WSConnectionState, WSMessage, WSServerEvents } from './types.js';
 import type { ServerConfig } from '../../config/config-types.js';
 import type { ASIServer } from '../server.js';
 
@@ -30,13 +26,13 @@ export interface WebSocketServerEvents extends WSServerEvents {
 }
 
 export class WSServer extends EventEmitter<WebSocketServerEvents> {
-  private connectionManager: WSConnectionManager;
-  private messageQueue: WSMessageQueue;
-  private compressionManager: WSCompressionManager;
-  private binaryManager: WSBinaryManager;
-  private config: ServerConfig['websocket'];
-  private asiServer: ASIServer;
-  private wsServer?: WebSocket.Server;
+  private readonly connectionManager: WSConnectionManager;
+  private readonly messageQueue: WSMessageQueue;
+  private readonly compressionManager: WSCompressionManager;
+  private readonly binaryManager: WSBinaryManager;
+  private readonly config: ServerConfig['websocket'];
+  private readonly asiServer: ASIServer;
+  private readonly wsServer?: WebSocket.Server;
 
   constructor(asiServer: ASIServer) {
     super();
@@ -50,7 +46,9 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
     // Initialize managers
     this.connectionManager = new WSConnectionManager(this.config);
     this.messageQueue = new WSMessageQueue(this.config.messageQueue);
-    this.compressionManager = new WSCompressionManager(this.config.compression || { enabled: false, threshold: 1024, level: 6 });
+    this.compressionManager = new WSCompressionManager(
+      this.config.compression || { enabled: false, threshold: 1024, level: 6 }
+    );
     this.binaryManager = new WSBinaryManager({
       maxSize: this.config.binary?.maxSize,
       allowedTypes: this.config.binary?.allowedTypes,
@@ -67,25 +65,28 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
   setupRoutes(app: Hono): void {
     const wsPath = this.config.path || '/ws';
 
-    app.get(wsPath, upgradeWebSocket((c) => {
-      return {
-        onOpen: (event, ws) => {
-          this.handleWebSocketConnection(ws);
-        },
-        onMessage: (event, ws) => {
-          // Handled by connection manager
-        },
-        onClose: (event, ws) => {
-          // Handled by connection manager
-        },
-        onError: (event, ws) => {
-          console.error('WebSocket error:', event);
-        },
-      };
-    }));
+    app.get(
+      wsPath,
+      upgradeWebSocket(c => {
+        return {
+          onOpen: (event, ws) => {
+            this.handleWebSocketConnection(ws);
+          },
+          onMessage: (event, ws) => {
+            // Handled by connection manager
+          },
+          onClose: (event, ws) => {
+            // Handled by connection manager
+          },
+          onError: (event, ws) => {
+            console.error('WebSocket error:', event);
+          },
+        };
+      })
+    );
 
     // WebSocket status endpoint
-    app.get('/api/websocket/status', (c) => {
+    app.get('/api/websocket/status', c => {
       const stats = this.getStats();
       return c.json({
         enabled: this.config.enabled,
@@ -95,13 +96,13 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
     });
 
     // WebSocket connection info endpoint
-    app.get('/api/websocket/connections', (c) => {
+    app.get('/api/websocket/connections', c => {
       const connections = this.connectionManager.getStats();
       return c.json(connections);
     });
 
     // Broadcast endpoint for server-side messages
-    app.post('/api/websocket/broadcast', async (c) => {
+    app.post('/api/websocket/broadcast', async c => {
       const { message, filter } = await c.req.json();
       await this.broadcast(message, filter);
       return c.json({ success: true });
@@ -113,19 +114,22 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
    */
   private handleWebSocketConnection(ws: WebSocket): void {
     const connectionId = this.connectionManager.addConnection(ws);
-    
+
     // Start processing queued messages for this connection
     const processQueue = async () => {
       if (ws.readyState === WebSocket.OPEN) {
-        await this.messageQueue.processConnectionQueue(connectionId, async (message) => {
-          try {
-            await this.sendToConnection(connectionId, message);
-            return true;
-          } catch (error) {
-            console.error('Error sending queued message:', error);
-            return false;
+        await this.messageQueue.processConnectionQueue(
+          connectionId,
+          async message => {
+            try {
+              await this.sendToConnection(connectionId, message);
+              return true;
+            } catch (error) {
+              console.error('Error sending queued message:', error);
+              return false;
+            }
           }
-        });
+        );
       }
     };
 
@@ -141,13 +145,17 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
   /**
    * Send message to a specific connection
    */
-  async sendToConnection(connectionId: string, message: WSMessage): Promise<void> {
+  async sendToConnection(
+    connectionId: string,
+    message: WSMessage
+  ): Promise<void> {
     // Apply compression if enabled and message is large enough
     let messageData: string | Buffer = JSON.stringify(message);
     let headers: Record<string, any> = {};
 
     if (this.config.compression?.enabled) {
-      const compressionResult = await this.compressionManager.compressMessage(messageData);
+      const compressionResult =
+        await this.compressionManager.compressMessage(messageData);
       if (compressionResult.compressed) {
         messageData = compressionResult.data;
         headers = {
@@ -180,14 +188,22 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
   /**
    * Broadcast to channel
    */
-  async broadcastToChannel(channel: string, message: WSMessage, exclude?: string[]): Promise<void> {
+  async broadcastToChannel(
+    channel: string,
+    message: WSMessage,
+    exclude?: string[]
+  ): Promise<void> {
     await this.connectionManager.broadcastToChannel(channel, message, exclude);
   }
 
   /**
    * Publish event to subscribers
    */
-  async publishEvent(event: string, payload: any, source?: string): Promise<void> {
+  async publishEvent(
+    event: string,
+    payload: any,
+    source?: string
+  ): Promise<void> {
     await this.connectionManager.publishEvent(event, payload, source);
   }
 
@@ -249,17 +265,23 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
       this.emit('connection:open', connectionId, connection);
     });
 
-    this.connectionManager.on('connection:close', (connectionId, code, reason) => {
-      this.emit('connection:close', connectionId, code, reason);
-    });
+    this.connectionManager.on(
+      'connection:close',
+      (connectionId, code, reason) => {
+        this.emit('connection:close', connectionId, code, reason);
+      }
+    );
 
     this.connectionManager.on('connection:error', (connectionId, error) => {
       this.emit('connection:error', connectionId, error);
     });
 
-    this.connectionManager.on('connection:authenticated', (connectionId, userId) => {
-      this.emit('connection:authenticated', connectionId, userId);
-    });
+    this.connectionManager.on(
+      'connection:authenticated',
+      (connectionId, userId) => {
+        this.emit('connection:authenticated', connectionId, userId);
+      }
+    );
 
     this.connectionManager.on('message:received', (connectionId, message) => {
       this.emit('message:received', connectionId, message);
@@ -290,7 +312,7 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
       this.emit('rate:limited', connectionId, type);
     });
 
-    this.connectionManager.on('queue:full', (connectionId) => {
+    this.connectionManager.on('queue:full', connectionId => {
       this.emit('queue:full', connectionId);
     });
   }
@@ -300,7 +322,7 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
    */
   private setupMiddleware(): void {
     const middlewareStack = createDefaultMiddlewareStack(this.config);
-    
+
     for (const middleware of middlewareStack) {
       this.connectionManager.use(middleware);
     }
@@ -335,26 +357,29 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
   /**
    * Handle incoming WebSocket messages
    */
-  private async handleIncomingMessage(connectionId: string, message: WSMessage): Promise<void> {
+  private async handleIncomingMessage(
+    connectionId: string,
+    message: WSMessage
+  ): Promise<void> {
     try {
       // Handle special message types that require server integration
       switch (message.type) {
         case 'ai:stream:start':
           await this.handleAIStreamRequest(connectionId, message);
           break;
-        
+
         case 'tool:execute:start':
           await this.handleToolExecutionRequest(connectionId, message);
           break;
-        
+
         case 'session:update':
           await this.handleSessionUpdateRequest(connectionId, message);
           break;
-        
+
         case 'system:status':
           await this.handleSystemStatusRequest(connectionId, message);
           break;
-        
+
         default:
           // Message handled by connection manager
           break;
@@ -378,9 +403,12 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
   /**
    * Handle AI stream request
    */
-  private async handleAIStreamRequest(connectionId: string, message: WSMessage): Promise<void> {
+  private async handleAIStreamRequest(
+    connectionId: string,
+    message: WSMessage
+  ): Promise<void> {
     const { requestId, provider, model, prompt, options } = message.data || {};
-    
+
     if (!requestId || !provider || !prompt) {
       await this.sendToConnection(connectionId, {
         id: nanoid(),
@@ -478,7 +506,6 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
         onComplete: handleComplete,
         onError: handleError,
       });
-
     } catch (error) {
       console.error('AI stream error:', error);
       await this.sendToConnection(connectionId, {
@@ -497,9 +524,12 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
   /**
    * Handle tool execution request
    */
-  private async handleToolExecutionRequest(connectionId: string, message: WSMessage): Promise<void> {
+  private async handleToolExecutionRequest(
+    connectionId: string,
+    message: WSMessage
+  ): Promise<void> {
     const { executionId, toolName, parameters, sessionId } = message.data || {};
-    
+
     if (!executionId || !toolName) {
       await this.sendToConnection(connectionId, {
         id: nanoid(),
@@ -577,7 +607,6 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
           duration: Date.now() - startTime,
         },
       });
-
     } catch (error) {
       console.error('Tool execution error:', error);
       await this.sendToConnection(connectionId, {
@@ -596,9 +625,12 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
   /**
    * Handle session update request
    */
-  private async handleSessionUpdateRequest(connectionId: string, message: WSMessage): Promise<void> {
+  private async handleSessionUpdateRequest(
+    connectionId: string,
+    message: WSMessage
+  ): Promise<void> {
     const { sessionId, update } = message.data || {};
-    
+
     if (!sessionId) {
       await this.sendToConnection(connectionId, {
         id: nanoid(),
@@ -651,7 +683,6 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
           },
         },
       });
-
     } catch (error) {
       console.error('Session update error:', error);
       await this.sendToConnection(connectionId, {
@@ -659,7 +690,8 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
         type: 'connection:error',
         timestamp: Date.now(),
         data: {
-          error: error instanceof Error ? error.message : 'Session update error',
+          error:
+            error instanceof Error ? error.message : 'Session update error',
           code: 'SESSION_UPDATE_ERROR',
           timestamp: Date.now(),
         },
@@ -670,10 +702,13 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
   /**
    * Handle system status request
    */
-  private async handleSystemStatusRequest(connectionId: string, message: WSMessage): Promise<void> {
+  private async handleSystemStatusRequest(
+    connectionId: string,
+    message: WSMessage
+  ): Promise<void> {
     try {
       const stats = this.getStats();
-      
+
       await this.sendToConnection(connectionId, {
         id: nanoid(),
         type: 'system:status',
@@ -693,7 +728,6 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
           timestamp: Date.now(),
         },
       });
-
     } catch (error) {
       console.error('System status error:', error);
       await this.sendToConnection(connectionId, {
@@ -721,7 +755,7 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
     this.connectionManager.cleanup();
     this.messageQueue.cleanup();
     this.removeAllListeners();
-    
+
     if (this.wsServer) {
       this.wsServer.close();
     }

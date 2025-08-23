@@ -55,9 +55,9 @@ export interface APIKeyValidationResult {
 }
 
 export class APIKeyManager {
-  private keys: Map<string, APIKey> = new Map();
-  private userKeys: Map<string, Set<string>> = new Map();
-  private rotationSchedule: Map<string, Date> = new Map();
+  private readonly keys: Map<string, APIKey> = new Map();
+  private readonly userKeys: Map<string, Set<string>> = new Map();
+  private readonly rotationSchedule: Map<string, Date> = new Map();
   private auditLog: Array<{
     action: string;
     keyId: string;
@@ -74,7 +74,9 @@ export class APIKeyManager {
   /**
    * Generate a new API key
    */
-  async generateAPIKey(request: CreateAPIKeyRequest): Promise<{ key: APIKey; plainKey: string }> {
+  async generateAPIKey(
+    request: CreateAPIKeyRequest
+  ): Promise<{ key: APIKey; plainKey: string }> {
     try {
       const keyId = uuidv4();
       const plainKey = this.generateSecureKey();
@@ -92,12 +94,12 @@ export class APIKeyManager {
         createdAt: new Date(),
         usageCount: 0,
         rateLimit: request.rateLimit,
-        ipWhitelist: request.ipWhitelist
+        ipWhitelist: request.ipWhitelist,
       };
 
       // Store the key (don't store plain key in production)
       this.keys.set(keyId, { ...apiKey, key: '' }); // Remove plain key from storage
-      
+
       // Track user keys
       if (!this.userKeys.has(request.userId)) {
         this.userKeys.set(request.userId, new Set());
@@ -113,14 +115,14 @@ export class APIKeyManager {
       this.logAuditEvent('key_created', keyId, request.userId, {
         name: request.name,
         permissions: request.permissions,
-        expiresAt: request.expiresAt
+        expiresAt: request.expiresAt,
       });
 
       logger.info('API key generated', {
         keyId,
         userId: request.userId,
         name: request.name,
-        permissions: request.permissions
+        permissions: request.permissions,
       });
 
       return { key: apiKey, plainKey };
@@ -133,11 +135,14 @@ export class APIKeyManager {
   /**
    * Validate an API key
    */
-  async validateAPIKey(providedKey: string, clientIP?: string): Promise<APIKeyValidationResult> {
+  async validateAPIKey(
+    providedKey: string,
+    clientIP?: string
+  ): Promise<APIKeyValidationResult> {
     try {
       // Extract key ID from the key format (aki_xxxx_yyyy...)
       const keyPrefix = providedKey.substring(0, 12);
-      
+
       // Find matching key by comparing hashes (in production, use database lookup)
       for (const [keyId, storedKey] of this.keys.entries()) {
         if (await bcrypt.compare(providedKey, storedKey.hashedKey)) {
@@ -145,20 +150,20 @@ export class APIKeyManager {
         }
       }
 
-      this.logAuditEvent('key_validation_failed', 'unknown', 'unknown', { 
-        keyPrefix, 
-        clientIP 
+      this.logAuditEvent('key_validation_failed', 'unknown', 'unknown', {
+        keyPrefix,
+        clientIP,
       });
 
       return {
         isValid: false,
-        error: 'Invalid API key'
+        error: 'Invalid API key',
       };
     } catch (error) {
       logger.error('API key validation error', error);
       return {
         isValid: false,
-        error: 'Validation error'
+        error: 'Validation error',
       };
     }
   }
@@ -166,48 +171,51 @@ export class APIKeyManager {
   /**
    * Validate a stored key
    */
-  private async validateStoredKey(key: APIKey, clientIP?: string): Promise<APIKeyValidationResult> {
+  private async validateStoredKey(
+    key: APIKey,
+    clientIP?: string
+  ): Promise<APIKeyValidationResult> {
     // Check if key is active
     if (!key.isActive) {
-      this.logAuditEvent('key_validation_failed', key.id, key.userId, { 
+      this.logAuditEvent('key_validation_failed', key.id, key.userId, {
         reason: 'inactive',
-        clientIP 
+        clientIP,
       });
       return {
         isValid: false,
-        error: 'API key is inactive'
+        error: 'API key is inactive',
       };
     }
 
     // Check expiration
     if (key.expiresAt && new Date() > key.expiresAt) {
-      this.logAuditEvent('key_validation_failed', key.id, key.userId, { 
+      this.logAuditEvent('key_validation_failed', key.id, key.userId, {
         reason: 'expired',
         expiresAt: key.expiresAt,
-        clientIP 
+        clientIP,
       });
-      
+
       // Auto-deactivate expired keys
       await this.deactivateKey(key.id);
-      
+
       return {
         isValid: false,
         error: 'API key has expired',
-        shouldRotate: true
+        shouldRotate: true,
       };
     }
 
     // Check IP whitelist
     if (key.ipWhitelist && key.ipWhitelist.length > 0 && clientIP) {
       if (!key.ipWhitelist.includes(clientIP)) {
-        this.logAuditEvent('key_validation_failed', key.id, key.userId, { 
+        this.logAuditEvent('key_validation_failed', key.id, key.userId, {
           reason: 'ip_not_whitelisted',
           clientIP,
-          whitelist: key.ipWhitelist 
+          whitelist: key.ipWhitelist,
         });
         return {
           isValid: false,
-          error: 'IP address not whitelisted'
+          error: 'IP address not whitelisted',
         };
       }
     }
@@ -216,21 +224,23 @@ export class APIKeyManager {
     key.lastUsedAt = new Date();
     key.usageCount++;
 
-    this.logAuditEvent('key_used', key.id, key.userId, { 
+    this.logAuditEvent('key_used', key.id, key.userId, {
       clientIP,
-      usageCount: key.usageCount 
+      usageCount: key.usageCount,
     });
 
     return {
       isValid: true,
-      key
+      key,
     };
   }
 
   /**
    * Rotate an API key
    */
-  async rotateAPIKey(keyId: string): Promise<{ key: APIKey; plainKey: string }> {
+  async rotateAPIKey(
+    keyId: string
+  ): Promise<{ key: APIKey; plainKey: string }> {
     try {
       const existingKey = this.keys.get(keyId);
       if (!existingKey) {
@@ -325,7 +335,7 @@ export class APIKeyManager {
       createdAt: key.createdAt,
       lastUsedAt: key.lastUsedAt,
       usageCount: key.usageCount,
-      keyPrefix: key.hashedKey.substring(0, 8)
+      keyPrefix: key.hashedKey.substring(0, 8),
     };
   }
 
@@ -350,7 +360,7 @@ export class APIKeyManager {
     const prefix = 'aki'; // API Key Identifier
     const timestamp = Date.now().toString(36);
     const randomBytes = crypto.randomBytes(32).toString('hex');
-    
+
     return `${prefix}_${timestamp}_${randomBytes}`;
   }
 
@@ -358,9 +368,12 @@ export class APIKeyManager {
    * Schedule automatic key rotation
    */
   private scheduleKeyRotation(): void {
-    setInterval(() => {
-      this.checkAndRotateKeys();
-    }, 24 * 60 * 60 * 1000); // Check daily
+    setInterval(
+      () => {
+        this.checkAndRotateKeys();
+      },
+      24 * 60 * 60 * 1000
+    ); // Check daily
 
     logger.info('API key rotation schedule initialized');
   }
@@ -374,7 +387,9 @@ export class APIKeyManager {
 
     this.rotationSchedule.forEach((expiryDate, keyId) => {
       // Rotate keys 7 days before expiry
-      const rotationDate = new Date(expiryDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const rotationDate = new Date(
+        expiryDate.getTime() - 7 * 24 * 60 * 60 * 1000
+      );
       if (now >= rotationDate) {
         keysToRotate.push(keyId);
       }
@@ -394,9 +409,12 @@ export class APIKeyManager {
    * Start cleanup job for expired keys
    */
   private startCleanupJob(): void {
-    setInterval(() => {
-      this.cleanupExpiredKeys();
-    }, 24 * 60 * 60 * 1000); // Daily cleanup
+    setInterval(
+      () => {
+        this.cleanupExpiredKeys();
+      },
+      24 * 60 * 60 * 1000
+    ); // Daily cleanup
 
     logger.info('API key cleanup job started');
   }
@@ -411,7 +429,8 @@ export class APIKeyManager {
     this.keys.forEach((key, keyId) => {
       // Cleanup keys expired for more than 30 days
       if (key.expiresAt && !key.isActive) {
-        const expiredDays = (now.getTime() - key.expiresAt.getTime()) / (24 * 60 * 60 * 1000);
+        const expiredDays =
+          (now.getTime() - key.expiresAt.getTime()) / (24 * 60 * 60 * 1000);
         if (expiredDays > 30) {
           keysToCleanup.push(keyId);
         }
@@ -431,13 +450,18 @@ export class APIKeyManager {
   /**
    * Log audit event
    */
-  private logAuditEvent(action: string, keyId: string, userId: string, metadata?: any): void {
+  private logAuditEvent(
+    action: string,
+    keyId: string,
+    userId: string,
+    metadata?: any
+  ): void {
     const event = {
       action,
       keyId,
       userId,
       timestamp: new Date(),
-      metadata
+      metadata,
     };
 
     this.auditLog.push(event);
@@ -453,13 +477,15 @@ export class APIKeyManager {
   /**
    * Get audit log for a key
    */
-  getKeyAuditLog(keyId: string): Array<{ action: string; timestamp: Date; metadata?: any }> {
+  getKeyAuditLog(
+    keyId: string
+  ): Array<{ action: string; timestamp: Date; metadata?: any }> {
     return this.auditLog
       .filter(event => event.keyId === keyId)
       .map(event => ({
         action: event.action,
         timestamp: event.timestamp,
-        metadata: event.metadata
+        metadata: event.metadata,
       }));
   }
 
@@ -492,7 +518,7 @@ export class APIKeyManager {
       totalKeys: this.keys.size,
       activeKeys,
       expiredKeys,
-      totalUsage
+      totalUsage,
     };
   }
 }

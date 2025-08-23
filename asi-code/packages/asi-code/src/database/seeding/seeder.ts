@@ -1,6 +1,6 @@
 /**
  * Database Seeding System
- * 
+ *
  * Provides comprehensive data seeding capabilities with:
  * - Environment-specific seed data
  * - Dependency resolution between seeds
@@ -46,11 +46,11 @@ export interface SeederOptions {
 }
 
 export class Seeder {
-  private adapter: DatabaseAdapter;
-  private logger: Logger;
-  private seedsDirectory: string;
-  private seedTrackingTable = 'knex_seeds';
-  private registeredSeeds = new Map<string, SeedConfig>();
+  private readonly adapter: DatabaseAdapter;
+  private readonly logger: Logger;
+  private readonly seedsDirectory: string;
+  private readonly seedTrackingTable = 'knex_seeds';
+  private readonly registeredSeeds = new Map<string, SeedConfig>();
 
   constructor(adapter: DatabaseAdapter, logger: Logger) {
     this.adapter = adapter;
@@ -64,15 +64,15 @@ export class Seeder {
   async initialize(): Promise<void> {
     try {
       this.logger.info('Initializing seeding system');
-      
+
       // Ensure seed tracking table exists
       await this.ensureSeedTrackingTable();
-      
+
       // Load seed files
       await this.loadSeedFiles();
-      
+
       this.logger.info('Seeding system initialized successfully', {
-        seedsLoaded: this.registeredSeeds.size
+        seedsLoaded: this.registeredSeeds.size,
       });
     } catch (error) {
       this.logger.error('Failed to initialize seeding system', { error });
@@ -85,24 +85,27 @@ export class Seeder {
    */
   private async ensureSeedTrackingTable(): Promise<void> {
     const hasTable = await this.adapter.hasTable(this.seedTrackingTable);
-    
+
     if (!hasTable) {
-      await this.adapter.knex.schema.createTable(this.seedTrackingTable, (table) => {
-        table.increments('id').primary();
-        table.string('name').notNullable().unique();
-        table.string('filename').notNullable();
-        table.string('environment').notNullable();
-        table.timestamp('executed_at').defaultTo(this.adapter.knex.fn.now());
-        table.integer('execution_time').nullable();
-        table.boolean('success').defaultTo(true);
-        table.text('error_message').nullable();
-        table.json('metadata').nullable();
-        
-        table.index(['name']);
-        table.index(['environment']);
-        table.index(['executed_at']);
-        table.index(['success']);
-      });
+      await this.adapter.knex.schema.createTable(
+        this.seedTrackingTable,
+        table => {
+          table.increments('id').primary();
+          table.string('name').notNullable().unique();
+          table.string('filename').notNullable();
+          table.string('environment').notNullable();
+          table.timestamp('executed_at').defaultTo(this.adapter.knex.fn.now());
+          table.integer('execution_time').nullable();
+          table.boolean('success').defaultTo(true);
+          table.text('error_message').nullable();
+          table.json('metadata').nullable();
+
+          table.index(['name']);
+          table.index(['environment']);
+          table.index(['executed_at']);
+          table.index(['success']);
+        }
+      );
     }
   }
 
@@ -113,16 +116,16 @@ export class Seeder {
     try {
       const files = await fs.readdir(this.seedsDirectory);
       const extensions = this.adapter.config.seeds.loadExtensions;
-      
+
       for (const file of files) {
         const ext = path.extname(file);
         if (!extensions.includes(ext)) continue;
-        
+
         const fullPath = path.join(this.seedsDirectory, file);
-        
+
         try {
           const seedModule = require(fullPath);
-          
+
           if (seedModule.config && typeof seedModule.seed === 'function') {
             const config: SeedConfig = {
               name: seedModule.config.name || path.basename(file, ext),
@@ -131,15 +134,15 @@ export class Seeder {
               dependencies: seedModule.config.dependencies || [],
               order: seedModule.config.order || 0,
               transactional: seedModule.config.transactional !== false,
-              generator: seedModule.seed
+              generator: seedModule.seed,
             };
-            
+
             this.registeredSeeds.set(config.name, config);
-            
+
             this.logger.debug('Loaded seed file', {
               name: config.name,
               file,
-              environments: config.environment
+              environments: config.environment,
             });
           } else {
             this.logger.warn('Invalid seed file format', { file });
@@ -147,14 +150,14 @@ export class Seeder {
         } catch (error) {
           this.logger.error('Failed to load seed file', {
             file,
-            error: error.message
+            error: error.message,
           });
         }
       }
     } catch (error) {
       this.logger.error('Failed to read seeds directory', {
         directory: this.seedsDirectory,
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
@@ -164,29 +167,30 @@ export class Seeder {
    * Run seeds based on options
    */
   async run(options: SeederOptions = {}): Promise<SeedInfo[]> {
-    const environment = options.environment || process.env.NODE_ENV || 'development';
-    
+    const environment =
+      options.environment || process.env.NODE_ENV || 'development';
+
     this.logger.info('Running seeds', {
       environment,
-      options
+      options,
     });
 
     try {
       // Get seeds to run
       const seedsToRun = await this.getSeeds(environment, options);
-      
+
       if (seedsToRun.length === 0) {
         this.logger.info('No seeds to run');
         return [];
       }
 
       // Resolve dependencies
-      const orderedSeeds = options.skipDependencies ? 
-        seedsToRun : 
-        this.resolveDependencies(seedsToRun);
+      const orderedSeeds = options.skipDependencies
+        ? seedsToRun
+        : this.resolveDependencies(seedsToRun);
 
       this.logger.info(`Running ${orderedSeeds.length} seeds`, {
-        seeds: orderedSeeds.map(s => s.name)
+        seeds: orderedSeeds.map(s => s.name),
       });
 
       const results: SeedInfo[] = [];
@@ -208,7 +212,10 @@ export class Seeder {
   /**
    * Get seeds to run based on environment and options
    */
-  private async getSeeds(environment: string, options: SeederOptions): Promise<SeedConfig[]> {
+  private async getSeeds(
+    environment: string,
+    options: SeederOptions
+  ): Promise<SeedConfig[]> {
     let seeds = Array.from(this.registeredSeeds.values());
 
     // Filter by environment
@@ -234,7 +241,8 @@ export class Seeder {
    */
   private async getExecutedSeeds(environment: string): Promise<SeedInfo[]> {
     try {
-      const seeds = await this.adapter.knex(this.seedTrackingTable)
+      const seeds = await this.adapter
+        .knex(this.seedTrackingTable)
         .where({ environment, success: true })
         .orderBy('executed_at', 'asc');
 
@@ -245,7 +253,7 @@ export class Seeder {
         executedAt: row.executed_at,
         executionTime: row.execution_time,
         success: row.success,
-        error: row.error_message
+        error: row.error_message,
       }));
     } catch (error) {
       this.logger.error('Failed to get executed seeds', { error });
@@ -267,7 +275,9 @@ export class Seeder {
       }
 
       if (resolving.has(seedName)) {
-        throw new Error(`Circular dependency detected involving seed: ${seedName}`);
+        throw new Error(
+          `Circular dependency detected involving seed: ${seedName}`
+        );
       }
 
       const seed = seedMap.get(seedName);
@@ -306,12 +316,12 @@ export class Seeder {
     options: SeederOptions
   ): Promise<SeedInfo> {
     const startTime = Date.now();
-    
+
     this.logger.info('Executing seed', {
       name: seed.name,
       description: seed.description,
       transactional: seed.transactional,
-      dryRun: options.dryRun
+      dryRun: options.dryRun,
     });
 
     try {
@@ -319,13 +329,13 @@ export class Seeder {
         environment,
         knex: this.adapter.knex,
         dryRun: options.dryRun || false,
-        force: options.force || false
+        force: options.force || false,
       };
 
       let result: any;
 
       if (seed.transactional) {
-        result = await this.adapter.transaction(async (trx) => {
+        result = await this.adapter.transaction(async trx => {
           context.transaction = trx;
           return await seed.generator!(trx);
         });
@@ -343,7 +353,7 @@ export class Seeder {
       this.logger.info('Seed executed successfully', {
         name: seed.name,
         executionTime,
-        dryRun: options.dryRun
+        dryRun: options.dryRun,
       });
 
       return {
@@ -352,20 +362,26 @@ export class Seeder {
         filename: `${seed.name}.ts`,
         executedAt: new Date(),
         executionTime,
-        success: true
+        success: true,
       };
     } catch (error) {
       const executionTime = Date.now() - startTime;
 
       // Record failed execution
       if (!options.dryRun) {
-        await this.recordSeedExecution(seed, environment, executionTime, false, error.message);
+        await this.recordSeedExecution(
+          seed,
+          environment,
+          executionTime,
+          false,
+          error.message
+        );
       }
 
       this.logger.error('Seed execution failed', {
         name: seed.name,
         error: error.message,
-        executionTime
+        executionTime,
       });
 
       throw new Error(`Seed '${seed.name}' failed: ${error.message}`);
@@ -384,7 +400,8 @@ export class Seeder {
   ): Promise<void> {
     try {
       // Delete existing record if force re-run
-      await this.adapter.knex(this.seedTrackingTable)
+      await this.adapter
+        .knex(this.seedTrackingTable)
         .where({ name: seed.name, environment })
         .delete();
 
@@ -399,13 +416,13 @@ export class Seeder {
         metadata: JSON.stringify({
           description: seed.description,
           dependencies: seed.dependencies,
-          order: seed.order
-        })
+          order: seed.order,
+        }),
       });
     } catch (error) {
       this.logger.error('Failed to record seed execution', {
         seed: seed.name,
-        error: error.message
+        error: error.message,
       });
     }
   }
@@ -414,8 +431,9 @@ export class Seeder {
    * Rollback seeds
    */
   async rollback(options: SeederOptions = {}): Promise<SeedInfo[]> {
-    const environment = options.environment || process.env.NODE_ENV || 'development';
-    
+    const environment =
+      options.environment || process.env.NODE_ENV || 'development';
+
     this.logger.info('Rolling back seeds', { environment, options });
 
     try {
@@ -425,7 +443,7 @@ export class Seeder {
 
       if (options.seedNames && options.seedNames.length > 0) {
         // Filter by specific seed names
-        const filteredSeeds = seedsToRollback.filter(seed => 
+        const filteredSeeds = seedsToRollback.filter(seed =>
           options.seedNames!.includes(seed.name)
         );
         seedsToRollback.length = 0;
@@ -441,15 +459,20 @@ export class Seeder {
 
       for (const seedInfo of seedsToRollback) {
         const seed = this.registeredSeeds.get(seedInfo.name);
-        
+
         if (!seed) {
           this.logger.warn('Seed definition not found for rollback', {
-            name: seedInfo.name
+            name: seedInfo.name,
           });
           continue;
         }
 
-        const result = await this.rollbackSeed(seed, seedInfo, environment, options);
+        const result = await this.rollbackSeed(
+          seed,
+          seedInfo,
+          environment,
+          options
+        );
         results.push(result);
       }
 
@@ -471,29 +494,32 @@ export class Seeder {
     options: SeederOptions
   ): Promise<SeedInfo> {
     const startTime = Date.now();
-    
+
     this.logger.info('Rolling back seed', { name: seed.name });
 
     try {
       // Check if seed has rollback method
       const seedPath = path.join(this.seedsDirectory, `${seed.name}.ts`);
       const seedModule = require(seedPath);
-      
+
       if (seedModule.rollback && typeof seedModule.rollback === 'function') {
         if (seed.transactional) {
-          await this.adapter.transaction(async (trx) => {
+          await this.adapter.transaction(async trx => {
             await seedModule.rollback(trx);
           });
         } else {
           await seedModule.rollback(this.adapter.knex);
         }
       } else {
-        this.logger.warn('No rollback method found for seed', { name: seed.name });
+        this.logger.warn('No rollback method found for seed', {
+          name: seed.name,
+        });
       }
 
       // Remove from tracking table
       if (!options.dryRun) {
-        await this.adapter.knex(this.seedTrackingTable)
+        await this.adapter
+          .knex(this.seedTrackingTable)
           .where({ name: seed.name, environment })
           .delete();
       }
@@ -503,7 +529,7 @@ export class Seeder {
       this.logger.info('Seed rolled back successfully', {
         name: seed.name,
         executionTime,
-        dryRun: options.dryRun
+        dryRun: options.dryRun,
       });
 
       return {
@@ -512,12 +538,12 @@ export class Seeder {
         filename: `${seed.name}.ts`,
         executedAt: new Date(),
         executionTime,
-        success: true
+        success: true,
       };
     } catch (error) {
       this.logger.error('Seed rollback failed', {
         name: seed.name,
-        error: error.message
+        error: error.message,
       });
 
       throw new Error(`Seed rollback '${seed.name}' failed: ${error.message}`);
@@ -529,7 +555,9 @@ export class Seeder {
    */
   registerSeed(config: SeedConfig): void {
     this.registeredSeeds.set(config.name, config);
-    this.logger.debug('Seed registered programmatically', { name: config.name });
+    this.logger.debug('Seed registered programmatically', {
+      name: config.name,
+    });
   }
 
   /**
@@ -543,27 +571,29 @@ export class Seeder {
     lastExecuted?: Date;
   }> {
     const env = environment || process.env.NODE_ENV || 'development';
-    
-    const availableSeeds = Array.from(this.registeredSeeds.values())
-      .filter(seed => seed.environment.includes(env));
-    
+
+    const availableSeeds = Array.from(this.registeredSeeds.values()).filter(
+      seed => seed.environment.includes(env)
+    );
+
     const executedSeeds = await this.getExecutedSeeds(env);
     const executedNames = new Set(executedSeeds.map(s => s.name));
-    
+
     const pendingSeeds = availableSeeds
       .filter(seed => !executedNames.has(seed.name))
       .map(seed => seed.name);
 
-    const lastExecuted = executedSeeds.length > 0 ? 
-      executedSeeds[executedSeeds.length - 1].executedAt : 
-      undefined;
+    const lastExecuted =
+      executedSeeds.length > 0
+        ? executedSeeds[executedSeeds.length - 1].executedAt
+        : undefined;
 
     return {
       environment: env,
       availableSeeds: availableSeeds.length,
       executedSeeds: executedSeeds.length,
       pendingSeeds,
-      lastExecuted
+      lastExecuted,
     };
   }
 
@@ -583,13 +613,14 @@ export class Seeder {
     try {
       const filename = `${name}.ts`;
       const filepath = path.join(this.seedsDirectory, filename);
-      
-      const template = options.template || this.getDefaultSeedTemplate(name, options);
-      
+
+      const template =
+        options.template || this.getDefaultSeedTemplate(name, options);
+
       await fs.writeFile(filepath, template, 'utf8');
-      
+
       this.logger.info('Seed file created', { name, filepath });
-      
+
       return filepath;
     } catch (error) {
       this.logger.error('Failed to create seed file', { error, name });

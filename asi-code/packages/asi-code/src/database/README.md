@@ -2,7 +2,8 @@
 
 ## Overview
 
-This comprehensive database layer provides enterprise-grade functionality for ASI-Code with zero-downtime deployments, high availability, and production-ready features.
+This comprehensive database layer provides enterprise-grade functionality for ASI-Code with
+zero-downtime deployments, high availability, and production-ready features.
 
 ## Architecture
 
@@ -36,30 +37,35 @@ Database Layer
 ## Key Features
 
 ### 1. Connection Management
+
 - **PostgreSQL Connection Pooling**: Robust connection pooling with configurable pool sizes
 - **Read/Write Splitting**: Automatic query routing to read replicas for scalability
 - **Retry Logic**: Exponential backoff for connection failures and transient errors
 - **Health Monitoring**: Continuous health checks with automatic failover
 
 ### 2. Schema Management
+
 - **Zero-Downtime Migrations**: Lock-free migrations with validation
 - **Schema Versioning**: Semantic versioning with compatibility checking
 - **Migration Tracking**: Complete migration history and rollback capabilities
 - **Dependency Resolution**: Automatic dependency ordering for migrations
 
 ### 3. Query & Transaction Support
+
 - **Query Builder**: Type-safe query construction with caching
 - **Transaction Manager**: Nested transactions with savepoints
 - **Deadlock Detection**: Automatic retry for recoverable errors
 - **Performance Monitoring**: Query execution tracking and slow query detection
 
 ### 4. Production Features
+
 - **Soft Deletes**: Configurable soft delete with cascade support
 - **Audit Logging**: Comprehensive change tracking with triggers
 - **Performance Indexes**: Automatic index creation and optimization
 - **Data Seeding**: Environment-specific data seeding with dependencies
 
 ### 5. Operations & Monitoring
+
 - **Automated Backups**: Scheduled backups with compression and retention
 - **Health Checks**: Real-time database health monitoring
 - **Cleanup Jobs**: Automated data retention and archival
@@ -75,7 +81,7 @@ interface DatabaseConfig {
   database: string;
   username: string;
   password: string;
-  
+
   // Connection pooling
   pool: {
     min: number;
@@ -83,7 +89,7 @@ interface DatabaseConfig {
     acquireTimeoutMillis: number;
     // ... more pool settings
   };
-  
+
   // Read replicas for scaling
   readReplicas?: Array<{
     host: string;
@@ -91,21 +97,21 @@ interface DatabaseConfig {
     weight: number;
     // ... replica settings
   }>;
-  
+
   // Feature toggles
   softDelete: {
     enabled: boolean;
     columnName: string;
     // ... soft delete settings
   };
-  
+
   audit: {
     enabled: boolean;
     tableName: string;
     trackChanges: boolean;
     // ... audit settings
   };
-  
+
   // ... more configuration options
 }
 ```
@@ -113,6 +119,7 @@ interface DatabaseConfig {
 ## Usage Examples
 
 ### Basic Setup
+
 ```typescript
 import { Database, createDatabase } from './database';
 import { Logger } from '../logging';
@@ -131,16 +138,19 @@ const database = await createDatabase(config, logger);
 ```
 
 ### Query Builder
+
 ```typescript
 // Simple queries
-const users = await database.query()
+const users = await database
+  .query()
   .table('users')
   .where('active', true)
   .orderBy('created_at', 'desc')
   .get();
 
 // Complex queries with joins
-const userProfiles = await database.query()
+const userProfiles = await database
+  .query()
   .table('users')
   .leftJoin('profiles', 'users.id', 'profiles.user_id')
   .where('users.active', true)
@@ -148,24 +158,23 @@ const userProfiles = await database.query()
   .get();
 
 // Pagination
-const paginatedUsers = await database.query()
-  .table('users')
-  .paginate({ page: 1, limit: 20 });
+const paginatedUsers = await database.query().table('users').paginate({ page: 1, limit: 20 });
 ```
 
 ### Transactions
+
 ```typescript
 // Basic transaction
-await database.transaction().transaction(async (trx) => {
+await database.transaction().transaction(async trx => {
   await trx('users').insert({ name: 'John', email: 'john@example.com' });
   await trx('profiles').insert({ user_id: userId, bio: 'Developer' });
 });
 
 // Nested transactions with savepoints
-await database.transaction().transaction(async (trx) => {
+await database.transaction().transaction(async trx => {
   await trx('orders').insert(orderData);
-  
-  await database.transaction().savepoint(trx, 'items', async (sp) => {
+
+  await database.transaction().savepoint(trx, 'items', async sp => {
     for (const item of orderItems) {
       await sp('order_items').insert(item);
     }
@@ -174,6 +183,7 @@ await database.transaction().transaction(async (trx) => {
 ```
 
 ### Migrations
+
 ```typescript
 // Run pending migrations
 await database.migrations().runPendingMigrations();
@@ -187,42 +197,47 @@ console.log(`Pending migrations: ${status.pendingCount}`);
 ```
 
 ### Audit Context
+
 ```typescript
 import { AuditLogger } from './features/audit-logging';
 
 const auditLogger = new AuditLogger(adapter, logger);
 
 // Execute with audit context
-await auditLogger.withContext({
-  userId: 'user123',
-  sessionId: 'session456',
-  ipAddress: '192.168.1.1'
-}, async () => {
-  await database.query()
-    .table('users')
-    .where('id', userId)
-    .update({ last_login: new Date() });
-});
+await auditLogger.withContext(
+  {
+    userId: 'user123',
+    sessionId: 'session456',
+    ipAddress: '192.168.1.1',
+  },
+  async () => {
+    await database.query().table('users').where('id', userId).update({ last_login: new Date() });
+  }
+);
 ```
 
 ## Performance Optimizations
 
 ### Connection Pooling
+
 - Configurable pool sizes based on load
 - Connection lifecycle management
 - Automatic connection recovery
 
 ### Query Optimization
+
 - Automatic query plan analysis
 - Slow query detection and logging
 - Query result caching with TTL
 
 ### Read/Write Splitting
+
 - Automatic read query routing
 - Load balancing across replicas
 - Lag monitoring and failover
 
 ### Indexing Strategy
+
 - Automatic index creation for foreign keys
 - Composite indexes for common query patterns
 - Periodic index usage analysis
@@ -230,6 +245,7 @@ await auditLogger.withContext({
 ## Monitoring & Observability
 
 ### Health Checks
+
 ```typescript
 const health = await database.getHealthStatus();
 console.log(health);
@@ -244,12 +260,14 @@ console.log(health);
 ```
 
 ### Metrics
+
 ```typescript
 const metrics = await database.adapter.getMetrics();
 // Connection pool metrics, query statistics, transaction metrics
 ```
 
 ### Audit Reporting
+
 ```typescript
 const auditStats = await auditLogger.getStatistics();
 // Comprehensive audit trail statistics
@@ -258,16 +276,19 @@ const auditStats = await auditLogger.getStatistics();
 ## Security Features
 
 ### SQL Injection Protection
+
 - Parameterized queries throughout
 - Input sanitization and validation
 - Query builder prevents raw SQL injection
 
 ### Audit Trail
+
 - Complete change tracking
 - User context preservation
 - Tamper-evident logging
 
 ### Access Control
+
 - Connection-level security
 - Role-based access patterns
 - Query-level permissions
@@ -275,16 +296,19 @@ const auditStats = await auditLogger.getStatistics();
 ## Deployment & Operations
 
 ### Zero-Downtime Migrations
+
 - Lock-free schema changes
 - Backward compatibility validation
 - Automatic rollback on failure
 
 ### Backup & Recovery
+
 - Automated scheduled backups
 - Point-in-time recovery support
 - Backup integrity verification
 
 ### High Availability
+
 - Read replica failover
 - Connection pool redundancy
 - Health check automation

@@ -10,7 +10,7 @@
  * - Real-time performance analytics
  */
 
-import { performance, PerformanceObserver } from 'perf_hooks';
+import { PerformanceObserver, performance } from 'perf_hooks';
 import { EventEmitter } from 'eventemitter3';
 import * as os from 'os';
 import type { PrometheusMetrics } from '../metrics/index.js';
@@ -61,13 +61,13 @@ export interface PerformanceSnapshot {
 }
 
 export class PerformanceMonitor extends EventEmitter {
-  private metrics: PrometheusMetrics;
-  private profiles: Map<string, PerformanceProfile> = new Map();
+  private readonly metrics: PrometheusMetrics;
+  private readonly profiles: Map<string, PerformanceProfile> = new Map();
   private snapshots: PerformanceSnapshot[] = [];
-  private maxSnapshots = 1000;
+  private readonly maxSnapshots = 1000;
   private performanceObserver: PerformanceObserver;
-  private gcStats = { totalTime: 0, count: 0 };
-  private requestStats = { active: 0, total: 0, totalResponseTime: 0 };
+  private readonly gcStats = { totalTime: 0, count: 0 };
+  private readonly requestStats = { active: 0, total: 0, totalResponseTime: 0 };
   
   constructor(metrics: PrometheusMetrics) {
     super();

@@ -21,63 +21,68 @@ export interface SQLProtectionConfig {
  * SQL injection protection utility
  */
 export class SQLInjectionProtector {
-  private config: SQLProtectionConfig;
-  
+  private readonly config: SQLProtectionConfig;
+
   // Common SQL injection patterns
   private readonly patterns = {
     // Union-based attacks
     union: /(\bunion\b.*\bselect\b)|(\bselect\b.*\bunion\b)/gi,
-    
+
     // Comment-based attacks
     comments: /(\/\*[\s\S]*?\*\/)|(--[^\r\n]*)|(\#[^\r\n]*)/gi,
-    
+
     // Boolean-based attacks
-    booleanLogic: /(\b(and|or)\b\s*\d+\s*[=<>!]+\s*\d+)|(\b(and|or)\b\s*\d+\s*[=<>!]+\s*\d+\s*--)/gi,
-    
+    booleanLogic:
+      /(\b(and|or)\b\s*\d+\s*[=<>!]+\s*\d+)|(\b(and|or)\b\s*\d+\s*[=<>!]+\s*\d+\s*--)/gi,
+
     // Time-based attacks
     timeBased: /(\bwaitfor\b|\bdelay\b|\bsleep\b|\bbenchmark\b)/gi,
-    
+
     // Error-based attacks
     errorBased: /(convert\(int|cast\(.*as)/gi,
-    
+
     // Stacked queries
-    stackedQueries: /;\s*(drop|alter|create|insert|update|delete|exec|execute)/gi,
-    
+    stackedQueries:
+      /;\s*(drop|alter|create|insert|update|delete|exec|execute)/gi,
+
     // Information schema attacks
     infoSchema: /(information_schema|sysobjects|syscolumns)/gi,
-    
+
     // Function-based attacks
-    functions: /(\bchar\b|\bascii\b|\bsubstring\b|\bmid\b|\bleft\b|\bright\b|\blen\b|\blength\b)/gi,
-    
+    functions:
+      /(\bchar\b|\bascii\b|\bsubstring\b|\bmid\b|\bleft\b|\bright\b|\blen\b|\blength\b)/gi,
+
     // Hex encoding
     hexEncoding: /0x[0-9a-f]+/gi,
-    
+
     // SQL keywords in suspicious contexts
-    keywords: /(\bdrop\s+(table|database|schema)\b)|(\btruncate\s+table\b)|(\balter\s+table\b)/gi,
-    
+    keywords:
+      /(\bdrop\s+(table|database|schema)\b)|(\btruncate\s+table\b)|(\balter\s+table\b)/gi,
+
     // Conditional statements
     conditionals: /(\bif\b\s*\(.*\bselect\b)|(\bcase\s+when\b)/gi,
-    
+
     // Version/database info functions
     systemInfo: /(\b(version|user|database|schema|current_user)\s*\(\s*\))/gi,
-    
+
     // Blind injection patterns
-    blindInjection: /(\b\d+\s*[=<>!]+\s*\d+\s*(and|or)\s*\d+\s*[=<>!]+\s*\d+)/gi,
-    
+    blindInjection:
+      /(\b\d+\s*[=<>!]+\s*\d+\s*(and|or)\s*\d+\s*[=<>!]+\s*\d+)/gi,
+
     // Load file attacks
     fileOperations: /(\bload_file\b|\binto\s+outfile\b|\binto\s+dumpfile\b)/gi,
-    
+
     // Privilege escalation
     privileges: /(\bgrant\b|\brevoke\b|\bcreate\s+user\b)/gi,
-    
+
     // Special characters in dangerous contexts
     dangerousChars: /(['"]\s*(;|\||&|\$))|(\$\{.*\})/gi,
-    
+
     // XPath injection (often combined with SQL)
     xpath: /(\bextractvalue\b|\bupdatexml\b)/gi,
-    
+
     // NoSQL injection patterns (for MongoDB etc.)
-    nosql: /(\$where|\$ne|\$gt|\$lt|\$regex|\$or|\$and)/gi
+    nosql: /(\$where|\$ne|\$gt|\$lt|\$regex|\$or|\$and)/gi,
   };
 
   constructor(config: Partial<SQLProtectionConfig> = {}) {
@@ -86,7 +91,7 @@ export class SQLInjectionProtector {
       blockSuspiciousQueries: true,
       logSuspiciousActivity: true,
       sanitizeInput: true,
-      ...config
+      ...config,
     };
   }
 
@@ -98,7 +103,7 @@ export class SQLInjectionProtector {
       return {
         isSuspicious: false,
         confidence: 0,
-        patterns: []
+        patterns: [],
       };
     }
 
@@ -112,7 +117,7 @@ export class SQLInjectionProtector {
       if (matches) {
         detectedPatterns.push(patternName);
         totalMatches += matches.length;
-        
+
         // Assign severity weights
         const severity = this.getPatternSeverity(patternName);
         maxSeverity = Math.max(maxSeverity, severity);
@@ -131,13 +136,10 @@ export class SQLInjectionProtector {
     }
 
     // Calculate confidence based on matches and severity
-    const confidence = Math.min(
-      (totalMatches * 0.2) + (maxSeverity * 0.8),
-      1.0
-    );
+    const confidence = Math.min(totalMatches * 0.2 + maxSeverity * 0.8, 1.0);
 
-    const isSuspicious = this.config.strictMode 
-      ? confidence > 0.1 
+    const isSuspicious = this.config.strictMode
+      ? confidence > 0.1
       : confidence > 0.5;
 
     let sanitized: string | undefined;
@@ -149,7 +151,7 @@ export class SQLInjectionProtector {
       isSuspicious,
       confidence,
       patterns: detectedPatterns,
-      sanitized
+      sanitized,
     };
   }
 
@@ -175,7 +177,7 @@ export class SQLInjectionProtector {
       blindInjection: 0.75,
       dangerousChars: 0.5,
       xpath: 0.8,
-      nosql: 0.6
+      nosql: 0.6,
     };
 
     return severityMap[patternName] || 0.5;
@@ -192,12 +194,29 @@ export class SQLInjectionProtector {
     let sanitized = input;
 
     // Remove SQL comments
-    sanitized = sanitized.replace(/(\/\*[\s\S]*?\*\/)|(--[^\r\n]*)|(\#[^\r\n]*)/gi, '');
+    sanitized = sanitized.replace(
+      /(\/\*[\s\S]*?\*\/)|(--[^\r\n]*)|(\#[^\r\n]*)/gi,
+      ''
+    );
 
     // Remove dangerous SQL keywords
     const dangerousKeywords = [
-      'union', 'select', 'insert', 'update', 'delete', 'drop', 'create', 'alter',
-      'exec', 'execute', 'sp_', 'xp_', 'waitfor', 'delay', 'sleep', 'benchmark'
+      'union',
+      'select',
+      'insert',
+      'update',
+      'delete',
+      'drop',
+      'create',
+      'alter',
+      'exec',
+      'execute',
+      'sp_',
+      'xp_',
+      'waitfor',
+      'delay',
+      'sleep',
+      'benchmark',
     ];
 
     for (const keyword of dangerousKeywords) {
@@ -226,7 +245,7 @@ export class SQLInjectionProtector {
    * Create parameterized query helper
    */
   static createParameterizedQuery(
-    query: string, 
+    query: string,
     params: Record<string, any>
   ): { query: string; values: any[] } {
     const values: any[] = [];
@@ -243,7 +262,7 @@ export class SQLInjectionProtector {
 
     return {
       query: processedQuery,
-      values
+      values,
     };
   }
 
@@ -264,15 +283,26 @@ export class SQLInjectionProtector {
       }
 
       // Check for object injection
-      if (typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
-        logger.warn('Object parameter detected', { paramName: key, type: typeof value });
+      if (
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        !(value instanceof Date)
+      ) {
+        logger.warn('Object parameter detected', {
+          paramName: key,
+          type: typeof value,
+        });
         return false;
       }
 
       // Validate string parameters
       if (typeof value === 'string') {
-        if (value.length > 10000) { // Reasonable string length limit
-          logger.warn('Parameter too long', { paramName: key, length: value.length });
+        if (value.length > 10000) {
+          // Reasonable string length limit
+          logger.warn('Parameter too long', {
+            paramName: key,
+            length: value.length,
+          });
           return false;
         }
       }
@@ -314,7 +344,9 @@ export class SQLInjectionProtector {
 /**
  * SQL injection protection middleware
  */
-export function createSQLProtectionMiddleware(config?: Partial<SQLProtectionConfig>) {
+export function createSQLProtectionMiddleware(
+  config?: Partial<SQLProtectionConfig>
+) {
   const protector = new SQLInjectionProtector(config);
 
   return async (c: Context, next: Next) => {
@@ -336,7 +368,7 @@ export function createSQLProtectionMiddleware(config?: Partial<SQLProtectionConf
               source: 'query',
               field: key,
               value,
-              analysis
+              analysis,
             });
           }
         }
@@ -347,7 +379,7 @@ export function createSQLProtectionMiddleware(config?: Partial<SQLProtectionConf
         try {
           const body = await c.req.json();
           const flattenedBody = flattenObject(body);
-          
+
           for (const [key, value] of Object.entries(flattenedBody)) {
             if (typeof value === 'string') {
               const analysis = protector.analyzeInput(value);
@@ -356,7 +388,7 @@ export function createSQLProtectionMiddleware(config?: Partial<SQLProtectionConf
                   source: 'body',
                   field: key,
                   value,
-                  analysis
+                  analysis,
                 });
               }
             }
@@ -379,21 +411,24 @@ export function createSQLProtectionMiddleware(config?: Partial<SQLProtectionConf
               source: input.source,
               field: input.field,
               confidence: input.analysis.confidence,
-              patterns: input.analysis.patterns
-            }))
+              patterns: input.analysis.patterns,
+            })),
           });
         }
 
         if (config?.blockSuspiciousQueries !== false) {
-          return c.json({
-            error: 'Potentially malicious input detected',
-            message: 'Request blocked for security reasons',
-            details: suspiciousInputs.map(input => ({
-              field: `${input.source}.${input.field}`,
-              confidence: input.analysis.confidence,
-              patterns: input.analysis.patterns
-            }))
-          }, 400);
+          return c.json(
+            {
+              error: 'Potentially malicious input detected',
+              message: 'Request blocked for security reasons',
+              details: suspiciousInputs.map(input => ({
+                field: `${input.source}.${input.field}`,
+                confidence: input.analysis.confidence,
+                patterns: input.analysis.patterns,
+              })),
+            },
+            400
+          );
         }
       }
 
@@ -414,7 +449,7 @@ export function createSQLProtectionMiddleware(config?: Partial<SQLProtectionConf
 export class SecureQueryBuilder {
   private query: string = '';
   private parameters: Record<string, any> = {};
-  private protector: SQLInjectionProtector;
+  private readonly protector: SQLInjectionProtector;
 
   constructor() {
     this.protector = new SQLInjectionProtector({ strictMode: true });
@@ -425,10 +460,10 @@ export class SecureQueryBuilder {
    */
   select(columns: string[]): this {
     // Validate and escape column names
-    const escapedColumns = columns.map(col => 
+    const escapedColumns = columns.map(col =>
       SQLInjectionProtector.escapeIdentifier(col)
     );
-    
+
     this.query = `SELECT ${escapedColumns.join(', ')}`;
     return this;
   }
@@ -447,19 +482,19 @@ export class SecureQueryBuilder {
    */
   where(conditions: Record<string, any>): this {
     const whereClauses: string[] = [];
-    
+
     for (const [column, value] of Object.entries(conditions)) {
       const escapedColumn = SQLInjectionProtector.escapeIdentifier(column);
       const paramName = `param_${Object.keys(this.parameters).length}`;
-      
+
       whereClauses.push(`${escapedColumn} = :${paramName}`);
       this.parameters[paramName] = value;
     }
-    
+
     if (whereClauses.length > 0) {
       this.query += ` WHERE ${whereClauses.join(' AND ')}`;
     }
-    
+
     return this;
   }
 
@@ -479,7 +514,7 @@ export class SecureQueryBuilder {
     if (typeof count !== 'number' || count < 0 || !Number.isInteger(count)) {
       throw new Error('Limit must be a non-negative integer');
     }
-    
+
     this.query += ` LIMIT ${count}`;
     return this;
   }
@@ -493,7 +528,10 @@ export class SecureQueryBuilder {
       throw new Error('Invalid parameters detected');
     }
 
-    return SQLInjectionProtector.createParameterizedQuery(this.query, this.parameters);
+    return SQLInjectionProtector.createParameterizedQuery(
+      this.query,
+      this.parameters
+    );
   }
 
   /**
@@ -511,17 +549,17 @@ export class SecureQueryBuilder {
  */
 function flattenObject(obj: any, prefix: string = ''): Record<string, any> {
   const flattened: Record<string, any> = {};
-  
+
   for (const [key, value] of Object.entries(obj)) {
     const newKey = prefix ? `${prefix}.${key}` : key;
-    
+
     if (value && typeof value === 'object' && !Array.isArray(value)) {
       Object.assign(flattened, flattenObject(value, newKey));
     } else {
       flattened[newKey] = value;
     }
   }
-  
+
   return flattened;
 }
 

@@ -1,6 +1,6 @@
 /**
  * Kenny Integration Pattern - Message Bus
- * 
+ *
  * Provides a typed event system for inter-subsystem communication
  * with event filtering, routing, and subscription management.
  */
@@ -23,7 +23,11 @@ export interface SystemEvent extends BaseEvent {
 }
 
 export interface SubsystemEvent extends BaseEvent {
-  type: 'subsystem.register' | 'subsystem.unregister' | 'subsystem.ready' | 'subsystem.error';
+  type:
+    | 'subsystem.register'
+    | 'subsystem.unregister'
+    | 'subsystem.ready'
+    | 'subsystem.error';
   data: {
     subsystemId: string;
     subsystemName: string;
@@ -32,7 +36,11 @@ export interface SubsystemEvent extends BaseEvent {
 }
 
 export interface MessageEvent extends BaseEvent {
-  type: 'message.send' | 'message.receive' | 'message.process' | 'message.complete';
+  type:
+    | 'message.send'
+    | 'message.receive'
+    | 'message.process'
+    | 'message.complete';
   data: {
     messageId: string;
     content: any;
@@ -40,7 +48,11 @@ export interface MessageEvent extends BaseEvent {
   };
 }
 
-export type KennyEvent = SystemEvent | SubsystemEvent | MessageEvent | BaseEvent;
+export type KennyEvent =
+  | SystemEvent
+  | SubsystemEvent
+  | MessageEvent
+  | BaseEvent;
 
 // Event filter types
 export interface EventFilter {
@@ -60,7 +72,7 @@ export interface EventSubscription {
 }
 
 export class MessageBus extends EventEmitter {
-  private subscriptions = new Map<string, EventSubscription>();
+  private readonly subscriptions = new Map<string, EventSubscription>();
   private eventHistory: KennyEvent[] = [];
   private maxHistorySize = 1000;
 
@@ -77,13 +89,13 @@ export class MessageBus extends EventEmitter {
     options: { once?: boolean; priority?: number } = {}
   ): string {
     const subscriptionId = `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const subscription: EventSubscription = {
       id: subscriptionId,
       filter,
       callback,
       once: options.once,
-      priority: options.priority ?? 0
+      priority: options.priority ?? 0,
     };
 
     this.subscriptions.set(subscriptionId, subscription);
@@ -126,7 +138,7 @@ export class MessageBus extends EventEmitter {
     const fullEvent: KennyEvent = {
       id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
-      ...event
+      ...event,
     };
 
     // Add to history
@@ -158,7 +170,7 @@ export class MessageBus extends EventEmitter {
         this.emit('subscription.error', {
           subscriptionId: subscription.id,
           event: fullEvent,
-          error
+          error,
         });
       }
     }
@@ -188,7 +200,7 @@ export class MessageBus extends EventEmitter {
       type,
       source: 'system',
       data,
-      metadata
+      metadata,
     });
   }
 
@@ -205,7 +217,7 @@ export class MessageBus extends EventEmitter {
       type,
       source,
       data,
-      metadata
+      metadata,
     });
   }
 
@@ -224,7 +236,7 @@ export class MessageBus extends EventEmitter {
       source,
       target,
       data,
-      metadata
+      metadata,
     });
   }
 
@@ -310,7 +322,7 @@ export class MessageBus extends EventEmitter {
    */
   private addToHistory(event: KennyEvent): void {
     this.eventHistory.push(event);
-    
+
     // Maintain history size
     if (this.eventHistory.length > this.maxHistorySize) {
       this.eventHistory = this.eventHistory.slice(-this.maxHistorySize);

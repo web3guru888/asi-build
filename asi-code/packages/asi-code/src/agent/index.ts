@@ -1,6 +1,6 @@
 /**
  * Agent Configuration System - Agent definitions and behavior management
- * 
+ *
  * Manages AI agent configurations, personalities, and specialized behaviors
  * for different use cases and domains.
  */
@@ -58,7 +58,7 @@ export class DefaultAgent extends EventEmitter implements Agent {
 }
 
 export class AgentManager extends EventEmitter {
-  private agents = new Map<string, Agent>();
+  private readonly agents = new Map<string, Agent>();
 
   async register(config: AgentConfig): Promise<void> {
     const agent = new DefaultAgent(config);

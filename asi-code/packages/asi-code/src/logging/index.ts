@@ -1,39 +1,39 @@
 /**
  * Logging System - Main Export
- * 
+ *
  * Central export point for the ASI-Code logging system with Kenny Integration Pattern support.
  * Provides factory functions, utilities, and easy-to-use interfaces for structured logging.
  */
 
-// Core logging exports
+// Core logging exports - separating classes from types
 export {
   Logger,
-  LogLevel,
-  LogContext,
-  LogTransport,
   ConsoleTransport,
   FileTransport,
   StreamTransport,
   HTTPTransport,
   createLogger,
   createTransportsFromConfig,
-  LOG_LEVELS
-} from './logger.js';
+  LOG_LEVELS,
+} from './logger';
+export type { LogLevel, LogContext, LogTransport } from './logger';
 
-// Log manager exports
+// Log manager exports - using type-only exports for interfaces
 export {
   LogManager,
   LogManagerSubsystem,
+  createLogManager,
+  createLogManagerSubsystem,
+} from './log-manager';
+export type {
   LogManagerConfig,
   LogRoutingRule,
   LogRoutingAction,
   LogArchivalConfig,
   LogMetrics,
-  createLogManager,
-  createLogManagerSubsystem
-} from './log-manager.js';
+} from './log-manager';
 
-// Formatter exports
+// Formatter exports - separating classes from types
 export {
   BaseFormatter,
   ConsoleFormatter,
@@ -42,22 +42,25 @@ export {
   FileFormatter,
   AuditFormatter,
   FormatterFactory,
-  LogEntry,
-  FormatterOptions,
   DEFAULT_FORMATTERS,
-  createFormatter
-} from './formatters.js';
+  createFormatter,
+} from './formatters';
+export type { LogEntry, FormatterOptions } from './formatters';
 
 // Configuration types
-export {
-  LoggingConfig,
-  LogOutput
-} from '../config/config-types.js';
+export type { LoggingConfig, LogOutput } from '../config/config-types';
 
-import { LogManager, LogManagerConfig, createLogManager } from './log-manager.js';
-import { Logger, LogContext, LogLevel, createLogger } from './logger.js';
-import { BaseSubsystem } from '../kenny/base-subsystem.js';
-import { KennyIntegration } from '../kenny/integration.js';
+import {
+  LogManager,
+  createLogManager,
+  createLogManagerSubsystem,
+} from './log-manager';
+import type { LogManagerConfig } from './log-manager';
+import { Logger, createLogger } from './logger';
+import type { LogContext, LogLevel } from './logger';
+import type { LogOutput } from '../config/config-types';
+import { BaseSubsystem } from '../kenny/base-subsystem';
+import { KennyIntegration } from '../kenny/integration';
 
 /**
  * Global logging instance
@@ -75,7 +78,7 @@ export function initializeLogging(config: LogManagerConfig): LogManager {
 
   globalLogManager = createLogManager(config);
   globalRootLogger = globalLogManager.getRootLogger();
-  
+
   return globalLogManager;
 }
 
@@ -84,7 +87,9 @@ export function initializeLogging(config: LogManagerConfig): LogManager {
  */
 export function getLogManager(): LogManager {
   if (!globalLogManager) {
-    throw new Error('Logging system not initialized. Call initializeLogging() first.');
+    throw new Error(
+      'Logging system not initialized. Call initializeLogging() first.'
+    );
   }
   return globalLogManager;
 }
@@ -94,7 +99,9 @@ export function getLogManager(): LogManager {
  */
 export function getRootLogger(): Logger {
   if (!globalRootLogger) {
-    throw new Error('Logging system not initialized. Call initializeLogging() first.');
+    throw new Error(
+      'Logging system not initialized. Call initializeLogging() first.'
+    );
   }
   return globalRootLogger;
 }
@@ -130,14 +137,14 @@ export class LoggingSystemFactory {
   ): Promise<LogManager> {
     // Create log manager subsystem
     const logManagerSubsystem = createLogManagerSubsystem();
-    
+
     // Register with Kenny Integration
     await kennyIntegration.registerSubsystem(logManagerSubsystem);
-    
+
     // Initialize the subsystem
     await logManagerSubsystem.initialize(config);
     await logManagerSubsystem.start();
-    
+
     // Get the log manager instance
     const logManager = logManagerSubsystem.getLogManager();
     if (!logManager) {
@@ -163,7 +170,10 @@ export class LoggingSystemFactory {
   /**
    * Create basic logger with minimal configuration
    */
-  static createBasicLogger(level: LogLevel = 'info', context?: LogContext): Logger {
+  static createBasicLogger(
+    level: LogLevel = 'info',
+    context?: LogContext
+  ): Logger {
     const config: LogManagerConfig = {
       level,
       format: 'pretty',
@@ -174,11 +184,11 @@ export class LoggingSystemFactory {
           enabled: true,
           level,
           format: 'pretty',
-          options: {}
-        }
+          options: {},
+        },
       ],
       includeTimestamp: true,
-      colorize: true
+      colorize: true,
     };
 
     return createLogger(config, context);
@@ -188,7 +198,7 @@ export class LoggingSystemFactory {
    * Create production logger with file output
    */
   static createProductionLogger(
-    logFile: string, 
+    logFile: string,
     level: LogLevel = 'info',
     context?: LogContext
   ): Logger {
@@ -202,7 +212,7 @@ export class LoggingSystemFactory {
           enabled: false,
           level: 'error',
           format: 'simple',
-          options: {}
+          options: {},
         },
         {
           type: 'file',
@@ -210,13 +220,13 @@ export class LoggingSystemFactory {
           level,
           format: 'json',
           options: {
-            filename: logFile
-          }
-        }
+            filename: logFile,
+          },
+        },
       ],
       includeTimestamp: true,
       includeStack: true,
-      colorize: false
+      colorize: false,
     };
 
     return createLogger(config, context);
@@ -225,7 +235,10 @@ export class LoggingSystemFactory {
   /**
    * Create development logger with console output
    */
-  static createDevelopmentLogger(level: LogLevel = 'debug', context?: LogContext): Logger {
+  static createDevelopmentLogger(
+    level: LogLevel = 'debug',
+    context?: LogContext
+  ): Logger {
     const config: LogManagerConfig = {
       level,
       format: 'pretty',
@@ -236,12 +249,12 @@ export class LoggingSystemFactory {
           enabled: true,
           level,
           format: 'pretty',
-          options: {}
-        }
+          options: {},
+        },
       ],
       includeTimestamp: true,
       colorize: true,
-      includeStack: true
+      includeStack: true,
     };
 
     return createLogger(config, context);
@@ -259,7 +272,7 @@ export function createContextualLogger(context: LogContext): Logger {
   if (globalLogManager && context.subsystem) {
     return globalLogManager.getLogger(context.subsystem, context);
   }
-  
+
   // Fallback to basic logger
   return LoggingSystemFactory.createBasicLogger('info', context);
 }
@@ -272,8 +285,8 @@ export function createAuditLogger(auditFile?: string): Logger {
     {
       type: 'console',
       enabled: false,
-      options: {}
-    }
+      options: {},
+    },
   ];
 
   if (auditFile) {
@@ -283,8 +296,8 @@ export function createAuditLogger(auditFile?: string): Logger {
       level: 'info',
       format: 'audit',
       options: {
-        filename: auditFile
-      }
+        filename: auditFile,
+      },
     });
   }
 
@@ -294,7 +307,7 @@ export function createAuditLogger(auditFile?: string): Logger {
     enabled: true,
     outputs,
     includeTimestamp: true,
-    includeStack: false
+    includeStack: false,
   };
 
   return createLogger(config, { context: 'audit' });
@@ -315,7 +328,7 @@ export const log = {
   },
   error: (message: string, metadata?: any, error?: Error) => {
     getRootLogger().error(message, metadata, error);
-  }
+  },
 };
 
 /**
@@ -332,12 +345,12 @@ export const LOGGING_CONFIGS = {
         enabled: true,
         level: 'debug' as LogLevel,
         format: 'pretty',
-        options: {}
-      }
+        options: {},
+      },
     ],
     includeTimestamp: true,
     colorize: true,
-    includeStack: true
+    includeStack: true,
   } as LogManagerConfig,
 
   production: {
@@ -348,7 +361,7 @@ export const LOGGING_CONFIGS = {
       {
         type: 'console',
         enabled: false,
-        options: {}
+        options: {},
       },
       {
         type: 'file',
@@ -356,8 +369,8 @@ export const LOGGING_CONFIGS = {
         level: 'info' as LogLevel,
         format: 'json',
         options: {
-          filename: '/var/log/asi-code/asi-code.log'
-        }
+          filename: '/var/log/asi-code/asi-code.log',
+        },
       },
       {
         type: 'file',
@@ -365,9 +378,9 @@ export const LOGGING_CONFIGS = {
         level: 'error' as LogLevel,
         format: 'json',
         options: {
-          filename: '/var/log/asi-code/error.log'
-        }
-      }
+          filename: '/var/log/asi-code/error.log',
+        },
+      },
     ],
     maxFileSize: 100,
     maxFiles: 10,
@@ -379,8 +392,8 @@ export const LOGGING_CONFIGS = {
       retentionPeriod: 30,
       compressionEnabled: true,
       archivePath: '/var/log/asi-code/archive',
-      schedule: 'daily'
-    }
+      schedule: 'daily',
+    },
   } as LogManagerConfig,
 
   test: {
@@ -389,8 +402,8 @@ export const LOGGING_CONFIGS = {
     enabled: false,
     outputs: [],
     includeTimestamp: false,
-    colorize: false
-  } as LogManagerConfig
+    colorize: false,
+  } as LogManagerConfig,
 };
 
 // Export the factory as default

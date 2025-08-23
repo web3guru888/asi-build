@@ -1,0 +1,11 @@
+{
+  "model": "asi1-mini",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello! Can you help me test this chat endpoint?"
+    }
+  ],
+  "temperature": 0.7,
+  "max_tokens": 100
+}

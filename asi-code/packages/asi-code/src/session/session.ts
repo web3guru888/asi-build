@@ -1,6 +1,6 @@
 /**
  * Session Class Implementation
- * 
+ *
  * Core session class with message history, context management,
  * and Kenny Integration Pattern support.
  */
@@ -42,7 +42,7 @@ export class DefaultSession extends EventEmitter implements Session {
   constructor(data: SessionData) {
     super();
     this.data = data;
-    
+
     // Ensure data integrity
     this.validateAndFixData();
   }
@@ -77,8 +77,8 @@ export class DefaultSession extends EventEmitter implements Session {
         consciousness: {
           level: 1,
           state: 'active',
-          lastActivity: new Date()
-        }
+          lastActivity: new Date(),
+        },
       };
     }
 
@@ -87,7 +87,7 @@ export class DefaultSession extends EventEmitter implements Session {
       this.data.kennyContext.consciousness = {
         level: 1,
         state: 'active',
-        lastActivity: new Date()
+        lastActivity: new Date(),
       };
     }
   }
@@ -117,11 +117,12 @@ export class DefaultSession extends EventEmitter implements Session {
     if (message.type === 'assistant') {
       const userMessages = this.data.messages.filter(m => m.type === 'user');
       const lastUserMessage = userMessages[userMessages.length - 1];
-      
+
       if (lastUserMessage) {
-        const responseTime = message.timestamp.getTime() - lastUserMessage.timestamp.getTime();
+        const responseTime =
+          message.timestamp.getTime() - lastUserMessage.timestamp.getTime();
         this.messageResponseTimes.push(responseTime);
-        
+
         // Keep only last 50 response times
         if (this.messageResponseTimes.length > 50) {
           this.messageResponseTimes.shift();
@@ -132,13 +133,13 @@ export class DefaultSession extends EventEmitter implements Session {
     // Trim messages if exceeded max
     if (this.data.messages.length > this.data.config.maxMessages) {
       const removed = this.data.messages.splice(
-        0, 
+        0,
         this.data.messages.length - this.data.config.maxMessages
       );
-      this.emit('messages:trimmed', { 
-        removed: removed.length, 
+      this.emit('messages:trimmed', {
+        removed: removed.length,
         remaining: this.data.messages.length,
-        removedMessages: removed.map(m => ({ id: m.id, type: m.type }))
+        removedMessages: removed.map(m => ({ id: m.id, type: m.type })),
       });
     }
 
@@ -161,7 +162,11 @@ export class DefaultSession extends EventEmitter implements Session {
     if (index !== -1) {
       const deleted = this.data.messages.splice(index, 1)[0];
       this.data.lastActivity = new Date();
-      this.emit('message:deleted', { messageId, message: deleted, session: this.data.id });
+      this.emit('message:deleted', {
+        messageId,
+        message: deleted,
+        session: this.data.id,
+      });
       return true;
     }
     return false;
@@ -180,9 +185,12 @@ export class DefaultSession extends EventEmitter implements Session {
     if (updates.metadata) {
       Object.assign(this.data.kennyContext.metadata, updates.metadata);
     }
-    
+
     if (updates.consciousness) {
-      Object.assign(this.data.kennyContext.consciousness, updates.consciousness);
+      Object.assign(
+        this.data.kennyContext.consciousness,
+        updates.consciousness
+      );
     }
 
     // Apply other updates
@@ -190,27 +198,27 @@ export class DefaultSession extends EventEmitter implements Session {
       ...updates,
       // Preserve existing metadata and consciousness if not being updated
       metadata: this.data.kennyContext.metadata,
-      consciousness: this.data.kennyContext.consciousness
+      consciousness: this.data.kennyContext.consciousness,
     });
 
     this.data.lastActivity = new Date();
     this.data.kennyContext.consciousness.lastActivity = this.data.lastActivity;
-    
-    this.emit('context:updated', { 
-      updates, 
-      context: this.data.kennyContext, 
-      session: this.data.id 
+
+    this.emit('context:updated', {
+      updates,
+      context: this.data.kennyContext,
+      session: this.data.id,
     });
   }
 
   updateMetadata(updates: Record<string, any>): void {
     Object.assign(this.data.metadata, updates);
     this.data.lastActivity = new Date();
-    
-    this.emit('metadata:updated', { 
-      updates, 
-      metadata: this.data.metadata, 
-      session: this.data.id 
+
+    this.emit('metadata:updated', {
+      updates,
+      metadata: this.data.metadata,
+      session: this.data.id,
     });
   }
 
@@ -224,13 +232,13 @@ export class DefaultSession extends EventEmitter implements Session {
     const messageCount = this.data.messages.length;
     const lastActivity = this.data.lastActivity.toISOString();
     const consciousness = this.data.kennyContext.consciousness;
-    
+
     let summary = `Session ${this.data.id}:\n`;
     summary += `- Messages: ${messageCount}\n`;
     summary += `- Last Activity: ${lastActivity}\n`;
     summary += `- Consciousness Level: ${consciousness.level}\n`;
     summary += `- State: ${consciousness.state}\n`;
-    
+
     if (this.data.userId) {
       summary += `- User: ${this.data.userId}\n`;
     }
@@ -251,7 +259,7 @@ export class DefaultSession extends EventEmitter implements Session {
       userMessages: 0,
       assistantMessages: 0,
       systemMessages: 0,
-      toolMessages: 0
+      toolMessages: 0,
     };
 
     // Count messages by type
@@ -275,12 +283,16 @@ export class DefaultSession extends EventEmitter implements Session {
     // Set first and last message timestamps
     if (this.data.messages.length > 0) {
       stats.firstMessageAt = this.data.messages[0].timestamp;
-      stats.lastMessageAt = this.data.messages[this.data.messages.length - 1].timestamp;
+      stats.lastMessageAt =
+        this.data.messages[this.data.messages.length - 1].timestamp;
     }
 
     // Calculate average response time
     if (this.messageResponseTimes.length > 0) {
-      const totalTime = this.messageResponseTimes.reduce((sum, time) => sum + time, 0);
+      const totalTime = this.messageResponseTimes.reduce(
+        (sum, time) => sum + time,
+        0
+      );
       stats.averageResponseTime = totalTime / this.messageResponseTimes.length;
     }
 
@@ -290,17 +302,17 @@ export class DefaultSession extends EventEmitter implements Session {
   async cleanup(): Promise<void> {
     // Update consciousness state to dormant
     this.data.kennyContext.consciousness.state = 'dormant';
-    
+
     // Clear any event listeners
     this.removeAllListeners();
-    
+
     // Clear response time tracking
     this.messageResponseTimes = [];
-    
-    this.emit('session:cleanup', { 
+
+    this.emit('session:cleanup', {
       session: this.data.id,
       messageCount: this.data.messages.length,
-      duration: Date.now() - this.data.createdAt.getTime()
+      duration: Date.now() - this.data.createdAt.getTime(),
     });
   }
 
@@ -323,10 +335,15 @@ export class DefaultSession extends EventEmitter implements Session {
   }
 
   // Search messages by content
-  searchMessages(query: string, caseSensitive: boolean = false): KennyMessage[] {
+  searchMessages(
+    query: string,
+    caseSensitive: boolean = false
+  ): KennyMessage[] {
     const searchQuery = caseSensitive ? query : query.toLowerCase();
     return this.data.messages.filter(message => {
-      const content = caseSensitive ? message.content : message.content.toLowerCase();
+      const content = caseSensitive
+        ? message.content
+        : message.content.toLowerCase();
       return content.includes(searchQuery);
     });
   }
@@ -340,7 +357,7 @@ export class DefaultSession extends EventEmitter implements Session {
     return {
       session: JSON.parse(JSON.stringify(this.data)), // Deep clone
       stats: this.getActivityStats(),
-      summary: this.getContextSummary()
+      summary: this.getContextSummary(),
     };
   }
 }

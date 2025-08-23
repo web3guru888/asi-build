@@ -1,0 +1,12 @@
+{
+  "model": "asi1-mini",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Tell me about ASI-Code streaming capabilities"
+    }
+  ],
+  "stream": true,
+  "temperature": 0.7,
+  "max_tokens": 100
+}

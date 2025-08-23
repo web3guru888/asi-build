@@ -1,6 +1,6 @@
 /**
  * Main Hono Server Implementation
- * 
+ *
  * Core server class with HTTP/SSE capabilities for ASI-Code system.
  * Provides real-time communication and REST API endpoints.
  */
@@ -31,7 +31,7 @@ export interface ASIServer extends EventEmitter {
 
 // SSE Connection Manager
 export class SSEConnectionManager {
-  private connections = new Map<string, WritableStreamDefaultWriter>();
+  private readonly connections = new Map<string, WritableStreamDefaultWriter>();
 
   addConnection(id: string, writer: WritableStreamDefaultWriter): void {
     this.connections.set(id, writer);
@@ -77,11 +77,11 @@ export class DefaultASIServer extends EventEmitter implements ASIServer {
   public app: Hono;
   public sseManager = new SSEConnectionManager();
   public wsServer?: import('./websocket/websocket-server.js').WSServer;
-  
+
   private server: any = null;
-  private sessionManager: SessionManager;
-  private providerManager: ProviderManager;
-  private toolManager: ToolManager;
+  private readonly sessionManager: SessionManager;
+  private readonly providerManager: ProviderManager;
+  private readonly toolManager: ToolManager;
 
   constructor(
     config: ServerConfig,
@@ -95,7 +95,7 @@ export class DefaultASIServer extends EventEmitter implements ASIServer {
     this.providerManager = providerManager;
     this.toolManager = toolManager;
     this.app = new Hono();
-    
+
     // Setup server asynchronously
     this.setupServer().catch(error => {
       console.error('Failed to setup server:', error);
@@ -106,7 +106,7 @@ export class DefaultASIServer extends EventEmitter implements ASIServer {
   private async setupServer(): Promise<void> {
     setupMiddleware(this.app, this.config);
     setupRoutes(this.app, this);
-    
+
     // Setup WebSocket server if enabled
     if (this.config.websocket?.enabled) {
       try {
@@ -141,12 +141,12 @@ export class DefaultASIServer extends EventEmitter implements ASIServer {
     this.server = serve({
       fetch: this.app.fetch,
       port: this.config.port,
-      hostname: this.config.host
+      hostname: this.config.host,
     });
 
-    this.emit('server:started', { 
-      host: this.config.host, 
-      port: this.config.port 
+    this.emit('server:started', {
+      host: this.config.host,
+      port: this.config.port,
     });
   }
 
@@ -155,13 +155,13 @@ export class DefaultASIServer extends EventEmitter implements ASIServer {
       this.server.close();
       this.server = null;
       this.sseManager.cleanup();
-      
+
       // Cleanup WebSocket server
       if (this.wsServer) {
         this.wsServer.cleanup();
         this.wsServer = undefined;
       }
-      
+
       this.emit('server:stopped');
     }
   }
@@ -178,7 +178,45 @@ export function createASIServer(
   providerManager: ProviderManager,
   toolManager: ToolManager
 ): ASIServer {
-  return new DefaultASIServer(config, sessionManager, providerManager, toolManager);
+  return new DefaultASIServer(
+    config,
+    sessionManager,
+    providerManager,
+    toolManager
+  );
+}
+
+// Simplified server creation function for testing
+export function createServer(config: any): any {
+  // For integration tests, return a simplified server interface
+  const app = new Hono();
+
+  // Minimal setup for testing
+  setupMiddleware(app, config);
+
+  const server = {
+    app,
+    listen: (port: number, callback?: () => void) => {
+      const nodeServer = serve({
+        fetch: app.fetch,
+        port: port,
+        hostname: config.host || 'localhost',
+      });
+
+      if (callback) {
+        process.nextTick(callback);
+      }
+
+      return nodeServer;
+    },
+    close: (callback?: () => void) => {
+      if (callback) {
+        process.nextTick(callback);
+      }
+    },
+  };
+
+  return server;
 }
 
 // Default server configuration
@@ -186,17 +224,17 @@ export const defaultServerConfig: ServerConfig = {
   port: 3000,
   host: 'localhost',
   ssl: {
-    enabled: false
+    enabled: false,
   },
   cors: {
     origin: ['http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
   },
   auth: {
     enabled: false,
-    type: 'jwt'
+    type: 'jwt',
   },
   middleware: {
     compression: true,
@@ -204,13 +242,13 @@ export const defaultServerConfig: ServerConfig = {
     rateLimiting: {
       enabled: true,
       windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 100
+      max: 100,
     },
-    requestLogging: true
+    requestLogging: true,
   },
   static: {
     enabled: false,
-    path: './public'
+    path: './public',
   },
   websocket: {
     enabled: true,
@@ -251,7 +289,11 @@ export const defaultServerConfig: ServerConfig = {
     binary: {
       enabled: true,
       maxSize: 10485760,
-      allowedTypes: ['application/octet-stream', 'application/json', 'text/plain'],
+      allowedTypes: [
+        'application/octet-stream',
+        'application/json',
+        'text/plain',
+      ],
     },
     reconnection: {
       enabled: true,
@@ -259,5 +301,5 @@ export const defaultServerConfig: ServerConfig = {
       backoffMultiplier: 1.5,
       maxBackoffTime: 30000,
     },
-  }
+  },
 };

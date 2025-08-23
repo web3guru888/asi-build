@@ -35,10 +35,10 @@ export interface CorrelationMetadata {
 }
 
 export class CorrelationTracker {
-  private config: MonitoringConfig['correlation'];
-  private asyncStorage = new AsyncLocalStorage<CorrelationContext>();
-  private correlationMap = new Map<string, CorrelationContext>();
-  private correlationIndex = new Map<string, Set<string>>(); // sessionId -> correlationIds
+  private readonly config: MonitoringConfig['correlation'];
+  private readonly asyncStorage = new AsyncLocalStorage<CorrelationContext>();
+  private readonly correlationMap = new Map<string, CorrelationContext>();
+  private readonly correlationIndex = new Map<string, Set<string>>(); // sessionId -> correlationIds
   
   constructor(config: MonitoringConfig['correlation']) {
     this.config = config;

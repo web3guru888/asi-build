@@ -1,24 +1,26 @@
 /**
  * WebSocket Middleware
- * 
+ *
  * Collection of middleware functions for WebSocket connections including
  * authentication, rate limiting, logging, and message validation.
  */
 
 import jwt from 'jsonwebtoken';
 import { nanoid } from 'nanoid';
-import type { 
-  WSMiddleware, 
-  WSMiddlewareContext, 
+import type {
+  WSConnectionState,
   WSMessage,
-  WSConnectionState 
+  WSMiddleware,
+  WSMiddlewareContext,
 } from './types.js';
 import type { ServerConfig } from '../../config/config-types.js';
 
 /**
  * Authentication middleware
  */
-export function createAuthMiddleware(config: ServerConfig['websocket']['auth']): WSMiddleware {
+export function createAuthMiddleware(
+  config: ServerConfig['websocket']['auth']
+): WSMiddleware {
   if (!config?.enabled) {
     return async (context: WSMiddlewareContext) => {
       await context.next();
@@ -27,9 +29,13 @@ export function createAuthMiddleware(config: ServerConfig['websocket']['auth']):
 
   return async (context: WSMiddlewareContext) => {
     const { connection, message, respond } = context;
-    
+
     // Skip auth for certain message types
-    const skipAuthTypes = ['connection:auth', 'connection:ping', 'connection:pong'];
+    const skipAuthTypes = [
+      'connection:auth',
+      'connection:ping',
+      'connection:pong',
+    ];
     if (skipAuthTypes.includes(message.type)) {
       await context.next();
       return;
@@ -150,7 +156,11 @@ export function createAuthHandler(
             },
           });
 
-          server.emit('connection:authenticated', connectionId, authUserId || 'unknown');
+          server.emit(
+            'connection:authenticated',
+            connectionId,
+            authUserId || 'unknown'
+          );
         } else {
           await respond({
             id: nanoid(),
@@ -194,18 +204,21 @@ export function createRateLimitMiddleware(
     };
   }
 
-  const rateLimits = new Map<string, {
-    messageCount: number;
-    byteCount: number;
-    windowStart: number;
-    violations: number;
-    blocked: boolean;
-    blockUntil?: number;
-  }>();
+  const rateLimits = new Map<
+    string,
+    {
+      messageCount: number;
+      byteCount: number;
+      windowStart: number;
+      violations: number;
+      blocked: boolean;
+      blockUntil?: number;
+    }
+  >();
 
   return async (context: WSMiddlewareContext) => {
     const { connectionId, rawMessage, respond, server } = context;
-    
+
     const now = Date.now();
     const messageSize = Buffer.byteLength(rawMessage);
     const messagesPerSecond = config.messagesPerSecond || 10;
@@ -225,7 +238,11 @@ export function createRateLimitMiddleware(
     }
 
     // Check if currently blocked
-    if (rateLimit.blocked && rateLimit.blockUntil && now < rateLimit.blockUntil) {
+    if (
+      rateLimit.blocked &&
+      rateLimit.blockUntil &&
+      now < rateLimit.blockUntil
+    ) {
       await respond({
         id: nanoid(),
         type: 'connection:error',
@@ -279,7 +296,8 @@ export function createRateLimitMiddleware(
       // Progressive blocking
       if (rateLimit.violations > 3) {
         rateLimit.blocked = true;
-        rateLimit.blockUntil = now + Math.min(rateLimit.violations * 5000, 300000); // Max 5 minutes
+        rateLimit.blockUntil =
+          now + Math.min(rateLimit.violations * 5000, 300000); // Max 5 minutes
       }
 
       await respond({
@@ -357,7 +375,8 @@ export function createValidationMiddleware(): WSMiddleware {
     // Check timestamp skew (allow up to 5 minutes difference)
     const now = Date.now();
     const skew = Math.abs(now - message.timestamp);
-    if (skew > 300000) { // 5 minutes
+    if (skew > 300000) {
+      // 5 minutes
       await respond({
         id: nanoid(),
         type: 'connection:error',
@@ -387,7 +406,11 @@ export function createLoggingMiddleware(
     maxDataLength?: number;
   } = {}
 ): WSMiddleware {
-  const { logLevel = 'info', includeData = false, maxDataLength = 1000 } = options;
+  const {
+    logLevel = 'info',
+    includeData = false,
+    maxDataLength = 1000,
+  } = options;
 
   return async (context: WSMiddlewareContext) => {
     const { connectionId, message, connection } = context;
@@ -395,9 +418,9 @@ export function createLoggingMiddleware(
 
     try {
       await context.next();
-      
+
       if (logLevel === 'debug' || logLevel === 'info') {
-        let logData: any = {
+        const logData: any = {
           connectionId,
           messageType: message.type,
           messageId: message.id,
@@ -407,7 +430,7 @@ export function createLoggingMiddleware(
         };
 
         if (includeData) {
-          let data = message.data;
+          const data = message.data;
           if (data && typeof data === 'object') {
             const dataStr = JSON.stringify(data);
             if (dataStr.length > maxDataLength) {
@@ -437,7 +460,9 @@ export function createLoggingMiddleware(
 /**
  * Message size limiting middleware
  */
-export function createMessageSizeLimitMiddleware(maxSize: number = 1024 * 1024): WSMiddleware {
+export function createMessageSizeLimitMiddleware(
+  maxSize: number = 1024 * 1024
+): WSMiddleware {
   return async (context: WSMiddlewareContext) => {
     const { rawMessage, respond } = context;
     const messageSize = Buffer.byteLength(rawMessage);
@@ -498,7 +523,7 @@ export function createErrorHandlingMiddleware(): WSMiddleware {
       await context.next();
     } catch (error) {
       console.error('WebSocket middleware error:', error);
-      
+
       const errorResponse = {
         id: nanoid(),
         type: 'connection:error' as const,
@@ -536,11 +561,11 @@ export function createBinaryMessageMiddleware(
 
   return async (context: WSMiddlewareContext) => {
     const { rawMessage, respond } = context;
-    
+
     // Check if message is binary
     if (Buffer.isBuffer(rawMessage)) {
       const maxSize = config.maxSize || 10485760; // 10MB default
-      
+
       if (rawMessage.length > maxSize) {
         await respond({
           id: nanoid(),
@@ -579,11 +604,13 @@ async function validateSession(sessionId: string): Promise<boolean> {
 
 async function customAuth(credentials: any): Promise<boolean> {
   // TODO: Implement custom authentication logic
-  return credentials && credentials.userId;
+  return credentials?.userId;
 }
 
 // Export convenience function to create common middleware stack
-export function createDefaultMiddlewareStack(config: ServerConfig['websocket']): WSMiddleware[] {
+export function createDefaultMiddlewareStack(
+  config: ServerConfig['websocket']
+): WSMiddleware[] {
   const middleware: WSMiddleware[] = [];
 
   // Error handling (should be first)

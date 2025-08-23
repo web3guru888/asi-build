@@ -80,12 +80,12 @@ export interface MetricCorrelation {
 }
 
 export class MetricAggregator extends EventEmitter {
-  private metrics: Map<string, TimeSeriesData> = new Map();
-  private rules: Map<string, AggregationRule> = new Map();
-  private correlations: Map<string, MetricCorrelation[]> = new Map();
-  private prometheusMetrics: PrometheusMetrics;
-  private maxDataPoints = 10000;
-  private aggregationInterval = 60000; // 1 minute
+  private readonly metrics: Map<string, TimeSeriesData> = new Map();
+  private readonly rules: Map<string, AggregationRule> = new Map();
+  private readonly correlations: Map<string, MetricCorrelation[]> = new Map();
+  private readonly prometheusMetrics: PrometheusMetrics;
+  private readonly maxDataPoints = 10000;
+  private readonly aggregationInterval = 60000; // 1 minute
   
   constructor(prometheusMetrics: PrometheusMetrics) {
     super();
@@ -741,7 +741,7 @@ export class MetricAggregator extends EventEmitter {
     
     for (const [ruleId, aggregations] of timeSeries.aggregations) {
       const rule = this.rules.get(ruleId);
-      if (rule && rule.timeWindows.includes(timeWindow)) {
+      if (rule?.timeWindows.includes(timeWindow)) {
         let filtered = aggregations;
         
         if (startTime) {

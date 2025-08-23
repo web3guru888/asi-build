@@ -1,12 +1,16 @@
 /**
  * Kenny Integration Pattern - Base Subsystem
- * 
+ *
  * Abstract base class for all subsystems in the Kenny integration system.
  * Provides common properties, lifecycle hooks, and message handling.
  */
 
 import { EventEmitter } from 'eventemitter3';
-import { getMessageBus, type KennyEvent, type EventFilter } from './message-bus.js';
+import {
+  type EventFilter,
+  type KennyEvent,
+  getMessageBus,
+} from './message-bus.js';
 import { getStateManager } from './state-manager.js';
 
 // Subsystem metadata
@@ -30,9 +34,9 @@ export interface SubsystemDependency {
 }
 
 // Subsystem status
-export type SubsystemStatus = 
+export type SubsystemStatus =
   | 'uninitialized'
-  | 'initializing' 
+  | 'initializing'
   | 'ready'
   | 'running'
   | 'paused'
@@ -111,11 +115,12 @@ export abstract class BaseSubsystem extends EventEmitter {
       this.emit('initialized', { subsystem: this.metadata.id, config });
     } catch (error) {
       this.status = 'error';
-      this.lastError = error instanceof Error ? error : new Error(String(error));
-      
+      this.lastError =
+        error instanceof Error ? error : new Error(String(error));
+
       await this.publishSubsystemEvent('subsystem.error', {
         error: this.lastError.message,
-        stack: this.lastError.stack
+        stack: this.lastError.stack,
       });
 
       throw error;
@@ -132,7 +137,7 @@ export abstract class BaseSubsystem extends EventEmitter {
 
     try {
       this.status = 'running';
-      
+
       // Publish start event
       await this.publishSubsystemEvent('subsystem.start');
 
@@ -142,11 +147,12 @@ export abstract class BaseSubsystem extends EventEmitter {
       this.emit('started', { subsystem: this.metadata.id });
     } catch (error) {
       this.status = 'error';
-      this.lastError = error instanceof Error ? error : new Error(String(error));
-      
+      this.lastError =
+        error instanceof Error ? error : new Error(String(error));
+
       await this.publishSubsystemEvent('subsystem.error', {
         error: this.lastError.message,
-        stack: this.lastError.stack
+        stack: this.lastError.stack,
       });
 
       throw error;
@@ -163,7 +169,7 @@ export abstract class BaseSubsystem extends EventEmitter {
 
     try {
       this.status = 'paused';
-      
+
       // Call custom pause logic
       await this.onPause();
 
@@ -173,7 +179,8 @@ export abstract class BaseSubsystem extends EventEmitter {
       this.emit('paused', { subsystem: this.metadata.id });
     } catch (error) {
       this.status = 'error';
-      this.lastError = error instanceof Error ? error : new Error(String(error));
+      this.lastError =
+        error instanceof Error ? error : new Error(String(error));
       throw error;
     }
   }
@@ -188,7 +195,7 @@ export abstract class BaseSubsystem extends EventEmitter {
 
     try {
       this.status = 'running';
-      
+
       // Call custom resume logic
       await this.onResume();
 
@@ -198,7 +205,8 @@ export abstract class BaseSubsystem extends EventEmitter {
       this.emit('resumed', { subsystem: this.metadata.id });
     } catch (error) {
       this.status = 'error';
-      this.lastError = error instanceof Error ? error : new Error(String(error));
+      this.lastError =
+        error instanceof Error ? error : new Error(String(error));
       throw error;
     }
   }
@@ -213,7 +221,7 @@ export abstract class BaseSubsystem extends EventEmitter {
 
     try {
       this.status = 'stopping';
-      
+
       // Publish stopping event
       await this.publishSubsystemEvent('subsystem.stopping');
 
@@ -231,7 +239,8 @@ export abstract class BaseSubsystem extends EventEmitter {
       this.emit('stopped', { subsystem: this.metadata.id });
     } catch (error) {
       this.status = 'error';
-      this.lastError = error instanceof Error ? error : new Error(String(error));
+      this.lastError =
+        error instanceof Error ? error : new Error(String(error));
       throw error;
     }
   }
@@ -252,12 +261,21 @@ export abstract class BaseSubsystem extends EventEmitter {
       const customResult = await this.onHealthCheck();
       const defaultStatus = this.status === 'error' ? 'unhealthy' : 'healthy';
       const defaultMessage = `Subsystem ${this.metadata.id} is ${this.status}`;
-      
+
       // Handle case where onHealthCheck returns void
-      const resultStatus = customResult && typeof customResult === 'object' ? customResult.status : undefined;
-      const resultMessage = customResult && typeof customResult === 'object' ? customResult.message : undefined;
-      const resultDetails = customResult && typeof customResult === 'object' ? customResult.details : undefined;
-      
+      const resultStatus =
+        customResult && typeof customResult === 'object'
+          ? customResult.status
+          : undefined;
+      const resultMessage =
+        customResult && typeof customResult === 'object'
+          ? customResult.message
+          : undefined;
+      const resultDetails =
+        customResult && typeof customResult === 'object'
+          ? customResult.details
+          : undefined;
+
       return {
         status: resultStatus || defaultStatus,
         message: resultMessage || defaultMessage,
@@ -266,9 +284,9 @@ export abstract class BaseSubsystem extends EventEmitter {
           subsystemId: this.metadata.id,
           status: this.status,
           uptime: this.getUptime(),
-          lastError: this.lastError?.message
+          lastError: this.lastError?.message,
         },
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     } catch (error) {
       return {
@@ -276,9 +294,9 @@ export abstract class BaseSubsystem extends EventEmitter {
         message: `Health check failed: ${error instanceof Error ? error.message : String(error)}`,
         details: {
           subsystemId: this.metadata.id,
-          error: error instanceof Error ? error.message : String(error)
+          error: error instanceof Error ? error.message : String(error),
         },
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     }
   }
@@ -333,7 +351,9 @@ export abstract class BaseSubsystem extends EventEmitter {
   protected unsubscribe(subscriptionId: string): boolean {
     const success = this.messageBus.unsubscribe(subscriptionId);
     if (success) {
-      this.subscriptions = this.subscriptions.filter(id => id !== subscriptionId);
+      this.subscriptions = this.subscriptions.filter(
+        id => id !== subscriptionId
+      );
     }
     return success;
   }
@@ -341,10 +361,12 @@ export abstract class BaseSubsystem extends EventEmitter {
   /**
    * Publish an event to the message bus
    */
-  protected async publish(event: Omit<KennyEvent, 'id' | 'timestamp' | 'source'>): Promise<void> {
+  protected async publish(
+    event: Omit<KennyEvent, 'id' | 'timestamp' | 'source'>
+  ): Promise<void> {
     await this.messageBus.publish({
       ...event,
-      source: this.metadata.id
+      source: this.metadata.id,
     });
   }
 
@@ -364,7 +386,7 @@ export abstract class BaseSubsystem extends EventEmitter {
         subsystemId: this.metadata.id,
         subsystemName: this.metadata.name,
         version: this.metadata.version,
-        ...data
+        ...data,
       },
       metadata
     );
@@ -420,7 +442,7 @@ export abstract class BaseSubsystem extends EventEmitter {
     // This would typically check with a subsystem registry
     // For now, we'll just emit an event that dependencies are being checked
     await this.publishSubsystemEvent('subsystem.dependencies.check', {
-      dependencies: this.dependencies
+      dependencies: this.dependencies,
     });
   }
 
@@ -429,25 +451,22 @@ export abstract class BaseSubsystem extends EventEmitter {
    */
   private setupSystemEventHandlers(): void {
     // Handle system shutdown
-    this.subscribe(
-      { type: 'system.shutdown' },
-      async () => {
-        await this.shutdown();
-      }
-    );
+    this.subscribe({ type: 'system.shutdown' }, async () => {
+      await this.shutdown();
+    });
 
     // Handle health check requests
     this.subscribe(
-      { 
+      {
         type: 'subsystem.health.request',
-        target: this.metadata.id
+        target: this.metadata.id,
       },
-      async (event) => {
+      async event => {
         const result = await this.healthCheck();
         await this.publish({
           type: 'subsystem.health.response',
           target: event.source,
-          data: result
+          data: result,
         });
       }
     );

@@ -5,24 +5,24 @@
 import { AgentRegistry } from './agent-registry.js';
 import { LoadBalancer } from './load-balancer.js';
 import { BaseAgent } from './base-agent.js';
-import { 
-  Agent, 
-  Task, 
-  AgentConfig, 
-  AgentMetrics, 
-  AgentPerformance, 
+import {
+  Agent,
+  AgentConfig,
+  AgentMetrics,
+  AgentPerformance,
   ResourceUtilization,
+  Task,
   TaskPriority,
-  TaskStatus
+  TaskStatus,
 } from './types.js';
 
 // Mock agent for testing
 class MockAgent extends BaseAgent implements Agent {
-  private mockMetrics: AgentMetrics;
+  private readonly mockMetrics: AgentMetrics;
 
   constructor(config: AgentConfig) {
     super(config);
-    
+
     // Initialize mock metrics
     this.mockMetrics = {
       tasksCompleted: 0,
@@ -37,16 +37,16 @@ class MockAgent extends BaseAgent implements Agent {
         resourceUtilization: {
           cpu: 0.3,
           memory: 0.4,
-          activeConnections: 5
-        }
-      }
+          activeConnections: 5,
+        },
+      },
     };
   }
 
   async executeTask(task: Task): Promise<any> {
     // Mock task execution
     this.currentTasks.add(task.id);
-    
+
     setTimeout(() => {
       this.currentTasks.delete(task.id);
       this.completedTasks++;
@@ -57,11 +57,11 @@ class MockAgent extends BaseAgent implements Agent {
   }
 
   getMetrics(): AgentMetrics {
-    return { 
+    return {
       ...this.mockMetrics,
       tasksInProgress: this.currentTasks.size,
       tasksCompleted: this.completedTasks,
-      tasksFailed: this.failedTasks
+      tasksFailed: this.failedTasks,
     };
   }
 
@@ -75,7 +75,7 @@ class MockAgent extends BaseAgent implements Agent {
   updateMockPerformance(performance: Partial<AgentPerformance>): void {
     this.mockMetrics.performance = {
       ...this.mockMetrics.performance,
-      ...performance
+      ...performance,
     };
   }
 }
@@ -95,31 +95,34 @@ export async function testImplementations(): Promise<void> {
       performance: 0.3,
       capacity: 0.25,
       capability: 0.25,
-      resource: 0.2
-    }
+      resource: 0.2,
+    },
   });
   console.log('✅ LoadBalancer created with hybrid strategy');
 
   // Create mock agents
   const agents: MockAgent[] = [];
-  
+
   for (let i = 0; i < 5; i++) {
     const agent = new MockAgent({
       name: `TestAgent-${i}`,
       type: i === 0 ? 'supervisor' : 'worker',
-      capabilities: ['basic-task', i % 2 === 0 ? 'advanced-task' : 'simple-task'],
-      maxConcurrentTasks: 3 + i
+      capabilities: [
+        'basic-task',
+        i % 2 === 0 ? 'advanced-task' : 'simple-task',
+      ],
+      maxConcurrentTasks: 3 + i,
     });
 
     // Vary performance for testing load balancing
     agent.updateMockPerformance({
-      successRate: 0.8 + (i * 0.04), // 0.8 to 0.96
-      averageTaskDuration: 3000 + (i * 1000), // 3-7 seconds
+      successRate: 0.8 + i * 0.04, // 0.8 to 0.96
+      averageTaskDuration: 3000 + i * 1000, // 3-7 seconds
       resourceUtilization: {
-        cpu: 0.2 + (i * 0.1),
-        memory: 0.3 + (i * 0.1),
-        activeConnections: i + 1
-      }
+        cpu: 0.2 + i * 0.1,
+        memory: 0.3 + i * 0.1,
+        activeConnections: i + 1,
+      },
     });
 
     agents.push(agent);
@@ -142,7 +145,9 @@ export async function testImplementations(): Promise<void> {
   console.log(`✅ Found ${workerAgents.length} worker agents`);
 
   const basicTaskAgents = registry.findByCapability('basic-task');
-  console.log(`✅ Found ${basicTaskAgents.length} agents with 'basic-task' capability`);
+  console.log(
+    `✅ Found ${basicTaskAgents.length} agents with 'basic-task' capability`
+  );
 
   const availableAgents = registry.findAvailable();
   console.log(`✅ Found ${availableAgents.length} available agents`);
@@ -153,7 +158,7 @@ export async function testImplementations(): Promise<void> {
     total: stats.totalAgents,
     workers: stats.agentsByType.worker,
     supervisors: stats.agentsByType.supervisor,
-    available: stats.availableAgents
+    available: stats.availableAgents,
   });
 
   // Test LoadBalancer
@@ -169,8 +174,8 @@ export async function testImplementations(): Promise<void> {
       status: 'pending' as TaskStatus,
       createdAt: Date.now(),
       constraints: {
-        requiredCapabilities: ['basic-task']
-      }
+        requiredCapabilities: ['basic-task'],
+      },
     },
     {
       id: 'task-2',
@@ -180,8 +185,8 @@ export async function testImplementations(): Promise<void> {
       status: 'pending' as TaskStatus,
       createdAt: Date.now(),
       constraints: {
-        requiredCapabilities: ['advanced-task']
-      }
+        requiredCapabilities: ['advanced-task'],
+      },
     },
     {
       id: 'task-3',
@@ -191,9 +196,9 @@ export async function testImplementations(): Promise<void> {
       status: 'pending' as TaskStatus,
       createdAt: Date.now(),
       constraints: {
-        requiredCapabilities: ['simple-task']
-      }
-    }
+        requiredCapabilities: ['simple-task'],
+      },
+    },
   ];
 
   console.log(`✅ Created ${tasks.length} test tasks`);
@@ -203,7 +208,9 @@ export async function testImplementations(): Promise<void> {
     const selectedAgent = loadBalancer.selectAgent(task, availableAgents);
     if (selectedAgent) {
       const load = loadBalancer.getLoad(selectedAgent);
-      console.log(`✅ Selected agent ${selectedAgent.id} for task ${task.id} (load: ${load.toFixed(2)})`);
+      console.log(
+        `✅ Selected agent ${selectedAgent.id} for task ${task.id} (load: ${load.toFixed(2)})`
+      );
     } else {
       console.log(`❌ No agent available for task ${task.id}`);
     }
@@ -211,7 +218,9 @@ export async function testImplementations(): Promise<void> {
 
   // Test rebalancing
   const rebalanceMap = loadBalancer.rebalance(agents, tasks);
-  console.log(`✅ Rebalancing complete, ${rebalanceMap.size} agents assigned tasks`);
+  console.log(
+    `✅ Rebalancing complete, ${rebalanceMap.size} agents assigned tasks`
+  );
 
   rebalanceMap.forEach((taskIds, agentId) => {
     console.log(`   Agent ${agentId}: ${taskIds.length} tasks`);
@@ -221,7 +230,8 @@ export async function testImplementations(): Promise<void> {
   const lbStats = loadBalancer.getStats();
   console.log('✅ LoadBalancer stats:', {
     strategy: lbStats.strategyUsed,
-    lastRebalance: lbStats.lastRebalanceTime > 0 ? 'completed' : 'not performed'
+    lastRebalance:
+      lbStats.lastRebalanceTime > 0 ? 'completed' : 'not performed',
   });
 
   // Test finding best agent
@@ -234,9 +244,15 @@ export async function testImplementations(): Promise<void> {
 
   console.log('\n🎉 All tests completed successfully!');
   console.log('\n📊 Summary:');
-  console.log('   - AgentRegistry: Registration, retrieval, health monitoring, statistics');
-  console.log('   - LoadBalancer: Agent selection, load calculation, task rebalancing');
-  console.log('   - Integration: Both components work together for optimal task distribution');
+  console.log(
+    '   - AgentRegistry: Registration, retrieval, health monitoring, statistics'
+  );
+  console.log(
+    '   - LoadBalancer: Agent selection, load calculation, task rebalancing'
+  );
+  console.log(
+    '   - Integration: Both components work together for optimal task distribution'
+  );
 }
 
 // Export for direct testing

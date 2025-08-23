@@ -15,8 +15,8 @@ import { EventEmitter } from 'eventemitter3';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import type { PrometheusMetrics } from '../metrics/index.js';
-import type { SLOTracker, SLOCompliance } from '../slo/index.js';
-import type { AnomalyDetector, Anomaly, AnomalyCluster } from '../anomaly/index.js';
+import type { SLOCompliance, SLOTracker } from '../slo/index.js';
+import type { Anomaly, AnomalyCluster, AnomalyDetector } from '../anomaly/index.js';
 import type { SentryErrorTracker } from '../sentry/index.js';
 import type { ASICodeHealthService } from '../health/index.js';
 import type { MetricAggregator } from '../aggregation/index.js';
@@ -144,18 +144,18 @@ export interface ChartData {
 }
 
 export class ReportingSystem extends EventEmitter {
-  private configs: Map<string, ReportConfig> = new Map();
-  private reports: Map<string, GeneratedReport> = new Map();
-  private scheduledReports: Map<string, NodeJS.Timeout> = new Map();
-  private reportDirectory: string;
+  private readonly configs: Map<string, ReportConfig> = new Map();
+  private readonly reports: Map<string, GeneratedReport> = new Map();
+  private readonly scheduledReports: Map<string, NodeJS.Timeout> = new Map();
+  private readonly reportDirectory: string;
   
   // Dependencies
-  private metrics: PrometheusMetrics;
-  private sloTracker: SLOTracker;
-  private anomalyDetector: AnomalyDetector;
-  private errorTracker: SentryErrorTracker;
-  private healthService: ASICodeHealthService;
-  private aggregator: MetricAggregator;
+  private readonly metrics: PrometheusMetrics;
+  private readonly sloTracker: SLOTracker;
+  private readonly anomalyDetector: AnomalyDetector;
+  private readonly errorTracker: SentryErrorTracker;
+  private readonly healthService: ASICodeHealthService;
+  private readonly aggregator: MetricAggregator;
   
   constructor(
     reportDirectory: string,

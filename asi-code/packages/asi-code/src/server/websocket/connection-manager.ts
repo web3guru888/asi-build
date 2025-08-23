@@ -1,6 +1,6 @@
 /**
  * WebSocket Connection Manager
- * 
+ *
  * Manages WebSocket connections, channels, and real-time communication
  * for the ASI-Code system. Includes room/channel support, message queuing,
  * and connection lifecycle management.
@@ -9,45 +9,49 @@
 import { EventEmitter } from 'eventemitter3';
 import WebSocket from 'ws';
 import { nanoid } from 'nanoid';
+import { ConnectionOptimizer } from './connection-optimizations.js';
 import type {
-  WSMessage,
-  WSConnectionState,
   WSChannelState,
-  WSSubscriptionState,
+  WSConnectionState,
+  WSEventHandlers,
+  WSMessage,
+  WSMiddleware,
+  WSMiddlewareContext,
   WSQueuedMessage,
   WSRateLimitState,
   WSServerEvents,
-  WSMiddleware,
-  WSMiddlewareContext,
-  WSEventHandlers
+  WSSubscriptionState,
 } from './types.js';
 import type { ServerConfig } from '../../config/config-types.js';
 
 export class WSConnectionManager extends EventEmitter<WSServerEvents> {
-  private connections = new Map<string, WSConnectionState>();
-  private channels = new Map<string, WSChannelState>();
-  private subscriptions = new Map<string, WSSubscriptionState>();
-  private messageQueue = new Map<string, WSQueuedMessage[]>();
-  private rateLimits = new Map<string, WSRateLimitState>();
-  private websockets = new Map<string, WebSocket>();
-  private middleware: WSMiddleware[] = [];
-  private eventHandlers: WSEventHandlers = {};
-  private config: ServerConfig['websocket'];
-  
+  private readonly connections = new Map<string, WSConnectionState>();
+  private readonly channels = new Map<string, WSChannelState>();
+  private readonly subscriptions = new Map<string, WSSubscriptionState>();
+  private readonly messageQueue = new Map<string, WSQueuedMessage[]>();
+  private readonly rateLimits = new Map<string, WSRateLimitState>();
+  private readonly websockets = new Map<string, WebSocket>();
+  private readonly middleware: WSMiddleware[] = [];
+  private readonly eventHandlers: WSEventHandlers = {};
+  private readonly config: ServerConfig['websocket'];
+
   // Heartbeat management
   private heartbeatInterval?: NodeJS.Timeout;
   private cleanupInterval?: NodeJS.Timeout;
+
+  // Connection optimization for 10K+ connections
+  private readonly connectionOptimizer: ConnectionOptimizer;
 
   constructor(config: ServerConfig['websocket']) {
     super();
     this.config = {
       enabled: true,
       path: '/ws',
-      maxConnections: 1000,
+      maxConnections: 10000,
       heartbeat: {
         enabled: true,
-        interval: 30000, // 30s
-        timeout: 60000, // 60s
+        interval: 60000, // 60s for scale
+        timeout: 120000, // 120s for scale
       },
       compression: {
         enabled: true,
@@ -61,13 +65,13 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
       },
       rateLimiting: {
         enabled: true,
-        messagesPerSecond: 10,
-        messagesPerMinute: 100,
+        messagesPerSecond: 50, // Increased for scale
+        messagesPerMinute: 1000, // Increased for scale
         bytesPerSecond: 10240, // 10KB
       },
       messageQueue: {
         enabled: true,
-        maxSize: 1000,
+        maxSize: 5000, // Increased for scale
         persistence: false,
         ttl: 3600, // 1 hour
       },
@@ -79,7 +83,11 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
       binary: {
         enabled: true,
         maxSize: 10485760, // 10MB
-        allowedTypes: ['application/octet-stream', 'application/json', 'text/plain'],
+        allowedTypes: [
+          'application/octet-stream',
+          'application/json',
+          'text/plain',
+        ],
       },
       reconnection: {
         enabled: true,
@@ -90,6 +98,14 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
       ...config,
     };
 
+    // Initialize connection optimizer for 10K+ connections
+    this.connectionOptimizer = new ConnectionOptimizer({
+      maxPoolSize: this.config.maxConnections || 10000,
+      maxBufferSize: 100,
+      backpressureThreshold: 1024 * 50, // 50KB buffer threshold
+      flushInterval: 16 // ~60fps buffer flushing for optimal performance
+    });
+
     this.startHeartbeat();
     this.startCleanup();
   }
@@ -99,7 +115,7 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
    */
   addConnection(ws: WebSocket, connectionId?: string): string {
     const id = connectionId || nanoid();
-    
+
     // Check connection limit
     if (this.connections.size >= this.config.maxConnections!) {
       ws.close(1013, 'Server capacity exceeded');
@@ -120,7 +136,7 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
     this.connections.set(id, connection);
     this.websockets.set(id, ws);
     this.messageQueue.set(id, []);
-    
+
     if (this.config.rateLimiting?.enabled) {
       this.rateLimits.set(id, {
         connectionId: id,
@@ -133,6 +149,9 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
         violations: 0,
       });
     }
+
+    // Initialize connection optimization
+    this.connectionOptimizer.initializeConnection(id, ws);
 
     // Set up WebSocket event handlers
     this.setupWebSocketHandlers(ws, id);
@@ -177,6 +196,9 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
       ws.close(code, reason);
     }
 
+    // Clean up optimization resources
+    this.connectionOptimizer.cleanupConnection(connectionId);
+
     this.connections.delete(connectionId);
     this.websockets.delete(connectionId);
     this.messageQueue.delete(connectionId);
@@ -191,7 +213,7 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
   async sendMessage(connectionId: string, message: WSMessage): Promise<void> {
     const ws = this.websockets.get(connectionId);
     const connection = this.connections.get(connectionId);
-    
+
     if (!ws || !connection || ws.readyState !== WebSocket.OPEN) {
       if (this.config.messageQueue?.enabled) {
         this.queueMessage(connectionId, message);
@@ -204,14 +226,16 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
       const messageSize = Buffer.byteLength(messageStr, 'utf8');
 
       // Check if compression should be applied
-      if (this.config.compression?.enabled && 
-          messageSize > (this.config.compression.threshold || 1024)) {
+      if (
+        this.config.compression?.enabled &&
+        messageSize > (this.config.compression.threshold || 1024)
+      ) {
         // TODO: Implement compression
       }
 
       ws.send(messageStr);
       connection.lastActivity = Date.now();
-      
+
       this.emit('message:sent', connectionId, message);
     } catch (error) {
       console.error(`Failed to send message to ${connectionId}:`, error);
@@ -227,7 +251,7 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
     filter?: (connection: WSConnectionState) => boolean
   ): Promise<void> {
     const promises: Promise<void>[] = [];
-    
+
     for (const [connectionId, connection] of this.connections) {
       if (!filter || filter(connection)) {
         promises.push(this.sendMessage(connectionId, message));
@@ -240,7 +264,11 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
   /**
    * Join a channel
    */
-  joinChannel(connectionId: string, channelName: string, password?: string): boolean {
+  joinChannel(
+    connectionId: string,
+    channelName: string,
+    password?: string
+  ): boolean {
     const connection = this.connections.get(connectionId);
     if (!connection) return false;
 
@@ -277,21 +305,25 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
     channel.lastActivity = Date.now();
 
     this.emit('channel:joined', connectionId, channelName);
-    
+
     // Notify other channel members
-    this.broadcastToChannel(channelName, {
-      id: nanoid(),
-      type: 'channel:message',
-      timestamp: Date.now(),
-      data: {
-        channel: channelName,
-        message: {
-          type: 'member_joined',
-          connectionId,
+    this.broadcastToChannel(
+      channelName,
+      {
+        id: nanoid(),
+        type: 'channel:message',
+        timestamp: Date.now(),
+        data: {
+          channel: channelName,
+          message: {
+            type: 'member_joined',
+            connectionId,
+          },
+          sender: 'system',
         },
-        sender: 'system',
       },
-    }, [connectionId]);
+      [connectionId]
+    );
 
     return true;
   }
@@ -302,7 +334,7 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
   leaveChannel(connectionId: string, channelName: string): boolean {
     const connection = this.connections.get(connectionId);
     const channel = this.channels.get(channelName);
-    
+
     if (!connection || !channel) return false;
 
     connection.channels.delete(channelName);
@@ -423,7 +455,7 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
   unsubscribe(connectionId: string, event: string): boolean {
     const connection = this.connections.get(connectionId);
     const subscription = this.subscriptions.get(event);
-    
+
     if (!connection || !subscription) return false;
 
     connection.subscriptions.delete(event);
@@ -441,7 +473,11 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
   /**
    * Publish event to subscribers
    */
-  async publishEvent(event: string, payload: any, source?: string): Promise<void> {
+  async publishEvent(
+    event: string,
+    payload: any,
+    source?: string
+  ): Promise<void> {
     const subscription = this.subscriptions.get(event);
     if (!subscription) return;
 
@@ -458,7 +494,8 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
 
     // Add to subscription history
     subscription.history.push(payload);
-    if (subscription.history.length > 100) { // Default max history
+    if (subscription.history.length > 100) {
+      // Default max history
       subscription.history = subscription.history.slice(-100);
     }
 
@@ -481,14 +518,20 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
   /**
    * Add event handler
    */
-  on<T extends keyof WSServerEvents>(event: T, handler: WSServerEvents[T]): this {
+  on<T extends keyof WSServerEvents>(
+    event: T,
+    handler: WSServerEvents[T]
+  ): this {
     return super.on(event, handler);
   }
 
   /**
    * Handle incoming message
    */
-  private async handleMessage(connectionId: string, rawMessage: string | Buffer): Promise<void> {
+  private async handleMessage(
+    connectionId: string,
+    rawMessage: string | Buffer
+  ): Promise<void> {
     try {
       const connection = this.connections.get(connectionId);
       if (!connection) return;
@@ -544,7 +587,10 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
   /**
    * Execute middleware chain
    */
-  private async executeMiddleware(context: WSMiddlewareContext, index: number): Promise<void> {
+  private async executeMiddleware(
+    context: WSMiddlewareContext,
+    index: number
+  ): Promise<void> {
     if (index >= this.middleware.length) {
       await context.next();
       return;
@@ -552,7 +598,7 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
 
     const middleware = this.middleware[index];
     const originalNext = context.next;
-    
+
     context.next = async () => {
       await this.executeMiddleware(context, index + 1);
     };
@@ -563,7 +609,10 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
   /**
    * Process a message after middleware
    */
-  private async processMessage(connectionId: string, message: WSMessage): Promise<void> {
+  private async processMessage(
+    connectionId: string,
+    message: WSMessage
+  ): Promise<void> {
     const handler = this.eventHandlers[message.type];
     if (handler) {
       const connection = this.connections.get(connectionId);
@@ -579,7 +628,10 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
   /**
    * Handle built-in message types
    */
-  private async handleBuiltinMessage(connectionId: string, message: WSMessage): Promise<void> {
+  private async handleBuiltinMessage(
+    connectionId: string,
+    message: WSMessage
+  ): Promise<void> {
     switch (message.type) {
       case 'connection:ping':
         await this.sendMessage(connectionId, {
@@ -588,16 +640,26 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
           timestamp: Date.now(),
           data: {
             timestamp: Date.now(),
-            latency: message.data?.timestamp ? Date.now() - message.data.timestamp : 0,
+            latency: message.data?.timestamp
+              ? Date.now() - message.data.timestamp
+              : 0,
           },
         });
         break;
 
       case 'channel:join':
         if (message.data?.channel) {
-          const joined = this.joinChannel(connectionId, message.data.channel, message.data.password);
+          const joined = this.joinChannel(
+            connectionId,
+            message.data.channel,
+            message.data.password
+          );
           if (!joined) {
-            await this.sendError(connectionId, 'Failed to join channel', 'CHANNEL_JOIN_FAILED');
+            await this.sendError(
+              connectionId,
+              'Failed to join channel',
+              'CHANNEL_JOIN_FAILED'
+            );
           }
         }
         break;
@@ -610,13 +672,17 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
 
       case 'channel:message':
         if (message.data?.channel && message.data?.message) {
-          await this.broadcastToChannel(message.data.channel, {
-            ...message,
-            data: {
-              ...message.data,
-              sender: connectionId,
+          await this.broadcastToChannel(
+            message.data.channel,
+            {
+              ...message,
+              data: {
+                ...message.data,
+                sender: connectionId,
+              },
             },
-          }, [connectionId]);
+            [connectionId]
+          );
         }
         break;
 
@@ -639,7 +705,11 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
 
       default:
         // Unknown message type
-        await this.sendError(connectionId, `Unknown message type: ${message.type}`, 'UNKNOWN_MESSAGE_TYPE');
+        await this.sendError(
+          connectionId,
+          `Unknown message type: ${message.type}`,
+          'UNKNOWN_MESSAGE_TYPE'
+        );
     }
   }
 
@@ -647,7 +717,7 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
    * Set up WebSocket event handlers
    */
   private setupWebSocketHandlers(ws: WebSocket, connectionId: string): void {
-    ws.on('message', (data) => {
+    ws.on('message', data => {
       this.handleMessage(connectionId, data);
     });
 
@@ -655,7 +725,7 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
       this.removeConnection(connectionId, code, reason.toString());
     });
 
-    ws.on('error', (error) => {
+    ws.on('error', error => {
       this.emit('connection:error', connectionId, error);
       this.removeConnection(connectionId, 1011, 'Internal error');
     });
@@ -671,7 +741,10 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
   /**
    * Check rate limits
    */
-  private checkRateLimit(connectionId: string, message: string | Buffer): boolean {
+  private checkRateLimit(
+    connectionId: string,
+    message: string | Buffer
+  ): boolean {
     if (!this.config.rateLimiting?.enabled) return true;
 
     const rateLimit = this.rateLimits.get(connectionId);
@@ -681,7 +754,8 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
     const messageSize = Buffer.byteLength(message);
 
     // Reset window if needed
-    if (now - rateLimit.windowStart > 60000) { // 1 minute window
+    if (now - rateLimit.windowStart > 60000) {
+      // 1 minute window
       rateLimit.windowStart = now;
       rateLimit.messageCount = 0;
       rateLimit.byteCount = 0;
@@ -700,9 +774,11 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
     const currentMps = rateLimit.messageCount / secondsInWindow;
     const currentBps = rateLimit.byteCount / secondsInWindow;
 
-    if (currentMps > messagesPerSecond ||
-        rateLimit.messageCount > messagesPerMinute ||
-        currentBps > bytesPerSecond) {
+    if (
+      currentMps > messagesPerSecond ||
+      rateLimit.messageCount > messagesPerMinute ||
+      currentBps > bytesPerSecond
+    ) {
       rateLimit.violations++;
       return false;
     }
@@ -742,7 +818,11 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
   /**
    * Send error message
    */
-  private async sendError(connectionId: string, error: string, code?: string): Promise<void> {
+  private async sendError(
+    connectionId: string,
+    error: string,
+    code?: string
+  ): Promise<void> {
     await this.sendMessage(connectionId, {
       id: nanoid(),
       type: 'connection:error',
@@ -786,7 +866,7 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
         if (!ws) continue;
 
         // Check if connection is stale
-        if (connection.lastPong && (now - connection.lastPong) > timeout) {
+        if (connection.lastPong && now - connection.lastPong > timeout) {
           this.removeConnection(connectionId, 1001, 'Heartbeat timeout');
           continue;
         }
@@ -811,7 +891,7 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
       // Clean up old queued messages
       for (const [connectionId, queue] of this.messageQueue) {
         for (let i = queue.length - 1; i >= 0; i--) {
-          if ((now - queue[i].nextAttempt) > ttl) {
+          if (now - queue[i].nextAttempt > ttl) {
             queue.splice(i, 1);
           }
         }
@@ -819,7 +899,10 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
 
       // Clean up old channels
       for (const [channelName, channel] of this.channels) {
-        if (channel.connections.size === 0 && (now - channel.lastActivity) > ttl) {
+        if (
+          channel.connections.size === 0 &&
+          now - channel.lastActivity > ttl
+        ) {
           this.channels.delete(channelName);
         }
       }
@@ -834,17 +917,45 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
     channels: number;
     subscriptions: number;
     queuedMessages: number;
+    performance: {
+      totalMessagesPerSecond: number;
+      totalBytesPerSecond: number;
+      averageConnectionTime: number;
+      backpressureConnections: number;
+      totalMemoryUsage: number;
+    };
+    health: {
+      healthy: number;
+      degraded: number;
+      unhealthy: number;
+    };
   } {
     let totalQueuedMessages = 0;
     for (const queue of this.messageQueue.values()) {
       totalQueuedMessages += queue.length;
     }
 
+    // Get optimization metrics
+    const perfMetrics = this.connectionOptimizer.getAggregatedMetrics();
+    const healthStatus = this.connectionOptimizer.getHealthStatus();
+
     return {
       connections: this.connections.size,
       channels: this.channels.size,
       subscriptions: this.subscriptions.size,
       queuedMessages: totalQueuedMessages,
+      performance: {
+        totalMessagesPerSecond: perfMetrics.totalMessagesPerSecond,
+        totalBytesPerSecond: perfMetrics.totalBytesPerSecond,
+        averageConnectionTime: perfMetrics.averageConnectionTime,
+        backpressureConnections: perfMetrics.backpressureConnections,
+        totalMemoryUsage: perfMetrics.totalMemoryUsage,
+      },
+      health: {
+        healthy: healthStatus.healthy.length,
+        degraded: healthStatus.degraded.length,
+        unhealthy: healthStatus.unhealthy.length,
+      },
     };
   }
 

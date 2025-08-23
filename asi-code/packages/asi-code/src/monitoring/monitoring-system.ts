@@ -55,7 +55,7 @@ export interface MonitoringSystemStatus {
 }
 
 export class MonitoringSystem extends EventEmitter {
-  private config: MonitoringConfig;
+  private readonly config: MonitoringConfig;
   private initialized = false;
   
   // Core monitoring components
@@ -73,7 +73,7 @@ export class MonitoringSystem extends EventEmitter {
   public readonly anomalyDetector;
   public readonly reportingSystem;
   
-  private componentStatus = new Map<string, {
+  private readonly componentStatus = new Map<string, {
     enabled: boolean;
     healthy: boolean;
     lastCheck: number;

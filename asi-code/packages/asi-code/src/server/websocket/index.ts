@@ -1,6 +1,6 @@
 /**
  * WebSocket Module Exports
- * 
+ *
  * Main entry point for WebSocket functionality in ASI-Code.
  * Exports all WebSocket classes, types, and utilities.
  */
@@ -13,13 +13,17 @@ export { WSConnectionManager } from './connection-manager.js';
 export { WSMessageQueue } from './message-queue.js';
 
 // Compression and binary support
-export { WSCompressionManager, WSBinaryManager, WSMessageUtils } from './compression.js';
+export {
+  WSCompressionManager,
+  WSBinaryManager,
+  WSMessageUtils,
+} from './compression.js';
 
 // Client reconnection
-export { 
+export {
   WSClientReconnection,
   createReconnectingWebSocket,
-  waitForConnection 
+  waitForConnection,
 } from './client-reconnection.js';
 
 // Middleware
@@ -33,7 +37,7 @@ export {
   createMetadataMiddleware,
   createErrorHandlingMiddleware,
   createBinaryMessageMiddleware,
-  createDefaultMiddlewareStack
+  createDefaultMiddlewareStack,
 } from './middleware.js';
 
 // Types
@@ -42,7 +46,7 @@ export type {
   WSMessage,
   WSMessageType,
   WSBaseMessage,
-  
+
   // Connection types
   WSConnectionState,
   WSChannelState,
@@ -51,7 +55,7 @@ export type {
   WSRateLimitState,
   WSBinaryMessage,
   WSCompressionOptions,
-  
+
   // Specific message types
   WSAuthMessage,
   WSPingMessage,
@@ -76,20 +80,20 @@ export type {
   WSSystemStatusMessage,
   WSSystemNotificationMessage,
   WSErrorMessage,
-  
+
   // Event and middleware types
   WSEventHandler,
   WSEventHandlers,
   WSMiddleware,
   WSMiddlewareContext,
-  WSServerEvents
+  WSServerEvents,
 } from './types.js';
 
 // Re-export client reconnection types
 export type {
   ReconnectionConfig,
   ConnectionState,
-  ReconnectionEvents
+  ReconnectionEvents,
 } from './client-reconnection.js';
 
 // Default configurations
@@ -100,7 +104,7 @@ export const defaultWebSocketConfig = {
   heartbeat: {
     enabled: true,
     interval: 30000, // 30 seconds
-    timeout: 60000,  // 60 seconds
+    timeout: 60000, // 60 seconds
   },
   compression: {
     enabled: true,
@@ -132,7 +136,11 @@ export const defaultWebSocketConfig = {
   binary: {
     enabled: true,
     maxSize: 10485760, // 10MB
-    allowedTypes: ['application/octet-stream', 'application/json', 'text/plain'],
+    allowedTypes: [
+      'application/octet-stream',
+      'application/json',
+      'text/plain',
+    ],
   },
   reconnection: {
     enabled: true,
@@ -147,37 +155,43 @@ export const WebSocketUtils = {
   /**
    * Generate a unique message ID
    */
-  generateMessageId: () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-  
+  generateMessageId: () =>
+    `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+
   /**
    * Create a basic message
    */
-  createMessage: (type: string, data?: any, metadata?: Record<string, any>) => ({
+  createMessage: (
+    type: string,
+    data?: any,
+    metadata?: Record<string, any>
+  ) => ({
     id: WebSocketUtils.generateMessageId(),
     type,
     timestamp: Date.now(),
     data,
     metadata,
   }),
-  
+
   /**
    * Validate message format
    */
   isValidMessage: (msg: any): msg is WSMessage => {
-    return msg && 
-           typeof msg.id === 'string' && 
-           typeof msg.type === 'string' && 
-           typeof msg.timestamp === 'number';
+    return (
+      msg &&
+      typeof msg.id === 'string' &&
+      typeof msg.type === 'string' &&
+      typeof msg.timestamp === 'number'
+    );
   },
-  
+
   /**
    * Check if message is a system message
    */
   isSystemMessage: (msg: WSMessage): boolean => {
-    return msg.type.startsWith('connection:') || 
-           msg.type.startsWith('system:');
+    return msg.type.startsWith('connection:') || msg.type.startsWith('system:');
   },
-  
+
   /**
    * Check if message expects a response
    */
@@ -191,7 +205,7 @@ export const WebSocketUtils = {
     ];
     return responseExpected.includes(msg.type);
   },
-  
+
   /**
    * Format message for logging
    */
@@ -201,12 +215,14 @@ export const WebSocketUtils = {
       `ID: ${msg.id}`,
       `Time: ${new Date(msg.timestamp).toISOString()}`,
     ];
-    
+
     if (includeData && msg.data) {
       const dataStr = JSON.stringify(msg.data);
-      parts.push(`Data: ${dataStr.length > 100 ? dataStr.substring(0, 100) + '...' : dataStr}`);
+      parts.push(
+        `Data: ${dataStr.length > 100 ? dataStr.substring(0, 100) + '...' : dataStr}`
+      );
     }
-    
+
     return parts.join(' | ');
   },
 };

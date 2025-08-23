@@ -1,29 +1,35 @@
 /**
  * Enhanced Configuration Manager
- * 
+ *
  * Advanced configuration management with environment variable support,
  * file loading, validation, watching, and Kenny Integration Pattern integration.
  */
 
 import { EventEmitter } from 'eventemitter3';
-import { readFileSync, writeFileSync, existsSync, watchFile, unwatchFile } from 'fs';
-import { dirname, resolve, extname } from 'path';
+import {
+  existsSync,
+  readFileSync,
+  unwatchFile,
+  watchFile,
+  writeFileSync,
+} from 'fs';
+import { dirname, extname, resolve } from 'path';
 import { mkdirSync } from 'fs';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import { 
-  ASICodeConfig, 
-  ConfigLoadOptions, 
-  ConfigValidationSchema, 
-  ConfigValidationRule,
+import {
+  ASICodeConfig,
   ConfigEvent,
+  ConfigLoadOptions,
+  ConfigValidationRule,
+  ConfigValidationSchema,
+  DeepPartial,
   EnvironmentConfig,
-  DeepPartial
 } from './config-types.js';
 import { DEFAULT_ASI_CONFIG, getDefaultConfig } from './default-config.js';
 
 /**
  * Enhanced Configuration Manager
- * 
+ *
  * Provides comprehensive configuration management with features like:
  * - Environment variable integration
  * - Multiple file format support (JSON, YAML)
@@ -34,10 +40,10 @@ import { DEFAULT_ASI_CONFIG, getDefaultConfig } from './default-config.js';
  */
 export class ConfigManager extends EventEmitter {
   private config: ASICodeConfig;
-  private schema?: ConfigValidationSchema;
-  private watchedFiles = new Set<string>();
+  private readonly schema?: ConfigValidationSchema;
+  private readonly watchedFiles = new Set<string>();
   private loadOptions: ConfigLoadOptions;
-  
+
   constructor(schema?: ConfigValidationSchema) {
     super();
     this.config = { ...DEFAULT_ASI_CONFIG };
@@ -49,7 +55,7 @@ export class ConfigManager extends EventEmitter {
       configPaths: [],
       environmentPrefix: 'ASI_CODE_',
       strict: false,
-      watch: false
+      watch: false,
     };
   }
 
@@ -58,11 +64,11 @@ export class ConfigManager extends EventEmitter {
    */
   async load(options: Partial<ConfigLoadOptions> = {}): Promise<void> {
     this.loadOptions = { ...this.loadOptions, ...options };
-    
+
     try {
       // Start with default configuration
       let config = getDefaultConfig(process.env.NODE_ENV);
-      
+
       // Merge environment variables if enabled
       if (this.loadOptions.mergeEnvironment) {
         const envConfig = this.loadEnvironmentVariables();
@@ -70,12 +76,15 @@ export class ConfigManager extends EventEmitter {
       }
 
       // Load and merge configuration files if specified
-      if (this.loadOptions.mergeFiles && this.loadOptions.configPaths.length > 0) {
+      if (
+        this.loadOptions.mergeFiles &&
+        this.loadOptions.configPaths.length > 0
+      ) {
         for (const configPath of this.loadOptions.configPaths) {
           if (existsSync(configPath)) {
             const fileConfig = await this.loadConfigurationFile(configPath);
             config = this.deepMerge(config, fileConfig);
-            
+
             // Set up file watching if enabled
             if (this.loadOptions.watch) {
               this.watchConfigurationFile(configPath);
@@ -97,16 +106,15 @@ export class ConfigManager extends EventEmitter {
       this.emit('loaded', {
         type: 'loaded',
         data: this.config,
-        timestamp: new Date()
+        timestamp: new Date(),
       } as ConfigEvent);
-
     } catch (error) {
       const configError = {
         type: 'error',
         error: error instanceof Error ? error : new Error(String(error)),
-        timestamp: new Date()
+        timestamp: new Date(),
       } as ConfigEvent;
-      
+
       this.emit('error', configError);
       throw error;
     }
@@ -139,19 +147,18 @@ export class ConfigManager extends EventEmitter {
       }
 
       writeFileSync(filePath, content, 'utf8');
-      
+
       this.emit('saved', {
         type: 'updated',
         path: filePath,
-        timestamp: new Date()
+        timestamp: new Date(),
       } as ConfigEvent);
-
     } catch (error) {
       this.emit('error', {
         type: 'error',
         path: filePath,
         error: error instanceof Error ? error : new Error(String(error)),
-        timestamp: new Date()
+        timestamp: new Date(),
       } as ConfigEvent);
       throw error;
     }
@@ -169,12 +176,12 @@ export class ConfigManager extends EventEmitter {
    */
   set(path: string, value: any): void {
     this.setValueByPath(this.config, path, value);
-    
+
     this.emit('updated', {
       type: 'updated',
       path,
       data: { path, value },
-      timestamp: new Date()
+      timestamp: new Date(),
     } as ConfigEvent);
   }
 
@@ -190,12 +197,12 @@ export class ConfigManager extends EventEmitter {
    */
   delete(path: string): void {
     this.deleteValueByPath(this.config, path);
-    
+
     this.emit('updated', {
       type: 'updated',
       path,
       data: { path, deleted: true },
-      timestamp: new Date()
+      timestamp: new Date(),
     } as ConfigEvent);
   }
 
@@ -211,11 +218,11 @@ export class ConfigManager extends EventEmitter {
    */
   merge(config: DeepPartial<ASICodeConfig>): void {
     this.config = this.deepMerge(this.config, config);
-    
+
     this.emit('updated', {
       type: 'updated',
       data: config,
-      timestamp: new Date()
+      timestamp: new Date(),
     } as ConfigEvent);
   }
 
@@ -224,11 +231,11 @@ export class ConfigManager extends EventEmitter {
    */
   reset(environment?: string): void {
     this.config = getDefaultConfig(environment);
-    
+
     this.emit('updated', {
       type: 'updated',
       data: { reset: true },
-      timestamp: new Date()
+      timestamp: new Date(),
     } as ConfigEvent);
   }
 
@@ -247,7 +254,7 @@ export class ConfigManager extends EventEmitter {
       this.emit('error', {
         type: 'error',
         error: error instanceof Error ? error : new Error(String(error)),
-        timestamp: new Date()
+        timestamp: new Date(),
       } as ConfigEvent);
       return false;
     }
@@ -265,14 +272,14 @@ export class ConfigManager extends EventEmitter {
 
     // Clear configuration
     this.config = { ...DEFAULT_ASI_CONFIG };
-    
+
     // Remove all event listeners
     this.removeAllListeners();
-    
+
     this.emit('cleanup', {
       type: 'updated',
       data: { cleanup: true },
-      timestamp: new Date()
+      timestamp: new Date(),
     } as ConfigEvent);
   }
 
@@ -306,15 +313,19 @@ export class ConfigManager extends EventEmitter {
       [`${prefix}ENV`]: 'environment',
       [`${prefix}DATA_DIR`]: 'dataDirectory',
       [`${prefix}CACHE_DIR`]: 'cacheDirectory',
-      'ANTHROPIC_API_KEY': 'providers.anthropic.apiKey',
-      'OPENAI_API_KEY': 'providers.openai.apiKey'
+      ANTHROPIC_API_KEY: 'providers.anthropic.apiKey',
+      OPENAI_API_KEY: 'providers.openai.apiKey',
     };
 
     // Process environment variables
     for (const [envVar, configPath] of Object.entries(envMappings)) {
       const value = process.env[envVar];
       if (value !== undefined) {
-        this.setValueByPath(envConfig, configPath, this.parseEnvironmentValue(value));
+        this.setValueByPath(
+          envConfig,
+          configPath,
+          this.parseEnvironmentValue(value)
+        );
       }
     }
 
@@ -323,13 +334,17 @@ export class ConfigManager extends EventEmitter {
       [`${prefix}KENNY_ENABLED`, 'kenny.enabled'],
       [`${prefix}CONSCIOUSNESS_ENABLED`, 'consciousness.enabled'],
       [`${prefix}DEV_MODE`, 'development.devMode'],
-      [`${prefix}SSL_ENABLED`, 'server.ssl.enabled']
+      [`${prefix}SSL_ENABLED`, 'server.ssl.enabled'],
     ];
 
     for (const [envVar, configPath] of booleanFlags) {
       const value = process.env[envVar];
       if (value !== undefined) {
-        this.setValueByPath(envConfig, configPath, value.toLowerCase() === 'true');
+        this.setValueByPath(
+          envConfig,
+          configPath,
+          value.toLowerCase() === 'true'
+        );
       }
     }
 
@@ -339,13 +354,15 @@ export class ConfigManager extends EventEmitter {
   /**
    * Load configuration from file
    */
-  private async loadConfigurationFile(filePath: string): Promise<DeepPartial<ASICodeConfig>> {
+  private async loadConfigurationFile(
+    filePath: string
+  ): Promise<DeepPartial<ASICodeConfig>> {
     const absolutePath = resolve(filePath);
     const content = readFileSync(absolutePath, 'utf8');
     const ext = extname(absolutePath).toLowerCase();
 
     let parsed: any;
-    
+
     switch (ext) {
       case '.json':
         parsed = JSON.parse(content);
@@ -366,30 +383,30 @@ export class ConfigManager extends EventEmitter {
    */
   private watchConfigurationFile(filePath: string): void {
     const absolutePath = resolve(filePath);
-    
+
     if (this.watchedFiles.has(absolutePath)) {
       return; // Already watching
     }
 
     this.watchedFiles.add(absolutePath);
-    
+
     watchFile(absolutePath, async (curr, prev) => {
       if (curr.mtime !== prev.mtime) {
         try {
           // Reload configuration
           await this.load(this.loadOptions);
-          
+
           this.emit('changed', {
             type: 'changed',
             path: absolutePath,
-            timestamp: new Date()
+            timestamp: new Date(),
           } as ConfigEvent);
         } catch (error) {
           this.emit('error', {
             type: 'error',
             path: absolutePath,
             error: error instanceof Error ? error : new Error(String(error)),
-            timestamp: new Date()
+            timestamp: new Date(),
           } as ConfigEvent);
         }
       }
@@ -408,7 +425,7 @@ export class ConfigManager extends EventEmitter {
 
     for (const rule of this.schema.rules) {
       const value = this.getValueByPath(this.config, rule.path);
-      
+
       // Check if required field is missing
       if (rule.required && value === undefined) {
         errors.push(`Required configuration missing: ${rule.path}`);
@@ -422,16 +439,20 @@ export class ConfigManager extends EventEmitter {
 
       // Type validation
       if (!this.validateType(value, rule.type)) {
-        errors.push(`Invalid type for ${rule.path}: expected ${rule.type}, got ${typeof value}`);
+        errors.push(
+          `Invalid type for ${rule.path}: expected ${rule.type}, got ${typeof value}`
+        );
       }
 
       // Custom validation
       if (rule.validator && typeof rule.validator === 'function') {
         const validationResult = rule.validator(value);
         if (validationResult !== true) {
-          errors.push(typeof validationResult === 'string' 
-            ? validationResult 
-            : `Validation failed for ${rule.path}`);
+          errors.push(
+            typeof validationResult === 'string'
+              ? validationResult
+              : `Validation failed for ${rule.path}`
+          );
         }
       }
     }
@@ -443,7 +464,7 @@ export class ConfigManager extends EventEmitter {
     this.emit('validated', {
       type: 'validated',
       data: { valid: true },
-      timestamp: new Date()
+      timestamp: new Date(),
     } as ConfigEvent);
   }
 
@@ -459,7 +480,9 @@ export class ConfigManager extends EventEmitter {
       case 'boolean':
         return typeof value === 'boolean';
       case 'object':
-        return typeof value === 'object' && value !== null && !Array.isArray(value);
+        return (
+          typeof value === 'object' && value !== null && !Array.isArray(value)
+        );
       case 'array':
         return Array.isArray(value);
       default:
@@ -517,7 +540,11 @@ export class ConfigManager extends EventEmitter {
 
     for (let i = 0; i < keys.length - 1; i++) {
       const key = keys[i];
-      if (!(key in current) || typeof current[key] !== 'object' || current[key] === null) {
+      if (
+        !(key in current) ||
+        typeof current[key] !== 'object' ||
+        current[key] === null
+      ) {
         current[key] = {};
       }
       current = current[key];
@@ -551,7 +578,11 @@ export class ConfigManager extends EventEmitter {
     const result = { ...target } as any;
 
     for (const key in source) {
-      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      if (
+        source[key] &&
+        typeof source[key] === 'object' &&
+        !Array.isArray(source[key])
+      ) {
         result[key] = this.deepMerge(result[key] || {}, source[key]);
       } else {
         result[key] = source[key];
@@ -570,7 +601,7 @@ export function createConfigManager(
   options?: Partial<ConfigLoadOptions>
 ): ConfigManager {
   const manager = new ConfigManager(schema);
-  
+
   // Load configuration immediately if options are provided
   if (options) {
     manager.load(options).catch(error => {
@@ -584,11 +615,13 @@ export function createConfigManager(
 /**
  * Create configuration validation schema
  */
-export function createValidationSchema(rules: ConfigValidationRule[]): ConfigValidationSchema {
+export function createValidationSchema(
+  rules: ConfigValidationRule[]
+): ConfigValidationSchema {
   return {
     rules,
     strictMode: false,
-    allowUnknown: true
+    allowUnknown: true,
   };
 }
 
@@ -599,39 +632,41 @@ export const DEFAULT_VALIDATION_SCHEMA = createValidationSchema([
   {
     path: 'name',
     type: 'string',
-    required: true
+    required: true,
   },
   {
     path: 'version',
     type: 'string',
-    required: true
+    required: true,
   },
   {
     path: 'environment',
     type: 'string',
     required: true,
-    validator: (value) => ['development', 'staging', 'production', 'test'].includes(value)
+    validator: value =>
+      ['development', 'staging', 'production', 'test'].includes(value),
   },
   {
     path: 'server.port',
     type: 'number',
     required: true,
-    validator: (value) => value > 0 && value <= 65535
+    validator: value => value > 0 && value <= 65535,
   },
   {
     path: 'server.host',
     type: 'string',
-    required: true
+    required: true,
   },
   {
     path: 'logging.level',
     type: 'string',
     required: true,
-    validator: (value) => ['debug', 'info', 'warn', 'error', 'silent'].includes(value)
+    validator: value =>
+      ['debug', 'info', 'warn', 'error', 'silent'].includes(value),
   },
   {
     path: 'providers.default',
     type: 'string',
-    required: true
-  }
+    required: true,
+  },
 ]);

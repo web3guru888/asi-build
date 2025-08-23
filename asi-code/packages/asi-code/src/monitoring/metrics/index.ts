@@ -8,7 +8,7 @@
  * - Custom application metrics
  */
 
-import { register, collectDefaultMetrics, Counter, Histogram, Gauge, Summary } from 'prom-client';
+import { Counter, Gauge, Histogram, Summary, collectDefaultMetrics, register } from 'prom-client';
 import type { Hono } from 'hono';
 import type { MonitoringConfig } from '../index.js';
 import * as os from 'os';
@@ -16,7 +16,7 @@ import * as pidusage from 'pidusage';
 import * as si from 'systeminformation';
 
 export class PrometheusMetrics {
-  private config: MonitoringConfig['prometheus'];
+  private readonly config: MonitoringConfig['prometheus'];
   
   // HTTP Metrics
   private httpRequestsTotal: Counter<string>;

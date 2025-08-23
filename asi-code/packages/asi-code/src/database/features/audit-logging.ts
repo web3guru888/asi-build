@@ -1,6 +1,6 @@
 /**
  * Audit Logging System
- * 
+ *
  * Provides comprehensive audit trail functionality with:
  * - Automatic change tracking for all tables
  * - Before/after value capture
@@ -14,7 +14,7 @@
 
 import { Knex } from 'knex';
 import { nanoid } from 'nanoid';
-import { DatabaseAdapter, AuditLogEntry } from '../types';
+import { AuditLogEntry, DatabaseAdapter } from '../types';
 import { Logger } from '../../logging';
 
 export interface AuditConfig {
@@ -64,11 +64,11 @@ export interface AuditStatistics {
 }
 
 export class AuditLogger {
-  private adapter: DatabaseAdapter;
-  private logger: Logger;
-  private config: AuditConfig;
+  private readonly adapter: DatabaseAdapter;
+  private readonly logger: Logger;
+  private readonly config: AuditConfig;
   private context: AuditContext = {};
-  private triggerCache = new Map<string, boolean>();
+  private readonly triggerCache = new Map<string, boolean>();
   private pendingEntries: AuditLogEntry[] = [];
   private flushInterval?: NodeJS.Timeout;
 
@@ -84,7 +84,7 @@ export class AuditLogger {
       retentionDays: 365, // 1 year default
       compressOldEntries: true,
       batchSize: 1000,
-      maxFieldLength: 10000
+      maxFieldLength: 10000,
     };
   }
 
@@ -121,42 +121,53 @@ export class AuditLogger {
    */
   private async createAuditTable(): Promise<void> {
     const hasTable = await this.adapter.hasTable(this.config.tableName);
-    
-    if (!hasTable) {
-      await this.adapter.knex.schema.createTable(this.config.tableName, (table) => {
-        table.uuid('id').primary().defaultTo(this.adapter.knex.raw('gen_random_uuid()'));
-        table.string('table_name', 100).notNullable();
-        table.enum('operation', ['INSERT', 'UPDATE', 'DELETE']).notNullable();
-        table.string('record_id', 100).notNullable();
-        table.jsonb('old_values').nullable();
-        table.jsonb('new_values').nullable();
-        table.specificType('changed_fields', 'text[]').nullable();
-        table.string('user_id', 100).nullable();
-        table.string('user_agent', 500).nullable();
-        table.string('ip_address', 45).nullable();
-        table.string('session_id', 100).nullable();
-        table.string('request_id', 100).nullable();
-        table.string('source', 100).nullable();
-        table.timestamp('timestamp').defaultTo(this.adapter.knex.fn.now()).notNullable();
-        table.jsonb('metadata').nullable();
-        table.boolean('compressed').defaultTo(false);
-        table.text('checksum').nullable();
-        
-        // Indexes for performance
-        table.index(['table_name']);
-        table.index(['operation']);
-        table.index(['record_id']);
-        table.index(['user_id']);
-        table.index(['timestamp']);
-        table.index(['table_name', 'record_id']);
-        table.index(['user_id', 'timestamp']);
-        table.index(['compressed']);
-        
-        // Composite index for common queries
-        table.index(['table_name', 'operation', 'timestamp']);
-      });
 
-      this.logger.info('Created audit log table', { tableName: this.config.tableName });
+    if (!hasTable) {
+      await this.adapter.knex.schema.createTable(
+        this.config.tableName,
+        table => {
+          table
+            .uuid('id')
+            .primary()
+            .defaultTo(this.adapter.knex.raw('gen_random_uuid()'));
+          table.string('table_name', 100).notNullable();
+          table.enum('operation', ['INSERT', 'UPDATE', 'DELETE']).notNullable();
+          table.string('record_id', 100).notNullable();
+          table.jsonb('old_values').nullable();
+          table.jsonb('new_values').nullable();
+          table.specificType('changed_fields', 'text[]').nullable();
+          table.string('user_id', 100).nullable();
+          table.string('user_agent', 500).nullable();
+          table.string('ip_address', 45).nullable();
+          table.string('session_id', 100).nullable();
+          table.string('request_id', 100).nullable();
+          table.string('source', 100).nullable();
+          table
+            .timestamp('timestamp')
+            .defaultTo(this.adapter.knex.fn.now())
+            .notNullable();
+          table.jsonb('metadata').nullable();
+          table.boolean('compressed').defaultTo(false);
+          table.text('checksum').nullable();
+
+          // Indexes for performance
+          table.index(['table_name']);
+          table.index(['operation']);
+          table.index(['record_id']);
+          table.index(['user_id']);
+          table.index(['timestamp']);
+          table.index(['table_name', 'record_id']);
+          table.index(['user_id', 'timestamp']);
+          table.index(['compressed']);
+
+          // Composite index for common queries
+          table.index(['table_name', 'operation', 'timestamp']);
+        }
+      );
+
+      this.logger.info('Created audit log table', {
+        tableName: this.config.tableName,
+      });
     }
   }
 
@@ -165,7 +176,7 @@ export class AuditLogger {
    */
   private async createAuditTriggers(): Promise<void> {
     const tables = await this.getAllTables();
-    
+
     for (const tableName of tables) {
       if (this.shouldExcludeTable(tableName)) {
         continue;
@@ -281,12 +292,12 @@ export class AuditLogger {
       this.logger.debug('Created audit trigger', {
         table: tableName,
         trigger: triggerName,
-        function: functionName
+        function: functionName,
       });
     } catch (error) {
       this.logger.error('Failed to create audit trigger', {
         table: tableName,
-        error: error.message
+        error: error.message,
       });
     }
   }
@@ -300,12 +311,15 @@ export class AuditLogger {
     }
 
     try {
-      const result = await this.adapter.knex.raw(`
+      const result = await this.adapter.knex.raw(
+        `
         SELECT EXISTS (
           SELECT 1 FROM information_schema.triggers 
           WHERE trigger_name = ? AND event_object_table = ?
         ) as exists
-      `, [`audit_${tableName}_trigger`, tableName]);
+      `,
+        [`audit_${tableName}_trigger`, tableName]
+      );
 
       const exists = result.rows[0].exists;
       this.triggerCache.set(tableName, exists);
@@ -313,7 +327,7 @@ export class AuditLogger {
     } catch (error) {
       this.logger.error('Failed to check trigger existence', {
         table: tableName,
-        error: error.message
+        error: error.message,
       });
       return false;
     }
@@ -324,15 +338,18 @@ export class AuditLogger {
    */
   private async getAllTables(): Promise<string[]> {
     try {
-      const result = await this.adapter.knex.raw(`
+      const result = await this.adapter.knex.raw(
+        `
         SELECT table_name 
         FROM information_schema.tables 
         WHERE table_schema = current_schema() 
         AND table_type = 'BASE TABLE'
         AND table_name NOT LIKE 'knex_%'
         AND table_name != ?
-      `, [this.config.tableName]);
-      
+      `,
+        [this.config.tableName]
+      );
+
       return result.rows.map(row => row.table_name);
     } catch (error) {
       this.logger.error('Failed to get table names', { error });
@@ -344,9 +361,11 @@ export class AuditLogger {
    * Check if table should be excluded from auditing
    */
   private shouldExcludeTable(tableName: string): boolean {
-    return this.config.excludeTables.includes(tableName) ||
-           tableName === this.config.tableName ||
-           tableName.startsWith('knex_');
+    return (
+      this.config.excludeTables.includes(tableName) ||
+      tableName === this.config.tableName ||
+      tableName.startsWith('knex_')
+    );
   }
 
   /**
@@ -376,52 +395,90 @@ export class AuditLogger {
     try {
       // Set PostgreSQL session variables for trigger access
       if (context.userId) {
-        await this.adapter.knex.raw('SELECT set_config(?, ?, false)', ['audit.user_id', context.userId]);
+        await this.adapter.knex.raw('SELECT set_config(?, ?, false)', [
+          'audit.user_id',
+          context.userId,
+        ]);
       }
       if (context.sessionId) {
-        await this.adapter.knex.raw('SELECT set_config(?, ?, false)', ['audit.session_id', context.sessionId]);
+        await this.adapter.knex.raw('SELECT set_config(?, ?, false)', [
+          'audit.session_id',
+          context.sessionId,
+        ]);
       }
       if (context.requestId) {
-        await this.adapter.knex.raw('SELECT set_config(?, ?, false)', ['audit.request_id', context.requestId]);
+        await this.adapter.knex.raw('SELECT set_config(?, ?, false)', [
+          'audit.request_id',
+          context.requestId,
+        ]);
       }
       if (context.source) {
-        await this.adapter.knex.raw('SELECT set_config(?, ?, false)', ['audit.source', context.source]);
+        await this.adapter.knex.raw('SELECT set_config(?, ?, false)', [
+          'audit.source',
+          context.source,
+        ]);
       }
       if (context.userAgent) {
-        await this.adapter.knex.raw('SELECT set_config(?, ?, false)', ['audit.user_agent', context.userAgent]);
+        await this.adapter.knex.raw('SELECT set_config(?, ?, false)', [
+          'audit.user_agent',
+          context.userAgent,
+        ]);
       }
       if (context.ipAddress) {
-        await this.adapter.knex.raw('SELECT set_config(?, ?, false)', ['audit.ip_address', context.ipAddress]);
+        await this.adapter.knex.raw('SELECT set_config(?, ?, false)', [
+          'audit.ip_address',
+          context.ipAddress,
+        ]);
       }
 
       const result = await operation();
       return result;
     } finally {
       this.context = oldContext;
-      
+
       // Clear session variables
-      await this.adapter.knex.raw('SELECT set_config(?, ?, false)', ['audit.user_id', '']);
-      await this.adapter.knex.raw('SELECT set_config(?, ?, false)', ['audit.session_id', '']);
-      await this.adapter.knex.raw('SELECT set_config(?, ?, false)', ['audit.request_id', '']);
-      await this.adapter.knex.raw('SELECT set_config(?, ?, false)', ['audit.source', '']);
-      await this.adapter.knex.raw('SELECT set_config(?, ?, false)', ['audit.user_agent', '']);
-      await this.adapter.knex.raw('SELECT set_config(?, ?, false)', ['audit.ip_address', '']);
+      await this.adapter.knex.raw('SELECT set_config(?, ?, false)', [
+        'audit.user_id',
+        '',
+      ]);
+      await this.adapter.knex.raw('SELECT set_config(?, ?, false)', [
+        'audit.session_id',
+        '',
+      ]);
+      await this.adapter.knex.raw('SELECT set_config(?, ?, false)', [
+        'audit.request_id',
+        '',
+      ]);
+      await this.adapter.knex.raw('SELECT set_config(?, ?, false)', [
+        'audit.source',
+        '',
+      ]);
+      await this.adapter.knex.raw('SELECT set_config(?, ?, false)', [
+        'audit.user_agent',
+        '',
+      ]);
+      await this.adapter.knex.raw('SELECT set_config(?, ?, false)', [
+        'audit.ip_address',
+        '',
+      ]);
     }
   }
 
   /**
    * Manually log an audit entry
    */
-  async logEntry(entry: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<void> {
+  async logEntry(
+    entry: Omit<AuditLogEntry, 'id' | 'timestamp'>
+  ): Promise<void> {
     const auditEntry: AuditLogEntry = {
       id: nanoid(),
       timestamp: new Date(),
-      ...entry
+      ...entry,
     };
 
     if (this.config.batchSize > 1) {
       this.pendingEntries.push(auditEntry);
-      
+
       if (this.pendingEntries.length >= this.config.batchSize) {
         await this.flushPendingEntries();
       }
@@ -464,7 +521,7 @@ export class AuditLogger {
           changed_fields: entry.changedFields,
           user_id: entry.userId,
           timestamp: entry.timestamp,
-          metadata: entry.metadata ? JSON.stringify(entry.metadata) : null
+          metadata: entry.metadata ? JSON.stringify(entry.metadata) : null,
         }))
       );
 
@@ -472,7 +529,7 @@ export class AuditLogger {
     } catch (error) {
       this.logger.error('Failed to flush audit entries', {
         error: error.message,
-        entriesLost: entries.length
+        entriesLost: entries.length,
       });
     }
   }
@@ -492,12 +549,12 @@ export class AuditLogger {
         changed_fields: entry.changedFields,
         user_id: entry.userId,
         timestamp: entry.timestamp,
-        metadata: entry.metadata ? JSON.stringify(entry.metadata) : null
+        metadata: entry.metadata ? JSON.stringify(entry.metadata) : null,
       });
     } catch (error) {
       this.logger.error('Failed to insert audit entry', {
         error: error.message,
-        entry: entry.id
+        entry: entry.id,
       });
     }
   }
@@ -533,7 +590,7 @@ export class AuditLogger {
       if (options.dateRange) {
         query = query.whereBetween('timestamp', [
           options.dateRange.from,
-          options.dateRange.to
+          options.dateRange.to,
         ]);
       }
 
@@ -545,11 +602,8 @@ export class AuditLogger {
       // Apply pagination
       const limit = options.limit || 100;
       const offset = options.offset || 0;
-      
-      query = query
-        .orderBy('timestamp', 'desc')
-        .limit(limit)
-        .offset(offset);
+
+      query = query.orderBy('timestamp', 'desc').limit(limit).offset(offset);
 
       const rows = await query;
 
@@ -563,13 +617,13 @@ export class AuditLogger {
         changedFields: row.changed_fields,
         userId: row.user_id,
         timestamp: row.timestamp,
-        metadata: row.metadata ? JSON.parse(row.metadata) : undefined
+        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
       }));
 
       return {
         entries,
         total,
-        hasMore: offset + entries.length < total
+        hasMore: offset + entries.length < total,
       };
     } catch (error) {
       this.logger.error('Failed to query audit log', { error, options });
@@ -588,44 +642,51 @@ export class AuditLogger {
         tableStats,
         userStats,
         dateStats,
-        sizeResult
+        sizeResult,
       ] = await Promise.all([
         this.adapter.knex(this.config.tableName).count('* as total').first(),
-        
-        this.adapter.knex(this.config.tableName)
+
+        this.adapter
+          .knex(this.config.tableName)
           .select('operation')
           .count('* as count')
           .groupBy('operation'),
-        
-        this.adapter.knex(this.config.tableName)
+
+        this.adapter
+          .knex(this.config.tableName)
           .select('table_name')
           .count('* as count')
           .groupBy('table_name')
           .orderBy('count', 'desc')
           .limit(10),
-        
-        this.adapter.knex(this.config.tableName)
+
+        this.adapter
+          .knex(this.config.tableName)
           .select('user_id')
           .count('* as count')
           .whereNotNull('user_id')
           .groupBy('user_id')
           .orderBy('count', 'desc')
           .limit(10),
-        
-        this.adapter.knex(this.config.tableName)
+
+        this.adapter
+          .knex(this.config.tableName)
           .select(
             this.adapter.knex.raw('MIN(timestamp) as oldest'),
             this.adapter.knex.raw('MAX(timestamp) as newest')
           )
           .first(),
-        
-        this.adapter.knex.raw(`
+
+        this.adapter.knex.raw(
+          `
           SELECT pg_total_relation_size(?) as size
-        `, [this.config.tableName])
+        `,
+          [this.config.tableName]
+        ),
       ]);
 
       const total = parseInt(totalResult.total, 10);
-      
+
       const entriesByOperation = operationStats.reduce((acc, row) => {
         acc[row.operation] = parseInt(row.count, 10);
         return acc;
@@ -643,11 +704,15 @@ export class AuditLogger {
 
       const oldestEntry = dateStats.oldest;
       const newestEntry = dateStats.newest;
-      
+
       let averageEntriesPerDay = 0;
       if (oldestEntry && newestEntry) {
-        const daysDiff = Math.max(1, 
-          Math.ceil((newestEntry.getTime() - oldestEntry.getTime()) / (1000 * 60 * 60 * 24))
+        const daysDiff = Math.max(
+          1,
+          Math.ceil(
+            (newestEntry.getTime() - oldestEntry.getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
         );
         averageEntriesPerDay = total / daysDiff;
       }
@@ -662,7 +727,7 @@ export class AuditLogger {
         oldestEntry,
         newestEntry,
         averageEntriesPerDay,
-        storageSize
+        storageSize,
       };
     } catch (error) {
       this.logger.error('Failed to get audit statistics', { error });
@@ -680,16 +745,17 @@ export class AuditLogger {
 
     this.logger.info('Starting audit log cleanup', {
       retentionDays,
-      cutoffDate
+      cutoffDate,
     });
 
     try {
-      const deletedCount = await this.adapter.knex(this.config.tableName)
+      const deletedCount = await this.adapter
+        .knex(this.config.tableName)
         .where('timestamp', '<', cutoffDate)
         .delete();
 
       this.logger.info('Audit log cleanup completed', {
-        deletedEntries: deletedCount
+        deletedEntries: deletedCount,
       });
 
       return deletedCount;

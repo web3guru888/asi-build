@@ -6,7 +6,16 @@ import { logger } from '../logging/logger.js';
 
 export interface ValidationRule {
   field: string;
-  type: 'string' | 'number' | 'boolean' | 'email' | 'url' | 'uuid' | 'json' | 'array' | 'object';
+  type:
+    | 'string'
+    | 'number'
+    | 'boolean'
+    | 'email'
+    | 'url'
+    | 'uuid'
+    | 'json'
+    | 'array'
+    | 'object';
   required?: boolean;
   min?: number;
   max?: number;
@@ -38,12 +47,12 @@ export interface ValidationResult {
  * Input validation and sanitization utility
  */
 export class InputValidator {
-  private static domPurifyConfig = {
+  private static readonly domPurifyConfig = {
     ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li'],
     ALLOWED_ATTR: ['href', 'title'],
     ALLOW_DATA_ATTR: false,
     FORBID_TAGS: ['script', 'object', 'embed', 'form', 'input'],
-    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover']
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
   };
 
   /**
@@ -56,35 +65,45 @@ export class InputValidator {
     for (const rule of rules) {
       const value = this.getNestedValue(data, rule.field);
       const validationResult = this.validateField(value, rule);
-      
+
       if (!validationResult.isValid) {
         errors.push({
           field: rule.field,
           message: validationResult.error!,
-          value: value
+          value: value,
         });
       } else {
-        this.setNestedValue(sanitizedData, rule.field, validationResult.sanitizedValue);
+        this.setNestedValue(
+          sanitizedData,
+          rule.field,
+          validationResult.sanitizedValue
+        );
       }
     }
 
     return {
       isValid: errors.length === 0,
       errors,
-      sanitizedData
+      sanitizedData,
     };
   }
 
   /**
    * Validate single field
    */
-  private static validateField(value: any, rule: ValidationRule): { 
-    isValid: boolean; 
-    error?: string; 
-    sanitizedValue?: any 
+  private static validateField(
+    value: any,
+    rule: ValidationRule
+  ): {
+    isValid: boolean;
+    error?: string;
+    sanitizedValue?: any;
   } {
     // Check required
-    if (rule.required && (value === undefined || value === null || value === '')) {
+    if (
+      rule.required &&
+      (value === undefined || value === null || value === '')
+    ) {
       return { isValid: false, error: `${rule.field} is required` };
     }
 
@@ -113,7 +132,11 @@ export class InputValidator {
         break;
 
       case 'boolean':
-        if (typeof value !== 'boolean' && value !== 'true' && value !== 'false') {
+        if (
+          typeof value !== 'boolean' &&
+          value !== 'true' &&
+          value !== 'false'
+        ) {
           return { isValid: false, error: `${rule.field} must be a boolean` };
         }
         sanitizedValue = typeof value === 'boolean' ? value : value === 'true';
@@ -121,7 +144,10 @@ export class InputValidator {
 
       case 'email':
         if (!this.isValidEmail(String(value))) {
-          return { isValid: false, error: `${rule.field} must be a valid email` };
+          return {
+            isValid: false,
+            error: `${rule.field} must be a valid email`,
+          };
         }
         sanitizedValue = String(value).toLowerCase().trim();
         break;
@@ -135,14 +161,18 @@ export class InputValidator {
 
       case 'uuid':
         if (!this.isValidUUID(String(value))) {
-          return { isValid: false, error: `${rule.field} must be a valid UUID` };
+          return {
+            isValid: false,
+            error: `${rule.field} must be a valid UUID`,
+          };
         }
         sanitizedValue = String(value).toLowerCase();
         break;
 
       case 'json':
         try {
-          sanitizedValue = typeof value === 'string' ? JSON.parse(value) : value;
+          sanitizedValue =
+            typeof value === 'string' ? JSON.parse(value) : value;
         } catch {
           return { isValid: false, error: `${rule.field} must be valid JSON` };
         }
@@ -156,7 +186,11 @@ export class InputValidator {
         break;
 
       case 'object':
-        if (typeof value !== 'object' || Array.isArray(value) || value === null) {
+        if (
+          typeof value !== 'object' ||
+          Array.isArray(value) ||
+          value === null
+        ) {
           return { isValid: false, error: `${rule.field} must be an object` };
         }
         sanitizedValue = value;
@@ -165,27 +199,37 @@ export class InputValidator {
 
     // Length validation
     if (rule.min !== undefined) {
-      const length = typeof sanitizedValue === 'string' ? sanitizedValue.length : 
-                     Array.isArray(sanitizedValue) ? sanitizedValue.length :
-                     typeof sanitizedValue === 'number' ? sanitizedValue : 0;
-      
+      const length =
+        typeof sanitizedValue === 'string'
+          ? sanitizedValue.length
+          : Array.isArray(sanitizedValue)
+            ? sanitizedValue.length
+            : typeof sanitizedValue === 'number'
+              ? sanitizedValue
+              : 0;
+
       if (length < rule.min) {
-        return { 
-          isValid: false, 
-          error: `${rule.field} must be at least ${rule.min} ${rule.type === 'number' ? 'value' : 'characters'}` 
+        return {
+          isValid: false,
+          error: `${rule.field} must be at least ${rule.min} ${rule.type === 'number' ? 'value' : 'characters'}`,
         };
       }
     }
 
     if (rule.max !== undefined) {
-      const length = typeof sanitizedValue === 'string' ? sanitizedValue.length : 
-                     Array.isArray(sanitizedValue) ? sanitizedValue.length :
-                     typeof sanitizedValue === 'number' ? sanitizedValue : 0;
-      
+      const length =
+        typeof sanitizedValue === 'string'
+          ? sanitizedValue.length
+          : Array.isArray(sanitizedValue)
+            ? sanitizedValue.length
+            : typeof sanitizedValue === 'number'
+              ? sanitizedValue
+              : 0;
+
       if (length > rule.max) {
-        return { 
-          isValid: false, 
-          error: `${rule.field} must be at most ${rule.max} ${rule.type === 'number' ? 'value' : 'characters'}` 
+        return {
+          isValid: false,
+          error: `${rule.field} must be at most ${rule.max} ${rule.type === 'number' ? 'value' : 'characters'}`,
         };
       }
     }
@@ -199,9 +243,9 @@ export class InputValidator {
 
     // Enum validation
     if (rule.enum && !rule.enum.includes(sanitizedValue)) {
-      return { 
-        isValid: false, 
-        error: `${rule.field} must be one of: ${rule.enum.join(', ')}` 
+      return {
+        isValid: false,
+        error: `${rule.field} must be one of: ${rule.enum.join(', ')}`,
       };
     }
 
@@ -209,9 +253,12 @@ export class InputValidator {
     if (rule.customValidator) {
       const customResult = rule.customValidator(sanitizedValue);
       if (customResult !== true) {
-        return { 
-          isValid: false, 
-          error: typeof customResult === 'string' ? customResult : `${rule.field} is invalid` 
+        return {
+          isValid: false,
+          error:
+            typeof customResult === 'string'
+              ? customResult
+              : `${rule.field} is invalid`,
         };
       }
     }
@@ -244,9 +291,11 @@ export class InputValidator {
       const purifyOptions = {
         ...this.domPurifyConfig,
         ...(options?.allowedTags && { ALLOWED_TAGS: options.allowedTags }),
-        ...(options?.allowedAttributes && { ALLOWED_ATTR: Object.values(options.allowedAttributes).flat() })
+        ...(options?.allowedAttributes && {
+          ALLOWED_ATTR: Object.values(options.allowedAttributes).flat(),
+        }),
       };
-      
+
       sanitized = DOMPurify.sanitize(sanitized, purifyOptions);
     }
 
@@ -269,7 +318,9 @@ export class InputValidator {
     const purifyOptions = {
       ...this.domPurifyConfig,
       ...(options?.allowedTags && { ALLOWED_TAGS: options.allowedTags }),
-      ...(options?.allowedAttributes && { ALLOWED_ATTR: Object.values(options.allowedAttributes).flat() })
+      ...(options?.allowedAttributes && {
+        ALLOWED_ATTR: Object.values(options.allowedAttributes).flat(),
+      }),
     };
 
     return DOMPurify.sanitize(html, purifyOptions);
@@ -288,7 +339,7 @@ export class InputValidator {
     }
 
     const sanitized: any = {};
-    
+
     for (const [key, value] of Object.entries(obj)) {
       if (typeof value === 'string') {
         sanitized[key] = this.sanitizeString(value, options);
@@ -324,11 +375,11 @@ export class InputValidator {
       /DELETE[^a-zA-Z0-9]/gi,
       /DROP[^a-zA-Z0-9]/gi,
       /CREATE[^a-zA-Z0-9]/gi,
-      /ALTER[^a-zA-Z0-9]/gi
+      /ALTER[^a-zA-Z0-9]/gi,
     ];
 
     let sanitized = input;
-    
+
     sqlPatterns.forEach(pattern => {
       sanitized = sanitized.replace(pattern, '');
     });
@@ -343,29 +394,33 @@ export class InputValidator {
     if (typeof input === 'string') {
       return input.replace(/[${}]/g, '');
     }
-    
+
     if (typeof input === 'object' && input !== null) {
       if (Array.isArray(input)) {
         return input.map(item => this.sanitizeNoSQL(item));
       }
-      
+
       const sanitized: any = {};
       for (const [key, value] of Object.entries(input)) {
         // Prevent prototype pollution
-        if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+        if (
+          key === '__proto__' ||
+          key === 'constructor' ||
+          key === 'prototype'
+        ) {
           continue;
         }
-        
+
         // Remove MongoDB operators
         if (typeof key === 'string' && key.startsWith('$')) {
           continue;
         }
-        
+
         sanitized[key] = this.sanitizeNoSQL(value);
       }
       return sanitized;
     }
-    
+
     return input;
   }
 
@@ -393,7 +448,8 @@ export class InputValidator {
    * Validate UUID format
    */
   private static isValidUUID(uuid: string): boolean {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(uuid);
   }
 
@@ -407,10 +463,10 @@ export class InputValidator {
       '>': '&gt;',
       '"': '&quot;',
       "'": '&#x27;',
-      '/': '&#x2F;'
+      '/': '&#x2F;',
     };
-    
-    return str.replace(/[&<>"'\/]/g, (s) => entityMap[s]);
+
+    return str.replace(/[&<>"'\/]/g, s => entityMap[s]);
   }
 
   /**
@@ -428,14 +484,14 @@ export class InputValidator {
   private static setNestedValue(obj: any, path: string, value: any): void {
     const keys = path.split('.');
     const lastKey = keys.pop()!;
-    
+
     const target = keys.reduce((current, key) => {
       if (current[key] === undefined) {
         current[key] = {};
       }
       return current[key];
     }, obj);
-    
+
     target[lastKey] = value;
   }
 }
@@ -449,33 +505,36 @@ export const ValidationSchemas = {
     email: z.string().email().max(254),
     name: z.string().min(1).max(100),
     password: z.string().min(8).max(128).optional(),
-    roles: z.array(z.string()).optional()
+    roles: z.array(z.string()).optional(),
   }),
 
   session: z.object({
     id: z.string().uuid().optional(),
     userId: z.string().uuid(),
     data: z.record(z.any()).optional(),
-    expiresAt: z.date().optional()
+    expiresAt: z.date().optional(),
   }),
 
   toolExecution: z.object({
     toolName: z.string().min(1).max(50),
     args: z.record(z.any()),
-    sessionId: z.string().uuid()
+    sessionId: z.string().uuid(),
   }),
 
   fileOperation: z.object({
     path: z.string().min(1).max(1000),
-    content: z.string().max(10 * 1024 * 1024).optional(), // 10MB limit
-    encoding: z.enum(['utf8', 'base64']).optional()
+    content: z
+      .string()
+      .max(10 * 1024 * 1024)
+      .optional(), // 10MB limit
+    encoding: z.enum(['utf8', 'base64']).optional(),
   }),
 
   apiKey: z.object({
     name: z.string().min(1).max(100),
     permissions: z.array(z.string()),
-    expiresAt: z.date().optional()
-  })
+    expiresAt: z.date().optional(),
+  }),
 };
 
 /**
@@ -488,22 +547,25 @@ export function createValidationMiddleware(schema: z.ZodSchema) {
       return parsed;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        logger.warn('Validation failed', { 
+        logger.warn('Validation failed', {
           errors: error.errors,
           path: c.req.path,
-          method: c.req.method
+          method: c.req.method,
         });
-        
-        return c.json({
-          error: 'Validation failed',
-          details: error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message,
-            code: err.code
-          }))
-        }, 400);
+
+        return c.json(
+          {
+            error: 'Validation failed',
+            details: error.errors.map(err => ({
+              field: err.path.join('.'),
+              message: err.message,
+              code: err.code,
+            })),
+          },
+          400
+        );
       }
-      
+
       logger.error('Validation error', error);
       return c.json({ error: 'Validation error' }, 400);
     }
@@ -520,7 +582,7 @@ export function sanitizationMiddleware(options?: SanitizationOptions) {
       if (c.req.header('content-type')?.includes('application/json')) {
         const body = await c.req.json();
         const sanitized = InputValidator.sanitizeObject(body, options);
-        
+
         // Replace the request body (implementation depends on framework)
         c.set('sanitizedBody', sanitized);
       }
@@ -528,15 +590,15 @@ export function sanitizationMiddleware(options?: SanitizationOptions) {
       // Sanitize query parameters
       const query = c.req.query();
       const sanitizedQuery: Record<string, string> = {};
-      
+
       for (const [key, value] of Object.entries(query)) {
         if (typeof value === 'string') {
           sanitizedQuery[key] = InputValidator.sanitizeString(value, options);
         }
       }
-      
+
       c.set('sanitizedQuery', sanitizedQuery);
-      
+
       await next();
     } catch (error) {
       logger.error('Sanitization error', error);
@@ -560,20 +622,30 @@ export function validateFileUpload(options: {
 
       // Check file size
       if (options.maxSize && contentLength > options.maxSize) {
-        return c.json({
-          error: 'File too large',
-          maxSize: options.maxSize,
-          actualSize: contentLength
-        }, 413);
+        return c.json(
+          {
+            error: 'File too large',
+            maxSize: options.maxSize,
+            actualSize: contentLength,
+          },
+          413
+        );
       }
 
       // Check content type
-      if (options.allowedTypes && contentType && !options.allowedTypes.includes(contentType)) {
-        return c.json({
-          error: 'File type not allowed',
-          allowedTypes: options.allowedTypes,
-          actualType: contentType
-        }, 400);
+      if (
+        options.allowedTypes &&
+        contentType &&
+        !options.allowedTypes.includes(contentType)
+      ) {
+        return c.json(
+          {
+            error: 'File type not allowed',
+            allowedTypes: options.allowedTypes,
+            actualType: contentType,
+          },
+          400
+        );
       }
 
       await next();

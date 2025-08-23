@@ -61,9 +61,9 @@ export interface Runbook {
 }
 
 export class RunbookAutomation extends EventEmitter {
-  private runbooks: Map<string, Runbook> = new Map();
-  private executions: Map<string, RunbookExecution> = new Map();
-  private runbookDirectory: string;
+  private readonly runbooks: Map<string, Runbook> = new Map();
+  private readonly executions: Map<string, RunbookExecution> = new Map();
+  private readonly runbookDirectory: string;
   
   constructor(runbookDirectory = './runbooks') {
     super();

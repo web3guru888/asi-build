@@ -1,15 +1,23 @@
 /**
  * Lifecycle Manager - Manages component lifecycle and dependencies
- * 
+ *
  * Handles the startup, shutdown, and coordination of all ASI-Code components
  * with proper dependency resolution and error handling.
  */
 
 import { EventEmitter } from 'eventemitter3';
 import type { AppContext } from './app-context.js';
-import type { ASICodeConfig } from '../index.js';
+import type { ASICodeConfig } from '../config/config-types.js';
 
-export type ComponentState = 'uninitialized' | 'initializing' | 'initialized' | 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
+export type ComponentState =
+  | 'uninitialized'
+  | 'initializing'
+  | 'initialized'
+  | 'starting'
+  | 'running'
+  | 'stopping'
+  | 'stopped'
+  | 'error';
 
 export interface ComponentInfo {
   name: string;
@@ -24,49 +32,59 @@ export interface ComponentInfo {
 export interface LifecycleManager extends EventEmitter {
   appContext: AppContext;
   components: Map<string, ComponentInfo>;
-  
+
   // Component registration
-  registerComponent(name: string, dependencies: string[], factory: (appContext: AppContext) => Promise<any>): void;
+  registerComponent(
+    name: string,
+    dependencies: string[],
+    factory: (appContext: AppContext) => Promise<any>
+  ): void;
   unregisterComponent(name: string): void;
-  
+
   // Lifecycle operations
   startAll(config?: Partial<ASICodeConfig>): Promise<void>;
   stopAll(): Promise<void>;
   restartAll(config?: Partial<ASICodeConfig>): Promise<void>;
-  
+
   // Individual component operations
   startComponent(name: string): Promise<void>;
   stopComponent(name: string): Promise<void>;
   restartComponent(name: string): Promise<void>;
-  
+
   // State queries
   getComponentState(name: string): ComponentState | null;
   getComponentInfo(name: string): ComponentInfo | null;
   isComponentRunning(name: string): boolean;
   getAllComponents(): ComponentInfo[];
-  
+
   // Health checks
   performHealthCheck(): Promise<Map<string, boolean>>;
-  
+
   // Cleanup
   cleanup(): Promise<void>;
 }
 
-export class DefaultLifecycleManager extends EventEmitter implements LifecycleManager {
+export class DefaultLifecycleManager
+  extends EventEmitter
+  implements LifecycleManager
+{
   public appContext: AppContext;
   public components = new Map<string, ComponentInfo>();
-  
-  private componentFactories = new Map<string, (appContext: AppContext) => Promise<any>>();
+
+  private readonly componentFactories = new Map<
+    string,
+    (appContext: AppContext) => Promise<any>
+  >();
   private startupOrder: string[] = [];
   private isShuttingDown = false;
 
   constructor(appContext: AppContext) {
     super();
     this.appContext = appContext;
-    
+
     // Register built-in components
     this.registerBuiltInComponents();
-    
+
     // Listen to app context events
     this.appContext.on('app:shutdown', () => {
       this.isShuttingDown = true;
@@ -75,82 +93,129 @@ export class DefaultLifecycleManager extends EventEmitter implements LifecycleMa
 
   private registerBuiltInComponents(): void {
     // Core components in dependency order
-    
-    this.registerComponent('eventBus', [], async (appContext) => {
+
+    this.registerComponent('eventBus', [], async appContext => {
       const { createEventBus } = await import('../bus/index.js');
       return createEventBus();
     });
 
-    this.registerComponent('configManager', [], async (appContext) => {
+    this.registerComponent('configManager', [], async appContext => {
       const { createConfigManager } = await import('../config/index.js');
       return createConfigManager();
     });
 
-    this.registerComponent('permissionManager', ['eventBus'], async (appContext) => {
-      const { createPermissionManager } = await import('../permission/index.js');
-      return createPermissionManager();
-    });
+    this.registerComponent(
+      'permissionManager',
+      ['eventBus'],
+      async appContext => {
+        const { createPermissionManager } = await import(
+          '../permission/index.js'
+        );
+        return createPermissionManager();
+      }
+    );
 
-    this.registerComponent('toolManager', ['permissionManager'], async (appContext) => {
-      const { createToolManager } = await import('../tool/index.js');
-      return createToolManager();
-    });
+    this.registerComponent(
+      'toolManager',
+      ['permissionManager'],
+      async appContext => {
+        const { createToolManager } = await import('../tool/index.js');
+        return createToolManager();
+      }
+    );
 
-    this.registerComponent('providerManager', ['permissionManager'], async (appContext) => {
-      const { createProviderManager } = await import('../provider/index.js');
-      return createProviderManager();
-    });
+    this.registerComponent(
+      'providerManager',
+      ['permissionManager'],
+      async appContext => {
+        const { createProviderManager } = await import('../provider/index.js');
+        return createProviderManager();
+      }
+    );
 
-    this.registerComponent('sessionStorage', ['eventBus'], async (appContext) => {
+    this.registerComponent('sessionStorage', ['eventBus'], async appContext => {
       const { createSessionStorage } = await import('../session/index.js');
       return createSessionStorage(appContext.config.storage.provider);
     });
 
-    this.registerComponent('sessionManager', ['sessionStorage', 'eventBus'], async (appContext) => {
-      const { createSessionManager } = await import('../session/index.js');
-      const sessionStorage = this.components.get('sessionStorage')?.instance;
-      return createSessionManager(sessionStorage);
-    });
+    this.registerComponent(
+      'sessionManager',
+      ['sessionStorage', 'eventBus'],
+      async appContext => {
+        const { createSessionManager } = await import('../session/index.js');
+        const sessionStorage = this.components.get('sessionStorage')?.instance;
+        return createSessionManager(sessionStorage);
+      }
+    );
 
-    this.registerComponent('consciousnessEngine', ['providerManager'], async (appContext) => {
-      const { createConsciousnessEngine, defaultConsciousnessConfig } = await import('../consciousness/index.js');
-      return createConsciousnessEngine({
-        ...defaultConsciousnessConfig,
-        ...appContext.config.consciousness
-      });
-    });
+    this.registerComponent(
+      'consciousnessEngine',
+      ['providerManager'],
+      async appContext => {
+        const { createConsciousnessEngine, defaultConsciousnessConfig } =
+          await import('../consciousness/index.js');
+        return createConsciousnessEngine({
+          ...defaultConsciousnessConfig,
+          ...appContext.config.consciousness,
+        });
+      }
+    );
 
-    this.registerComponent('agentManager', ['providerManager', 'toolManager'], async (appContext) => {
-      const { createAgentManager } = await import('../agent/index.js');
-      return createAgentManager();
-    });
+    this.registerComponent(
+      'agentManager',
+      ['providerManager', 'toolManager'],
+      async appContext => {
+        const { createAgentManager } = await import('../agent/index.js');
+        return createAgentManager();
+      }
+    );
 
-    this.registerComponent('satEngine', [], async (appContext) => {
+    this.registerComponent('satEngine', [], async appContext => {
       const { createSATEngine } = await import('../sat/index.js');
       return createSATEngine();
     });
 
-    this.registerComponent('kennyIntegration', ['eventBus', 'permissionManager', 'toolManager'], async (appContext) => {
-      const { createKennyIntegration } = await import('../kenny/index.js');
-      const kenny = createKennyIntegration();
-      await kenny.initialize(appContext.config.kenny);
-      return kenny;
-    });
+    this.registerComponent(
+      'kennyIntegration',
+      ['eventBus', 'permissionManager', 'toolManager'],
+      async appContext => {
+        const { createKennyIntegration } = await import('../kenny/index.js');
+        const kenny = createKennyIntegration();
+        await kenny.initialize(appContext.config.kenny);
+        return kenny;
+      }
+    );
 
-    this.registerComponent('server', ['sessionManager', 'providerManager', 'toolManager'], async (appContext) => {
-      const { createASIServer, defaultServerConfig } = await import('../server/index.js');
-      const sessionManager = this.components.get('sessionManager')?.instance;
-      const providerManager = this.components.get('providerManager')?.instance;
-      const toolManager = this.components.get('toolManager')?.instance;
-      
-      return createASIServer({
-        ...defaultServerConfig,
-        ...appContext.config.server
-      }, sessionManager, providerManager, toolManager);
-    });
+    this.registerComponent(
+      'server',
+      ['sessionManager', 'providerManager', 'toolManager'],
+      async appContext => {
+        const { createASIServer, defaultServerConfig } = await import(
+          '../server/index.js'
+        );
+        const sessionManager = this.components.get('sessionManager')?.instance;
+        const providerManager =
+          this.components.get('providerManager')?.instance;
+        const toolManager = this.components.get('toolManager')?.instance;
+
+        return createASIServer(
+          {
+            ...defaultServerConfig,
+            ...appContext.config.server,
+          },
+          sessionManager,
+          providerManager,
+          toolManager
+        );
+      }
+    );
   }
 
-  registerComponent(name: string, dependencies: string[], factory: (appContext: AppContext) => Promise<any>): void {
+  registerComponent(
+    name: string,
+    dependencies: string[],
+    factory: (appContext: AppContext) => Promise<any>
+  ): void {
     if (this.components.has(name)) {
       throw new Error(`Component ${name} already registered`);
     }
@@ -158,7 +223,7 @@ export class DefaultLifecycleManager extends EventEmitter implements LifecycleMa
     this.components.set(name, {
       name,
       state: 'uninitialized',
-      dependencies: [...dependencies]
+      dependencies: [...dependencies],
     });
 
     this.componentFactories.set(name, factory);
@@ -203,7 +268,7 @@ export class DefaultLifecycleManager extends EventEmitter implements LifecycleMa
     try {
       // Stop components in reverse order
       const stopOrder = [...this.startupOrder].reverse();
-      
+
       for (const componentName of stopOrder) {
         try {
           await this.stopComponent(componentName);
@@ -261,13 +326,16 @@ export class DefaultLifecycleManager extends EventEmitter implements LifecycleMa
         if (!factory) {
           throw new Error(`No factory registered for component ${name}`);
         }
-        
+
         component.instance = await factory(this.appContext);
         component.state = 'initialized';
       }
 
       // Start the component if it has a start method
-      if (component.instance?.start && typeof component.instance.start === 'function') {
+      if (
+        component.instance?.start &&
+        typeof component.instance.start === 'function'
+      ) {
         await component.instance.start();
       }
 
@@ -279,7 +347,6 @@ export class DefaultLifecycleManager extends EventEmitter implements LifecycleMa
       this.registerComponentWithAppContext(name, component.instance);
 
       this.emit('component:started', { name, component });
-
     } catch (error) {
       component.state = 'error';
       component.error = error as Error;
@@ -290,7 +357,7 @@ export class DefaultLifecycleManager extends EventEmitter implements LifecycleMa
 
   async stopComponent(name: string): Promise<void> {
     const component = this.components.get(name);
-    if (!component || !component.instance) {
+    if (!component?.instance) {
       return; // Nothing to stop
     }
 
@@ -303,12 +370,18 @@ export class DefaultLifecycleManager extends EventEmitter implements LifecycleMa
 
     try {
       // Stop the component if it has a stop method
-      if (component.instance?.stop && typeof component.instance.stop === 'function') {
+      if (
+        component.instance?.stop &&
+        typeof component.instance.stop === 'function'
+      ) {
         await component.instance.stop();
       }
 
       // Cleanup if it has a cleanup method
-      if (component.instance?.cleanup && typeof component.instance.cleanup === 'function') {
+      if (
+        component.instance?.cleanup &&
+        typeof component.instance.cleanup === 'function'
+      ) {
         await component.instance.cleanup();
       }
 
@@ -317,7 +390,6 @@ export class DefaultLifecycleManager extends EventEmitter implements LifecycleMa
       component.error = undefined;
 
       this.emit('component:stopped', { name, component });
-
     } catch (error) {
       component.state = 'error';
       component.error = error as Error;
@@ -353,7 +425,10 @@ export class DefaultLifecycleManager extends EventEmitter implements LifecycleMa
     for (const [name, component] of this.components) {
       if (component.state === 'running' && component.instance) {
         try {
-          if (component.instance.healthCheck && typeof component.instance.healthCheck === 'function') {
+          if (
+            component.instance.healthCheck &&
+            typeof component.instance.healthCheck === 'function'
+          ) {
             const isHealthy = await component.instance.healthCheck();
             results.set(name, isHealthy);
           } else {
@@ -380,9 +455,11 @@ export class DefaultLifecycleManager extends EventEmitter implements LifecycleMa
 
     const visit = (componentName: string) => {
       if (visiting.has(componentName)) {
-        throw new Error(`Circular dependency detected involving ${componentName}`);
+        throw new Error(
+          `Circular dependency detected involving ${componentName}`
+        );
       }
-      
+
       if (visited.has(componentName)) {
         return;
       }
@@ -445,6 +522,8 @@ export class DefaultLifecycleManager extends EventEmitter implements LifecycleMa
 /**
  * Factory function to create a lifecycle manager
  */
-export function createLifecycleManager(appContext: AppContext): LifecycleManager {
+export function createLifecycleManager(
+  appContext: AppContext
+): LifecycleManager {
   return new DefaultLifecycleManager(appContext);
 }

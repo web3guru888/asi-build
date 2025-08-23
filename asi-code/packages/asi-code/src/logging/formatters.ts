@@ -1,6 +1,6 @@
 /**
  * Log Formatters
- * 
+ *
  * Comprehensive log formatting system supporting multiple output formats
  * including console, file, and JSON formats with customizable options.
  */
@@ -37,16 +37,16 @@ export interface FormatterOptions {
 
 // Color mappings for console output
 const LEVEL_COLORS = {
-  debug: '\x1b[36m',    // Cyan
-  info: '\x1b[32m',     // Green
-  warn: '\x1b[33m',     // Yellow
-  error: '\x1b[31m',    // Red
-  reset: '\x1b[0m'      // Reset
+  debug: '\x1b[36m', // Cyan
+  info: '\x1b[32m', // Green
+  warn: '\x1b[33m', // Yellow
+  error: '\x1b[31m', // Red
+  reset: '\x1b[0m', // Reset
 } as const;
 
 const COMPONENT_COLOR = '\x1b[35m'; // Magenta
 const TIMESTAMP_COLOR = '\x1b[90m'; // Bright black (gray)
-const CONTEXT_COLOR = '\x1b[94m';   // Bright blue
+const CONTEXT_COLOR = '\x1b[94m'; // Bright blue
 
 /**
  * Base formatter class
@@ -66,7 +66,7 @@ export abstract class BaseFormatter {
       maxMetadataDepth: 3,
       prettyPrint: false,
       indent: 2,
-      ...options
+      ...options,
     };
   }
 
@@ -81,12 +81,14 @@ export abstract class BaseFormatter {
     const minutes = String(timestamp.getMinutes()).padStart(2, '0');
     const seconds = String(timestamp.getSeconds()).padStart(2, '0');
     const ms = String(timestamp.getMilliseconds()).padStart(3, '0');
-    
+
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${ms}`;
   }
 
   protected colorize(text: string, color: string): string {
-    return this.options.colorize ? `${color}${text}${LEVEL_COLORS.reset}` : text;
+    return this.options.colorize
+      ? `${color}${text}${LEVEL_COLORS.reset}`
+      : text;
   }
 
   protected formatMetadata(metadata: any): string {
@@ -99,11 +101,15 @@ export abstract class BaseFormatter {
         depth: this.options.maxMetadataDepth,
         colors: this.options.colorize,
         compact: false,
-        breakLength: 80
+        breakLength: 80,
       });
     }
 
-    return JSON.stringify(metadata, null, typeof this.options.indent === 'number' ? this.options.indent : undefined);
+    return JSON.stringify(
+      metadata,
+      null,
+      typeof this.options.indent === 'number' ? this.options.indent : undefined
+    );
   }
 
   protected formatError(error: Error): string {
@@ -123,7 +129,7 @@ export class ConsoleFormatter extends BaseFormatter {
     super({
       colorize: true,
       prettyPrint: true,
-      ...options
+      ...options,
     });
   }
 
@@ -146,15 +152,15 @@ export class ConsoleFormatter extends BaseFormatter {
     // Context/Component
     if (this.options.includeContext) {
       const contextParts: string[] = [];
-      
+
       if (entry.subsystem) {
         contextParts.push(entry.subsystem);
       }
-      
+
       if (entry.component) {
         contextParts.push(entry.component);
       }
-      
+
       if (entry.context) {
         contextParts.push(entry.context);
       }
@@ -167,7 +173,9 @@ export class ConsoleFormatter extends BaseFormatter {
 
     // Request ID
     if (entry.requestId) {
-      parts.push(this.colorize(`(${entry.requestId.slice(0, 8)}...)`, COMPONENT_COLOR));
+      parts.push(
+        this.colorize(`(${entry.requestId.slice(0, 8)}...)`, COMPONENT_COLOR)
+      );
     }
 
     // Message
@@ -177,13 +185,19 @@ export class ConsoleFormatter extends BaseFormatter {
 
     // Error details
     if (entry.error) {
-      result += '\n' + this.colorize(this.formatError(entry.error), LEVEL_COLORS.error);
+      result +=
+        '\n' + this.colorize(this.formatError(entry.error), LEVEL_COLORS.error);
     }
 
     // Metadata
-    if (this.options.includeMetadata && entry.metadata && Object.keys(entry.metadata).length > 0) {
+    if (
+      this.options.includeMetadata &&
+      entry.metadata &&
+      Object.keys(entry.metadata).length > 0
+    ) {
       const metadataStr = this.formatMetadata(entry.metadata);
-      result += '\n' + this.colorize('Metadata:', COMPONENT_COLOR) + '\n' + metadataStr;
+      result +=
+        '\n' + this.colorize('Metadata:', COMPONENT_COLOR) + '\n' + metadataStr;
     }
 
     return result;
@@ -198,7 +212,7 @@ export class JSONFormatter extends BaseFormatter {
     super({
       colorize: false,
       prettyPrint: false,
-      ...options
+      ...options,
     });
   }
 
@@ -206,7 +220,7 @@ export class JSONFormatter extends BaseFormatter {
     const logObject: Record<string, any> = {
       timestamp: entry.timestamp.toISOString(),
       level: entry.level,
-      message: entry.message
+      message: entry.message,
     };
 
     // Add optional fields
@@ -234,7 +248,7 @@ export class JSONFormatter extends BaseFormatter {
       logObject.error = {
         name: entry.error.name,
         message: entry.error.message,
-        stack: this.options.includeStackTrace ? entry.error.stack : undefined
+        stack: this.options.includeStackTrace ? entry.error.stack : undefined,
       };
     }
 
@@ -242,7 +256,11 @@ export class JSONFormatter extends BaseFormatter {
       logObject.metadata = entry.metadata;
     }
 
-    return JSON.stringify(logObject, null, this.options.prettyPrint ? 2 : undefined);
+    return JSON.stringify(
+      logObject,
+      null,
+      this.options.prettyPrint ? 2 : undefined
+    );
   }
 }
 
@@ -256,7 +274,7 @@ export class SimpleFormatter extends BaseFormatter {
       includeContext: false,
       includeMetadata: false,
       colorize: false,
-      ...options
+      ...options,
     });
   }
 
@@ -296,7 +314,7 @@ export class FileFormatter extends BaseFormatter {
       colorize: false,
       prettyPrint: false,
       includeStackTrace: true,
-      ...options
+      ...options,
     });
   }
 
@@ -314,8 +332,15 @@ export class FileFormatter extends BaseFormatter {
     }
 
     // Context
-    if (this.options.includeContext && (entry.subsystem || entry.component || entry.context)) {
-      const contextParts = [entry.subsystem, entry.component, entry.context].filter(Boolean);
+    if (
+      this.options.includeContext &&
+      (entry.subsystem || entry.component || entry.context)
+    ) {
+      const contextParts = [
+        entry.subsystem,
+        entry.component,
+        entry.context,
+      ].filter(Boolean);
       parts.push(`[${contextParts.join('.')}]`);
     }
 
@@ -335,7 +360,11 @@ export class FileFormatter extends BaseFormatter {
     }
 
     // Metadata (compact format for files)
-    if (this.options.includeMetadata && entry.metadata && Object.keys(entry.metadata).length > 0) {
+    if (
+      this.options.includeMetadata &&
+      entry.metadata &&
+      Object.keys(entry.metadata).length > 0
+    ) {
       const metadataStr = JSON.stringify(entry.metadata);
       result += '\n  Metadata: ' + metadataStr;
     }
@@ -356,7 +385,7 @@ export class AuditFormatter extends BaseFormatter {
       includeMetadata: true,
       colorize: false,
       prettyPrint: false,
-      ...options
+      ...options,
     });
   }
 
@@ -364,7 +393,7 @@ export class AuditFormatter extends BaseFormatter {
     const auditObject: Record<string, any> = {
       timestamp: entry.timestamp.toISOString(),
       event: entry.message,
-      level: entry.level
+      level: entry.level,
     };
 
     // Add audit-specific fields
@@ -392,7 +421,7 @@ export class AuditFormatter extends BaseFormatter {
     if (entry.error) {
       auditObject.error = {
         type: entry.error.name,
-        message: entry.error.message
+        message: entry.error.message,
       };
     }
 
@@ -404,12 +433,12 @@ export class AuditFormatter extends BaseFormatter {
  * Formatter factory
  */
 export class FormatterFactory {
-  private static formatters = new Map<string, typeof BaseFormatter>([
+  private static readonly formatters = new Map<string, typeof BaseFormatter>([
     ['console', ConsoleFormatter],
     ['json', JSONFormatter],
     ['simple', SimpleFormatter],
     ['file', FileFormatter],
-    ['audit', AuditFormatter]
+    ['audit', AuditFormatter],
   ]);
 
   /**
@@ -417,9 +446,11 @@ export class FormatterFactory {
    */
   static create(type: string, options: FormatterOptions = {}): BaseFormatter {
     const FormatterClass = this.formatters.get(type.toLowerCase());
-    
+
     if (!FormatterClass) {
-      throw new Error(`Unknown formatter type: ${type}. Available types: ${Array.from(this.formatters.keys()).join(', ')}`);
+      throw new Error(
+        `Unknown formatter type: ${type}. Available types: ${Array.from(this.formatters.keys()).join(', ')}`
+      );
     }
 
     return new FormatterClass(options);
@@ -448,35 +479,38 @@ export const DEFAULT_FORMATTERS = {
     colorize: true,
     includeTimestamp: true,
     includeContext: true,
-    prettyPrint: true
+    prettyPrint: true,
   }),
-  
+
   file: new FileFormatter({
     colorize: false,
     includeTimestamp: true,
     includeContext: true,
-    includeStackTrace: true
+    includeStackTrace: true,
   }),
-  
+
   json: new JSONFormatter({
     prettyPrint: false,
-    includeStackTrace: true
+    includeStackTrace: true,
   }),
-  
+
   simple: new SimpleFormatter({
     includeLevel: true,
-    colorize: false
+    colorize: false,
   }),
-  
+
   audit: new AuditFormatter({
     includeTimestamp: true,
-    includeMetadata: true
-  })
+    includeMetadata: true,
+  }),
 } as const;
 
 /**
  * Utility function to create formatter from configuration
  */
-export function createFormatter(type: string, options: FormatterOptions = {}): BaseFormatter {
+export function createFormatter(
+  type: string,
+  options: FormatterOptions = {}
+): BaseFormatter {
   return FormatterFactory.create(type, options);
 }

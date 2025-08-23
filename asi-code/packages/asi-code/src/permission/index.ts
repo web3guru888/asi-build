@@ -1,6 +1,6 @@
 /**
  * Permission System - Fine-grained access control and security
- * 
+ *
  * Manages permissions for users, sessions, and operations within the ASI-Code system.
  */
 
@@ -38,17 +38,23 @@ export interface PermissionManager extends EventEmitter {
   addPermission(permission: Permission): Promise<void>;
   addRole(role: Role): Promise<void>;
   assignRole(userId: string, roleId: string): Promise<void>;
-  checkPermission(context: PermissionContext, permissionId: string): Promise<boolean>;
+  checkPermission(
+    context: PermissionContext,
+    permissionId: string
+  ): Promise<boolean>;
   getUserPermissions(userId: string): Promise<Permission[]>;
   initialize(config?: Record<string, any>): Promise<void>;
   shutdown(): Promise<void>;
   cleanup(): Promise<void>;
 }
 
-export class DefaultPermissionManager extends EventEmitter implements PermissionManager {
-  private permissions = new Map<string, Permission>();
-  private roles = new Map<string, Role>();
-  private userRoles = new Map<string, Set<string>>();
+export class DefaultPermissionManager
+  extends EventEmitter
+  implements PermissionManager
+{
+  private readonly permissions = new Map<string, Permission>();
+  private readonly roles = new Map<string, Role>();
+  private readonly userRoles = new Map<string, Set<string>>();
 
   async addPermission(permission: Permission): Promise<void> {
     this.permissions.set(permission.id, permission);
@@ -68,7 +74,10 @@ export class DefaultPermissionManager extends EventEmitter implements Permission
     this.emit('role:assigned', { userId, roleId });
   }
 
-  async checkPermission(context: PermissionContext, permissionId: string): Promise<boolean> {
+  async checkPermission(
+    context: PermissionContext,
+    permissionId: string
+  ): Promise<boolean> {
     if (!context.userId) {
       return false; // No user, no permissions
     }
@@ -76,7 +85,7 @@ export class DefaultPermissionManager extends EventEmitter implements Permission
     const userRoles = this.userRoles.get(context.userId) || new Set();
     for (const roleId of userRoles) {
       const role = this.roles.get(roleId);
-      if (role && role.permissions.includes(permissionId)) {
+      if (role?.permissions.includes(permissionId)) {
         this.emit('permission:granted', { context, permissionId });
         return true;
       }
@@ -125,25 +134,69 @@ export class DefaultPermissionManager extends EventEmitter implements Permission
 
 // Built-in permissions
 export const builtinPermissions: Permission[] = [
-  { id: 'read_files', name: 'Read Files', description: 'Read file contents', category: 'file', level: 'read' },
-  { id: 'write_files', name: 'Write Files', description: 'Write file contents', category: 'file', level: 'write' },
-  { id: 'execute_commands', name: 'Execute Commands', description: 'Execute system commands', category: 'system', level: 'execute' },
-  { id: 'manage_sessions', name: 'Manage Sessions', description: 'Create and manage sessions', category: 'session', level: 'admin' }
+  {
+    id: 'read_files',
+    name: 'Read Files',
+    description: 'Read file contents',
+    category: 'file',
+    level: 'read',
+  },
+  {
+    id: 'write_files',
+    name: 'Write Files',
+    description: 'Write file contents',
+    category: 'file',
+    level: 'write',
+  },
+  {
+    id: 'execute_commands',
+    name: 'Execute Commands',
+    description: 'Execute system commands',
+    category: 'system',
+    level: 'execute',
+  },
+  {
+    id: 'manage_sessions',
+    name: 'Manage Sessions',
+    description: 'Create and manage sessions',
+    category: 'session',
+    level: 'admin',
+  },
 ];
 
 // Built-in roles
 export const builtinRoles: Role[] = [
-  { id: 'user', name: 'User', description: 'Basic user role', permissions: ['read_files'] },
-  { id: 'developer', name: 'Developer', description: 'Developer role', permissions: ['read_files', 'write_files'] },
-  { id: 'admin', name: 'Admin', description: 'Administrator role', permissions: ['read_files', 'write_files', 'execute_commands', 'manage_sessions'] }
+  {
+    id: 'user',
+    name: 'User',
+    description: 'Basic user role',
+    permissions: ['read_files'],
+  },
+  {
+    id: 'developer',
+    name: 'Developer',
+    description: 'Developer role',
+    permissions: ['read_files', 'write_files'],
+  },
+  {
+    id: 'admin',
+    name: 'Admin',
+    description: 'Administrator role',
+    permissions: [
+      'read_files',
+      'write_files',
+      'execute_commands',
+      'manage_sessions',
+    ],
+  },
 ];
 
 export function createPermissionManager(): PermissionManager {
   const manager = new DefaultPermissionManager();
-  
+
   // Add built-in permissions and roles
   builtinPermissions.forEach(p => manager.addPermission(p));
   builtinRoles.forEach(r => manager.addRole(r));
-  
+
   return manager;
 }

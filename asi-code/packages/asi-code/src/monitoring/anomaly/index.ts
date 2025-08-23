@@ -11,7 +11,7 @@
  */
 
 import { EventEmitter } from 'eventemitter3';
-import type { MetricAggregator, AggregatedMetric } from '../aggregation/index.js';
+import type { AggregatedMetric, MetricAggregator } from '../aggregation/index.js';
 import type { MonitoringConfig } from '../index.js';
 
 export interface AnomalyDetectionRule {
@@ -96,15 +96,15 @@ export interface AnomalyCluster {
 }
 
 export class AnomalyDetector extends EventEmitter {
-  private config: MonitoringConfig['anomaly'];
-  private aggregator: MetricAggregator;
-  private rules: Map<string, AnomalyDetectionRule> = new Map();
-  private anomalies: Map<string, Anomaly> = new Map();
-  private clusters: Map<string, AnomalyCluster> = new Map();
-  private historicalData: Map<string, number[]> = new Map();
-  private seasonalPatterns: Map<string, SeasonalPattern> = new Map();
-  private detectionInterval = 60000; // 1 minute
-  private maxHistorySize = 10080; // 1 week of minutes
+  private readonly config: MonitoringConfig['anomaly'];
+  private readonly aggregator: MetricAggregator;
+  private readonly rules: Map<string, AnomalyDetectionRule> = new Map();
+  private readonly anomalies: Map<string, Anomaly> = new Map();
+  private readonly clusters: Map<string, AnomalyCluster> = new Map();
+  private readonly historicalData: Map<string, number[]> = new Map();
+  private readonly seasonalPatterns: Map<string, SeasonalPattern> = new Map();
+  private readonly detectionInterval = 60000; // 1 minute
+  private readonly maxHistorySize = 10080; // 1 week of minutes
   
   constructor(config: MonitoringConfig['anomaly'], aggregator: MetricAggregator) {
     super();

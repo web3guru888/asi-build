@@ -1,17 +1,13 @@
 /**
  * WebSocket Message Queue
- * 
+ *
  * Provides reliable message delivery with queuing, persistence,
  * and retry mechanisms for WebSocket connections.
  */
 
 import { EventEmitter } from 'eventemitter3';
 import { nanoid } from 'nanoid';
-import type { 
-  WSMessage, 
-  WSQueuedMessage, 
-  WSConnectionState 
-} from './types.js';
+import type { WSConnectionState, WSMessage, WSQueuedMessage } from './types.js';
 import type { ServerConfig } from '../../config/config-types.js';
 
 interface QueueStats {
@@ -24,7 +20,7 @@ interface QueueStats {
 }
 
 export class WSMessageQueue extends EventEmitter {
-  private queues = new Map<string, WSQueuedMessage[]>();
+  private readonly queues = new Map<string, WSQueuedMessage[]>();
   private persistentQueue: WSQueuedMessage[] = [];
   private stats: QueueStats = {
     totalMessages: 0,
@@ -34,7 +30,7 @@ export class WSMessageQueue extends EventEmitter {
     retryAttempts: 0,
     connectionQueues: 0,
   };
-  private config: ServerConfig['websocket']['messageQueue'];
+  private readonly config: ServerConfig['websocket']['messageQueue'];
   private processingInterval?: NodeJS.Timeout;
   private cleanupInterval?: NodeJS.Timeout;
 
@@ -130,38 +126,48 @@ export class WSMessageQueue extends EventEmitter {
 
     for (let i = messagesToProcess.length - 1; i >= 0; i--) {
       const queuedMessage = messagesToProcess[i];
-      
+
       try {
         const delivered = await sendFunction(queuedMessage.message);
-        
+
         if (delivered) {
           // Remove from queue
           const index = queue.indexOf(queuedMessage);
           if (index > -1) {
             queue.splice(index, 1);
           }
-          
+
           this.stats.deliveredMessages++;
           this.stats.pendingMessages--;
           processed++;
-          
-          this.emit('message:delivered', connectionId, queuedMessage.message, queuedMessage);
+
+          this.emit(
+            'message:delivered',
+            connectionId,
+            queuedMessage.message,
+            queuedMessage
+          );
         } else {
           // Delivery failed, increment attempts
           queuedMessage.attempts++;
           this.stats.retryAttempts++;
-          
+
           if (queuedMessage.attempts >= queuedMessage.maxAttempts) {
             // Remove failed message
             const index = queue.indexOf(queuedMessage);
             if (index > -1) {
               queue.splice(index, 1);
             }
-            
+
             this.stats.failedMessages++;
             this.stats.pendingMessages--;
-            
-            this.emit('message:failed', connectionId, queuedMessage.message, queuedMessage);
+
+            this.emit(
+              'message:failed',
+              connectionId,
+              queuedMessage.message,
+              queuedMessage
+            );
           } else {
             // Schedule retry with exponential backoff
             const backoffTime = Math.min(
@@ -169,24 +175,38 @@ export class WSMessageQueue extends EventEmitter {
               30000 // Max 30 seconds
             );
             queuedMessage.nextAttempt = now + backoffTime;
-            
-            this.emit('message:retry', connectionId, queuedMessage.message, queuedMessage);
+
+            this.emit(
+              'message:retry',
+              connectionId,
+              queuedMessage.message,
+              queuedMessage
+            );
           }
         }
       } catch (error) {
-        console.error(`Error processing queued message for ${connectionId}:`, error);
+        console.error(
+          `Error processing queued message for ${connectionId}:`,
+          error
+        );
         queuedMessage.attempts++;
-        
+
         if (queuedMessage.attempts >= queuedMessage.maxAttempts) {
           const index = queue.indexOf(queuedMessage);
           if (index > -1) {
             queue.splice(index, 1);
           }
-          
+
           this.stats.failedMessages++;
           this.stats.pendingMessages--;
-          
-          this.emit('message:error', connectionId, queuedMessage.message, error, queuedMessage);
+
+          this.emit(
+            'message:error',
+            connectionId,
+            queuedMessage.message,
+            error,
+            queuedMessage
+          );
         }
       }
     }
@@ -221,42 +241,57 @@ export class WSMessageQueue extends EventEmitter {
       return a.nextAttempt - b.nextAttempt;
     });
 
-    const messagesToProcess = this.persistentQueue.filter(msg => msg.nextAttempt <= now);
+    const messagesToProcess = this.persistentQueue.filter(
+      msg => msg.nextAttempt <= now
+    );
 
     for (let i = messagesToProcess.length - 1; i >= 0; i--) {
       const queuedMessage = messagesToProcess[i];
-      
+
       try {
-        const delivered = await sendFunction(queuedMessage.connectionId, queuedMessage.message);
-        
+        const delivered = await sendFunction(
+          queuedMessage.connectionId,
+          queuedMessage.message
+        );
+
         if (delivered) {
           // Remove from persistent queue
           const index = this.persistentQueue.indexOf(queuedMessage);
           if (index > -1) {
             this.persistentQueue.splice(index, 1);
           }
-          
+
           this.stats.deliveredMessages++;
           this.stats.pendingMessages--;
           processed++;
-          
-          this.emit('message:delivered', queuedMessage.connectionId, queuedMessage.message, queuedMessage);
+
+          this.emit(
+            'message:delivered',
+            queuedMessage.connectionId,
+            queuedMessage.message,
+            queuedMessage
+          );
         } else {
           // Delivery failed, increment attempts
           queuedMessage.attempts++;
           this.stats.retryAttempts++;
-          
+
           if (queuedMessage.attempts >= queuedMessage.maxAttempts) {
             // Remove failed message
             const index = this.persistentQueue.indexOf(queuedMessage);
             if (index > -1) {
               this.persistentQueue.splice(index, 1);
             }
-            
+
             this.stats.failedMessages++;
             this.stats.pendingMessages--;
-            
-            this.emit('message:failed', queuedMessage.connectionId, queuedMessage.message, queuedMessage);
+
+            this.emit(
+              'message:failed',
+              queuedMessage.connectionId,
+              queuedMessage.message,
+              queuedMessage
+            );
           } else {
             // Schedule retry with exponential backoff
             const backoffTime = Math.min(
@@ -264,24 +299,38 @@ export class WSMessageQueue extends EventEmitter {
               30000 // Max 30 seconds
             );
             queuedMessage.nextAttempt = now + backoffTime;
-            
-            this.emit('message:retry', queuedMessage.connectionId, queuedMessage.message, queuedMessage);
+
+            this.emit(
+              'message:retry',
+              queuedMessage.connectionId,
+              queuedMessage.message,
+              queuedMessage
+            );
           }
         }
       } catch (error) {
-        console.error(`Error processing persistent message for ${queuedMessage.connectionId}:`, error);
+        console.error(
+          `Error processing persistent message for ${queuedMessage.connectionId}:`,
+          error
+        );
         queuedMessage.attempts++;
-        
+
         if (queuedMessage.attempts >= queuedMessage.maxAttempts) {
           const index = this.persistentQueue.indexOf(queuedMessage);
           if (index > -1) {
             this.persistentQueue.splice(index, 1);
           }
-          
+
           this.stats.failedMessages++;
           this.stats.pendingMessages--;
-          
-          this.emit('message:error', queuedMessage.connectionId, queuedMessage.message, error, queuedMessage);
+
+          this.emit(
+            'message:error',
+            queuedMessage.connectionId,
+            queuedMessage.message,
+            error,
+            queuedMessage
+          );
         }
       }
     }
@@ -329,11 +378,11 @@ export class WSMessageQueue extends EventEmitter {
    */
   clearAllQueues(): number {
     let totalCleared = this.persistentQueue.length;
-    
+
     for (const queue of this.queues.values()) {
       totalCleared += queue.length;
     }
-    
+
     this.queues.clear();
     this.persistentQueue = [];
     this.stats.connectionQueues = 0;
@@ -403,7 +452,7 @@ export class WSMessageQueue extends EventEmitter {
     } = {}
   ): Promise<void> {
     const promises: Promise<void>[] = [];
-    
+
     for (const connectionId of connectionIds) {
       promises.push(this.queueMessage(connectionId, message, options));
     }
@@ -417,22 +466,25 @@ export class WSMessageQueue extends EventEmitter {
   private async enforceQueueLimits(connectionId: string): Promise<void> {
     const maxSize = this.config.maxSize || 1000;
     const queue = this.queues.get(connectionId);
-    
+
     if (queue && queue.length > maxSize) {
       // Remove oldest messages (FIFO)
       const removed = queue.splice(0, queue.length - maxSize);
       this.stats.pendingMessages -= removed.length;
       this.stats.failedMessages += removed.length;
-      
+
       this.emit('queue:overflow', connectionId, removed.length);
     }
 
     // Also check persistent queue
     if (this.persistentQueue.length > maxSize) {
-      const removed = this.persistentQueue.splice(0, this.persistentQueue.length - maxSize);
+      const removed = this.persistentQueue.splice(
+        0,
+        this.persistentQueue.length - maxSize
+      );
       this.stats.pendingMessages -= removed.length;
       this.stats.failedMessages += removed.length;
-      
+
       this.emit('persistent_queue:overflow', removed.length);
     }
   }
@@ -452,39 +504,49 @@ export class WSMessageQueue extends EventEmitter {
    */
   private startCleanup(): void {
     const ttl = (this.config.ttl || 3600) * 1000;
-    
+
     this.cleanupInterval = setInterval(() => {
       const now = Date.now();
-      
+
       // Clean up expired messages from connection queues
       for (const [connectionId, queue] of this.queues) {
         for (let i = queue.length - 1; i >= 0; i--) {
           const message = queue[i];
-          if ((now - message.nextAttempt) > ttl) {
+          if (now - message.nextAttempt > ttl) {
             queue.splice(i, 1);
             this.stats.pendingMessages--;
             this.stats.failedMessages++;
-            
-            this.emit('message:expired', connectionId, message.message, message);
+
+            this.emit(
+              'message:expired',
+              connectionId,
+              message.message,
+              message
+            );
           }
         }
-        
+
         // Remove empty queues
         if (queue.length === 0) {
           this.queues.delete(connectionId);
           this.stats.connectionQueues--;
         }
       }
-      
+
       // Clean up expired messages from persistent queue
       for (let i = this.persistentQueue.length - 1; i >= 0; i--) {
         const message = this.persistentQueue[i];
-        if ((now - message.nextAttempt) > ttl) {
+        if (now - message.nextAttempt > ttl) {
           this.persistentQueue.splice(i, 1);
           this.stats.pendingMessages--;
           this.stats.failedMessages++;
-          
-          this.emit('message:expired', message.connectionId, message.message, message);
+
+          this.emit(
+            'message:expired',
+            message.connectionId,
+            message.message,
+            message
+          );
         }
       }
     }, 60000); // Run every minute
@@ -548,7 +610,9 @@ export class WSMessageQueue extends EventEmitter {
 
     if (data.connectionQueues) {
       this.queues.clear();
-      for (const [connectionId, queue] of Object.entries(data.connectionQueues)) {
+      for (const [connectionId, queue] of Object.entries(
+        data.connectionQueues
+      )) {
         this.queues.set(connectionId, [...queue]);
       }
       this.stats.connectionQueues = this.queues.size;
@@ -571,7 +635,7 @@ export class WSMessageQueue extends EventEmitter {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
     }
-    
+
     this.clearAllQueues();
     this.removeAllListeners();
   }

@@ -1,6 +1,6 @@
 /**
  * Database Schema Versioning System
- * 
+ *
  * Provides comprehensive schema version management with:
  * - Semantic versioning for database schemas
  * - Version compatibility checking
@@ -46,10 +46,10 @@ export interface CompatibilityCheck {
 }
 
 export class SchemaVersioning {
-  private adapter: DatabaseAdapter;
-  private logger: Logger;
-  private versionTable = 'schema_versions';
-  private compatibilityTable = 'schema_compatibility';
+  private readonly adapter: DatabaseAdapter;
+  private readonly logger: Logger;
+  private readonly versionTable = 'schema_versions';
+  private readonly compatibilityTable = 'schema_compatibility';
 
   constructor(adapter: DatabaseAdapter, logger: Logger) {
     this.adapter = adapter;
@@ -62,15 +62,15 @@ export class SchemaVersioning {
   async initialize(): Promise<void> {
     try {
       this.logger.info('Initializing schema versioning system');
-      
+
       await this.ensureVersioningTables();
-      
+
       // Initialize with version 0.0.0 if no versions exist
       const currentVersion = await this.getCurrentVersion();
       if (!currentVersion) {
         await this.setVersion('0.0.0', 'Initial schema version', [], false);
       }
-      
+
       this.logger.info('Schema versioning system initialized');
     } catch (error) {
       this.logger.error('Failed to initialize schema versioning', { error });
@@ -85,7 +85,7 @@ export class SchemaVersioning {
     // Schema versions table
     const hasVersionTable = await this.adapter.hasTable(this.versionTable);
     if (!hasVersionTable) {
-      await this.adapter.knex.schema.createTable(this.versionTable, (table) => {
+      await this.adapter.knex.schema.createTable(this.versionTable, table => {
         table.increments('id').primary();
         table.string('version', 50).notNullable().unique();
         table.integer('major').notNullable();
@@ -103,7 +103,7 @@ export class SchemaVersioning {
         table.json('removed').nullable();
         table.json('metadata').nullable();
         table.boolean('active').defaultTo(true);
-        
+
         table.index(['version']);
         table.index(['major', 'minor', 'patch']);
         table.index(['created_at']);
@@ -113,23 +113,28 @@ export class SchemaVersioning {
     }
 
     // Schema compatibility table
-    const hasCompatibilityTable = await this.adapter.hasTable(this.compatibilityTable);
+    const hasCompatibilityTable = await this.adapter.hasTable(
+      this.compatibilityTable
+    );
     if (!hasCompatibilityTable) {
-      await this.adapter.knex.schema.createTable(this.compatibilityTable, (table) => {
-        table.increments('id').primary();
-        table.string('from_version', 50).notNullable();
-        table.string('to_version', 50).notNullable();
-        table.boolean('compatible').notNullable();
-        table.string('reason').nullable();
-        table.json('warnings').nullable();
-        table.json('errors').nullable();
-        table.timestamp('checked_at').defaultTo(this.adapter.knex.fn.now());
-        table.json('metadata').nullable();
-        
-        table.unique(['from_version', 'to_version']);
-        table.index(['compatible']);
-        table.index(['checked_at']);
-      });
+      await this.adapter.knex.schema.createTable(
+        this.compatibilityTable,
+        table => {
+          table.increments('id').primary();
+          table.string('from_version', 50).notNullable();
+          table.string('to_version', 50).notNullable();
+          table.boolean('compatible').notNullable();
+          table.string('reason').nullable();
+          table.json('warnings').nullable();
+          table.json('errors').nullable();
+          table.timestamp('checked_at').defaultTo(this.adapter.knex.fn.now());
+          table.json('metadata').nullable();
+
+          table.unique(['from_version', 'to_version']);
+          table.index(['compatible']);
+          table.index(['checked_at']);
+        }
+      );
     }
   }
 
@@ -148,7 +153,7 @@ export class SchemaVersioning {
       patch: parsed.patch,
       prerelease: parsed.prerelease.join('.') || undefined,
       build: parsed.build.join('.') || undefined,
-      full: versionString
+      full: versionString,
     };
   }
 
@@ -157,7 +162,8 @@ export class SchemaVersioning {
    */
   async getCurrentVersion(): Promise<SchemaVersionInfo | null> {
     try {
-      const result = await this.adapter.knex(this.versionTable)
+      const result = await this.adapter
+        .knex(this.versionTable)
         .where({ active: true })
         .orderBy('created_at', 'desc')
         .first();
@@ -173,7 +179,7 @@ export class SchemaVersioning {
           patch: result.patch,
           prerelease: result.prerelease,
           build: result.build,
-          full: result.version
+          full: result.version,
         },
         timestamp: result.created_at,
         description: result.description,
@@ -183,7 +189,7 @@ export class SchemaVersioning {
         added: result.added || [],
         changed: result.changed || [],
         removed: result.removed || [],
-        metadata: result.metadata
+        metadata: result.metadata,
       };
     } catch (error) {
       this.logger.error('Failed to get current version', { error });
@@ -196,7 +202,8 @@ export class SchemaVersioning {
    */
   async getAllVersions(): Promise<SchemaVersionInfo[]> {
     try {
-      const results = await this.adapter.knex(this.versionTable)
+      const results = await this.adapter
+        .knex(this.versionTable)
         .orderBy('major', 'asc')
         .orderBy('minor', 'asc')
         .orderBy('patch', 'asc')
@@ -209,7 +216,7 @@ export class SchemaVersioning {
           patch: result.patch,
           prerelease: result.prerelease,
           build: result.build,
-          full: result.version
+          full: result.version,
         },
         timestamp: result.created_at,
         description: result.description,
@@ -219,7 +226,7 @@ export class SchemaVersioning {
         added: result.added || [],
         changed: result.changed || [],
         removed: result.removed || [],
-        metadata: result.metadata
+        metadata: result.metadata,
       }));
     } catch (error) {
       this.logger.error('Failed to get all versions', { error });
@@ -245,16 +252,17 @@ export class SchemaVersioning {
   ): Promise<void> {
     try {
       const version = this.parseVersion(versionString);
-      
+
       this.logger.info('Setting new schema version', {
         version: version.full,
         description,
         breaking,
-        migrations: migrations.length
+        migrations: migrations.length,
       });
 
       // Deactivate current version
-      await this.adapter.knex(this.versionTable)
+      await this.adapter
+        .knex(this.versionTable)
         .where({ active: true })
         .update({ active: false });
 
@@ -274,12 +282,17 @@ export class SchemaVersioning {
         changed: JSON.stringify(changes?.changed || []),
         removed: JSON.stringify(changes?.removed || []),
         metadata: metadata ? JSON.stringify(metadata) : null,
-        active: true
+        active: true,
       });
 
-      this.logger.info('Schema version set successfully', { version: version.full });
+      this.logger.info('Schema version set successfully', {
+        version: version.full,
+      });
     } catch (error) {
-      this.logger.error('Failed to set schema version', { error, version: versionString });
+      this.logger.error('Failed to set schema version', {
+        error,
+        version: versionString,
+      });
       throw error;
     }
   }
@@ -322,12 +335,20 @@ export class SchemaVersioning {
           throw new Error(`Invalid bump type: ${bumpType}`);
       }
 
-      const breaking = bumpType === 'major' || 
-                      (changes?.removed && changes.removed.length > 0) ||
-                      (changes?.changed && changes.changed.length > 0);
+      const breaking =
+        bumpType === 'major' ||
+        (changes?.removed && changes.removed.length > 0) ||
+        (changes?.changed && changes.changed.length > 0);
 
-      await this.setVersion(newVersionString, description, migrations, breaking, changes, metadata);
-      
+      await this.setVersion(
+        newVersionString,
+        description,
+        migrations,
+        breaking,
+        changes,
+        metadata
+      );
+
       return newVersionString;
     } catch (error) {
       this.logger.error('Failed to bump version', { error, bumpType });
@@ -338,12 +359,19 @@ export class SchemaVersioning {
   /**
    * Check compatibility between versions
    */
-  async checkCompatibility(fromVersion: string, toVersion: string): Promise<CompatibilityCheck> {
+  async checkCompatibility(
+    fromVersion: string,
+    toVersion: string
+  ): Promise<CompatibilityCheck> {
     try {
-      this.logger.debug('Checking version compatibility', { fromVersion, toVersion });
+      this.logger.debug('Checking version compatibility', {
+        fromVersion,
+        toVersion,
+      });
 
       // Check cached compatibility result
-      const cached = await this.adapter.knex(this.compatibilityTable)
+      const cached = await this.adapter
+        .knex(this.compatibilityTable)
         .where({ from_version: fromVersion, to_version: toVersion })
         .first();
 
@@ -354,13 +382,16 @@ export class SchemaVersioning {
           currentVersion: fromVersion,
           targetVersion: toVersion,
           warnings: cached.warnings || [],
-          errors: cached.errors || []
+          errors: cached.errors || [],
         };
       }
 
       // Perform compatibility check
-      const result = await this.performCompatibilityCheck(fromVersion, toVersion);
-      
+      const result = await this.performCompatibilityCheck(
+        fromVersion,
+        toVersion
+      );
+
       // Cache result
       await this.adapter.knex(this.compatibilityTable).insert({
         from_version: fromVersion,
@@ -368,12 +399,16 @@ export class SchemaVersioning {
         compatible: result.compatible,
         reason: result.reason,
         warnings: JSON.stringify(result.warnings),
-        errors: JSON.stringify(result.errors)
+        errors: JSON.stringify(result.errors),
       });
 
       return result;
     } catch (error) {
-      this.logger.error('Failed to check compatibility', { error, fromVersion, toVersion });
+      this.logger.error('Failed to check compatibility', {
+        error,
+        fromVersion,
+        toVersion,
+      });
       throw error;
     }
   }
@@ -381,7 +416,10 @@ export class SchemaVersioning {
   /**
    * Perform actual compatibility check
    */
-  private async performCompatibilityCheck(fromVersion: string, toVersion: string): Promise<CompatibilityCheck> {
+  private async performCompatibilityCheck(
+    fromVersion: string,
+    toVersion: string
+  ): Promise<CompatibilityCheck> {
     const warnings: string[] = [];
     const errors: string[] = [];
     let compatible = true;
@@ -399,7 +437,7 @@ export class SchemaVersioning {
           currentVersion: fromVersion,
           targetVersion: toVersion,
           warnings,
-          errors: ['One or both versions not found in database']
+          errors: ['One or both versions not found in database'],
         };
       }
 
@@ -412,18 +450,25 @@ export class SchemaVersioning {
       }
 
       // Check for breaking changes
-      const versionsInRange = await this.getVersionsInRange(fromVersion, toVersion);
+      const versionsInRange = await this.getVersionsInRange(
+        fromVersion,
+        toVersion
+      );
       const hasBreakingChanges = versionsInRange.some(v => v.breaking);
-      
+
       if (hasBreakingChanges) {
         const breakingVersions = versionsInRange.filter(v => v.breaking);
-        warnings.push(`Breaking changes found in versions: ${breakingVersions.map(v => v.version.full).join(', ')}`);
+        warnings.push(
+          `Breaking changes found in versions: ${breakingVersions.map(v => v.version.full).join(', ')}`
+        );
       }
 
       // Check major version difference
       const majorDiff = semver.major(toVersion) - semver.major(fromVersion);
       if (majorDiff > 1) {
-        warnings.push('Skipping major versions may require manual intervention');
+        warnings.push(
+          'Skipping major versions may require manual intervention'
+        );
       }
 
       // Check deprecated features
@@ -446,7 +491,7 @@ export class SchemaVersioning {
         currentVersion: fromVersion,
         targetVersion: toVersion,
         warnings,
-        errors
+        errors,
       };
     } catch (error) {
       return {
@@ -455,7 +500,7 @@ export class SchemaVersioning {
         currentVersion: fromVersion,
         targetVersion: toVersion,
         warnings,
-        errors: [`Compatibility check error: ${error.message}`]
+        errors: [`Compatibility check error: ${error.message}`],
       };
     }
   }
@@ -463,9 +508,12 @@ export class SchemaVersioning {
   /**
    * Get version information by version string
    */
-  private async getVersionInfo(versionString: string): Promise<SchemaVersionInfo | null> {
+  private async getVersionInfo(
+    versionString: string
+  ): Promise<SchemaVersionInfo | null> {
     try {
-      const result = await this.adapter.knex(this.versionTable)
+      const result = await this.adapter
+        .knex(this.versionTable)
         .where({ version: versionString })
         .first();
 
@@ -480,7 +528,7 @@ export class SchemaVersioning {
           patch: result.patch,
           prerelease: result.prerelease,
           build: result.build,
-          full: result.version
+          full: result.version,
         },
         timestamp: result.created_at,
         description: result.description,
@@ -490,10 +538,13 @@ export class SchemaVersioning {
         added: result.added || [],
         changed: result.changed || [],
         removed: result.removed || [],
-        metadata: result.metadata
+        metadata: result.metadata,
       };
     } catch (error) {
-      this.logger.error('Failed to get version info', { error, version: versionString });
+      this.logger.error('Failed to get version info', {
+        error,
+        version: versionString,
+      });
       throw error;
     }
   }
@@ -501,16 +552,26 @@ export class SchemaVersioning {
   /**
    * Get versions in range (exclusive of fromVersion, inclusive of toVersion)
    */
-  private async getVersionsInRange(fromVersion: string, toVersion: string): Promise<SchemaVersionInfo[]> {
+  private async getVersionsInRange(
+    fromVersion: string,
+    toVersion: string
+  ): Promise<SchemaVersionInfo[]> {
     try {
       const allVersions = await this.getAllVersions();
-      
+
       return allVersions.filter(version => {
         const versionString = version.version.full;
-        return semver.gt(versionString, fromVersion) && semver.lte(versionString, toVersion);
+        return (
+          semver.gt(versionString, fromVersion) &&
+          semver.lte(versionString, toVersion)
+        );
       });
     } catch (error) {
-      this.logger.error('Failed to get versions in range', { error, fromVersion, toVersion });
+      this.logger.error('Failed to get versions in range', {
+        error,
+        fromVersion,
+        toVersion,
+      });
       throw error;
     }
   }
@@ -520,7 +581,8 @@ export class SchemaVersioning {
    */
   async getVersionHistory(limit = 50): Promise<SchemaVersionInfo[]> {
     try {
-      const results = await this.adapter.knex(this.versionTable)
+      const results = await this.adapter
+        .knex(this.versionTable)
         .orderBy('created_at', 'desc')
         .limit(limit);
 
@@ -531,7 +593,7 @@ export class SchemaVersioning {
           patch: result.patch,
           prerelease: result.prerelease,
           build: result.build,
-          full: result.version
+          full: result.version,
         },
         timestamp: result.created_at,
         description: result.description,
@@ -541,7 +603,7 @@ export class SchemaVersioning {
         added: result.added || [],
         changed: result.changed || [],
         removed: result.removed || [],
-        metadata: result.metadata
+        metadata: result.metadata,
       }));
     } catch (error) {
       this.logger.error('Failed to get version history', { error });
@@ -557,11 +619,14 @@ export class SchemaVersioning {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
-      const result = await this.adapter.knex(this.compatibilityTable)
+      const result = await this.adapter
+        .knex(this.compatibilityTable)
         .where('checked_at', '<', cutoffDate)
         .del();
 
-      this.logger.info('Cleaned up compatibility cache', { deletedRecords: result });
+      this.logger.info('Cleaned up compatibility cache', {
+        deletedRecords: result,
+      });
       return result;
     } catch (error) {
       this.logger.error('Failed to cleanup compatibility cache', { error });

@@ -1,6 +1,6 @@
 /**
  * Database Type Definitions
- * 
+ *
  * Comprehensive type definitions for the ASI-Code database layer.
  */
 
@@ -14,7 +14,7 @@ export interface DatabaseConfig {
   database: string;
   username: string;
   password: string;
-  
+
   // Connection pool settings
   pool: {
     min: number;
@@ -26,7 +26,7 @@ export interface DatabaseConfig {
     reapIntervalMillis: number;
     createRetryIntervalMillis: number;
   };
-  
+
   // Connection retry logic
   retry: {
     maxAttempts: number;
@@ -34,7 +34,7 @@ export interface DatabaseConfig {
     maxDelayMs: number;
     exponentialBackoff: boolean;
   };
-  
+
   // Read replicas for read/write splitting
   readReplicas?: Array<{
     host: string;
@@ -44,7 +44,7 @@ export interface DatabaseConfig {
     password: string;
     weight?: number; // Load balancing weight
   }>;
-  
+
   // SSL configuration
   ssl?: {
     enabled: boolean;
@@ -53,7 +53,7 @@ export interface DatabaseConfig {
     cert?: string;
     key?: string;
   };
-  
+
   // Migration settings
   migrations: {
     directory: string;
@@ -64,14 +64,14 @@ export interface DatabaseConfig {
     disableTransactions: boolean;
     sortDirsSeparately: boolean;
   };
-  
+
   // Seeding settings
   seeds: {
     directory: string;
     loadExtensions: string[];
     recursive: boolean;
   };
-  
+
   // Audit logging configuration
   audit: {
     enabled: boolean;
@@ -80,7 +80,7 @@ export interface DatabaseConfig {
     trackDeletes: boolean;
     excludeTables: string[];
   };
-  
+
   // Soft delete configuration
   softDelete: {
     enabled: boolean;
@@ -88,7 +88,7 @@ export interface DatabaseConfig {
     defaultValue: null;
     deletedValue: Date | string | number;
   };
-  
+
   // Performance monitoring
   monitoring: {
     enabled: boolean;
@@ -96,7 +96,7 @@ export interface DatabaseConfig {
     logQueries: boolean;
     trackMetrics: boolean;
   };
-  
+
   // Backup configuration
   backup: {
     enabled: boolean;
@@ -105,7 +105,7 @@ export interface DatabaseConfig {
     location: string;
     compression: boolean;
   };
-  
+
   // Cleanup jobs configuration
   cleanup: {
     enabled: boolean;
@@ -117,7 +117,13 @@ export interface DatabaseConfig {
 }
 
 // Query types
-export type QueryType = 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'DDL' | 'OTHER';
+export type QueryType =
+  | 'SELECT'
+  | 'INSERT'
+  | 'UPDATE'
+  | 'DELETE'
+  | 'DDL'
+  | 'OTHER';
 
 export interface QueryMetrics {
   query: string;
@@ -131,7 +137,11 @@ export interface QueryMetrics {
 
 // Transaction types
 export interface TransactionOptions {
-  isolationLevel?: 'READ_UNCOMMITTED' | 'READ_COMMITTED' | 'REPEATABLE_READ' | 'SERIALIZABLE';
+  isolationLevel?:
+    | 'READ_UNCOMMITTED'
+    | 'READ_COMMITTED'
+    | 'REPEATABLE_READ'
+    | 'SERIALIZABLE';
   timeout?: number; // milliseconds
   readOnly?: boolean;
 }
@@ -292,25 +302,25 @@ export interface QueryBuilderOptions {
 export interface DatabaseAdapter {
   knex: Knex;
   config: DatabaseConfig;
-  
+
   // Connection management
   connect(): Promise<void>;
   disconnect(): Promise<void>;
   isConnected(): boolean;
-  
+
   // Query execution
   query(sql: string, params?: any[]): Promise<any>;
   transaction<T>(callback: (trx: Knex.Transaction) => Promise<T>): Promise<T>;
-  
+
   // Health checks
   healthCheck(): Promise<boolean>;
   getMetrics(): Promise<PerformanceMetrics>;
-  
+
   // Schema operations
   hasTable(tableName: string): Promise<boolean>;
   hasColumn(tableName: string, columnName: string): Promise<boolean>;
   getTableInfo(tableName: string): Promise<any>;
-  
+
   // Utility methods
   escape(value: any): string;
   escapeIdentifier(identifier: string): string;
@@ -329,7 +339,7 @@ export class DatabaseError extends Error {
   public readonly code: string;
   public readonly query?: string;
   public readonly params?: any[];
-  
+
   constructor(message: string, code: string, query?: string, params?: any[]) {
     super(message);
     this.name = 'DatabaseError';
@@ -347,7 +357,12 @@ export class ConnectionError extends DatabaseError {
 }
 
 export class QueryError extends DatabaseError {
-  constructor(message: string, query: string, params?: any[], originalError?: Error) {
+  constructor(
+    message: string,
+    query: string,
+    params?: any[],
+    originalError?: Error
+  ) {
     super(message, 'QUERY_ERROR', query, params);
     this.stack = originalError?.stack;
   }
@@ -362,7 +377,7 @@ export class TransactionError extends DatabaseError {
 
 export class MigrationError extends DatabaseError {
   public readonly migrationName: string;
-  
+
   constructor(message: string, migrationName: string, originalError?: Error) {
     super(message, 'MIGRATION_ERROR');
     this.migrationName = migrationName;

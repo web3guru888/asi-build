@@ -1,6 +1,6 @@
 /**
  * App Context - Application-wide context and state management
- * 
+ *
  * Manages the global application state, configuration, and context
  * that needs to be accessible across all ASI-Code components.
  */
@@ -23,24 +23,31 @@ export interface AppContext extends EventEmitter {
   permissionManager?: PermissionManager;
   consciousnessEngine?: ConsciousnessEngine;
   satEngine?: SATEngine;
-  
+
   // Context management
-  createKennyContext(sessionId: string, userId: string, metadata?: Record<string, any>): KennyContext;
+  createKennyContext(
+    sessionId: string,
+    userId: string,
+    metadata?: Record<string, any>
+  ): KennyContext;
   getKennyContext(contextId: string): KennyContext | null;
-  updateKennyContext(contextId: string, updates: Partial<KennyContext>): Promise<void>;
+  updateKennyContext(
+    contextId: string,
+    updates: Partial<KennyContext>
+  ): Promise<void>;
   removeKennyContext(contextId: string): Promise<void>;
-  
+
   // Provider management
   registerProvider(name: string, provider: Provider): Promise<void>;
   getProvider(name: string): Provider | null;
   removeProvider(name: string): Promise<void>;
-  
+
   // Component registration
   setToolRegistry(registry: ToolRegistry): void;
   setPermissionManager(manager: PermissionManager): void;
   setConsciousnessEngine(engine: ConsciousnessEngine): void;
   setSATEngine(engine: SATEngine): void;
-  
+
   // Lifecycle
   initialize(config?: Partial<ASICodeConfig>): Promise<void>;
   shutdown(): Promise<void>;
@@ -54,23 +61,27 @@ export class DefaultAppContext extends EventEmitter implements AppContext {
   public permissionManager?: PermissionManager;
   public consciousnessEngine?: ConsciousnessEngine;
   public satEngine?: SATEngine;
-  
-  private kennyContexts = new Map<string, KennyContext>();
+
+  private readonly kennyContexts = new Map<string, KennyContext>();
   private contextCounter = 0;
 
   constructor(initialConfig?: Partial<ASICodeConfig>) {
     super();
-    
+
     // Use default configuration and merge with initial config
     this.config = {
       ...DEFAULT_ASI_CONFIG,
-      ...initialConfig
+      ...initialConfig,
     };
   }
 
-  createKennyContext(sessionId: string, userId: string, metadata: Record<string, any> = {}): KennyContext {
+  createKennyContext(
+    sessionId: string,
+    userId: string,
+    metadata: Record<string, any> = {}
+  ): KennyContext {
     const id = `ctx_${++this.contextCounter}_${Date.now()}`;
-    
+
     const context: KennyContext = {
       id,
       sessionId,
@@ -78,18 +89,18 @@ export class DefaultAppContext extends EventEmitter implements AppContext {
       consciousness: {
         level: 1,
         state: 'active',
-        lastActivity: new Date()
+        lastActivity: new Date(),
       },
       metadata: {
         createdAt: new Date().toISOString(),
         lastActive: new Date().toISOString(),
-        ...metadata
-      }
+        ...metadata,
+      },
     };
 
     this.kennyContexts.set(id, context);
     this.emit('context:created', { context });
-    
+
     return context;
   }
 
@@ -102,7 +113,10 @@ export class DefaultAppContext extends EventEmitter implements AppContext {
     return context || null;
   }
 
-  async updateKennyContext(contextId: string, updates: Partial<KennyContext>): Promise<void> {
+  async updateKennyContext(
+    contextId: string,
+    updates: Partial<KennyContext>
+  ): Promise<void> {
     const existing = this.kennyContexts.get(contextId);
     if (!existing) {
       throw new Error(`Context ${contextId} not found`);
@@ -115,8 +129,8 @@ export class DefaultAppContext extends EventEmitter implements AppContext {
       metadata: {
         ...existing.metadata,
         ...updates.metadata,
-        lastActive: new Date().toISOString()
-      }
+        lastActive: new Date().toISOString(),
+      },
     };
 
     this.kennyContexts.set(contextId, updated);
@@ -150,17 +164,26 @@ export class DefaultAppContext extends EventEmitter implements AppContext {
 
   setToolRegistry(registry: ToolRegistry): void {
     this.toolRegistry = registry;
-    this.emit('component:registered', { type: 'toolRegistry', component: registry });
+    this.emit('component:registered', {
+      type: 'toolRegistry',
+      component: registry,
+    });
   }
 
   setPermissionManager(manager: PermissionManager): void {
     this.permissionManager = manager;
-    this.emit('component:registered', { type: 'permissionManager', component: manager });
+    this.emit('component:registered', {
+      type: 'permissionManager',
+      component: manager,
+    });
   }
 
   setConsciousnessEngine(engine: ConsciousnessEngine): void {
     this.consciousnessEngine = engine;
-    this.emit('component:registered', { type: 'consciousnessEngine', component: engine });
+    this.emit('component:registered', {
+      type: 'consciousnessEngine',
+      component: engine,
+    });
   }
 
   setSATEngine(engine: SATEngine): void {
@@ -208,7 +231,6 @@ export class DefaultAppContext extends EventEmitter implements AppContext {
 
       this.initialized = true;
       this.emit('app:initialized', { config: this.config });
-
     } catch (error) {
       this.emit('app:initialization_failed', { error, config: this.config });
       throw error;
@@ -260,7 +282,6 @@ export class DefaultAppContext extends EventEmitter implements AppContext {
 
       this.initialized = false;
       this.emit('app:shutdown_complete');
-
     } catch (error) {
       this.emit('app:shutdown_error', { error });
       throw error;
@@ -283,7 +304,9 @@ let globalAppContext: AppContext | null = null;
 /**
  * Get or create the global app context
  */
-export function getGlobalAppContext(config?: Partial<ASICodeConfig>): AppContext {
+export function getGlobalAppContext(
+  config?: Partial<ASICodeConfig>
+): AppContext {
   if (!globalAppContext) {
     globalAppContext = createAppContext(config);
   }

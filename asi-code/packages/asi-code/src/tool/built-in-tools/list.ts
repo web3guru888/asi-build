@@ -1,14 +1,19 @@
 /**
  * List Tool - Advanced directory listing with filtering and analysis
- * 
+ *
  * Provides comprehensive directory listing capabilities with metadata,
  * filtering options, and file analysis features.
  */
 
-import { readdir, stat, access } from 'fs/promises';
+import { access, readdir, stat } from 'fs/promises';
 import { constants } from 'fs';
-import { resolve, normalize, join, extname, basename, dirname } from 'path';
-import { BaseTool, ToolDefinition, ToolExecutionContext, ToolResult } from '../base-tool.js';
+import { basename, dirname, extname, join, normalize, resolve } from 'path';
+import {
+  BaseTool,
+  ToolDefinition,
+  ToolExecutionContext,
+  ToolResult,
+} from '../base-tool.js';
 
 export interface ListOptions {
   recursive?: boolean;
@@ -65,7 +70,8 @@ export class ListTool extends BaseTool {
   constructor() {
     const definition: ToolDefinition = {
       name: 'list',
-      description: 'List directory contents with advanced filtering, sorting, and metadata analysis',
+      description:
+        'List directory contents with advanced filtering, sorting, and metadata analysis',
       parameters: [
         {
           name: 'path',
@@ -74,70 +80,71 @@ export class ListTool extends BaseTool {
           default: '.',
           validation: {
             custom: (value: string) => {
-              if (value.length > 500) return 'Path too long (max 500 characters)';
+              if (value.length > 500)
+                return 'Path too long (max 500 characters)';
               return true;
-            }
-          }
+            },
+          },
         },
         {
           name: 'recursive',
           type: 'boolean',
           description: 'List contents recursively',
-          default: false
+          default: false,
         },
         {
           name: 'showHidden',
           type: 'boolean',
           description: 'Include hidden files and directories',
-          default: false
+          default: false,
         },
         {
           name: 'includeStats',
           type: 'boolean',
           description: 'Include detailed file statistics',
-          default: true
+          default: true,
         },
         {
           name: 'sortBy',
           type: 'string',
           description: 'Sort results by field',
           default: 'name',
-          enum: ['name', 'size', 'modified', 'created', 'type']
+          enum: ['name', 'size', 'modified', 'created', 'type'],
         },
         {
           name: 'sortOrder',
           type: 'string',
           description: 'Sort order',
           default: 'asc',
-          enum: ['asc', 'desc']
+          enum: ['asc', 'desc'],
         },
         {
           name: 'typeFilter',
           type: 'string',
           description: 'Filter by item type',
           default: 'all',
-          enum: ['files', 'directories', 'all']
+          enum: ['files', 'directories', 'all'],
         },
         {
           name: 'extensions',
           type: 'array',
-          description: 'Filter by file extensions (e.g., [".js", ".ts"])'
+          description: 'Filter by file extensions (e.g., [".js", ".ts"])',
         },
         {
           name: 'sizeMin',
           type: 'number',
           description: 'Minimum file size in bytes',
           validation: {
-            min: 0
-          }
+            min: 0,
+          },
         },
         {
           name: 'sizeMax',
           type: 'number',
           description: 'Maximum file size in bytes',
           validation: {
-            min: 0
-          }
+            min: 0,
+          },
         },
         {
           name: 'maxDepth',
@@ -146,8 +153,8 @@ export class ListTool extends BaseTool {
           default: 5,
           validation: {
             min: 1,
-            max: 20
-          }
+            max: 20,
+          },
         },
         {
           name: 'maxResults',
@@ -156,9 +163,9 @@ export class ListTool extends BaseTool {
           default: 500,
           validation: {
             min: 1,
-            max: 1000
-          }
-        }
+            max: 1000,
+          },
+        },
       ],
       category: 'file',
       version: '1.0.0',
@@ -171,8 +178,8 @@ export class ListTool extends BaseTool {
           description: 'List current directory with details',
           parameters: {
             path: '.',
-            includeStats: true
-          }
+            includeStats: true,
+          },
         },
         {
           description: 'Recursively list JavaScript files',
@@ -181,22 +188,32 @@ export class ListTool extends BaseTool {
             recursive: true,
             extensions: ['.js', '.ts'],
             sortBy: 'size',
-            sortOrder: 'desc'
-          }
-        }
-      ]
+            sortOrder: 'desc',
+          },
+        },
+      ],
     };
 
     super(definition);
 
     // Blocked paths for security
     this.blockedPaths = new Set([
-      '/etc/passwd', '/etc/shadow', '/etc/group', '/etc/hosts',
-      '/proc', '/sys', '/dev', '/var/log/auth.log', '/var/log/secure'
+      '/etc/passwd',
+      '/etc/shadow',
+      '/etc/group',
+      '/etc/hosts',
+      '/proc',
+      '/sys',
+      '/dev',
+      '/var/log/auth.log',
+      '/var/log/secure',
     ]);
   }
 
-  async execute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<ToolResult> {
+  async execute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<ToolResult> {
     const {
       path: inputPath = '.',
       recursive = false,
@@ -209,24 +226,30 @@ export class ListTool extends BaseTool {
       sizeMin,
       sizeMax,
       maxDepth = 5,
-      maxResults = 500
+      maxResults = 500,
     } = parameters;
 
     const startTime = Date.now();
 
     try {
       // Normalize path
-      const normalizedPath = this.normalizePath(inputPath, context.workingDirectory);
-      
+      const normalizedPath = this.normalizePath(
+        inputPath,
+        context.workingDirectory
+      );
+
       // Security checks
-      const securityCheck = await this.performSecurityCheck(normalizedPath, context);
+      const securityCheck = await this.performSecurityCheck(
+        normalizedPath,
+        context
+      );
       if (!securityCheck.safe) {
         return {
           success: false,
           error: `List denied: ${securityCheck.reason}`,
           performance: {
-            executionTime: Date.now() - startTime
-          }
+            executionTime: Date.now() - startTime,
+          },
         };
       }
 
@@ -234,14 +257,14 @@ export class ListTool extends BaseTool {
       try {
         await access(normalizedPath, constants.R_OK);
         const pathStats = await stat(normalizedPath);
-        
+
         if (!pathStats.isDirectory()) {
           return {
             success: false,
             error: 'Path is not a directory',
             performance: {
-              executionTime: Date.now() - startTime
-            }
+              executionTime: Date.now() - startTime,
+            },
           };
         }
       } catch (error: unknown) {
@@ -251,16 +274,16 @@ export class ListTool extends BaseTool {
             success: false,
             error: 'Directory not found',
             performance: {
-              executionTime: Date.now() - startTime
-            }
+              executionTime: Date.now() - startTime,
+            },
           };
         } else if (err.code === 'EACCES') {
           return {
             success: false,
             error: 'Permission denied',
             performance: {
-              executionTime: Date.now() - startTime
-            }
+              executionTime: Date.now() - startTime,
+            },
           };
         }
         throw error;
@@ -268,10 +291,12 @@ export class ListTool extends BaseTool {
 
       // Build filter options
       const filterOptions = {
-        extensions: extensions ? extensions.map((ext: string) => ext.toLowerCase()) : undefined,
+        extensions: extensions
+          ? extensions.map((ext: string) => ext.toLowerCase())
+          : undefined,
         sizeMin,
         sizeMax,
-        typeFilter
+        typeFilter,
       };
 
       const listOptions: ListOptions = {
@@ -282,7 +307,7 @@ export class ListTool extends BaseTool {
         sortOrder,
         filter: filterOptions,
         maxDepth: Math.min(maxDepth, this.maxDepth),
-        maxResults: Math.min(maxResults, this.maxResults)
+        maxResults: Math.min(maxResults, this.maxResults),
       };
 
       // List directory contents
@@ -297,7 +322,7 @@ export class ListTool extends BaseTool {
       this.emit('executed', {
         path: normalizedPath,
         itemsFound: sortedItems.length,
-        success: true
+        success: true,
       });
 
       return {
@@ -306,29 +331,29 @@ export class ListTool extends BaseTool {
           path: normalizedPath,
           items: sortedItems.slice(0, listOptions.maxResults!),
           statistics,
-          options: listOptions
+          options: listOptions,
         },
         performance: {
           executionTime: Date.now() - startTime,
-          resourcesAccessed: [normalizedPath]
-        }
+          resourcesAccessed: [normalizedPath],
+        },
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
       this.emit('error', {
         path: inputPath,
         error: errorMessage,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       });
 
       return {
         success: false,
         error: `List operation failed: ${errorMessage}`,
         performance: {
-          executionTime: Date.now() - startTime
-        }
+          executionTime: Date.now() - startTime,
+        },
       };
     }
   }
@@ -360,7 +385,9 @@ export class ListTool extends BaseTool {
     // Check if path is within allowed directories
     if (context.metadata?.allowedDirectories) {
       const allowedDirs = context.metadata.allowedDirectories as string[];
-      const isAllowed = allowedDirs.some(dir => listPath.startsWith(resolve(dir)));
+      const isAllowed = allowedDirs.some(dir =>
+        listPath.startsWith(resolve(dir))
+      );
       if (!isAllowed) {
         return { safe: false, reason: 'Path is outside allowed directories' };
       }
@@ -390,15 +417,19 @@ export class ListTool extends BaseTool {
         }
 
         const itemPath = join(dirPath, entry);
-        
+
         // Skip hidden files if not requested
         if (!options.showHidden && entry.startsWith('.')) {
           continue;
         }
 
         try {
-          const itemInfo = await this.getFileInfo(itemPath, currentDepth, options.includeStats || false);
-          
+          const itemInfo = await this.getFileInfo(
+            itemPath,
+            currentDepth,
+            options.includeStats || false
+          );
+
           // Apply filters
           if (!this.passesFilter(itemInfo, options.filter)) {
             continue;
@@ -408,10 +439,13 @@ export class ListTool extends BaseTool {
 
           // Recurse into directories if requested
           if (options.recursive && itemInfo.type === 'directory') {
-            const subItems = await this.listDirectory(itemPath, options, currentDepth + 1);
+            const subItems = await this.listDirectory(
+              itemPath,
+              options,
+              currentDepth + 1
+            );
             items.push(...subItems);
           }
-
         } catch (error) {
           // Skip items we can't access
           continue;
@@ -447,7 +481,7 @@ export class ListTool extends BaseTool {
     const permissions = {
       readable: false,
       writable: false,
-      executable: false
+      executable: false,
     };
 
     if (includeStats) {
@@ -477,7 +511,7 @@ export class ListTool extends BaseTool {
       permissions,
       extension: ext || undefined,
       isHidden: name.startsWith('.'),
-      depth
+      depth,
     };
   }
 
@@ -489,19 +523,25 @@ export class ListTool extends BaseTool {
 
     // Type filter
     if (filter.typeFilter === 'files' && item.type !== 'file') return false;
-    if (filter.typeFilter === 'directories' && item.type !== 'directory') return false;
+    if (filter.typeFilter === 'directories' && item.type !== 'directory')
+      return false;
 
     // Extension filter (only for files)
     if (filter.extensions && item.type === 'file') {
-      if (!item.extension || !filter.extensions.includes(item.extension.toLowerCase())) {
+      if (
+        !item.extension ||
+        !filter.extensions.includes(item.extension.toLowerCase())
+      ) {
         return false;
       }
     }
 
     // Size filters (only for files)
     if (item.type === 'file') {
-      if (filter.sizeMin !== undefined && item.size < filter.sizeMin) return false;
-      if (filter.sizeMax !== undefined && item.size > filter.sizeMax) return false;
+      if (filter.sizeMin !== undefined && item.size < filter.sizeMin)
+        return false;
+      if (filter.sizeMax !== undefined && item.size > filter.sizeMax)
+        return false;
     }
 
     return true;
@@ -550,7 +590,7 @@ export class ListTool extends BaseTool {
       directories: 0,
       totalSize: 0,
       largestFile: null as { name: string; size: number } | null,
-      extensions: {} as Record<string, number>
+      extensions: {} as Record<string, number>,
     };
 
     let largestSize = 0;
@@ -577,14 +617,19 @@ export class ListTool extends BaseTool {
     return stats;
   }
 
-  async beforeExecute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<void> {
+  async beforeExecute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<void> {
     await super.beforeExecute(parameters, context);
-    
+
     if (!context.permissions.includes('read_files')) {
       throw new Error('List tool requires read_files permission');
     }
 
-    console.log(`[ListTool] Listing directory ${parameters.path || '.'} for user ${context.userId} (recursive: ${parameters.recursive || false})`);
+    console.log(
+      `[ListTool] Listing directory ${parameters.path || '.'} for user ${context.userId} (recursive: ${parameters.recursive || false})`
+    );
   }
 }
 

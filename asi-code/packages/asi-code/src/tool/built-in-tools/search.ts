@@ -1,15 +1,20 @@
 /**
  * Search Tool - Advanced code and text searching with pattern matching
- * 
+ *
  * Provides sophisticated search capabilities including regex patterns,
  * file type filtering, and content analysis.
  */
 
-import { readFile, stat, access } from 'fs/promises';
+import { access, readFile, stat } from 'fs/promises';
 import { constants } from 'fs';
-import { resolve, normalize, extname, basename, dirname } from 'path';
+import { basename, dirname, extname, normalize, resolve } from 'path';
 import { glob } from 'glob';
-import { BaseTool, ToolDefinition, ToolExecutionContext, ToolResult } from '../base-tool.js';
+import {
+  BaseTool,
+  ToolDefinition,
+  ToolExecutionContext,
+  ToolResult,
+} from '../base-tool.js';
 
 export interface SearchOptions {
   pattern?: string | RegExp;
@@ -43,7 +48,8 @@ export class SearchTool extends BaseTool {
   constructor() {
     const definition: ToolDefinition = {
       name: 'search',
-      description: 'Search for text patterns in files with advanced filtering and context',
+      description:
+        'Search for text patterns in files with advanced filtering and context',
       parameters: [
         {
           name: 'query',
@@ -53,10 +59,11 @@ export class SearchTool extends BaseTool {
           validation: {
             custom: (value: string) => {
               if (!value.trim()) return 'Search query cannot be empty';
-              if (value.length > 500) return 'Search query too long (max 500 characters)';
+              if (value.length > 500)
+                return 'Search query too long (max 500 characters)';
               return true;
-            }
-          }
+            },
+          },
         },
         {
           name: 'path',
@@ -65,34 +72,35 @@ export class SearchTool extends BaseTool {
           default: '.',
           validation: {
             custom: (value: string) => {
-              if (value.length > 500) return 'Path too long (max 500 characters)';
+              if (value.length > 500)
+                return 'Path too long (max 500 characters)';
               return true;
-            }
-          }
+            },
+          },
         },
         {
           name: 'filePattern',
           type: 'string',
           description: 'Glob pattern for files to include',
-          default: '**/*'
+          default: '**/*',
         },
         {
           name: 'ignoreCase',
           type: 'boolean',
           description: 'Case-insensitive search',
-          default: false
+          default: false,
         },
         {
           name: 'wholeWord',
           type: 'boolean',
           description: 'Match whole words only',
-          default: false
+          default: false,
         },
         {
           name: 'useRegex',
           type: 'boolean',
           description: 'Treat query as regular expression',
-          default: false
+          default: false,
         },
         {
           name: 'context',
@@ -101,8 +109,8 @@ export class SearchTool extends BaseTool {
           default: 0,
           validation: {
             min: 0,
-            max: 10
-          }
+            max: 10,
+          },
         },
         {
           name: 'maxDepth',
@@ -111,14 +119,14 @@ export class SearchTool extends BaseTool {
           default: 10,
           validation: {
             min: 1,
-            max: 20
-          }
+            max: 20,
+          },
         },
         {
           name: 'includeHidden',
           type: 'boolean',
           description: 'Include hidden files and directories',
-          default: false
+          default: false,
         },
         {
           name: 'maxResults',
@@ -127,9 +135,9 @@ export class SearchTool extends BaseTool {
           default: 100,
           validation: {
             min: 1,
-            max: 1000
-          }
-        }
+            max: 1000,
+          },
+        },
       ],
       category: 'file',
       version: '1.0.0',
@@ -143,41 +151,85 @@ export class SearchTool extends BaseTool {
           parameters: {
             query: 'function\\s+\\w+',
             filePattern: '**/*.js',
-            useRegex: true
-          }
+            useRegex: true,
+          },
         },
         {
           description: 'Case-insensitive search with context',
           parameters: {
             query: 'TODO',
             ignoreCase: true,
-            context: 2
-          }
-        }
-      ]
+            context: 2,
+          },
+        },
+      ],
     };
 
     super(definition);
 
     this.maxFileSize = 2 * 1024 * 1024; // 2MB per file
-    
+
     // Allowed file extensions for searching
     this.allowedExtensions = new Set([
-      '.txt', '.md', '.json', '.js', '.ts', '.jsx', '.tsx', '.css', '.html',
-      '.xml', '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.py', '.rb',
-      '.java', '.c', '.cpp', '.h', '.hpp', '.go', '.rs', '.php', '.sh', '.bat',
-      '.sql', '.csv', '.log', '.env', '.gitignore', '.dockerfile', '.makefile',
-      '.properties', '.template', '.example', '.sample'
+      '.txt',
+      '.md',
+      '.json',
+      '.js',
+      '.ts',
+      '.jsx',
+      '.tsx',
+      '.css',
+      '.html',
+      '.xml',
+      '.yaml',
+      '.yml',
+      '.toml',
+      '.ini',
+      '.cfg',
+      '.conf',
+      '.py',
+      '.rb',
+      '.java',
+      '.c',
+      '.cpp',
+      '.h',
+      '.hpp',
+      '.go',
+      '.rs',
+      '.php',
+      '.sh',
+      '.bat',
+      '.sql',
+      '.csv',
+      '.log',
+      '.env',
+      '.gitignore',
+      '.dockerfile',
+      '.makefile',
+      '.properties',
+      '.template',
+      '.example',
+      '.sample',
     ]);
 
     // Blocked paths for security
     this.blockedPaths = new Set([
-      '/etc/passwd', '/etc/shadow', '/etc/group', '/etc/hosts',
-      '/proc', '/sys', '/dev', '/var/log/auth.log', '/var/log/secure'
+      '/etc/passwd',
+      '/etc/shadow',
+      '/etc/group',
+      '/etc/hosts',
+      '/proc',
+      '/sys',
+      '/dev',
+      '/var/log/auth.log',
+      '/var/log/secure',
     ]);
   }
 
-  async execute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<ToolResult> {
+  async execute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<ToolResult> {
     const {
       query,
       path = '.',
@@ -188,7 +240,7 @@ export class SearchTool extends BaseTool {
       context: contextLines = 0,
       maxDepth = 10,
       includeHidden = false,
-      maxResults = 100
+      maxResults = 100,
     } = parameters;
 
     const startTime = Date.now();
@@ -196,27 +248,35 @@ export class SearchTool extends BaseTool {
     try {
       // Normalize path
       const normalizedPath = this.normalizePath(path, context.workingDirectory);
-      
+
       // Security checks
-      const securityCheck = await this.performSecurityCheck(normalizedPath, query, context);
+      const securityCheck = await this.performSecurityCheck(
+        normalizedPath,
+        query,
+        context
+      );
       if (!securityCheck.safe) {
         return {
           success: false,
           error: `Search denied: ${securityCheck.reason}`,
           performance: {
-            executionTime: Date.now() - startTime
-          }
+            executionTime: Date.now() - startTime,
+          },
         };
       }
 
       // Build search pattern
-      const searchPattern = this.buildSearchPattern(query, { ignoreCase, wholeWord, useRegex });
+      const searchPattern = this.buildSearchPattern(query, {
+        ignoreCase,
+        wholeWord,
+        useRegex,
+      });
 
       // Find files to search
-      const files = await this.findFiles(normalizedPath, filePattern, { 
-        includeHidden, 
+      const files = await this.findFiles(normalizedPath, filePattern, {
+        includeHidden,
         maxDepth,
-        maxResults
+        maxResults,
       });
 
       // Perform search
@@ -226,7 +286,11 @@ export class SearchTool extends BaseTool {
 
       for (const file of files.slice(0, maxResults)) {
         try {
-          const searchResult = await this.searchInFile(file, searchPattern, contextLines);
+          const searchResult = await this.searchInFile(
+            file,
+            searchPattern,
+            contextLines
+          );
           if (searchResult.totalMatches > 0) {
             results.push(searchResult);
             totalMatches += searchResult.totalMatches;
@@ -243,7 +307,7 @@ export class SearchTool extends BaseTool {
         path: normalizedPath,
         filesSearched,
         totalMatches,
-        success: true
+        success: true,
       });
 
       return {
@@ -257,38 +321,38 @@ export class SearchTool extends BaseTool {
             filesSearched,
             filesWithMatches: results.length,
             totalMatches,
-            searchPattern: useRegex ? query : searchPattern.source
+            searchPattern: useRegex ? query : searchPattern.source,
           },
           options: {
             ignoreCase,
             wholeWord,
             useRegex,
             contextLines,
-            filePattern
-          }
+            filePattern,
+          },
         },
         performance: {
           executionTime: Date.now() - startTime,
-          resourcesAccessed: results.map(r => r.file)
-        }
+          resourcesAccessed: results.map(r => r.file),
+        },
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
       this.emit('error', {
         query,
         path,
         error: errorMessage,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       });
 
       return {
         success: false,
         error: `Search failed: ${errorMessage}`,
         performance: {
-          executionTime: Date.now() - startTime
-        }
+          executionTime: Date.now() - startTime,
+        },
       };
     }
   }
@@ -302,7 +366,7 @@ export class SearchTool extends BaseTool {
 
   private async performSecurityCheck(
     searchPath: string,
-    query: string, 
+    query: string,
     context: ToolExecutionContext
   ): Promise<{ safe: boolean; reason?: string }> {
     // Check for path traversal
@@ -334,7 +398,10 @@ export class SearchTool extends BaseTool {
       const regex = new RegExp(query);
       for (const pattern of dangerousPatterns) {
         if (pattern.test(query)) {
-          return { safe: false, reason: 'Query contains potentially dangerous regex pattern' };
+          return {
+            safe: false,
+            reason: 'Query contains potentially dangerous regex pattern',
+          };
         }
       }
     } catch (error) {
@@ -344,7 +411,9 @@ export class SearchTool extends BaseTool {
     // Check if path is within allowed directories
     if (context.metadata?.allowedDirectories) {
       const allowedDirs = context.metadata.allowedDirectories as string[];
-      const isAllowed = allowedDirs.some(dir => searchPath.startsWith(resolve(dir)));
+      const isAllowed = allowedDirs.some(dir =>
+        searchPath.startsWith(resolve(dir))
+      );
       if (!isAllowed) {
         return { safe: false, reason: 'Path is outside allowed directories' };
       }
@@ -353,11 +422,14 @@ export class SearchTool extends BaseTool {
     return { safe: true };
   }
 
-  private buildSearchPattern(query: string, options: {
-    ignoreCase: boolean;
-    wholeWord: boolean;
-    useRegex: boolean;
-  }): RegExp {
+  private buildSearchPattern(
+    query: string,
+    options: {
+      ignoreCase: boolean;
+      wholeWord: boolean;
+      useRegex: boolean;
+    }
+  ): RegExp {
     let pattern = query;
     let flags = '';
 
@@ -390,7 +462,7 @@ export class SearchTool extends BaseTool {
   ): Promise<string[]> {
     try {
       const stats = await stat(searchPath);
-      
+
       if (stats.isFile()) {
         return [searchPath];
       }
@@ -399,7 +471,7 @@ export class SearchTool extends BaseTool {
         cwd: searchPath,
         absolute: true,
         nodir: true,
-        maxDepth: options.maxDepth
+        maxDepth: options.maxDepth,
       };
 
       if (!options.includeHidden) {
@@ -409,13 +481,14 @@ export class SearchTool extends BaseTool {
       }
 
       const files = await glob(filePattern, globOptions);
-      
+
       // Filter by allowed extensions and security checks
       const filteredFiles: string[] = [];
-      
-      for (const file of files.slice(0, options.maxResults * 2)) { // Get more to account for filtering
+
+      for (const file of files.slice(0, options.maxResults * 2)) {
+        // Get more to account for filtering
         const ext = extname(file).toLowerCase();
-        
+
         // Skip if extension not allowed
         if (ext && !this.allowedExtensions.has(ext)) {
           continue;
@@ -427,11 +500,11 @@ export class SearchTool extends BaseTool {
           if (fileStats.size > this.maxFileSize) {
             continue;
           }
-          
+
           // Check read permission
           await access(file, constants.R_OK);
           filteredFiles.push(file);
-          
+
           if (filteredFiles.length >= options.maxResults) {
             break;
           }
@@ -442,9 +515,10 @@ export class SearchTool extends BaseTool {
       }
 
       return filteredFiles;
-      
     } catch (error) {
-      throw new Error(`Cannot access search path: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Cannot access search path: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -460,12 +534,12 @@ export class SearchTool extends BaseTool {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const lineMatches = [...line.matchAll(pattern)];
-      
+
       for (const match of lineMatches) {
         const matchInfo: SearchResult['matches'][0] = {
           line: i + 1,
           column: (match.index || 0) + 1,
-          text: match[0]
+          text: match[0],
         };
 
         // Add context if requested
@@ -475,7 +549,7 @@ export class SearchTool extends BaseTool {
 
           matchInfo.context = {
             before: lines.slice(beforeStart, i),
-            after: lines.slice(i + 1, afterEnd + 1)
+            after: lines.slice(i + 1, afterEnd + 1),
           };
         }
 
@@ -486,18 +560,23 @@ export class SearchTool extends BaseTool {
     return {
       file: filePath,
       matches,
-      totalMatches: matches.length
+      totalMatches: matches.length,
     };
   }
 
-  async beforeExecute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<void> {
+  async beforeExecute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<void> {
     await super.beforeExecute(parameters, context);
-    
+
     if (!context.permissions.includes('read_files')) {
       throw new Error('Search tool requires read_files permission');
     }
 
-    console.log(`[SearchTool] Searching for '${parameters.query}' for user ${context.userId} in ${parameters.path || '.'}`);
+    console.log(
+      `[SearchTool] Searching for '${parameters.query}' for user ${context.userId} in ${parameters.path || '.'}`
+    );
   }
 }
 

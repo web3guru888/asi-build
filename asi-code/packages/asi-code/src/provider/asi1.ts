@@ -1,6 +1,6 @@
 /**
  * ASI1 Provider - Core AI model provider for ASI-Code
- * 
+ *
  * Implements the ASI1 model interface with advanced capabilities for
  * code generation, analysis, and intelligent automation.
  */
@@ -55,7 +55,9 @@ export class ASI1Provider {
 
   async generate(request: ASI1Request): Promise<ASI1Response> {
     if (!this.config.apiKey) {
-      throw new Error('ASI1 API key is required. Set ASI1_API_KEY environment variable or provide in config.');
+      throw new Error(
+        'ASI1 API key is required. Set ASI1_API_KEY environment variable or provide in config.'
+      );
     }
 
     const payload = {
@@ -71,7 +73,7 @@ export class ASI1Provider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.config.apiKey}`,
+          Authorization: `Bearer ${this.config.apiKey}`,
           'User-Agent': 'asi-code/1.0.0',
         },
         body: JSON.stringify(payload),
@@ -83,7 +85,7 @@ export class ASI1Provider {
       }
 
       const data = await response.json();
-      
+
       return {
         content: data.choices[0]?.message?.content || '',
         usage: {
@@ -95,13 +97,17 @@ export class ASI1Provider {
         timestamp: new Date(),
       };
     } catch (error) {
-      throw new Error(`Failed to generate response from ASI1: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to generate response from ASI1: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
   async streamGenerate(request: ASI1Request): Promise<AsyncIterable<string>> {
     if (!this.config.apiKey) {
-      throw new Error('ASI1 API key is required. Set ASI1_API_KEY environment variable or provide in config.');
+      throw new Error(
+        'ASI1 API key is required. Set ASI1_API_KEY environment variable or provide in config.'
+      );
     }
 
     const payload = {
@@ -116,7 +122,7 @@ export class ASI1Provider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.config.apiKey}`,
+        Authorization: `Bearer ${this.config.apiKey}`,
         'User-Agent': 'asi-code/1.0.0',
       },
       body: JSON.stringify(payload),
@@ -130,7 +136,9 @@ export class ASI1Provider {
     return this.parseStreamResponse(response);
   }
 
-  private async *parseStreamResponse(response: Response): AsyncIterable<string> {
+  private async *parseStreamResponse(
+    response: Response
+  ): AsyncIterable<string> {
     if (!response.body) {
       throw new Error('No response body received from ASI1 API');
     }
@@ -152,7 +160,7 @@ export class ASI1Provider {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') return;
-            
+
             try {
               const parsed = JSON.parse(data);
               const content = parsed.choices?.[0]?.delta?.content;
@@ -177,7 +185,7 @@ export class ASI1Provider {
   updateConfig(updates: Partial<ASI1Config>): void {
     this.config = { ...this.config, ...updates } as Required<ASI1Config>;
   }
-  
+
   getAvailableModels(): string[] {
     return ['asi1-mini', 'asi1-extended', 'asi1-thinking', 'asi1-graph'];
   }
@@ -186,7 +194,7 @@ export class ASI1Provider {
     try {
       const response = await this.generate({
         messages: [
-          { role: 'user', content: 'Test connection. Respond with "OK".' }
+          { role: 'user', content: 'Test connection. Respond with "OK".' },
         ],
         maxTokens: 10,
         temperature: 0,

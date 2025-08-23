@@ -1,6 +1,6 @@
 /**
  * PostgreSQL Connection Pool Manager
- * 
+ *
  * Provides robust connection pooling with:
  * - Automatic connection retry with exponential backoff
  * - Health monitoring and recovery
@@ -9,14 +9,14 @@
  */
 
 import { Pool, PoolClient, PoolConfig } from 'pg';
-import { DatabaseConfig, ConnectionError, PerformanceMetrics } from '../types';
+import { ConnectionError, DatabaseConfig, PerformanceMetrics } from '../types';
 import { Logger } from '../../logging';
 
 export class PoolManager {
   private pool: Pool | null = null;
-  private config: DatabaseConfig;
-  private logger: Logger;
-  private metrics: {
+  private readonly config: DatabaseConfig;
+  private readonly logger: Logger;
+  private readonly metrics: {
     totalConnections: number;
     activeConnections: number;
     idleConnections: number;
@@ -40,7 +40,7 @@ export class PoolManager {
       waitingClients: 0,
       totalQueries: 0,
       failedQueries: 0,
-      connectionErrors: 0
+      connectionErrors: 0,
     };
   }
 
@@ -59,7 +59,7 @@ export class PoolManager {
         port: this.config.port,
         database: this.config.database,
         poolMin: this.config.pool.min,
-        poolMax: this.config.pool.max
+        poolMax: this.config.pool.max,
       });
 
       const poolConfig: PoolConfig = {
@@ -71,27 +71,32 @@ export class PoolManager {
         min: this.config.pool.min,
         max: this.config.pool.max,
         idleTimeoutMillis: this.config.pool.idleTimeoutMillis,
-        ssl: this.config.ssl?.enabled ? {
-          rejectUnauthorized: this.config.ssl.rejectUnauthorized ?? true,
-          ca: this.config.ssl.ca,
-          cert: this.config.ssl.cert,
-          key: this.config.ssl.key
-        } : false
+        ssl: this.config.ssl?.enabled
+          ? {
+              rejectUnauthorized: this.config.ssl.rejectUnauthorized ?? true,
+              ca: this.config.ssl.ca,
+              cert: this.config.ssl.cert,
+              key: this.config.ssl.key,
+            }
+          : false,
       };
 
       this.pool = new Pool(poolConfig);
       this.setupEventHandlers();
-      
+
       // Test initial connection with retry logic
       await this.testConnection();
-      
+
       // Start health monitoring
       this.startHealthMonitoring();
-      
+
       this.logger.info('PostgreSQL connection pool initialized successfully');
     } catch (error) {
       this.logger.error('Failed to initialize connection pool', { error });
-      throw new ConnectionError(`Failed to initialize connection pool: ${error.message}`, error);
+      throw new ConnectionError(
+        `Failed to initialize connection pool: ${error.message}`,
+        error
+      );
     }
   }
 
@@ -106,7 +111,7 @@ export class PoolManager {
       this.logger.debug('New client connected to pool', {
         totalConnections: this.pool?.totalCount,
         idleConnections: this.pool?.idleCount,
-        waitingClients: this.pool?.waitingCount
+        waitingClients: this.pool?.waitingCount,
       });
     });
 
@@ -137,7 +142,8 @@ export class PoolManager {
    * Test connection with retry logic
    */
   private async testConnection(): Promise<void> {
-    const { maxAttempts, initialDelayMs, maxDelayMs, exponentialBackoff } = this.config.retry;
+    const { maxAttempts, initialDelayMs, maxDelayMs, exponentialBackoff } =
+      this.config.retry;
     let attempt = 0;
     let delay = initialDelayMs;
 
@@ -146,23 +152,29 @@ export class PoolManager {
         const client = await this.pool!.connect();
         const result = await client.query('SELECT 1 as test');
         client.release();
-        
+
         this.logger.info('Database connection test successful');
         return;
       } catch (error) {
         attempt++;
-        this.logger.warn(`Connection test failed (attempt ${attempt}/${maxAttempts})`, {
-          error: error.message,
-          nextRetryIn: attempt < maxAttempts ? delay : 'no more retries'
-        });
+        this.logger.warn(
+          `Connection test failed (attempt ${attempt}/${maxAttempts})`,
+          {
+            error: error.message,
+            nextRetryIn: attempt < maxAttempts ? delay : 'no more retries',
+          }
+        );
 
         if (attempt >= maxAttempts) {
-          throw new ConnectionError(`Failed to connect after ${maxAttempts} attempts: ${error.message}`, error);
+          throw new ConnectionError(
+            `Failed to connect after ${maxAttempts} attempts: ${error.message}`,
+            error
+          );
         }
 
         // Wait before retrying
         await new Promise(resolve => setTimeout(resolve, delay));
-        
+
         // Exponential backoff
         if (exponentialBackoff) {
           delay = Math.min(delay * 2, maxDelayMs);
@@ -177,7 +189,7 @@ export class PoolManager {
   private startHealthMonitoring(): void {
     this.healthCheckInterval = setInterval(async () => {
       if (this.isShuttingDown) return;
-      
+
       try {
         await this.healthCheck();
       } catch (error) {
@@ -197,18 +209,18 @@ export class PoolManager {
     try {
       const startTime = Date.now();
       const client = await this.pool.connect();
-      
+
       try {
         await client.query('SELECT 1');
         const responseTime = Date.now() - startTime;
-        
+
         this.logger.debug('Health check passed', {
           responseTime,
           totalCount: this.pool.totalCount,
           idleCount: this.pool.idleCount,
-          waitingCount: this.pool.waitingCount
+          waitingCount: this.pool.waitingCount,
         });
-        
+
         return true;
       } finally {
         client.release();
@@ -233,7 +245,10 @@ export class PoolManager {
     } catch (error) {
       this.metrics.connectionErrors++;
       this.logger.error('Failed to get client from pool', { error });
-      throw new ConnectionError(`Failed to acquire database connection: ${error.message}`, error);
+      throw new ConnectionError(
+        `Failed to acquire database connection: ${error.message}`,
+        error
+      );
     }
   }
 
@@ -251,15 +266,15 @@ export class PoolManager {
     try {
       client = await this.getClient();
       const result = await client.query(text, params);
-      
+
       this.metrics.totalQueries++;
       const executionTime = Date.now() - startTime;
-      
+
       this.logger.debug('Query executed successfully', {
         executionTime,
-        rowCount: result.rowCount
+        rowCount: result.rowCount,
       });
-      
+
       return result;
     } catch (error) {
       this.metrics.failedQueries++;
@@ -267,7 +282,7 @@ export class PoolManager {
         error,
         query: text,
         params,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       });
       throw error;
     } finally {
@@ -286,21 +301,21 @@ export class PoolManager {
         active: this.pool?.totalCount - this.pool?.idleCount || 0,
         idle: this.pool?.idleCount || 0,
         waiting: this.pool?.waitingCount || 0,
-        max: this.config.pool.max
+        max: this.config.pool.max,
       },
       queries: {
         total: this.metrics.totalQueries,
         successful: this.metrics.totalQueries - this.metrics.failedQueries,
         failed: this.metrics.failedQueries,
         averageExecutionTime: 0, // TODO: Implement average calculation
-        slowQueries: 0 // TODO: Implement slow query tracking
+        slowQueries: 0, // TODO: Implement slow query tracking
       },
       transactions: {
         active: 0, // TODO: Track active transactions
         committed: 0, // TODO: Track committed transactions
         rolledBack: 0, // TODO: Track rolled back transactions
-        deadlocks: 0 // TODO: Track deadlocks
-      }
+        deadlocks: 0, // TODO: Track deadlocks
+      },
     };
   }
 
@@ -321,7 +336,7 @@ export class PoolManager {
       idleConnections: this.pool?.idleCount || 0,
       waitingClients: this.pool?.waitingCount || 0,
       lastError: this.metrics.lastError,
-      lastErrorTime: this.metrics.lastErrorTime
+      lastErrorTime: this.metrics.lastErrorTime,
     };
   }
 
@@ -335,20 +350,20 @@ export class PoolManager {
     }
 
     this.isShuttingDown = true;
-    
+
     try {
       this.logger.info('Shutting down connection pool gracefully');
-      
+
       // Stop health monitoring
       if (this.healthCheckInterval) {
         clearInterval(this.healthCheckInterval);
         this.healthCheckInterval = undefined;
       }
-      
+
       // Close all connections
       await this.pool.end();
       this.pool = null;
-      
+
       this.logger.info('Connection pool shutdown completed');
     } catch (error) {
       this.logger.error('Error during pool shutdown', { error });

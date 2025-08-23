@@ -1,6 +1,6 @@
 /**
  * Permission Manager - Advanced permission checking and management system
- * 
+ *
  * Integrates with Kenny Integration Pattern to provide comprehensive
  * permission management with caching, auditing, and safety protocols.
  */
@@ -11,28 +11,28 @@ import { getKennyIntegration } from '../kenny/integration.js';
 import { BaseSubsystem } from '../kenny/base-subsystem.js';
 import { SafetyProtocolManager } from './safety-protocols.js';
 import type {
+  BUILT_IN_PERMISSIONS,
+  BUILT_IN_ROLES,
   Permission,
-  Role,
-  User,
-  UserSession,
-  PermissionContext,
-  PermissionRequest,
-  PermissionResult,
   PermissionAuditInfo,
   PermissionCache,
-  PermissionStats,
-  SecurityPolicy,
-  SafetyLevel,
-  ResourceType,
+  PermissionContext,
   PermissionLevel,
-  BUILT_IN_PERMISSIONS,
-  BUILT_IN_ROLES
+  PermissionRequest,
+  PermissionResult,
+  PermissionStats,
+  ResourceType,
+  Role,
+  SafetyLevel,
+  SecurityPolicy,
+  User,
+  UserSession,
 } from './permission-types.js';
 import {
   PermissionError,
   SecurityViolationError,
+  SessionStatus,
   UserStatus,
-  SessionStatus
 } from './permission-types.js';
 
 export interface PermissionManagerConfig {
@@ -57,27 +57,30 @@ export interface PermissionManagerConfig {
  * Advanced permission manager with Kenny Integration
  */
 export class PermissionManager extends BaseSubsystem {
-  private permissions = new Map<string, Permission>();
-  private roles = new Map<string, Role>();
-  private users = new Map<string, User>();
-  private sessions = new Map<string, UserSession>();
-  private securityPolicies = new Map<string, SecurityPolicy>();
-  
-  private permissionCache = new Map<string, PermissionCache>();
-  private auditLog: PermissionAuditInfo[] = [];
-  private stats: PermissionStats;
-  
-  private safetyProtocols: SafetyProtocolManager;
-  private config: Required<PermissionManagerConfig>;
-  
-  private rateLimitTracking = new Map<string, { count: number; resetTime: number }>();
+  private readonly permissions = new Map<string, Permission>();
+  private readonly roles = new Map<string, Role>();
+  private readonly users = new Map<string, User>();
+  private readonly sessions = new Map<string, UserSession>();
+  private readonly securityPolicies = new Map<string, SecurityPolicy>();
+
+  private readonly permissionCache = new Map<string, PermissionCache>();
+  private readonly auditLog: PermissionAuditInfo[] = [];
+  private readonly stats: PermissionStats;
+
+  private readonly safetyProtocols: SafetyProtocolManager;
+  private readonly config: Required<PermissionManagerConfig>;
+
+  private readonly rateLimitTracking = new Map<
+    string,
+    { count: number; resetTime: number }
+  >();
 
   constructor(config: PermissionManagerConfig = {}) {
     super({
       id: 'permission-manager',
       name: 'Permission Manager',
       description: 'Advanced permission checking and management system',
-      version: '1.0.0'
+      version: '1.0.0',
     });
 
     this.config = {
@@ -89,11 +92,11 @@ export class PermissionManager extends BaseSubsystem {
       enableSafetyProtocols: config.enableSafetyProtocols ?? true,
       rateLimit: config.rateLimit ?? {
         maxRequestsPerMinute: 1000,
-        maxRequestsPerHour: 10000
+        maxRequestsPerHour: 10000,
       },
       storage: config.storage ?? {
-        type: 'memory'
-      }
+        type: 'memory',
+      },
     };
 
     this.safetyProtocols = new SafetyProtocolManager();
@@ -135,7 +138,7 @@ export class PermissionManager extends BaseSubsystem {
     if (this.config.enableSafetyProtocols) {
       await this.safetyProtocols.stop();
     }
-    
+
     // Cleanup resources
     this.cleanup();
     this.emit('stopped');
@@ -161,12 +164,12 @@ export class PermissionManager extends BaseSubsystem {
 
       // Publish initialization event
       const kenny = getKennyIntegration();
-      await kenny.getMessageBus().publishSubsystem(
-        'permission-manager.initialized',
-        this.metadata.id,
-        { permissionCount: this.permissions.size, roleCount: this.roles.size }
-      );
-
+      await kenny
+        .getMessageBus()
+        .publishSubsystem('permission-manager.initialized', this.metadata.id, {
+          permissionCount: this.permissions.size,
+          roleCount: this.roles.size,
+        });
     } catch (error) {
       // Error status is managed by BaseSubsystem
       throw error;
@@ -218,25 +221,28 @@ export class PermissionManager extends BaseSubsystem {
   /**
    * Add a new permission
    */
-  async addPermission(permission: Omit<Permission, 'createdAt' | 'updatedAt'>): Promise<void> {
+  async addPermission(
+    permission: Omit<Permission, 'createdAt' | 'updatedAt'>
+  ): Promise<void> {
     const fullPermission: Permission = {
       ...permission,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     this.permissions.set(permission.id, fullPermission);
-    
+
     // Clear related cache entries
     this.clearCacheForPermission(permission.id);
 
     // Publish event
     const kenny = getKennyIntegration();
-    await kenny.getMessageBus().publishSubsystem(
-      'permission.added',
-      this.metadata.id,
-      { permissionId: permission.id, name: permission.name }
-    );
+    await kenny
+      .getMessageBus()
+      .publishSubsystem('permission.added', this.metadata.id, {
+        permissionId: permission.id,
+        name: permission.name,
+      });
 
     this.emit('permission.added', { permission: fullPermission });
   }
@@ -248,14 +254,17 @@ export class PermissionManager extends BaseSubsystem {
     // Validate role permissions exist
     for (const permissionId of role.permissions) {
       if (!this.permissions.has(permissionId)) {
-        throw new PermissionError(`Permission ${permissionId} does not exist`, 'INVALID_PERMISSION');
+        throw new PermissionError(
+          `Permission ${permissionId} does not exist`,
+          'INVALID_PERMISSION'
+        );
       }
     }
 
     const fullRole: Role = {
       ...role,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     this.roles.set(role.id, fullRole);
@@ -265,11 +274,13 @@ export class PermissionManager extends BaseSubsystem {
 
     // Publish event
     const kenny = getKennyIntegration();
-    await kenny.getMessageBus().publishSubsystem(
-      'role.added',
-      this.metadata.id,
-      { roleId: role.id, name: role.name, permissionCount: role.permissions.length }
-    );
+    await kenny
+      .getMessageBus()
+      .publishSubsystem('role.added', this.metadata.id, {
+        roleId: role.id,
+        name: role.name,
+        permissionCount: role.permissions.length,
+      });
 
     this.emit('role.added', { role: fullRole });
   }
@@ -277,11 +288,16 @@ export class PermissionManager extends BaseSubsystem {
   /**
    * Create a new user
    */
-  async createUser(userData: Omit<User, 'createdAt' | 'updatedAt' | 'sessions'>): Promise<User> {
+  async createUser(
+    userData: Omit<User, 'createdAt' | 'updatedAt' | 'sessions'>
+  ): Promise<User> {
     // Validate roles exist
     for (const roleId of userData.roles) {
       if (!this.roles.has(roleId)) {
-        throw new PermissionError(`Role ${roleId} does not exist`, 'INVALID_ROLE');
+        throw new PermissionError(
+          `Role ${roleId} does not exist`,
+          'INVALID_ROLE'
+        );
       }
     }
 
@@ -289,7 +305,7 @@ export class PermissionManager extends BaseSubsystem {
       ...userData,
       sessions: [],
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     this.users.set(user.id, user);
@@ -299,11 +315,13 @@ export class PermissionManager extends BaseSubsystem {
 
     // Publish event
     const kenny = getKennyIntegration();
-    await kenny.getMessageBus().publishSubsystem(
-      'user.created',
-      this.metadata.id,
-      { userId: user.id, username: user.username, roleCount: user.roles.length }
-    );
+    await kenny
+      .getMessageBus()
+      .publishSubsystem('user.created', this.metadata.id, {
+        userId: user.id,
+        username: user.username,
+        roleCount: user.roles.length,
+      });
 
     this.emit('user.created', { user });
     return user;
@@ -312,22 +330,39 @@ export class PermissionManager extends BaseSubsystem {
   /**
    * Create a new session
    */
-  async createSession(userId: string, sessionData: Omit<UserSession, 'id' | 'userId' | 'startTime' | 'lastActivity'>): Promise<UserSession> {
+  async createSession(
+    userId: string,
+    sessionData: Omit<
+      UserSession,
+      'id' | 'userId' | 'startTime' | 'lastActivity'
+    >
+  ): Promise<UserSession> {
     const user = this.users.get(userId);
     if (!user) {
-      throw new PermissionError(`User ${userId} does not exist`, 'USER_NOT_FOUND');
+      throw new PermissionError(
+        `User ${userId} does not exist`,
+        'USER_NOT_FOUND'
+      );
     }
 
     if (user.status !== UserStatus.ACTIVE) {
-      throw new PermissionError(`User ${userId} is not active`, 'USER_INACTIVE');
+      throw new PermissionError(
+        `User ${userId} is not active`,
+        'USER_INACTIVE'
+      );
     }
 
     // Check session limits
-    const activeSessions = user.sessions.filter(s => s.status === SessionStatus.ACTIVE);
+    const activeSessions = user.sessions.filter(
+      s => s.status === SessionStatus.ACTIVE
+    );
     const maxSessions = user.constraints?.maxSessions || 10;
-    
+
     if (activeSessions.length >= maxSessions) {
-      throw new PermissionError(`User ${userId} has reached maximum session limit`, 'SESSION_LIMIT_EXCEEDED');
+      throw new PermissionError(
+        `User ${userId} has reached maximum session limit`,
+        'SESSION_LIMIT_EXCEEDED'
+      );
     }
 
     const session: UserSession = {
@@ -336,7 +371,7 @@ export class PermissionManager extends BaseSubsystem {
       startTime: new Date(),
       lastActivity: new Date(),
       status: SessionStatus.ACTIVE,
-      ...sessionData
+      ...sessionData,
     };
 
     // Add session to user
@@ -348,11 +383,13 @@ export class PermissionManager extends BaseSubsystem {
 
     // Publish event
     const kenny = getKennyIntegration();
-    await kenny.getMessageBus().publishSubsystem(
-      'session.created',
-      this.metadata.id,
-      { sessionId: session.id, userId, ipAddress: session.ipAddress }
-    );
+    await kenny
+      .getMessageBus()
+      .publishSubsystem('session.created', this.metadata.id, {
+        sessionId: session.id,
+        userId,
+        ipAddress: session.ipAddress,
+      });
 
     this.emit('session.created', { session });
     return session;
@@ -367,8 +404,16 @@ export class PermissionManager extends BaseSubsystem {
 
     try {
       // Rate limiting
-      if (!this.checkRateLimit(request.context.userId || request.context.sessionId)) {
-        throw new SecurityViolationError('Rate limit exceeded', 'medium', request.context);
+      if (
+        !this.checkRateLimit(
+          request.context.userId || request.context.sessionId
+        )
+      ) {
+        throw new SecurityViolationError(
+          'Rate limit exceeded',
+          'medium',
+          request.context
+        );
       }
 
       // Check cache first
@@ -412,7 +457,7 @@ export class PermissionManager extends BaseSubsystem {
           duration: Date.now() - startTime,
           ipAddress: request.context.ipAddress,
           userAgent: request.context.userAgent,
-          metadata: request.context.metadata
+          metadata: request.context.metadata,
         };
 
         this.addAuditEntry(auditInfo);
@@ -426,25 +471,23 @@ export class PermissionManager extends BaseSubsystem {
 
       // Publish event
       const kenny = getKennyIntegration();
-      await kenny.getMessageBus().publishSubsystem(
-        'permission.checked',
-        this.metadata.id,
-        {
+      await kenny
+        .getMessageBus()
+        .publishSubsystem('permission.checked', this.metadata.id, {
           checkId,
           permissionId: request.permissionId,
           result: result.granted ? 'granted' : 'denied',
           userId: user?.id,
-          duration: Date.now() - startTime
-        }
-      );
+          duration: Date.now() - startTime,
+        });
 
       this.emit('permission.checked', { request, result });
 
       return result;
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
       const errorResult: PermissionResult = {
         granted: false,
         reason: `Permission check failed: ${errorMessage}`,
@@ -457,8 +500,8 @@ export class PermissionManager extends BaseSubsystem {
           result: 'error',
           reason: errorMessage,
           timestamp: new Date(),
-          duration: Date.now() - startTime
-        }
+          duration: Date.now() - startTime,
+        },
       };
 
       this.updateStats(errorResult);
@@ -472,17 +515,15 @@ export class PermissionManager extends BaseSubsystem {
       if (error instanceof SecurityViolationError) {
         // Handle security violations specially
         const kenny = getKennyIntegration();
-        await kenny.getMessageBus().publishSubsystem(
-          'security.violation',
-          this.metadata.id,
-          {
+        await kenny
+          .getMessageBus()
+          .publishSubsystem('security.violation', this.metadata.id, {
             severity: error.severity,
             message: error.message,
             userId: request.context.userId,
             sessionId: request.context.sessionId,
-            resource: request.context.resource
-          }
-        );
+            resource: request.context.resource,
+          });
       }
 
       return errorResult;
@@ -495,7 +536,10 @@ export class PermissionManager extends BaseSubsystem {
   async getUserPermissions(userId: string): Promise<Permission[]> {
     const user = this.users.get(userId);
     if (!user) {
-      throw new PermissionError(`User ${userId} does not exist`, 'USER_NOT_FOUND');
+      throw new PermissionError(
+        `User ${userId} does not exist`,
+        'USER_NOT_FOUND'
+      );
     }
 
     const userPermissions = new Set<Permission>();
@@ -549,10 +593,13 @@ export class PermissionManager extends BaseSubsystem {
     if (filter) {
       filteredLog = filteredLog.filter(entry => {
         if (filter.userId && entry.userId !== filter.userId) return false;
-        if (filter.sessionId && entry.sessionId !== filter.sessionId) return false;
-        if (filter.permissionId && entry.permissionId !== filter.permissionId) return false;
+        if (filter.sessionId && entry.sessionId !== filter.sessionId)
+          return false;
+        if (filter.permissionId && entry.permissionId !== filter.permissionId)
+          return false;
         if (filter.result && entry.result !== filter.result) return false;
-        if (filter.startTime && entry.timestamp < filter.startTime) return false;
+        if (filter.startTime && entry.timestamp < filter.startTime)
+          return false;
         if (filter.endTime && entry.timestamp > filter.endTime) return false;
         return true;
       });
@@ -569,12 +616,16 @@ export class PermissionManager extends BaseSubsystem {
    * Health check for the permission manager
    */
   protected async onHealthCheck() {
-    const activeUsers = Array.from(this.users.values()).filter(u => u.status === UserStatus.ACTIVE).length;
-    const activeSessions = Array.from(this.sessions.values()).filter(s => s.status === SessionStatus.ACTIVE).length;
+    const activeUsers = Array.from(this.users.values()).filter(
+      u => u.status === UserStatus.ACTIVE
+    ).length;
+    const activeSessions = Array.from(this.sessions.values()).filter(
+      s => s.status === SessionStatus.ACTIVE
+    ).length;
     const cacheSize = this.permissionCache.size;
-    
+
     return {
-      status: this.status === 'running' ? 'healthy' : 'unhealthy' as const,
+      status: this.status === 'running' ? 'healthy' : ('unhealthy' as const),
       message: `${this.permissions.size} permissions, ${activeUsers} active users, ${activeSessions} active sessions`,
       details: {
         permissions: this.permissions.size,
@@ -585,14 +636,16 @@ export class PermissionManager extends BaseSubsystem {
         activeSessions,
         cacheSize,
         auditEntries: this.auditLog.length,
-        stats: this.stats
-      }
+        stats: this.stats,
+      },
     };
   }
 
   private async initializeBuiltInData(): Promise<void> {
     // Import built-in permissions and roles
-    const { BUILT_IN_PERMISSIONS, BUILT_IN_ROLES } = await import('./permission-types.js');
+    const { BUILT_IN_PERMISSIONS, BUILT_IN_ROLES } = await import(
+      './permission-types.js'
+    );
 
     // Add built-in permissions
     for (const permissionData of BUILT_IN_PERMISSIONS) {
@@ -607,7 +660,9 @@ export class PermissionManager extends BaseSubsystem {
 
   private async initializeStorage(): Promise<void> {
     // TODO: Implement database/file storage initialization
-    console.log(`[PermissionManager] Storage type '${this.config.storage.type}' not yet implemented`);
+    console.log(
+      `[PermissionManager] Storage type '${this.config.storage.type}' not yet implemented`
+    );
   }
 
   private async performPermissionCheck(
@@ -620,7 +675,7 @@ export class PermissionManager extends BaseSubsystem {
       return {
         granted: false,
         reason: `Permission ${request.permissionId} does not exist`,
-        auditInfo: {} as any // Will be filled by caller
+        auditInfo: {} as any, // Will be filled by caller
       };
     }
 
@@ -629,7 +684,7 @@ export class PermissionManager extends BaseSubsystem {
       return {
         granted: false,
         reason: user ? `User is ${user.status}` : 'User not found',
-        auditInfo: {} as any
+        auditInfo: {} as any,
       };
     }
 
@@ -638,7 +693,7 @@ export class PermissionManager extends BaseSubsystem {
       return {
         granted: false,
         reason: session ? `Session is ${session.status}` : 'Session not found',
-        auditInfo: {} as any
+        auditInfo: {} as any,
       };
     }
 
@@ -647,35 +702,46 @@ export class PermissionManager extends BaseSubsystem {
 
     // Check user permissions
     const userPermissions = await this.getUserPermissions(user.id);
-    const hasPermission = userPermissions.some(p => p.id === request.permissionId);
+    const hasPermission = userPermissions.some(
+      p => p.id === request.permissionId
+    );
 
     if (!hasPermission) {
       return {
         granted: false,
         reason: 'User does not have required permission',
-        auditInfo: {} as any
+        auditInfo: {} as any,
       };
     }
 
     // Check constraints
-    const constraintResult = await this.checkConstraints(permission, request.context, user, session);
+    const constraintResult = await this.checkConstraints(
+      permission,
+      request.context,
+      user,
+      session
+    );
     if (!constraintResult.passed) {
       return {
         granted: false,
         reason: `Constraint violation: ${constraintResult.reason}`,
         constraints: permission.constraints,
-        auditInfo: {} as any
+        auditInfo: {} as any,
       };
     }
 
     // Check security policies
-    const policyResult = await this.checkSecurityPolicies(request, user, session);
+    const policyResult = await this.checkSecurityPolicies(
+      request,
+      user,
+      session
+    );
     if (!policyResult.allowed) {
       return {
         granted: false,
         reason: `Policy violation: ${policyResult.reason}`,
         warnings: policyResult.warnings,
-        auditInfo: {} as any
+        auditInfo: {} as any,
       };
     }
 
@@ -684,7 +750,7 @@ export class PermissionManager extends BaseSubsystem {
       reason: 'Permission granted',
       constraints: permission.constraints,
       warnings: constraintResult.warnings,
-      auditInfo: {} as any
+      auditInfo: {} as any,
     };
   }
 
@@ -711,7 +777,10 @@ export class PermissionManager extends BaseSubsystem {
       if (constraints.timeRestrictions.allowedHours) {
         const [start, end] = constraints.timeRestrictions.allowedHours;
         if (hour < start || hour > end) {
-          return { passed: false, reason: `Access not allowed at this time (${hour}:xx)` };
+          return {
+            passed: false,
+            reason: `Access not allowed at this time (${hour}:xx)`,
+          };
         }
       }
 
@@ -737,13 +806,13 @@ export class PermissionManager extends BaseSubsystem {
           // Reset window
           this.rateLimitTracking.set(key, {
             count: 1,
-            resetTime: now + constraints.rateLimit.windowMs
+            resetTime: now + constraints.rateLimit.windowMs,
           });
         }
       } else {
         this.rateLimitTracking.set(key, {
           count: 1,
-          resetTime: now + constraints.rateLimit.windowMs
+          resetTime: now + constraints.rateLimit.windowMs,
         });
       }
     }
@@ -751,12 +820,15 @@ export class PermissionManager extends BaseSubsystem {
     // IP restrictions
     if (constraints.ipRestrictions && context.ipAddress) {
       const ip = context.ipAddress;
-      
+
       if (constraints.ipRestrictions.blockedIPs?.includes(ip)) {
         return { passed: false, reason: 'IP address is blocked' };
       }
 
-      if (constraints.ipRestrictions.allowedIPs && !constraints.ipRestrictions.allowedIPs.includes(ip)) {
+      if (
+        constraints.ipRestrictions.allowedIPs &&
+        !constraints.ipRestrictions.allowedIPs.includes(ip)
+      ) {
         return { passed: false, reason: 'IP address not in allowed list' };
       }
     }
@@ -789,7 +861,8 @@ export class PermissionManager extends BaseSubsystem {
       for (const inheritedRoleId of role.inheritsFrom) {
         const inheritedRole = this.roles.get(inheritedRoleId);
         if (inheritedRole) {
-          const inheritedPermissions = await this.getRolePermissions(inheritedRole);
+          const inheritedPermissions =
+            await this.getRolePermissions(inheritedRole);
           for (const permission of inheritedPermissions) {
             permissions.add(permission);
           }
@@ -816,12 +889,21 @@ export class PermissionManager extends BaseSubsystem {
     return null;
   }
 
-  private cacheResult(key: string, result: PermissionResult, request: PermissionRequest): void {
+  private cacheResult(
+    key: string,
+    result: PermissionResult,
+    request: PermissionRequest
+  ): void {
     if (this.permissionCache.size >= this.config.cacheMaxSize) {
       // Remove oldest entries
       const entries = Array.from(this.permissionCache.entries());
-      entries.sort((a, b) => a[1].createdAt.getTime() - b[1].createdAt.getTime());
-      const toRemove = entries.slice(0, Math.floor(this.config.cacheMaxSize * 0.1));
+      entries.sort(
+        (a, b) => a[1].createdAt.getTime() - b[1].createdAt.getTime()
+      );
+      const toRemove = entries.slice(
+        0,
+        Math.floor(this.config.cacheMaxSize * 0.1)
+      );
       for (const [k] of toRemove) {
         this.permissionCache.delete(k);
       }
@@ -836,7 +918,7 @@ export class PermissionManager extends BaseSubsystem {
       createdAt: new Date(),
       expiresAt: new Date(Date.now() + this.config.cacheTTL),
       hitCount: 0,
-      metadata: request.context.metadata
+      metadata: request.context.metadata,
     };
 
     this.permissionCache.set(key, cacheEntry);
@@ -856,10 +938,16 @@ export class PermissionManager extends BaseSubsystem {
         }
         minuteTracker.count++;
       } else {
-        this.rateLimitTracking.set(minuteKey, { count: 1, resetTime: now + 60000 });
+        this.rateLimitTracking.set(minuteKey, {
+          count: 1,
+          resetTime: now + 60000,
+        });
       }
     } else {
-      this.rateLimitTracking.set(minuteKey, { count: 1, resetTime: now + 60000 });
+      this.rateLimitTracking.set(minuteKey, {
+        count: 1,
+        resetTime: now + 60000,
+      });
     }
 
     // Check hour limit
@@ -871,10 +959,16 @@ export class PermissionManager extends BaseSubsystem {
         }
         hourTracker.count++;
       } else {
-        this.rateLimitTracking.set(hourKey, { count: 1, resetTime: now + 3600000 });
+        this.rateLimitTracking.set(hourKey, {
+          count: 1,
+          resetTime: now + 3600000,
+        });
       }
     } else {
-      this.rateLimitTracking.set(hourKey, { count: 1, resetTime: now + 3600000 });
+      this.rateLimitTracking.set(hourKey, {
+        count: 1,
+        resetTime: now + 3600000,
+      });
     }
 
     return true;
@@ -890,7 +984,7 @@ export class PermissionManager extends BaseSubsystem {
 
   private updateStats(result: PermissionResult): void {
     this.stats.totalChecks++;
-    
+
     if (result.granted) {
       this.stats.grantedCount++;
     } else {
@@ -903,24 +997,32 @@ export class PermissionManager extends BaseSubsystem {
 
     // Update average check duration
     if (result.auditInfo) {
-      const totalTime = this.stats.averageCheckDuration * (this.stats.totalChecks - 1) + result.auditInfo.duration;
+      const totalTime =
+        this.stats.averageCheckDuration * (this.stats.totalChecks - 1) +
+        result.auditInfo.duration;
       this.stats.averageCheckDuration = totalTime / this.stats.totalChecks;
     }
   }
 
   private clearCacheForPermission(permissionId: string): void {
-    const keysToRemove = Array.from(this.permissionCache.keys()).filter(key => key.includes(permissionId));
+    const keysToRemove = Array.from(this.permissionCache.keys()).filter(key =>
+      key.includes(permissionId)
+    );
     keysToRemove.forEach(key => this.permissionCache.delete(key));
   }
 
   private clearCacheForRole(roleId: string): void {
     // Clear cache for users with this role
-    const usersWithRole = Array.from(this.users.values()).filter(user => user.roles.includes(roleId));
+    const usersWithRole = Array.from(this.users.values()).filter(user =>
+      user.roles.includes(roleId)
+    );
     usersWithRole.forEach(user => this.clearCacheForUser(user.id));
   }
 
   private clearCacheForUser(userId: string): void {
-    const keysToRemove = Array.from(this.permissionCache.keys()).filter(key => key.startsWith(userId));
+    const keysToRemove = Array.from(this.permissionCache.keys()).filter(key =>
+      key.startsWith(userId)
+    );
     keysToRemove.forEach(key => this.permissionCache.delete(key));
   }
 
@@ -937,8 +1039,8 @@ export class PermissionManager extends BaseSubsystem {
       topUsers: [],
       timeRange: {
         start: new Date(),
-        end: new Date()
-      }
+        end: new Date(),
+      },
     };
   }
 
@@ -947,13 +1049,13 @@ export class PermissionManager extends BaseSubsystem {
     setInterval(() => {
       const now = new Date();
       const keysToRemove: string[] = [];
-      
+
       for (const [key, entry] of this.permissionCache.entries()) {
         if (entry.expiresAt <= now) {
           keysToRemove.push(key);
         }
       }
-      
+
       keysToRemove.forEach(key => this.permissionCache.delete(key));
     }, 300000);
 
@@ -961,13 +1063,13 @@ export class PermissionManager extends BaseSubsystem {
     setInterval(() => {
       const now = Date.now();
       const keysToRemove: string[] = [];
-      
+
       for (const [key, tracker] of this.rateLimitTracking.entries()) {
         if (tracker.resetTime <= now) {
           keysToRemove.push(key);
         }
       }
-      
+
       keysToRemove.forEach(key => this.rateLimitTracking.delete(key));
     }, 3600000);
   }
@@ -976,11 +1078,17 @@ export class PermissionManager extends BaseSubsystem {
   async assignRole(userId: string, roleId: string): Promise<void> {
     const user = this.users.get(userId);
     if (!user) {
-      throw new PermissionError(`User ${userId} does not exist`, 'USER_NOT_FOUND');
+      throw new PermissionError(
+        `User ${userId} does not exist`,
+        'USER_NOT_FOUND'
+      );
     }
 
     if (!this.roles.has(roleId)) {
-      throw new PermissionError(`Role ${roleId} does not exist`, 'ROLE_NOT_FOUND');
+      throw new PermissionError(
+        `Role ${roleId} does not exist`,
+        'ROLE_NOT_FOUND'
+      );
     }
 
     if (!user.roles.includes(roleId)) {
@@ -989,11 +1097,12 @@ export class PermissionManager extends BaseSubsystem {
       this.clearCacheForUser(userId);
 
       const kenny = getKennyIntegration();
-      await kenny.getMessageBus().publishSubsystem(
-        'role.assigned',
-        this.metadata.id,
-        { userId, roleId }
-      );
+      await kenny
+        .getMessageBus()
+        .publishSubsystem('role.assigned', this.metadata.id, {
+          userId,
+          roleId,
+        });
 
       this.emit('role.assigned', { userId, roleId });
     }
@@ -1007,6 +1116,8 @@ export class PermissionManager extends BaseSubsystem {
 /**
  * Factory function to create a permission manager
  */
-export function createPermissionManager(config?: PermissionManagerConfig): PermissionManager {
+export function createPermissionManager(
+  config?: PermissionManagerConfig
+): PermissionManager {
   return new PermissionManager(config);
 }

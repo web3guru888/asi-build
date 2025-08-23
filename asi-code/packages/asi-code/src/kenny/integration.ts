@@ -1,14 +1,22 @@
 /**
  * Kenny Integration Pattern - Core Integration
- * 
+ *
  * Provides the main KennyIntegration singleton class, subsystem registry,
  * and lifecycle management for the entire Kenny integration system.
  */
 
 import { EventEmitter } from 'eventemitter3';
-import { getMessageBus, type MessageBus, type KennyEvent } from './message-bus.js';
-import { getStateManager, type StateManager } from './state-manager.js';
-import { BaseSubsystem, type SubsystemMetadata, type HealthCheckResult } from './base-subsystem.js';
+import {
+  type KennyEvent,
+  type MessageBus,
+  getMessageBus,
+} from './message-bus.js';
+import { type StateManager, getStateManager } from './state-manager.js';
+import {
+  BaseSubsystem,
+  type HealthCheckResult,
+  type SubsystemMetadata,
+} from './base-subsystem.js';
 
 // Integration configuration
 export interface KennyIntegrationConfig {
@@ -55,11 +63,14 @@ export interface SystemHealth {
  */
 export class KennyIntegration extends EventEmitter {
   private static instance: KennyIntegration | null = null;
-  
+
   private readonly messageBus: MessageBus;
   private readonly stateManager: StateManager;
-  private readonly subsystemRegistry = new Map<string, SubsystemRegistryEntry>();
-  
+  private readonly subsystemRegistry = new Map<
+    string,
+    SubsystemRegistryEntry
+  >();
+
   private config: KennyIntegrationConfig = {};
   private initialized = false;
   private startTime: Date | null = null;
@@ -69,7 +80,7 @@ export class KennyIntegration extends EventEmitter {
     super();
     this.messageBus = getMessageBus();
     this.stateManager = getStateManager();
-    
+
     // Setup internal event handlers
     this.setupInternalHandlers();
   }
@@ -111,7 +122,7 @@ export class KennyIntegration extends EventEmitter {
         logging: { level: 'info', enabled: true },
         persistence: { enabled: false },
         health: { checkInterval: 30000, enabled: true },
-        ...config
+        ...config,
       };
 
       // Initialize state manager
@@ -123,21 +134,23 @@ export class KennyIntegration extends EventEmitter {
             version: this.config.version,
             environment: this.config.environment,
             startTime: new Date().toISOString(),
-            status: 'initializing'
+            status: 'initializing',
           },
-          subsystems: {}
+          subsystems: {},
         },
-        persistence: this.config.persistence?.enabled ? {
-          storage: this.config.persistence.storage,
-          key: this.config.persistence.key || 'kenny-integration-state'
-        } : undefined
+        persistence: this.config.persistence?.enabled
+          ? {
+              storage: this.config.persistence.storage,
+              key: this.config.persistence.key || 'kenny-integration-state',
+            }
+          : undefined,
       });
 
       // Publish system startup event
       await this.messageBus.publishSystem('system.startup', {
         systemId: this.config.systemId,
         version: this.config.version,
-        environment: this.config.environment
+        environment: this.config.environment,
       });
 
       // Start health monitoring if enabled
@@ -150,19 +163,23 @@ export class KennyIntegration extends EventEmitter {
 
       // Update system state
       await this.stateManager.set('system.status', 'ready');
-      await this.stateManager.set('system.startTime', this.startTime.toISOString());
+      await this.stateManager.set(
+        'system.startTime',
+        this.startTime.toISOString()
+      );
 
       this.emit('initialized', { config: this.config });
 
       // Log initialization
       if (this.config.logging?.enabled) {
-        console.log(`[Kenny Integration] System initialized: ${this.config.systemName} v${this.config.version}`);
+        console.log(
+          `[Kenny Integration] System initialized: ${this.config.systemName} v${this.config.version}`
+        );
       }
-
     } catch (error) {
       await this.messageBus.publishSystem('system.error', {
         error: error instanceof Error ? error.message : String(error),
-        phase: 'initialization'
+        phase: 'initialization',
       });
       throw error;
     }
@@ -173,11 +190,13 @@ export class KennyIntegration extends EventEmitter {
    */
   async registerSubsystem(subsystem: BaseSubsystem): Promise<void> {
     if (!this.initialized) {
-      throw new Error('Kenny Integration must be initialized before registering subsystems');
+      throw new Error(
+        'Kenny Integration must be initialized before registering subsystems'
+      );
     }
 
     const subsystemId = subsystem.metadata.id;
-    
+
     if (this.subsystemRegistry.has(subsystemId)) {
       throw new Error(`Subsystem ${subsystemId} is already registered`);
     }
@@ -188,7 +207,7 @@ export class KennyIntegration extends EventEmitter {
         instance: subsystem,
         metadata: subsystem.metadata,
         registeredAt: new Date(),
-        status: subsystem.status
+        status: subsystem.status,
       };
 
       this.subsystemRegistry.set(subsystemId, entry);
@@ -197,19 +216,15 @@ export class KennyIntegration extends EventEmitter {
       await this.stateManager.set(`subsystems.${subsystemId}`, {
         ...subsystem.metadata,
         status: subsystem.status,
-        registeredAt: entry.registeredAt.toISOString()
+        registeredAt: entry.registeredAt.toISOString(),
       });
 
       // Publish registration event
-      await this.messageBus.publishSubsystem(
-        'subsystem.register',
-        'system',
-        {
-          subsystemId,
-          subsystemName: subsystem.metadata.name,
-          version: subsystem.metadata.version
-        }
-      );
+      await this.messageBus.publishSubsystem('subsystem.register', 'system', {
+        subsystemId,
+        subsystemName: subsystem.metadata.name,
+        version: subsystem.metadata.version,
+      });
 
       // Setup subsystem event forwarding
       this.setupSubsystemEventForwarding(subsystem);
@@ -217,14 +232,15 @@ export class KennyIntegration extends EventEmitter {
       this.emit('subsystem.registered', { subsystem: subsystem.metadata });
 
       if (this.config.logging?.enabled) {
-        console.log(`[Kenny Integration] Registered subsystem: ${subsystem.metadata.name} v${subsystem.metadata.version}`);
+        console.log(
+          `[Kenny Integration] Registered subsystem: ${subsystem.metadata.name} v${subsystem.metadata.version}`
+        );
       }
-
     } catch (error) {
       await this.messageBus.publishSystem('system.error', {
         error: error instanceof Error ? error.message : String(error),
         phase: 'subsystem.registration',
-        subsystemId
+        subsystemId,
       });
       throw error;
     }
@@ -241,7 +257,10 @@ export class KennyIntegration extends EventEmitter {
 
     try {
       // Stop the subsystem if it's running
-      if (entry.instance.status !== 'stopped' && entry.instance.status !== 'uninitialized') {
+      if (
+        entry.instance.status !== 'stopped' &&
+        entry.instance.status !== 'uninitialized'
+      ) {
         await entry.instance.shutdown();
       }
 
@@ -252,27 +271,24 @@ export class KennyIntegration extends EventEmitter {
       await this.stateManager.delete(`subsystems.${subsystemId}`);
 
       // Publish unregistration event
-      await this.messageBus.publishSubsystem(
-        'subsystem.unregister',
-        'system',
-        {
-          subsystemId,
-          subsystemName: entry.metadata.name,
-          version: entry.metadata.version
-        }
-      );
+      await this.messageBus.publishSubsystem('subsystem.unregister', 'system', {
+        subsystemId,
+        subsystemName: entry.metadata.name,
+        version: entry.metadata.version,
+      });
 
       this.emit('subsystem.unregistered', { subsystem: entry.metadata });
 
       if (this.config.logging?.enabled) {
-        console.log(`[Kenny Integration] Unregistered subsystem: ${entry.metadata.name}`);
+        console.log(
+          `[Kenny Integration] Unregistered subsystem: ${entry.metadata.name}`
+        );
       }
-
     } catch (error) {
       await this.messageBus.publishSystem('system.error', {
         error: error instanceof Error ? error.message : String(error),
         phase: 'subsystem.unregistration',
-        subsystemId
+        subsystemId,
       });
       throw error;
     }
@@ -281,7 +297,9 @@ export class KennyIntegration extends EventEmitter {
   /**
    * Get a registered subsystem
    */
-  getSubsystem<T extends BaseSubsystem = BaseSubsystem>(subsystemId: string): T | null {
+  getSubsystem<T extends BaseSubsystem = BaseSubsystem>(
+    subsystemId: string
+  ): T | null {
     const entry = this.subsystemRegistry.get(subsystemId);
     return entry ? (entry.instance as T) : null;
   }
@@ -298,17 +316,23 @@ export class KennyIntegration extends EventEmitter {
    */
   async initializeSubsystems(config: Record<string, any> = {}): Promise<void> {
     const subsystems = Array.from(this.subsystemRegistry.values());
-    
+
     for (const entry of subsystems) {
       if (entry.instance.status === 'uninitialized') {
         try {
           const subsystemConfig = config[entry.metadata.id] || {};
           await entry.instance.initialize(subsystemConfig);
           entry.status = entry.instance.status;
-          
-          await this.stateManager.set(`subsystems.${entry.metadata.id}.status`, entry.status);
+
+          await this.stateManager.set(
+            `subsystems.${entry.metadata.id}.status`,
+            entry.status
+          );
         } catch (error) {
-          console.error(`Failed to initialize subsystem ${entry.metadata.id}:`, error);
+          console.error(
+            `Failed to initialize subsystem ${entry.metadata.id}:`,
+            error
+          );
         }
       }
     }
@@ -319,16 +343,22 @@ export class KennyIntegration extends EventEmitter {
    */
   async startSubsystems(): Promise<void> {
     const subsystems = Array.from(this.subsystemRegistry.values());
-    
+
     for (const entry of subsystems) {
       if (entry.instance.status === 'ready') {
         try {
           await entry.instance.start();
           entry.status = entry.instance.status;
-          
-          await this.stateManager.set(`subsystems.${entry.metadata.id}.status`, entry.status);
+
+          await this.stateManager.set(
+            `subsystems.${entry.metadata.id}.status`,
+            entry.status
+          );
         } catch (error) {
-          console.error(`Failed to start subsystem ${entry.metadata.id}:`, error);
+          console.error(
+            `Failed to start subsystem ${entry.metadata.id}:`,
+            error
+          );
         }
       }
     }
@@ -339,18 +369,27 @@ export class KennyIntegration extends EventEmitter {
    */
   async stopSubsystems(): Promise<void> {
     const subsystems = Array.from(this.subsystemRegistry.values());
-    
+
     // Stop in reverse order
     for (let i = subsystems.length - 1; i >= 0; i--) {
       const entry = subsystems[i];
-      if (entry.instance.status === 'running' || entry.instance.status === 'paused') {
+      if (
+        entry.instance.status === 'running' ||
+        entry.instance.status === 'paused'
+      ) {
         try {
           await entry.instance.stop();
           entry.status = entry.instance.status;
-          
-          await this.stateManager.set(`subsystems.${entry.metadata.id}.status`, entry.status);
+
+          await this.stateManager.set(
+            `subsystems.${entry.metadata.id}.status`,
+            entry.status
+          );
         } catch (error) {
-          console.error(`Failed to stop subsystem ${entry.metadata.id}:`, error);
+          console.error(
+            `Failed to stop subsystem ${entry.metadata.id}:`,
+            error
+          );
         }
       }
     }
@@ -374,16 +413,19 @@ export class KennyIntegration extends EventEmitter {
         // Update overall status
         if (health.status === 'unhealthy') {
           overallStatus = 'unhealthy';
-        } else if (health.status === 'degraded' && overallStatus !== 'unhealthy') {
+        } else if (
+          health.status === 'degraded' &&
+          overallStatus !== 'unhealthy'
+        ) {
           overallStatus = 'degraded';
         }
       } catch (error) {
         const unhealthyResult: HealthCheckResult = {
           status: 'unhealthy',
           message: `Health check failed: ${error instanceof Error ? error.message : String(error)}`,
-          timestamp: new Date()
+          timestamp: new Date(),
         };
-        
+
         subsystemHealth[id] = unhealthyResult;
         entry.health = unhealthyResult;
         entry.lastHealthCheck = new Date();
@@ -400,8 +442,8 @@ export class KennyIntegration extends EventEmitter {
         systemId: this.config.systemId,
         version: this.config.version,
         environment: this.config.environment,
-        subsystemCount: this.subsystemRegistry.size
-      }
+        subsystemCount: this.subsystemRegistry.size,
+      },
     };
 
     // Update state
@@ -481,7 +523,6 @@ export class KennyIntegration extends EventEmitter {
       if (this.config.logging?.enabled) {
         console.log('[Kenny Integration] System shutdown complete');
       }
-
     } catch (error) {
       console.error('[Kenny Integration] Error during shutdown:', error);
       throw error;
@@ -493,13 +534,16 @@ export class KennyIntegration extends EventEmitter {
    */
   private setupInternalHandlers(): void {
     // Handle subsystem events
-    this.messageBus.subscribeToType('subsystem.ready', async (event) => {
+    this.messageBus.subscribeToType('subsystem.ready', async event => {
       const subsystemId = event.data?.subsystemId;
       if (subsystemId) {
         const entry = this.subsystemRegistry.get(subsystemId);
         if (entry) {
           entry.status = 'ready';
-          await this.stateManager.set(`subsystems.${subsystemId}.status`, 'ready');
+          await this.stateManager.set(
+            `subsystems.${subsystemId}.status`,
+            'ready'
+          );
         }
       }
     });
@@ -515,18 +559,21 @@ export class KennyIntegration extends EventEmitter {
    */
   private setupSubsystemEventForwarding(subsystem: BaseSubsystem): void {
     const events = ['started', 'stopped', 'paused', 'resumed', 'error'];
-    
+
     events.forEach(eventName => {
-      subsystem.on(eventName, async (data) => {
+      subsystem.on(eventName, async data => {
         const entry = this.subsystemRegistry.get(subsystem.metadata.id);
         if (entry) {
           entry.status = subsystem.status;
-          await this.stateManager.set(`subsystems.${subsystem.metadata.id}.status`, subsystem.status);
+          await this.stateManager.set(
+            `subsystems.${subsystem.metadata.id}.status`,
+            subsystem.status
+          );
         }
-        
+
         this.emit(`subsystem.${eventName}`, {
           subsystem: subsystem.metadata,
-          data
+          data,
         });
       });
     });
@@ -541,7 +588,7 @@ export class KennyIntegration extends EventEmitter {
     }
 
     const interval = this.config.health?.checkInterval || 30000;
-    
+
     this.healthCheckTimer = setInterval(async () => {
       try {
         await this.performHealthCheck();

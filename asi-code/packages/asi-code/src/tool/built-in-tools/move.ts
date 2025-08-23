@@ -1,14 +1,28 @@
 /**
  * Move Tool - Safe file and directory moving/renaming operations
- * 
+ *
  * Provides secure file and directory moving with conflict resolution,
  * backup options, and atomic operations.
  */
 
-import { rename, copyFile, mkdir, unlink, rmdir, stat, access, readdir } from 'fs/promises';
+import {
+  access,
+  copyFile,
+  mkdir,
+  readdir,
+  rename,
+  rmdir,
+  stat,
+  unlink,
+} from 'fs/promises';
 import { constants } from 'fs';
-import { resolve, normalize, dirname, basename, join, extname } from 'path';
-import { BaseTool, ToolDefinition, ToolExecutionContext, ToolResult } from '../base-tool.js';
+import { basename, dirname, extname, join, normalize, resolve } from 'path';
+import {
+  BaseTool,
+  ToolDefinition,
+  ToolExecutionContext,
+  ToolResult,
+} from '../base-tool.js';
 
 export interface MoveOptions {
   overwrite?: boolean;
@@ -34,7 +48,8 @@ export class MoveTool extends BaseTool {
   constructor() {
     const definition: ToolDefinition = {
       name: 'move',
-      description: 'Move or rename files and directories with conflict resolution and backup options',
+      description:
+        'Move or rename files and directories with conflict resolution and backup options',
       parameters: [
         {
           name: 'source',
@@ -44,10 +59,11 @@ export class MoveTool extends BaseTool {
           validation: {
             custom: (value: string) => {
               if (!value.trim()) return 'Source path cannot be empty';
-              if (value.length > 500) return 'Source path too long (max 500 characters)';
+              if (value.length > 500)
+                return 'Source path too long (max 500 characters)';
               return true;
-            }
-          }
+            },
+          },
         },
         {
           name: 'destination',
@@ -57,41 +73,43 @@ export class MoveTool extends BaseTool {
           validation: {
             custom: (value: string) => {
               if (!value.trim()) return 'Destination path cannot be empty';
-              if (value.length > 500) return 'Destination path too long (max 500 characters)';
+              if (value.length > 500)
+                return 'Destination path too long (max 500 characters)';
               return true;
-            }
-          }
+            },
+          },
         },
         {
           name: 'overwrite',
           type: 'boolean',
           description: 'Overwrite destination if it exists',
-          default: false
+          default: false,
         },
         {
           name: 'createBackup',
           type: 'boolean',
           description: 'Create backup of destination if it exists',
-          default: true
+          default: true,
         },
         {
           name: 'atomic',
           type: 'boolean',
-          description: 'Use atomic operations (copy then delete for cross-device moves)',
-          default: true
+          description:
+            'Use atomic operations (copy then delete for cross-device moves)',
+          default: true,
         },
         {
           name: 'createDirs',
           type: 'boolean',
           description: 'Create destination directories if they do not exist',
-          default: false
+          default: false,
         },
         {
           name: 'dryRun',
           type: 'boolean',
           description: 'Preview the move operation without executing it',
-          default: false
-        }
+          default: false,
+        },
       ],
       category: 'file',
       version: '1.0.0',
@@ -104,8 +122,8 @@ export class MoveTool extends BaseTool {
           description: 'Rename a file',
           parameters: {
             source: './old-name.txt',
-            destination: './new-name.txt'
-          }
+            destination: './new-name.txt',
+          },
         },
         {
           description: 'Move directory with backup',
@@ -113,16 +131,16 @@ export class MoveTool extends BaseTool {
             source: './temp-folder',
             destination: './archive/temp-folder',
             createDirs: true,
-            createBackup: true
-          }
-        }
-      ]
+            createBackup: true,
+          },
+        },
+      ],
     };
 
     super(definition);
 
     this.maxFileSize = 100 * 1024 * 1024; // 100MB
-    
+
     // Critical system paths that should not be moved
     this.blockedPaths = new Set([
       '/',
@@ -135,11 +153,14 @@ export class MoveTool extends BaseTool {
       '/proc',
       '/dev',
       '/boot',
-      '/root'
+      '/root',
     ]);
   }
 
-  async execute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<ToolResult> {
+  async execute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<ToolResult> {
     const {
       source: sourceInput,
       destination: destinationInput,
@@ -147,25 +168,35 @@ export class MoveTool extends BaseTool {
       createBackup = true,
       atomic = true,
       createDirs = false,
-      dryRun = false
+      dryRun = false,
     } = parameters;
 
     const startTime = Date.now();
 
     try {
       // Normalize paths
-      const sourcePath = this.normalizePath(sourceInput, context.workingDirectory);
-      const destinationPath = this.normalizePath(destinationInput, context.workingDirectory);
-      
+      const sourcePath = this.normalizePath(
+        sourceInput,
+        context.workingDirectory
+      );
+      const destinationPath = this.normalizePath(
+        destinationInput,
+        context.workingDirectory
+      );
+
       // Security and safety checks
-      const safetyCheck = await this.performSafetyCheck(sourcePath, destinationPath, context);
+      const safetyCheck = await this.performSafetyCheck(
+        sourcePath,
+        destinationPath,
+        context
+      );
       if (!safetyCheck.safe) {
         return {
           success: false,
           error: `Move denied: ${safetyCheck.reason}`,
           performance: {
-            executionTime: Date.now() - startTime
-          }
+            executionTime: Date.now() - startTime,
+          },
         };
       }
 
@@ -180,15 +211,19 @@ export class MoveTool extends BaseTool {
             success: false,
             error: 'Source path does not exist',
             performance: {
-              executionTime: Date.now() - startTime
-            }
+              executionTime: Date.now() - startTime,
+            },
           };
         }
         throw error;
       }
 
       // Analyze the move operation
-      const analysis = await this.analyzeMoveOperation(sourcePath, destinationPath, sourceStats);
+      const analysis = await this.analyzeMoveOperation(
+        sourcePath,
+        destinationPath,
+        sourceStats
+      );
 
       if (dryRun) {
         return {
@@ -199,11 +234,11 @@ export class MoveTool extends BaseTool {
             dryRun: true,
             analysis,
             wouldOverwrite: analysis.destinationExists,
-            operation: analysis.operationType
+            operation: analysis.operationType,
           },
           performance: {
-            executionTime: Date.now() - startTime
-          }
+            executionTime: Date.now() - startTime,
+          },
         };
       }
 
@@ -217,11 +252,11 @@ export class MoveTool extends BaseTool {
             data: {
               sourcePath,
               destinationPath,
-              destinationExists: true
+              destinationExists: true,
             },
             performance: {
-              executionTime: Date.now() - startTime
-            }
+              executionTime: Date.now() - startTime,
+            },
           };
         }
 
@@ -237,7 +272,12 @@ export class MoveTool extends BaseTool {
       }
 
       // Perform the move operation
-      const moveResult = await this.performMove(sourcePath, destinationPath, sourceStats, { atomic });
+      const moveResult = await this.performMove(
+        sourcePath,
+        destinationPath,
+        sourceStats,
+        { atomic }
+      );
 
       this.emit('executed', {
         source: sourcePath,
@@ -245,7 +285,7 @@ export class MoveTool extends BaseTool {
         operation: moveResult.operation,
         backupCreated: !!backupPath,
         itemsMoved: moveResult.itemsMoved,
-        success: true
+        success: true,
       });
 
       return {
@@ -255,30 +295,34 @@ export class MoveTool extends BaseTool {
           sourcePath,
           destinationPath,
           backupPath,
-          analysis
+          analysis,
         },
         performance: {
           executionTime: Date.now() - startTime,
-          resourcesAccessed: [sourcePath, destinationPath, ...(backupPath ? [backupPath] : [])]
-        }
+          resourcesAccessed: [
+            sourcePath,
+            destinationPath,
+            ...(backupPath ? [backupPath] : []),
+          ],
+        },
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
       this.emit('error', {
         source: sourceInput,
         destination: destinationInput,
         error: errorMessage,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       });
 
       return {
         success: false,
         error: `Move operation failed: ${errorMessage}`,
         performance: {
-          executionTime: Date.now() - startTime
-        }
+          executionTime: Date.now() - startTime,
+        },
       };
     }
   }
@@ -298,10 +342,12 @@ export class MoveTool extends BaseTool {
     // Check for critical system paths
     const normalizedSource = sourcePath.toLowerCase();
     const normalizedDest = destinationPath.toLowerCase();
-    
+
     for (const blockedPath of this.blockedPaths) {
-      if (normalizedSource.startsWith(blockedPath.toLowerCase()) || 
-          normalizedDest.startsWith(blockedPath.toLowerCase())) {
+      if (
+        normalizedSource.startsWith(blockedPath.toLowerCase()) ||
+        normalizedDest.startsWith(blockedPath.toLowerCase())
+      ) {
         return { safe: false, reason: 'Cannot move system critical paths' };
       }
     }
@@ -324,11 +370,18 @@ export class MoveTool extends BaseTool {
     // Check if paths are within allowed directories
     if (context.metadata?.allowedDirectories) {
       const allowedDirs = context.metadata.allowedDirectories as string[];
-      const sourceAllowed = allowedDirs.some(dir => sourcePath.startsWith(resolve(dir)));
-      const destAllowed = allowedDirs.some(dir => destinationPath.startsWith(resolve(dir)));
-      
+      const sourceAllowed = allowedDirs.some(dir =>
+        sourcePath.startsWith(resolve(dir))
+      );
+      const destAllowed = allowedDirs.some(dir =>
+        destinationPath.startsWith(resolve(dir))
+      );
+
       if (!sourceAllowed || !destAllowed) {
-        return { safe: false, reason: 'Source or destination is outside allowed directories' };
+        return {
+          safe: false,
+          reason: 'Source or destination is outside allowed directories',
+        };
       }
     }
 
@@ -356,10 +409,10 @@ export class MoveTool extends BaseTool {
     const sourceDir = dirname(sourcePath);
     const destDir = dirname(destinationPath);
     const operationType = sourceDir === destDir ? 'rename' : 'move';
-    
+
     let destinationExists = false;
     let destinationStats;
-    
+
     try {
       destinationStats = await stat(destinationPath);
       destinationExists = true;
@@ -372,7 +425,7 @@ export class MoveTool extends BaseTool {
 
     // Simple device check (might not be perfect across all platforms)
     const sameDevice = sourceDir.split('/')[1] === destDir.split('/')[1];
-    
+
     let estimatedSize = sourceStats.size || 0;
     let itemCount = 1;
 
@@ -389,23 +442,25 @@ export class MoveTool extends BaseTool {
       sameDevice,
       isDirectory: sourceStats.isDirectory(),
       estimatedSize,
-      itemCount
+      itemCount,
     };
   }
 
-  private async analyzeDirectory(dirPath: string): Promise<{ totalSize: number; itemCount: number }> {
+  private async analyzeDirectory(
+    dirPath: string
+  ): Promise<{ totalSize: number; itemCount: number }> {
     let totalSize = 0;
     let itemCount = 0;
 
     try {
       const items = await readdir(dirPath);
-      
+
       for (const item of items) {
         const itemPath = join(dirPath, item);
         try {
           const itemStats = await stat(itemPath);
           itemCount++;
-          
+
           if (itemStats.isFile()) {
             totalSize += itemStats.size;
           } else if (itemStats.isDirectory()) {
@@ -436,7 +491,7 @@ export class MoveTool extends BaseTool {
 
     try {
       const destStats = await stat(destinationPath);
-      
+
       if (destStats.isFile()) {
         await copyFile(destinationPath, backupPath);
       } else if (destStats.isDirectory()) {
@@ -444,25 +499,30 @@ export class MoveTool extends BaseTool {
       }
     } catch (error) {
       // If backup fails, we'll continue without it
-      throw new Error(`Failed to create backup: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to create backup: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
 
     return backupPath;
   }
 
-  private async backupDirectory(sourcePath: string, backupPath: string): Promise<void> {
+  private async backupDirectory(
+    sourcePath: string,
+    backupPath: string
+  ): Promise<void> {
     await mkdir(backupPath, { recursive: true });
-    
+
     try {
       const items = await readdir(sourcePath);
-      
+
       for (const item of items) {
         const sourceItemPath = join(sourcePath, item);
         const backupItemPath = join(backupPath, item);
-        
+
         try {
           const itemStats = await stat(sourceItemPath);
-          
+
           if (itemStats.isFile()) {
             await copyFile(sourceItemPath, backupItemPath);
           } else if (itemStats.isDirectory()) {
@@ -489,7 +549,7 @@ export class MoveTool extends BaseTool {
     try {
       // Try atomic rename first (works if on same device)
       await rename(sourcePath, destinationPath);
-      
+
       if (sourceStats.isDirectory()) {
         const analysis = await this.analyzeDirectory(destinationPath);
         itemsMoved = analysis.itemCount;
@@ -498,7 +558,7 @@ export class MoveTool extends BaseTool {
       }
     } catch (error: unknown) {
       const err = error as any;
-      
+
       // If rename fails (e.g., cross-device), use copy + delete
       if (err.code === 'EXDEV' || !options.atomic) {
         if (sourceStats.isFile()) {
@@ -516,31 +576,37 @@ export class MoveTool extends BaseTool {
 
     return {
       operation: 'move',
-      itemsMoved
+      itemsMoved,
     };
   }
 
-  private async copyDirectory(sourcePath: string, destinationPath: string): Promise<number> {
+  private async copyDirectory(
+    sourcePath: string,
+    destinationPath: string
+  ): Promise<number> {
     let itemsCopied = 0;
-    
+
     await mkdir(destinationPath, { recursive: true });
     itemsCopied++;
 
     try {
       const items = await readdir(sourcePath);
-      
+
       for (const item of items) {
         const sourceItemPath = join(sourcePath, item);
         const destItemPath = join(destinationPath, item);
-        
+
         try {
           const itemStats = await stat(sourceItemPath);
-          
+
           if (itemStats.isFile()) {
             await copyFile(sourceItemPath, destItemPath);
             itemsCopied++;
           } else if (itemStats.isDirectory()) {
-            const subItemsCopied = await this.copyDirectory(sourceItemPath, destItemPath);
+            const subItemsCopied = await this.copyDirectory(
+              sourceItemPath,
+              destItemPath
+            );
             itemsCopied += subItemsCopied;
           }
         } catch (error) {
@@ -558,13 +624,13 @@ export class MoveTool extends BaseTool {
   private async removeDirectory(dirPath: string): Promise<void> {
     try {
       const items = await readdir(dirPath);
-      
+
       // Remove all contents first
       for (const item of items) {
         const itemPath = join(dirPath, item);
         try {
           const itemStats = await stat(itemPath);
-          
+
           if (itemStats.isFile()) {
             await unlink(itemPath);
           } else if (itemStats.isDirectory()) {
@@ -575,7 +641,7 @@ export class MoveTool extends BaseTool {
           continue;
         }
       }
-      
+
       // Remove the directory itself
       await rmdir(dirPath);
     } catch (error) {
@@ -583,14 +649,24 @@ export class MoveTool extends BaseTool {
     }
   }
 
-  async beforeExecute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<void> {
+  async beforeExecute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<void> {
     await super.beforeExecute(parameters, context);
-    
-    if (!context.permissions.includes('write_files') || !context.permissions.includes('read_files')) {
-      throw new Error('Move tool requires both read_files and write_files permissions');
+
+    if (
+      !context.permissions.includes('write_files') ||
+      !context.permissions.includes('read_files')
+    ) {
+      throw new Error(
+        'Move tool requires both read_files and write_files permissions'
+      );
     }
 
-    console.log(`[MoveTool] Moving ${parameters.source} to ${parameters.destination} for user ${context.userId} (dryRun: ${parameters.dryRun || false})`);
+    console.log(
+      `[MoveTool] Moving ${parameters.source} to ${parameters.destination} for user ${context.userId} (dryRun: ${parameters.dryRun || false})`
+    );
   }
 }
 

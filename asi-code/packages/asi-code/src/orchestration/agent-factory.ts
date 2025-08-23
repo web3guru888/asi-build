@@ -1,18 +1,18 @@
 /**
  * Agent Factory Implementation
- * 
+ *
  * Factory pattern for creating different agent types with support for templates,
  * dependency injection, agent pooling, and recycling capabilities.
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { 
-  Agent, 
-  AgentConfig, 
-  AgentType, 
-  SupervisorAgent,
+import {
+  Agent,
+  AgentConfig,
+  AgentType,
   ResourceRequirements,
-  RetryPolicy 
+  RetryPolicy,
+  SupervisorAgent,
 } from './types.js';
 import { BaseAgent } from './base-agent.js';
 import { WorkerAgent } from './worker-agent.js';
@@ -74,19 +74,21 @@ interface PooledAgent {
  * Agent Factory Implementation
  */
 export class AgentFactory {
-  private templates: Map<string, AgentTemplate> = new Map();
-  private pools: Map<AgentType, PooledAgent[]> = new Map();
-  private poolConfigs: Map<AgentType, AgentPoolConfig> = new Map();
+  private readonly templates: Map<string, AgentTemplate> = new Map();
+  private readonly pools: Map<AgentType, PooledAgent[]> = new Map();
+  private readonly poolConfigs: Map<AgentType, AgentPoolConfig> = new Map();
   private dependencies: DependencyContainer = {};
-  private logger: Logger;
+  private readonly logger: Logger;
   private cleanupInterval: NodeJS.Timer | null = null;
 
   constructor(dependencies?: DependencyContainer) {
     this.dependencies = dependencies || {};
-    this.logger = dependencies?.logger || new Logger({
-      level: 'info',
-      context: { component: 'AgentFactory' }
-    });
+    this.logger =
+      dependencies?.logger ||
+      new Logger({
+        level: 'info',
+        context: { component: 'AgentFactory' },
+      });
 
     this.initializeTemplates();
     this.initializePoolConfigs();
@@ -96,8 +98,13 @@ export class AgentFactory {
   /**
    * Create an agent based on configuration and options
    */
-  async createAgent(config: AgentConfig, options: AgentCreationOptions = {}): Promise<Agent> {
-    this.logger.info(`Creating agent of type ${config.type} with name ${config.name}`);
+  async createAgent(
+    config: AgentConfig,
+    options: AgentCreationOptions = {}
+  ): Promise<Agent> {
+    this.logger.info(
+      `Creating agent of type ${config.type} with name ${config.name}`
+    );
 
     try {
       // Apply template if specified
@@ -115,9 +122,9 @@ export class AgentFactory {
       }
 
       if (options.tags) {
-        finalConfig.metadata = { 
-          ...finalConfig.metadata, 
-          tags: [...(finalConfig.metadata?.tags || []), ...options.tags]
+        finalConfig.metadata = {
+          ...finalConfig.metadata,
+          tags: [...(finalConfig.metadata?.tags || []), ...options.tags],
         };
       }
 
@@ -125,13 +132,18 @@ export class AgentFactory {
       if (options.pooled && this.isPoolingEnabled(finalConfig.type)) {
         const pooledAgent = await this.getPooledAgent(finalConfig.type);
         if (pooledAgent) {
-          this.logger.info(`Reusing pooled agent ${pooledAgent.id} for type ${finalConfig.type}`);
+          this.logger.info(
+            `Reusing pooled agent ${pooledAgent.id} for type ${finalConfig.type}`
+          );
           return pooledAgent;
         }
       }
 
       // Create new agent instance
-      const agent = await this.instantiateAgent(finalConfig, options.dependencies);
+      const agent = await this.instantiateAgent(
+        finalConfig,
+        options.dependencies
+      );
 
       // Initialize the agent
       await agent.initialize();
@@ -141,11 +153,15 @@ export class AgentFactory {
         this.addToPool(agent);
       }
 
-      this.logger.info(`Successfully created agent ${agent.id} of type ${finalConfig.type}`);
+      this.logger.info(
+        `Successfully created agent ${agent.id} of type ${finalConfig.type}`
+      );
       return agent;
-
     } catch (error) {
-      this.logger.error(`Failed to create agent of type ${config.type}:`, error);
+      this.logger.error(
+        `Failed to create agent of type ${config.type}:`,
+        error
+      );
       throw error;
     }
   }
@@ -153,7 +169,11 @@ export class AgentFactory {
   /**
    * Create agent from template
    */
-  async createFromTemplate(templateName: string, overrides: Partial<AgentConfig> = {}, options: AgentCreationOptions = {}): Promise<Agent> {
+  async createFromTemplate(
+    templateName: string,
+    overrides: Partial<AgentConfig> = {},
+    options: AgentCreationOptions = {}
+  ): Promise<Agent> {
     const template = this.templates.get(templateName);
     if (!template) {
       throw new Error(`Template '${templateName}' not found`);
@@ -163,7 +183,7 @@ export class AgentFactory {
       ...template.baseConfig,
       ...overrides,
       type: template.type,
-      name: overrides.name || `${template.name}-${uuidv4().slice(0, 8)}`
+      name: overrides.name || `${template.name}-${uuidv4().slice(0, 8)}`,
     } as AgentConfig;
 
     return this.createAgent(config, { ...options, template: templateName });
@@ -173,11 +193,13 @@ export class AgentFactory {
    * Create multiple agents with load balancing
    */
   async createAgentCluster(
-    count: number, 
-    config: AgentConfig, 
+    count: number,
+    config: AgentConfig,
     options: AgentCreationOptions = {}
   ): Promise<Agent[]> {
-    this.logger.info(`Creating agent cluster of ${count} agents of type ${config.type}`);
+    this.logger.info(
+      `Creating agent cluster of ${count} agents of type ${config.type}`
+    );
 
     const agents: Agent[] = [];
     const promises: Promise<Agent>[] = [];
@@ -186,7 +208,7 @@ export class AgentFactory {
       const agentConfig: AgentConfig = {
         ...config,
         name: `${config.name}-${i + 1}`,
-        id: `${config.id || 'cluster'}-${i + 1}-${uuidv4().slice(0, 8)}`
+        id: `${config.id || 'cluster'}-${i + 1}-${uuidv4().slice(0, 8)}`,
       };
 
       promises.push(this.createAgent(agentConfig, options));
@@ -196,21 +218,25 @@ export class AgentFactory {
       const createdAgents = await Promise.all(promises);
       agents.push(...createdAgents);
 
-      this.logger.info(`Successfully created agent cluster of ${agents.length} agents`);
+      this.logger.info(
+        `Successfully created agent cluster of ${agents.length} agents`
+      );
       return agents;
-
     } catch (error) {
       this.logger.error(`Failed to create agent cluster:`, error);
-      
+
       // Cleanup any successfully created agents
       for (const agent of agents) {
         try {
           await agent.terminate();
         } catch (cleanupError) {
-          this.logger.warn(`Failed to cleanup agent ${agent.id}:`, cleanupError);
+          this.logger.warn(
+            `Failed to cleanup agent ${agent.id}:`,
+            cleanupError
+          );
         }
       }
-      
+
       throw error;
     }
   }
@@ -251,7 +277,10 @@ export class AgentFactory {
   /**
    * Get pool statistics
    */
-  getPoolStats(): Map<AgentType, { total: number; inUse: number; idle: number }> {
+  getPoolStats(): Map<
+    AgentType,
+    { total: number; inUse: number; idle: number }
+  > {
     const stats = new Map();
 
     for (const [type, pool] of Array.from(this.pools.entries())) {
@@ -299,7 +328,6 @@ export class AgentFactory {
 
       this.logger.debug(`Recycled agent ${agent.id} back to pool`);
       return true;
-
     } catch (error) {
       this.logger.error(`Failed to recycle agent ${agent.id}:`, error);
       await this.retirePooledAgent(pooledAgent);
@@ -369,11 +397,11 @@ export class AgentFactory {
             maxRetries: 2,
             backoffMultiplier: 2,
             initialDelay: 1000,
-            maxDelay: 10000
-          }
+            maxDelay: 10000,
+          },
         },
         description: 'Basic worker agent for general task execution',
-        tags: ['worker', 'basic', 'general']
+        tags: ['worker', 'basic', 'general'],
       },
       {
         name: 'high-performance-worker',
@@ -384,17 +412,17 @@ export class AgentFactory {
           resources: {
             cpu: 2,
             memory: 1024,
-            network: true
+            network: true,
           },
           retryPolicy: {
             maxRetries: 1,
             backoffMultiplier: 1.5,
             initialDelay: 500,
-            maxDelay: 5000
-          }
+            maxDelay: 5000,
+          },
         },
         description: 'High-performance worker for compute-intensive tasks',
-        tags: ['worker', 'high-performance', 'computation']
+        tags: ['worker', 'high-performance', 'computation'],
       },
       {
         name: 'specialist-analyzer',
@@ -405,11 +433,12 @@ export class AgentFactory {
           resources: {
             cpu: 4,
             memory: 2048,
-            network: true
-          }
+            network: true,
+          },
         },
-        description: 'Specialist agent for data analysis and pattern recognition',
-        tags: ['specialist', 'analysis', 'data']
+        description:
+          'Specialist agent for data analysis and pattern recognition',
+        tags: ['specialist', 'analysis', 'data'],
       },
       {
         name: 'coordinator',
@@ -420,11 +449,11 @@ export class AgentFactory {
           resources: {
             cpu: 1,
             memory: 512,
-            network: true
-          }
+            network: true,
+          },
         },
         description: 'Coordinator agent for managing task workflows',
-        tags: ['coordinator', 'management', 'workflow']
+        tags: ['coordinator', 'management', 'workflow'],
       },
       {
         name: 'supervisor',
@@ -435,12 +464,12 @@ export class AgentFactory {
           resources: {
             cpu: 2,
             memory: 1024,
-            network: true
-          }
+            network: true,
+          },
         },
         description: 'Supervisor agent for managing other agents',
-        tags: ['supervisor', 'management', 'orchestration']
-      }
+        tags: ['supervisor', 'management', 'orchestration'],
+      },
     ];
 
     for (const template of defaultTemplates) {
@@ -453,9 +482,18 @@ export class AgentFactory {
    */
   private initializePoolConfigs(): void {
     const defaultPoolConfigs: [AgentType, AgentPoolConfig][] = [
-      ['worker', { minSize: 2, maxSize: 10, idleTimeout: 300000, recycleThreshold: 100 }],
-      ['specialist', { minSize: 1, maxSize: 5, idleTimeout: 600000, recycleThreshold: 50 }],
-      ['coordinator', { minSize: 1, maxSize: 3, idleTimeout: 900000, recycleThreshold: 200 }]
+      [
+        'worker',
+        { minSize: 2, maxSize: 10, idleTimeout: 300000, recycleThreshold: 100 },
+      ],
+      [
+        'specialist',
+        { minSize: 1, maxSize: 5, idleTimeout: 600000, recycleThreshold: 50 },
+      ],
+      [
+        'coordinator',
+        { minSize: 1, maxSize: 3, idleTimeout: 900000, recycleThreshold: 200 },
+      ],
     ];
 
     for (const [type, config] of defaultPoolConfigs) {
@@ -466,7 +504,10 @@ export class AgentFactory {
   /**
    * Apply template to configuration
    */
-  private applyTemplate(config: AgentConfig, templateName: string): AgentConfig {
+  private applyTemplate(
+    config: AgentConfig,
+    templateName: string
+  ): AgentConfig {
     const template = this.templates.get(templateName);
     if (!template) {
       throw new Error(`Template '${templateName}' not found`);
@@ -476,7 +517,10 @@ export class AgentFactory {
       ...template.baseConfig,
       ...config,
       type: template.type,
-      capabilities: [...(template.baseConfig.capabilities || []), ...(config.capabilities || [])]
+      capabilities: [
+        ...(template.baseConfig.capabilities || []),
+        ...(config.capabilities || []),
+      ],
     } as AgentConfig;
   }
 
@@ -489,24 +533,27 @@ export class AgentFactory {
       timeout: config.timeout || 30000,
       ...config,
       capabilities: config.capabilities || [],
-      metadata: config.metadata || {}
+      metadata: config.metadata || {},
     };
   }
 
   /**
    * Instantiate agent based on type
    */
-  private async instantiateAgent(config: AgentConfig, dependencies?: DependencyContainer): Promise<Agent> {
+  private async instantiateAgent(
+    config: AgentConfig,
+    dependencies?: DependencyContainer
+  ): Promise<Agent> {
     const mergedDeps = { ...this.dependencies, ...dependencies };
     const logger = mergedDeps.logger || this.logger;
 
     switch (config.type) {
       case 'worker':
         return new WorkerAgent(config, logger);
-      
+
       case 'supervisor':
         return new SupervisorAgentImpl(config, logger);
-      
+
       case 'specialist':
       case 'coordinator':
       case 'analyzer':
@@ -515,11 +562,14 @@ export class AgentFactory {
       case 'validator':
         // For now, use WorkerAgent as base for specialized types
         // In a full implementation, these would have their own classes
-        return new WorkerAgent({
-          ...config,
-          capabilities: [...config.capabilities, config.type]
-        }, logger);
-      
+        return new WorkerAgent(
+          {
+            ...config,
+            capabilities: [...config.capabilities, config.type],
+          },
+          logger
+        );
+
       default:
         throw new Error(`Unsupported agent type: ${config.type}`);
     }
@@ -548,7 +598,7 @@ export class AgentFactory {
 
     available.inUse = true;
     available.lastUsed = Date.now();
-    
+
     return available.agent;
   }
 
@@ -558,7 +608,7 @@ export class AgentFactory {
   private addToPool(agent: Agent): void {
     const type = agent.config.type;
     const pool = this.pools.get(type);
-    
+
     if (!pool) {
       return;
     }
@@ -573,7 +623,7 @@ export class AgentFactory {
       createdAt: Date.now(),
       lastUsed: Date.now(),
       taskCount: 0,
-      inUse: true
+      inUse: true,
     };
 
     pool.push(pooledAgent);
@@ -586,7 +636,7 @@ export class AgentFactory {
   private async retirePooledAgent(pooledAgent: PooledAgent): Promise<void> {
     const type = pooledAgent.agent.config.type;
     const pool = this.pools.get(type);
-    
+
     if (!pool) {
       return;
     }
@@ -594,12 +644,17 @@ export class AgentFactory {
     const index = pool.indexOf(pooledAgent);
     if (index !== -1) {
       pool.splice(index, 1);
-      
+
       try {
         await pooledAgent.agent.terminate();
-        this.logger.debug(`Retired agent ${pooledAgent.agent.id} from ${type} pool`);
+        this.logger.debug(
+          `Retired agent ${pooledAgent.agent.id} from ${type} pool`
+        );
       } catch (error) {
-        this.logger.error(`Error retiring agent ${pooledAgent.agent.id}:`, error);
+        this.logger.error(
+          `Error retiring agent ${pooledAgent.agent.id}:`,
+          error
+        );
       }
     }
   }
@@ -624,20 +679,24 @@ export class AgentFactory {
       }
 
       const now = Date.now();
-      const idleAgents = pool.filter(p => 
-        !p.inUse && 
-        now - p.lastUsed > config.idleTimeout
+      const idleAgents = pool.filter(
+        p => !p.inUse && now - p.lastUsed > config.idleTimeout
       );
 
       // Keep minimum pool size
-      const toRemove = Math.max(0, idleAgents.length - (config.minSize - (pool.length - idleAgents.length)));
-      
+      const toRemove = Math.max(
+        0,
+        idleAgents.length - (config.minSize - (pool.length - idleAgents.length))
+      );
+
       for (let i = 0; i < toRemove; i++) {
         this.retirePooledAgent(idleAgents[i]);
       }
 
       if (toRemove > 0) {
-        this.logger.debug(`Cleaned up ${toRemove} idle agents from ${type} pool`);
+        this.logger.debug(
+          `Cleaned up ${toRemove} idle agents from ${type} pool`
+        );
       }
     }
   }
@@ -651,13 +710,24 @@ export const defaultAgentFactory = new AgentFactory();
 /**
  * Helper function to create agent
  */
-export async function createAgent(config: AgentConfig, options?: AgentCreationOptions): Promise<Agent> {
+export async function createAgent(
+  config: AgentConfig,
+  options?: AgentCreationOptions
+): Promise<Agent> {
   return defaultAgentFactory.createAgent(config, options);
 }
 
 /**
  * Helper function to create agent from template
  */
-export async function createFromTemplate(templateName: string, overrides?: Partial<AgentConfig>, options?: AgentCreationOptions): Promise<Agent> {
-  return defaultAgentFactory.createFromTemplate(templateName, overrides, options);
+export async function createFromTemplate(
+  templateName: string,
+  overrides?: Partial<AgentConfig>,
+  options?: AgentCreationOptions
+): Promise<Agent> {
+  return defaultAgentFactory.createFromTemplate(
+    templateName,
+    overrides,
+    options
+  );
 }

@@ -57,12 +57,12 @@ export interface BurnRateAlert {
 }
 
 export class SLOTracker extends EventEmitter {
-  private config: MonitoringConfig['slo'];
-  private metrics: PrometheusMetrics;
-  private slos: Map<string, SLOTarget> = new Map();
-  private slis: Map<string, SLI> = new Map();
-  private complianceHistory: Map<string, SLOCompliance[]> = new Map();
-  private burnRateThresholds: Map<string, number[]> = new Map();
+  private readonly config: MonitoringConfig['slo'];
+  private readonly metrics: PrometheusMetrics;
+  private readonly slos: Map<string, SLOTarget> = new Map();
+  private readonly slis: Map<string, SLI> = new Map();
+  private readonly complianceHistory: Map<string, SLOCompliance[]> = new Map();
+  private readonly burnRateThresholds: Map<string, number[]> = new Map();
   
   constructor(config: MonitoringConfig['slo'], metrics: PrometheusMetrics) {
     super();

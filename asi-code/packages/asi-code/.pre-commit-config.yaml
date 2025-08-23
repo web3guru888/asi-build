@@ -1,0 +1,85 @@
+# Pre-commit hooks configuration for ASI-Code documentation validation
+# See https://pre-commit.com for more information
+
+repos:
+  # Built-in hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Markdown linting and formatting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.37.0
+    hooks:
+      - id: markdownlint
+        args: ['--config', '.markdownlint.json', '--fix']
+
+  # Prettier for markdown formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        files: \.(md|yml|yaml|json)$
+        args: ['--write']
+
+  # Custom documentation validation hooks
+  - repo: local
+    hooks:
+      # API Documentation validation
+      - id: validate-api-docs
+        name: 🔗 Validate API Documentation
+        entry: node scripts/validate-api-docs.js
+        language: system
+        files: '^(API\.md|src/server/routes\.ts)$'
+        require_serial: true
+        verbose: true
+
+      # Check for broken internal links
+      - id: check-internal-links
+        name: 🔍 Check Internal Documentation Links
+        entry: scripts/check-doc-links.sh
+        language: system
+        files: '\.md$'
+        require_serial: true
+
+      # Validate code examples (quick check)
+      - id: validate-code-examples-quick
+        name: 🧪 Quick Code Examples Validation
+        entry: scripts/validate-examples-quick.sh
+        language: system
+        files: '\.md$'
+        require_serial: true
+
+      # Check documentation freshness
+      - id: check-doc-freshness
+        name: 📅 Check Documentation Freshness
+        entry: scripts/check-doc-freshness.sh
+        language: system
+        files: '^(src/.*\.ts|API\.md|README\.md)$'
+        require_serial: true
+
+  # Spell checking for documentation
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.6
+    hooks:
+      - id: codespell
+        args:
+          - --ignore-words-list=
+          - --skip="node_modules,*.min.js,*.map,dist,coverage,.git"
+        additional_dependencies:
+          - tomli
+
+# Global configuration
+default_stages: [commit]
+fail_fast: false
+minimum_pre_commit_version: '2.15.0'

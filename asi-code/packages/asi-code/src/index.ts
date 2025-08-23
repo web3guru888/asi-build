@@ -33,7 +33,7 @@ export async function initializeASICode(config?: any) {
     },
     async shutdown() {
       console.log('✅ ASI-Code shutdown complete');
-    }
+    },
   };
 }
 
@@ -44,30 +44,30 @@ export async function createMinimalASICode() {
     components: { kenny: true, asi1: true },
     async shutdown() {
       console.log('✅ Minimal system shutdown');
-    }
+    },
   };
 }
 
 // CLI entry point
 export async function main(args: string[] = process.argv.slice(2)) {
   const command = args[0] || 'help';
-  
+
   switch (command) {
     case 'init':
       console.log('🚀 Initializing ASI-Code project...');
       const system = await initializeASICode();
       console.log(`✅ ASI-Code initialized (${system.version})`);
       break;
-      
+
     case 'start':
       console.log('🚀 Starting ASI-Code server...');
       console.log('✅ Server running on http://localhost:8080');
       break;
-      
+
     case 'version':
       console.log('ASI-Code v1.0.0');
       break;
-      
+
     case 'help':
     default:
       console.log(`
@@ -90,6 +90,10 @@ For more information, visit: https://github.com/asi/asi-code
 }
 
 // Auto-run CLI if this is the main module
-if (import.meta.main) {
-  main().catch(console.error);
+try {
+  if (import.meta?.main) {
+    main().catch(console.error);
+  }
+} catch (error) {
+  // import.meta may not be available in all environments
 }

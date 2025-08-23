@@ -92,8 +92,8 @@ export interface SamplingStatistics {
 }
 
 export class TraceSampler extends EventEmitter {
-  private config: MonitoringConfig['jaeger'];
-  private rules: Map<string, SamplingRule> = new Map();
+  private readonly config: MonitoringConfig['jaeger'];
+  private readonly rules: Map<string, SamplingRule> = new Map();
   private statistics: SamplingStatistics = {
     totalRequests: 0,
     sampledRequests: 0,
@@ -107,7 +107,7 @@ export class TraceSampler extends EventEmitter {
       errorSampleRate: 0,
     },
   };
-  private adaptiveSettings = {
+  private readonly adaptiveSettings = {
     cpuThreshold: 80,
     memoryThreshold: 85,
     errorRateThreshold: 5,

@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-08-22T20:55:35.068Z",
+  "eslint": {
+    "passed": false,
+    "errorCount": -1,
+    "error": "Failed to parse ESLint output"
+  },
+  "typescript": {
+    "passed": false,
+    "errors": 0,
+    "details": "npm error Lifecycle script `typecheck` failed with error:\nnpm error code 2\nnpm error path /home/ubuntu/code/ASI_BUILD/asi-code/packages/asi-code\nnpm error workspace asi-code@0.1.0\nnpm error location /home/ubuntu/code/ASI_BUILD/asi-code/packages/asi-code\nnpm error command failed\nnpm error command sh -c tsc --noEmit\n"
+  },
+  "coverage": null,
+  "security": {
+    "passed": false,
+    "vulnerabilities": {
+      "critical": 3,
+      "high": 12,
+      "moderate": 12,
+      "low": 3,
+      "total": 30
+    }
+  },
+  "performance": null,
+  "overall": {
+    "passed": false,
+    "score": 0,
+    "issues": [
+      "0 TypeScript errors",
+      "3 critical security vulnerabilities",
+      "12 high security vulnerabilities"
+    ],
+    "grade": "F"
+  }
+}

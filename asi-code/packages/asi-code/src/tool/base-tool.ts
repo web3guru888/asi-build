@@ -1,6 +1,6 @@
 /**
  * Base Tool - Abstract foundation for all tools in ASI-Code
- * 
+ *
  * Provides the base interface and common functionality that all tools must implement.
  * Integrates with the Kenny Integration Pattern and permission system.
  */
@@ -27,7 +27,14 @@ export interface ToolDefinition {
   name: string;
   description: string;
   parameters: ToolParameter[];
-  category: 'file' | 'system' | 'network' | 'ai' | 'custom' | 'analysis' | 'generation';
+  category:
+    | 'file'
+    | 'system'
+    | 'network'
+    | 'ai'
+    | 'custom'
+    | 'analysis'
+    | 'generation';
   version: string;
   author?: string;
   permissions?: string[];
@@ -87,7 +94,7 @@ export abstract class BaseTool extends EventEmitter {
       safetyLevel: 'safe',
       tags: [],
       permissions: [],
-      ...definition
+      ...definition,
     };
   }
 
@@ -98,17 +105,15 @@ export abstract class BaseTool extends EventEmitter {
     if (this.initialized) {
       return;
     }
-    
+
     // Publish initialization event
     const kenny = getKennyIntegration();
-    await kenny.getMessageBus().publishSubsystem(
-      'tool.initialize',
-      'tool-registry',
-      { 
+    await kenny
+      .getMessageBus()
+      .publishSubsystem('tool.initialize', 'tool-registry', {
         toolName: this.definition.name,
-        config: config ? Object.keys(config) : []
-      }
-    );
+        config: config ? Object.keys(config) : [],
+      });
 
     this.initialized = true;
     this.emit('initialized', { config });
@@ -117,7 +122,10 @@ export abstract class BaseTool extends EventEmitter {
   /**
    * Main execution method - must be implemented by all tools
    */
-  abstract execute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<ToolResult>;
+  abstract execute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<ToolResult>;
 
   /**
    * Validate parameters against the tool definition
@@ -132,11 +140,11 @@ export abstract class BaseTool extends EventEmitter {
         errors.push(`Required parameter '${param.name}' is missing`);
         continue;
       }
-      
+
       if (param.name in parameters) {
         const value = parameters[param.name];
         const validationResult = this.validateParameter(param, value);
-        
+
         if (!validationResult.isValid) {
           errors.push(...validationResult.errors);
         }
@@ -154,24 +162,34 @@ export abstract class BaseTool extends EventEmitter {
     return {
       isValid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     };
   }
 
   /**
    * Pre-execution hook - can be overridden for custom validation/preparation
    */
-  async beforeExecute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<void> {
+  async beforeExecute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<void> {
     // Check safety level against context
-    if (this.definition.safetyLevel === 'dangerous' && !context.permissions.includes('dangerous_operations')) {
-      throw new Error(`Tool ${this.definition.name} requires dangerous_operations permission`);
+    if (
+      this.definition.safetyLevel === 'dangerous' &&
+      !context.permissions.includes('dangerous_operations')
+    ) {
+      throw new Error(
+        `Tool ${this.definition.name} requires dangerous_operations permission`
+      );
     }
 
     // Check specific tool permissions
     if (this.definition.permissions) {
       for (const permission of this.definition.permissions) {
         if (!context.permissions.includes(permission)) {
-          throw new Error(`Tool ${this.definition.name} requires permission: ${permission}`);
+          throw new Error(
+            `Tool ${this.definition.name} requires permission: ${permission}`
+          );
         }
       }
     }
@@ -183,22 +201,20 @@ export abstract class BaseTool extends EventEmitter {
    * Post-execution hook - can be overridden for cleanup/logging
    */
   async afterExecute(
-    parameters: Record<string, any>, 
-    context: ToolExecutionContext, 
+    parameters: Record<string, any>,
+    context: ToolExecutionContext,
     result: ToolResult
   ): Promise<void> {
     // Publish execution event
     const kenny = getKennyIntegration();
-    await kenny.getMessageBus().publishSubsystem(
-      'tool.execute',
-      'tool-registry',
-      { 
+    await kenny
+      .getMessageBus()
+      .publishSubsystem('tool.execute', 'tool-registry', {
         toolName: this.definition.name,
         success: result.success,
         executionTime: result.performance?.executionTime || 0,
-        parametersCount: Object.keys(parameters).length
-      }
-    );
+        parametersCount: Object.keys(parameters).length,
+      });
 
     this.emit('afterExecute', { parameters, context, result });
   }
@@ -206,11 +222,14 @@ export abstract class BaseTool extends EventEmitter {
   /**
    * Execute the tool with full lifecycle management
    */
-  async executeWithLifecycle(parameters: Record<string, any>, context: ToolExecutionContext): Promise<ToolResult> {
+  async executeWithLifecycle(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<ToolResult> {
     if (this.disposed) {
       return {
         success: false,
-        error: `Tool ${this.definition.name} has been disposed`
+        error: `Tool ${this.definition.name} has been disposed`,
       };
     }
 
@@ -229,8 +248,8 @@ export abstract class BaseTool extends EventEmitter {
           error: `Parameter validation failed: ${validation.errors.join(', ')}`,
           warnings: validation.warnings,
           performance: {
-            executionTime: Date.now() - startTime
-          }
+            executionTime: Date.now() - startTime,
+          },
         };
       }
 
@@ -240,7 +259,7 @@ export abstract class BaseTool extends EventEmitter {
       // Add performance data if not already present
       if (!result.performance) {
         result.performance = {
-          executionTime: Date.now() - startTime
+          executionTime: Date.now() - startTime,
         };
       } else if (!result.performance.executionTime) {
         result.performance.executionTime = Date.now() - startTime;
@@ -250,14 +269,13 @@ export abstract class BaseTool extends EventEmitter {
       if (validation.warnings.length > 0) {
         result.warnings = [...(result.warnings || []), ...validation.warnings];
       }
-
     } catch (error) {
       result = {
         success: false,
         error: error instanceof Error ? error.message : String(error),
         performance: {
-          executionTime: Date.now() - startTime
-        }
+          executionTime: Date.now() - startTime,
+        },
       };
     }
 
@@ -265,7 +283,10 @@ export abstract class BaseTool extends EventEmitter {
       // Post-execution
       await this.afterExecute(parameters, context, result);
     } catch (error) {
-      console.error(`Error in afterExecute for tool ${this.definition.name}:`, error);
+      console.error(
+        `Error in afterExecute for tool ${this.definition.name}:`,
+        error
+      );
     }
 
     return result;
@@ -278,7 +299,7 @@ export abstract class BaseTool extends EventEmitter {
     return {
       ...this.definition,
       initialized: this.initialized,
-      disposed: this.disposed
+      disposed: this.disposed,
     };
   }
 
@@ -287,7 +308,10 @@ export abstract class BaseTool extends EventEmitter {
    */
   canExecute(permissions: string[]): boolean {
     // Check safety level
-    if (this.definition.safetyLevel === 'dangerous' && !permissions.includes('dangerous_operations')) {
+    if (
+      this.definition.safetyLevel === 'dangerous' &&
+      !permissions.includes('dangerous_operations')
+    ) {
       return false;
     }
 
@@ -314,13 +338,16 @@ export abstract class BaseTool extends EventEmitter {
     // Publish cleanup event
     try {
       const kenny = getKennyIntegration();
-      await kenny.getMessageBus().publishSubsystem(
-        'tool.cleanup',
-        'tool-registry',
-        { toolName: this.definition.name }
-      );
+      await kenny
+        .getMessageBus()
+        .publishSubsystem('tool.cleanup', 'tool-registry', {
+          toolName: this.definition.name,
+        });
     } catch (error) {
-      console.error(`Error publishing cleanup event for tool ${this.definition.name}:`, error);
+      console.error(
+        `Error publishing cleanup event for tool ${this.definition.name}:`,
+        error
+      );
     }
 
     this.disposed = true;
@@ -332,18 +359,23 @@ export abstract class BaseTool extends EventEmitter {
   /**
    * Create a safe execution context for testing
    */
-  static createTestContext(overrides: Partial<ToolExecutionContext> = {}): ToolExecutionContext {
+  static createTestContext(
+    overrides: Partial<ToolExecutionContext> = {}
+  ): ToolExecutionContext {
     return {
       sessionId: 'test-session',
       userId: 'test-user',
       permissions: ['read_files', 'write_files'],
       workingDirectory: process.cwd(),
       environment: {},
-      ...overrides
+      ...overrides,
     };
   }
 
-  private validateParameter(param: ToolParameter, value: any): ToolValidationResult {
+  private validateParameter(
+    param: ToolParameter,
+    value: any
+  ): ToolValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -351,17 +383,26 @@ export abstract class BaseTool extends EventEmitter {
     const expectedType = param.type;
     const actualType = Array.isArray(value) ? 'array' : typeof value;
 
-    if (expectedType === 'object' && (actualType !== 'object' || Array.isArray(value))) {
-      errors.push(`Parameter '${param.name}' must be an object, got ${actualType}`);
+    if (
+      expectedType === 'object' &&
+      (actualType !== 'object' || Array.isArray(value))
+    ) {
+      errors.push(
+        `Parameter '${param.name}' must be an object, got ${actualType}`
+      );
       return { isValid: false, errors, warnings };
     } else if (expectedType !== 'object' && actualType !== expectedType) {
-      errors.push(`Parameter '${param.name}' must be ${expectedType}, got ${actualType}`);
+      errors.push(
+        `Parameter '${param.name}' must be ${expectedType}, got ${actualType}`
+      );
       return { isValid: false, errors, warnings };
     }
 
     // Enum validation
     if (param.enum && !param.enum.includes(value)) {
-      errors.push(`Parameter '${param.name}' must be one of: ${param.enum.join(', ')}`);
+      errors.push(
+        `Parameter '${param.name}' must be one of: ${param.enum.join(', ')}`
+      );
     }
 
     // Additional validation if specified
@@ -379,10 +420,16 @@ export abstract class BaseTool extends EventEmitter {
       }
 
       // Pattern validation for strings
-      if (expectedType === 'string' && typeof value === 'string' && validation.pattern) {
+      if (
+        expectedType === 'string' &&
+        typeof value === 'string' &&
+        validation.pattern
+      ) {
         const regex = new RegExp(validation.pattern);
         if (!regex.test(value)) {
-          errors.push(`Parameter '${param.name}' does not match required pattern`);
+          errors.push(
+            `Parameter '${param.name}' does not match required pattern`
+          );
         }
       }
 
@@ -404,7 +451,7 @@ export abstract class BaseTool extends EventEmitter {
     return {
       isValid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     };
   }
 }
@@ -412,20 +459,30 @@ export abstract class BaseTool extends EventEmitter {
 /**
  * Decorator for tool methods to add automatic logging and error handling
  */
-export function toolMethod(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+export function toolMethod(
+  target: any,
+  propertyKey: string,
+  descriptor: PropertyDescriptor
+) {
   const originalMethod = descriptor.value;
 
   descriptor.value = async function (this: BaseTool, ...args: any[]) {
     const methodName = `${this.definition.name}.${propertyKey}`;
-    
-    this.emit('methodCall', { method: methodName, args: args.map(arg => typeof arg) });
+
+    this.emit('methodCall', {
+      method: methodName,
+      args: args.map(arg => typeof arg),
+    });
 
     try {
       const result = await originalMethod.apply(this, args);
       this.emit('methodComplete', { method: methodName, success: true });
       return result;
     } catch (error) {
-      this.emit('methodError', { method: methodName, error: error instanceof Error ? error.message : String(error) });
+      this.emit('methodError', {
+        method: methodName,
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
   };

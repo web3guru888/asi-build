@@ -1,15 +1,15 @@
 /**
  * ASI-Code Agent Orchestration System Types
- * 
+ *
  * Core type definitions for the agent orchestration framework
- * that enables supervisor agents, task decomposition, and 
+ * that enables supervisor agents, task decomposition, and
  * parallel agent deployment.
  */
 
 import { EventEmitter } from 'eventemitter3';
 
 // Agent Types
-export type AgentType = 
+export type AgentType =
   | 'supervisor'
   | 'worker'
   | 'specialist'
@@ -19,7 +19,7 @@ export type AgentType =
   | 'monitor'
   | 'validator';
 
-export type AgentStatus = 
+export type AgentStatus =
   | 'idle'
   | 'busy'
   | 'working'
@@ -132,7 +132,7 @@ export interface Agent extends EventEmitter {
   completedTasks: number;
   failedTasks: number;
   performance: AgentPerformance;
-  
+
   // Core methods
   initialize(): Promise<void>;
   executeTask(task: Task): Promise<any>;
@@ -172,7 +172,7 @@ export interface AgentMetrics {
 export interface SupervisorAgent extends Agent {
   managedAgents: Map<string, Agent>;
   taskQueue: TaskQueue;
-  
+
   deployAgent(config: AgentConfig): Promise<Agent>;
   decommissionAgent(agentId: string): Promise<void>;
   assignTask(task: Task, agentId?: string): Promise<void>;
@@ -223,19 +223,19 @@ export interface Orchestrator extends EventEmitter {
   supervisors: Map<string, SupervisorAgent>;
   agents: Map<string, Agent>;
   taskRegistry: Map<string, Task>;
-  
+
   // Core orchestration methods
   createSupervisor(config: AgentConfig): Promise<SupervisorAgent>;
   submitTask(task: Task): Promise<string>;
   getTaskStatus(taskId: string): TaskStatus | undefined;
   getTaskResult(taskId: string): Promise<any>;
   cancelTask(taskId: string): Promise<boolean>;
-  
+
   // Agent management
   deployAgent(config: AgentConfig, supervisorId?: string): Promise<Agent>;
   scaleAgents(targetCount: number, type?: AgentType): Promise<void>;
   terminateAgent(agentId: string): Promise<void>;
-  
+
   // Monitoring
   getSystemStatus(): SystemStatus;
   getAgentStatuses(): Map<string, AgentStatus>;
@@ -287,7 +287,10 @@ export interface TaskDecomposer {
   canDecompose(task: Task): boolean;
   decompose(task: Task): Promise<TaskDecomposition>;
   analyzeDependencies(tasks: Task[]): TaskDependency[];
-  createExecutionPlan(tasks: Task[], dependencies: TaskDependency[]): ExecutionPlan;
+  createExecutionPlan(
+    tasks: Task[],
+    dependencies: TaskDependency[]
+  ): ExecutionPlan;
   estimateDuration(task: Task): number;
 }
 

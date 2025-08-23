@@ -10,7 +10,7 @@
  * - Resource utilization
  */
 
-import { Counter, Histogram, Gauge } from 'prom-client';
+import { Counter, Gauge, Histogram } from 'prom-client';
 import type { PrometheusMetrics } from '../metrics/index.js';
 
 export interface BusinessMetrics {
@@ -46,7 +46,7 @@ export interface BusinessMetrics {
 }
 
 export class ASICodeBusinessMetrics implements BusinessMetrics {
-  private metrics: PrometheusMetrics;
+  private readonly metrics: PrometheusMetrics;
   
   // Additional business-specific metrics
   private sessionLifecycle: Histogram<string>;

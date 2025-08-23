@@ -1,21 +1,21 @@
 /**
  * ASI-Code Load Balancer Implementation
- * 
+ *
  * Intelligent task distribution and load balancing for agents.
  * Supports multiple balancing strategies and smart task-to-agent matching.
  */
 
 import { EventEmitter } from 'eventemitter3';
-import { 
-  Agent, 
-  LoadBalancer as ILoadBalancer, 
-  Task, 
+import {
+  Agent,
   AgentMetrics,
   AgentPerformance,
-  ResourceUtilization
+  LoadBalancer as ILoadBalancer,
+  ResourceUtilization,
+  Task,
 } from './types.js';
 
-export type LoadBalancingStrategy = 
+export type LoadBalancingStrategy =
   | 'round_robin'
   | 'least_loaded'
   | 'capability_based'
@@ -25,7 +25,7 @@ export type LoadBalancingStrategy =
 
 export interface LoadBalancerConfig {
   strategy: LoadBalancingStrategy;
-  
+
   // Strategy-specific weights
   weights?: {
     performance?: number;
@@ -33,7 +33,7 @@ export interface LoadBalancerConfig {
     capability?: number;
     resource?: number;
   };
-  
+
   // Load calculation parameters
   loadFactors?: {
     taskCount?: number;
@@ -41,14 +41,14 @@ export interface LoadBalancerConfig {
     responseTime?: number;
     errorRate?: number;
   };
-  
+
   // Rebalancing thresholds
   rebalanceThresholds?: {
     maxLoadImbalance?: number;
     minIdleAgents?: number;
     maxQueueDepth?: number;
   };
-  
+
   // Performance tracking
   trackingWindowMs?: number;
   minDataPoints?: number;
@@ -76,13 +76,13 @@ interface LoadStats {
 export class LoadBalancer extends EventEmitter implements ILoadBalancer {
   private config: Required<LoadBalancerConfig>;
   private roundRobinIndex = 0;
-  private loadHistory = new Map<string, number[]>();
-  private performanceHistory = new Map<string, AgentPerformance[]>();
+  private readonly loadHistory = new Map<string, number[]>();
+  private readonly performanceHistory = new Map<string, AgentPerformance[]>();
   private lastRebalanceTime = 0;
 
   constructor(config: Partial<LoadBalancerConfig> = {}) {
     super();
-    
+
     this.config = {
       strategy: config.strategy || 'hybrid',
       weights: {
@@ -90,23 +90,23 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
         capacity: 0.25,
         capability: 0.25,
         resource: 0.2,
-        ...config.weights
+        ...config.weights,
       },
       loadFactors: {
         taskCount: 0.4,
         resourceUtilization: 0.3,
         responseTime: 0.2,
         errorRate: 0.1,
-        ...config.loadFactors
+        ...config.loadFactors,
       },
       rebalanceThresholds: {
         maxLoadImbalance: 0.3,
         minIdleAgents: 1,
         maxQueueDepth: 10,
-        ...config.rebalanceThresholds
+        ...config.rebalanceThresholds,
       },
       trackingWindowMs: config.trackingWindowMs || 300000, // 5 minutes
-      minDataPoints: config.minDataPoints || 10
+      minDataPoints: config.minDataPoints || 10,
     };
   }
 
@@ -120,7 +120,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
 
     // Filter agents that can handle the task
     const capableAgents = agents.filter(agent => agent.canHandle(task));
-    
+
     if (capableAgents.length === 0) {
       return undefined;
     }
@@ -129,22 +129,22 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
     switch (this.config.strategy) {
       case 'round_robin':
         return this.selectRoundRobin(capableAgents);
-      
+
       case 'least_loaded':
         return this.selectLeastLoaded(capableAgents);
-      
+
       case 'capability_based':
         return this.selectByCapability(task, capableAgents);
-      
+
       case 'performance_based':
         return this.selectByPerformance(capableAgents);
-      
+
       case 'resource_aware':
         return this.selectByResourceAvailability(task, capableAgents);
-      
+
       case 'hybrid':
         return this.selectHybrid(task, capableAgents);
-      
+
       default:
         return this.selectHybrid(task, capableAgents);
     }
@@ -162,7 +162,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
    */
   rebalance(agents: Agent[], tasks: Task[]): Map<string, string[]> {
     const rebalanceMap = new Map<string, string[]>();
-    
+
     if (agents.length === 0 || tasks.length === 0) {
       return rebalanceMap;
     }
@@ -178,11 +178,11 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
 
     // Group tasks by priority and type
     const taskGroups = this.groupTasks(tasks);
-    
+
     // Create optimal distribution
     const optimalDistribution = this.calculateOptimalDistribution(
-      agentLoads, 
-      taskGroups, 
+      agentLoads,
+      taskGroups,
       loadStats
     );
 
@@ -218,7 +218,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
       imbalanceRatio: 0,
       strategyUsed: this.config.strategy,
       rebalanceCount: 0,
-      lastRebalanceTime: this.lastRebalanceTime
+      lastRebalanceTime: this.lastRebalanceTime,
     };
   }
 
@@ -231,7 +231,10 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
       ...newConfig,
       weights: { ...this.config.weights, ...newConfig.weights },
       loadFactors: { ...this.config.loadFactors, ...newConfig.loadFactors },
-      rebalanceThresholds: { ...this.config.rebalanceThresholds, ...newConfig.rebalanceThresholds }
+      rebalanceThresholds: {
+        ...this.config.rebalanceThresholds,
+        ...newConfig.rebalanceThresholds,
+      },
     };
 
     this.emit('config:updated', this.config);
@@ -254,7 +257,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
   private selectLeastLoaded(agents: Agent[]): Agent {
     const agentLoads = agents.map(agent => ({
       agent,
-      load: this.calculateAgentLoad(agent).totalLoad
+      load: this.calculateAgentLoad(agent).totalLoad,
     }));
 
     agentLoads.sort((a, b) => a.load - b.load);
@@ -267,7 +270,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
   private selectByCapability(task: Task, agents: Agent[]): Agent {
     const scored = agents.map(agent => ({
       agent,
-      score: this.calculateCapabilityScore(task, agent)
+      score: this.calculateCapabilityScore(task, agent),
     }));
 
     scored.sort((a, b) => b.score - a.score);
@@ -280,7 +283,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
   private selectByPerformance(agents: Agent[]): Agent {
     const scored = agents.map(agent => ({
       agent,
-      score: this.calculatePerformanceScore(agent)
+      score: this.calculatePerformanceScore(agent),
     }));
 
     scored.sort((a, b) => b.score - a.score);
@@ -293,7 +296,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
   private selectByResourceAvailability(task: Task, agents: Agent[]): Agent {
     const scored = agents.map(agent => ({
       agent,
-      score: this.calculateResourceScore(task, agent)
+      score: this.calculateResourceScore(task, agent),
     }));
 
     scored.sort((a, b) => b.score - a.score);
@@ -308,9 +311,9 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
       const performanceScore = this.calculatePerformanceScore(agent);
       const capabilityScore = this.calculateCapabilityScore(task, agent);
       const resourceScore = this.calculateResourceScore(task, agent);
-      const loadScore = 1 - (this.calculateAgentLoad(agent).totalLoad / 100);
+      const loadScore = 1 - this.calculateAgentLoad(agent).totalLoad / 100;
 
-      const totalScore = 
+      const totalScore =
         performanceScore * this.config.weights.performance! +
         capabilityScore * this.config.weights.capability! +
         resourceScore * this.config.weights.resource! +
@@ -323,13 +326,13 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
           performance: performanceScore,
           capability: capabilityScore,
           resource: resourceScore,
-          load: loadScore
-        }
+          load: loadScore,
+        },
       };
     });
 
     scored.sort((a, b) => b.score - a.score);
-    
+
     // Emit selection details for monitoring
     this.emit('agent:selected', {
       task: task.id,
@@ -338,8 +341,8 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
       breakdown: scored[0].breakdown,
       alternatives: scored.slice(1, 3).map(s => ({
         agent: s.agent.id,
-        score: s.score
-      }))
+        score: s.score,
+      })),
     });
 
     return scored[0].agent;
@@ -355,28 +358,33 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
     const config = agent.config;
 
     // Task count load (0-100)
-    const taskLoad = (agent.currentTasks.size / config.maxConcurrentTasks) * 100;
+    const taskLoad =
+      (agent.currentTasks.size / config.maxConcurrentTasks) * 100;
 
     // Resource utilization load (0-100)
     const resourceUtil = metrics.performance.resourceUtilization;
     const resourceLoad = Math.max(resourceUtil.cpu, resourceUtil.memory) * 100;
 
     // Performance-based load adjustment
-    const performanceMultiplier = metrics.performance.successRate > 0 
-      ? 1 / metrics.performance.successRate 
-      : 2; // Penalize agents with no success rate data
+    const performanceMultiplier =
+      metrics.performance.successRate > 0
+        ? 1 / metrics.performance.successRate
+        : 2; // Penalize agents with no success rate data
 
     // Response time factor
-    const responseTimeFactor = metrics.performance.averageTaskDuration > 0
-      ? Math.min(metrics.performance.averageTaskDuration / 1000, 10) // Cap at 10 seconds
-      : 1;
+    const responseTimeFactor =
+      metrics.performance.averageTaskDuration > 0
+        ? Math.min(metrics.performance.averageTaskDuration / 1000, 10) // Cap at 10 seconds
+        : 1;
 
     // Calculate weighted total load
-    const totalLoad = 
+    const totalLoad =
       taskLoad * this.config.loadFactors.taskCount! +
       resourceLoad * this.config.loadFactors.resourceUtilization! +
-      (responseTimeFactor * 10) * this.config.loadFactors.responseTime! +
-      ((1 - metrics.performance.successRate) * 100) * this.config.loadFactors.errorRate!;
+      responseTimeFactor * 10 * this.config.loadFactors.responseTime! +
+      (1 - metrics.performance.successRate) *
+        100 *
+        this.config.loadFactors.errorRate!;
 
     return {
       agentId: agent.id,
@@ -385,7 +393,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
       resourceLoad,
       performanceScore: metrics.performance.successRate,
       capacity: config.maxConcurrentTasks,
-      utilizationRatio: agent.currentTasks.size / config.maxConcurrentTasks
+      utilizationRatio: agent.currentTasks.size / config.maxConcurrentTasks,
     };
   }
 
@@ -408,7 +416,10 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
     const bonus = exactMatch ? 0.2 : 0;
 
     // Penalty for over-qualification (having too many capabilities)
-    const overQualificationPenalty = Math.max(0, (agentCaps.length - requiredCaps.length) * 0.01);
+    const overQualificationPenalty = Math.max(
+      0,
+      (agentCaps.length - requiredCaps.length) * 0.01
+    );
 
     return Math.min(1, matchRatio + bonus - overQualificationPenalty);
   }
@@ -429,7 +440,10 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
 
     // Factor in average response time (faster is better)
     if (performance.averageTaskDuration > 0) {
-      const responseTimeBonus = Math.max(0, 0.1 - (performance.averageTaskDuration / 60000)); // Convert to minutes
+      const responseTimeBonus = Math.max(
+        0,
+        0.1 - performance.averageTaskDuration / 60000
+      ); // Convert to minutes
       score += responseTimeBonus;
     }
 
@@ -449,15 +463,22 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
     const requiredResources = task.constraints?.requiredResources;
 
     // Base availability score (higher available resources = higher score)
-    const availabilityScore = 1 - Math.max(resourceUtil.cpu, resourceUtil.memory);
+    const availabilityScore =
+      1 - Math.max(resourceUtil.cpu, resourceUtil.memory);
 
     // Check specific resource requirements
     let requirementScore = 1;
     if (requiredResources) {
-      if (requiredResources.cpu && resourceUtil.cpu > (1 - requiredResources.cpu)) {
+      if (
+        requiredResources.cpu &&
+        resourceUtil.cpu > 1 - requiredResources.cpu
+      ) {
         requirementScore *= 0.5; // Insufficient CPU
       }
-      if (requiredResources.memory && resourceUtil.memory > (1 - requiredResources.memory)) {
+      if (
+        requiredResources.memory &&
+        resourceUtil.memory > 1 - requiredResources.memory
+      ) {
         requirementScore *= 0.5; // Insufficient memory
       }
     }
@@ -476,7 +497,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
         maxLoad: 0,
         minLoad: 0,
         loadVariance: 0,
-        imbalanceRatio: 0
+        imbalanceRatio: 0,
       };
     }
 
@@ -487,10 +508,13 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
     const minLoad = Math.min(...loads);
 
     // Calculate variance
-    const variance = loads.reduce((sum, load) => sum + Math.pow(load - averageLoad, 2), 0) / loads.length;
+    const variance =
+      loads.reduce((sum, load) => sum + Math.pow(load - averageLoad, 2), 0) /
+      loads.length;
 
     // Calculate imbalance ratio (how far from perfect balance)
-    const imbalanceRatio = averageLoad > 0 ? (maxLoad - minLoad) / averageLoad : 0;
+    const imbalanceRatio =
+      averageLoad > 0 ? (maxLoad - minLoad) / averageLoad : 0;
 
     return {
       totalLoad,
@@ -498,7 +522,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
       maxLoad,
       minLoad,
       loadVariance: variance,
-      imbalanceRatio
+      imbalanceRatio,
     };
   }
 
@@ -506,7 +530,8 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
    * Determine if rebalancing is needed
    */
   private shouldRebalance(loadStats: LoadStats, taskCount: number): boolean {
-    const { maxLoadImbalance, minIdleAgents, maxQueueDepth } = this.config.rebalanceThresholds;
+    const { maxLoadImbalance, minIdleAgents, maxQueueDepth } =
+      this.config.rebalanceThresholds;
     const timeSinceLastRebalance = Date.now() - this.lastRebalanceTime;
 
     // Don't rebalance too frequently (minimum 30 seconds)
@@ -536,7 +561,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
     for (const task of tasks) {
       // Group by priority and type
       const groupKey = `${task.priority}_${task.type}`;
-      
+
       if (!groups.has(groupKey)) {
         groups.set(groupKey, []);
       }
@@ -557,11 +582,13 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
     const distribution = new Map<string, string[]>();
 
     // Sort agents by current load (least loaded first)
-    const sortedAgents = [...agentLoads].sort((a, b) => a.totalLoad - b.totalLoad);
+    const sortedAgents = [...agentLoads].sort(
+      (a, b) => a.totalLoad - b.totalLoad
+    );
 
     // Distribute tasks starting with highest priority
     const priorityOrder = ['critical', 'high', 'medium', 'low'];
-    
+
     for (const priority of priorityOrder) {
       taskGroups.forEach((tasks, groupKey) => {
         if (!groupKey.startsWith(priority)) return;
@@ -574,10 +601,11 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
               distribution.set(bestAgent.agentId, []);
             }
             distribution.get(bestAgent.agentId)!.push(task.id);
-            
+
             // Update agent load for next iteration
             bestAgent.taskCount++;
-            bestAgent.utilizationRatio = bestAgent.taskCount / bestAgent.capacity;
+            bestAgent.utilizationRatio =
+              bestAgent.taskCount / bestAgent.capacity;
             bestAgent.totalLoad = this.estimateLoadWithNewTask(bestAgent, task);
           }
         }
@@ -590,11 +618,15 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
   /**
    * Find best agent for rebalancing a specific task
    */
-  private findBestAgentForRebalance(task: Task, agentLoads: AgentLoad[]): AgentLoad | undefined {
+  private findBestAgentForRebalance(
+    task: Task,
+    agentLoads: AgentLoad[]
+  ): AgentLoad | undefined {
     // Filter agents that aren't overloaded and can handle the task
-    const availableAgents = agentLoads.filter(agent => 
-      agent.utilizationRatio < 0.9 && // Not overloaded
-      agent.totalLoad < 80 // Not at capacity
+    const availableAgents = agentLoads.filter(
+      agent =>
+        agent.utilizationRatio < 0.9 && // Not overloaded
+        agent.totalLoad < 80 // Not at capacity
     );
 
     if (availableAgents.length === 0) {
@@ -604,7 +636,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
     // Score agents based on load and capability
     const scoredAgents = availableAgents.map(agent => ({
       agent,
-      score: this.calculateRebalanceScore(agent, task)
+      score: this.calculateRebalanceScore(agent, task),
     }));
 
     scoredAgents.sort((a, b) => b.score - a.score);
@@ -616,15 +648,15 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
    */
   private calculateRebalanceScore(agentLoad: AgentLoad, task: Task): number {
     // Lower load = higher score
-    const loadScore = 1 - (agentLoad.totalLoad / 100);
-    
-    // Lower utilization = higher score  
+    const loadScore = 1 - agentLoad.totalLoad / 100;
+
+    // Lower utilization = higher score
     const utilizationScore = 1 - agentLoad.utilizationRatio;
-    
+
     // Performance score
     const performanceScore = agentLoad.performanceScore;
 
-    return (loadScore * 0.4 + utilizationScore * 0.4 + performanceScore * 0.2);
+    return loadScore * 0.4 + utilizationScore * 0.4 + performanceScore * 0.2;
   }
 
   /**
@@ -649,7 +681,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
     }
     const loadHistory = this.loadHistory.get(agentId)!;
     loadHistory.push(this.getLoad(agent));
-    
+
     // Keep only recent data
     const maxDataPoints = Math.max(this.config.minDataPoints, 100);
     if (loadHistory.length > maxDataPoints) {
@@ -677,7 +709,7 @@ export class LoadBalancer extends EventEmitter implements ILoadBalancer {
   } {
     return {
       loadHistory: this.loadHistory.get(agentId) || [],
-      performanceHistory: this.performanceHistory.get(agentId) || []
+      performanceHistory: this.performanceHistory.get(agentId) || [],
     };
   }
 

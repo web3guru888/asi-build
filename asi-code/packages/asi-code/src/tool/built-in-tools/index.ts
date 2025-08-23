@@ -1,6 +1,6 @@
 /**
  * Built-in Tools - Export all built-in tools for ASI-Code
- * 
+ *
  * Provides easy access to all built-in tools and factory functions
  * for creating tool instances.
  */
@@ -46,7 +46,7 @@ export function createBuiltInTools(): BaseTool[] {
     new SearchTool(),
     new DeleteTool(),
     new MoveTool(),
-    new ListTool()
+    new ListTool(),
   ];
 }
 
@@ -89,6 +89,6 @@ export function getBuiltInToolNames(): string[] {
 export function getBuiltInToolCategories(): Record<string, string[]> {
   return {
     file: ['read', 'write', 'edit', 'search', 'delete', 'move', 'list'],
-    system: ['bash']
+    system: ['bash'],
   };
 }

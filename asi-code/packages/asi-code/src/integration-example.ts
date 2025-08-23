@@ -1,7 +1,7 @@
 // Complete Integration Example for ASI-Code
 import { ConfigSystemFactory } from './config';
 import { LoggingSystemFactory } from './logging';
-import { initializeASICode, createMinimalASICode } from '.';
+import { createMinimalASICode, initializeASICode } from '.';
 
 async function demonstrateFullIntegration() {
   console.log('🚀 ASI-Code Full Integration Demonstration');
@@ -10,7 +10,7 @@ async function demonstrateFullIntegration() {
   const configManager = await ConfigSystemFactory.createAndRegister();
   await configManager.waitForInitialization();
 
-  // Create and register logging system  
+  // Create and register logging system
   const logManager = await LoggingSystemFactory.createAndRegister();
   await logManager.waitForInitialization();
 
@@ -20,10 +20,10 @@ async function demonstrateFullIntegration() {
       providers: {
         asi1: {
           apiKey: process.env.ASI1_API_KEY || 'test-key',
-          defaultModel: 'asi1-mini'
-        }
-      }
-    }
+          defaultModel: 'asi1-mini',
+        },
+      },
+    },
   });
 
   console.log('✅ ASI-Code system fully initialized');
@@ -43,9 +43,11 @@ async function demonstrateMinimalSetup() {
 
   // Create minimal system for development
   const system = await createMinimalASICode();
-  
+
   console.log('✅ Minimal ASI-Code system ready');
-  console.log(`Components active: ${Object.keys(system.components || {}).length}`);
+  console.log(
+    `Components active: ${Object.keys(system.components || {}).length}`
+  );
 
   await system.shutdown();
   console.log('✅ Minimal system shutdown complete');

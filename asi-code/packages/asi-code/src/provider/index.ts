@@ -1,6 +1,6 @@
 /**
  * AI Provider System - Unified interface for various AI providers
- * 
+ *
  * Supports Anthropic Claude, OpenAI GPT, and other providers through
  * a standardized interface for the ASI-Code system.
  */
@@ -40,8 +40,14 @@ export interface Provider extends EventEmitter {
   name: string;
   config: ProviderConfig;
   initialize(): Promise<void>;
-  generate(messages: ProviderMessage[], options?: Partial<ProviderConfig>): Promise<ProviderResponse>;
-  streamGenerate(messages: ProviderMessage[], options?: Partial<ProviderConfig>): AsyncGenerator<string, ProviderResponse>;
+  generate(
+    messages: ProviderMessage[],
+    options?: Partial<ProviderConfig>
+  ): Promise<ProviderResponse>;
+  streamGenerate(
+    messages: ProviderMessage[],
+    options?: Partial<ProviderConfig>
+  ): AsyncGenerator<string, ProviderResponse>;
   isAvailable(): Promise<boolean>;
   cleanup(): Promise<void>;
 }
@@ -57,8 +63,14 @@ export abstract class BaseProvider extends EventEmitter implements Provider {
   }
 
   abstract initialize(): Promise<void>;
-  abstract generate(messages: ProviderMessage[], options?: Partial<ProviderConfig>): Promise<ProviderResponse>;
-  abstract streamGenerate(messages: ProviderMessage[], options?: Partial<ProviderConfig>): AsyncGenerator<string, ProviderResponse>;
+  abstract generate(
+    messages: ProviderMessage[],
+    options?: Partial<ProviderConfig>
+  ): Promise<ProviderResponse>;
+  abstract streamGenerate(
+    messages: ProviderMessage[],
+    options?: Partial<ProviderConfig>
+  ): AsyncGenerator<string, ProviderResponse>;
   abstract isAvailable(): Promise<boolean>;
 
   async cleanup(): Promise<void> {
@@ -76,7 +88,7 @@ export class AnthropicProvider extends BaseProvider {
       const { Anthropic } = await import('@anthropic-ai/sdk');
       this.client = new Anthropic({
         apiKey: this.config.apiKey,
-        baseURL: this.config.baseUrl
+        baseURL: this.config.baseUrl,
       });
       this.emit('initialized', { provider: this.name });
     } catch (error) {
@@ -85,7 +97,10 @@ export class AnthropicProvider extends BaseProvider {
     }
   }
 
-  async generate(messages: ProviderMessage[], options?: Partial<ProviderConfig>): Promise<ProviderResponse> {
+  async generate(
+    messages: ProviderMessage[],
+    options?: Partial<ProviderConfig>
+  ): Promise<ProviderResponse> {
     if (!this.client) {
       throw new Error('Provider not initialized');
     }
@@ -95,7 +110,7 @@ export class AnthropicProvider extends BaseProvider {
         model: options?.model || this.config.model,
         max_tokens: options?.maxTokens || this.config.maxTokens || 4000,
         temperature: options?.temperature || this.config.temperature || 0.7,
-        messages: messages.map(m => ({ role: m.role, content: m.content }))
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
       });
 
       const result: ProviderResponse = {
@@ -103,13 +118,18 @@ export class AnthropicProvider extends BaseProvider {
         usage: {
           inputTokens: response.usage.input_tokens,
           outputTokens: response.usage.output_tokens,
-          totalTokens: response.usage.input_tokens + response.usage.output_tokens
+          totalTokens:
+            response.usage.input_tokens + response.usage.output_tokens,
         },
         model: response.model,
-        metadata: { id: response.id, type: response.type }
+        metadata: { id: response.id, type: response.type },
       };
 
-      this.emit('response', { messages, response: result, provider: this.name });
+      this.emit('response', {
+        messages,
+        response: result,
+        provider: this.name,
+      });
       return result;
     } catch (error) {
       this.emit('error', { error, messages, provider: this.name });
@@ -117,7 +137,10 @@ export class AnthropicProvider extends BaseProvider {
     }
   }
 
-  async* streamGenerate(messages: ProviderMessage[], options?: Partial<ProviderConfig>): AsyncGenerator<string, ProviderResponse> {
+  async *streamGenerate(
+    messages: ProviderMessage[],
+    options?: Partial<ProviderConfig>
+  ): AsyncGenerator<string, ProviderResponse> {
     if (!this.client) {
       throw new Error('Provider not initialized');
     }
@@ -128,11 +151,11 @@ export class AnthropicProvider extends BaseProvider {
         max_tokens: options?.maxTokens || this.config.maxTokens || 4000,
         temperature: options?.temperature || this.config.temperature || 0.7,
         messages: messages.map(m => ({ role: m.role, content: m.content })),
-        stream: true
+        stream: true,
       });
 
       let fullContent = '';
-      let usage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+      const usage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
       let model = '';
 
       for await (const chunk of stream) {
@@ -153,7 +176,7 @@ export class AnthropicProvider extends BaseProvider {
         content: fullContent,
         usage,
         model,
-        metadata: { streamed: true }
+        metadata: { streamed: true },
       };
     } catch (error) {
       this.emit('error', { error, messages, provider: this.name });
@@ -168,7 +191,7 @@ export class AnthropicProvider extends BaseProvider {
       await this.client.messages.create({
         model: this.config.model,
         max_tokens: 1,
-        messages: [{ role: 'user', content: 'test' }]
+        messages: [{ role: 'user', content: 'test' }],
       });
       return true;
     } catch {
@@ -186,7 +209,7 @@ export class OpenAIProvider extends BaseProvider {
       const { OpenAI } = await import('openai');
       this.client = new OpenAI({
         apiKey: this.config.apiKey,
-        baseURL: this.config.baseUrl
+        baseURL: this.config.baseUrl,
       });
       this.emit('initialized', { provider: this.name });
     } catch (error) {
@@ -195,7 +218,10 @@ export class OpenAIProvider extends BaseProvider {
     }
   }
 
-  async generate(messages: ProviderMessage[], options?: Partial<ProviderConfig>): Promise<ProviderResponse> {
+  async generate(
+    messages: ProviderMessage[],
+    options?: Partial<ProviderConfig>
+  ): Promise<ProviderResponse> {
     if (!this.client) {
       throw new Error('Provider not initialized');
     }
@@ -206,7 +232,7 @@ export class OpenAIProvider extends BaseProvider {
         max_tokens: options?.maxTokens || this.config.maxTokens || 4000,
         temperature: options?.temperature || this.config.temperature || 0.7,
         top_p: options?.topP || this.config.topP || 1,
-        messages: messages.map(m => ({ role: m.role, content: m.content }))
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
       });
 
       const result: ProviderResponse = {
@@ -214,13 +240,17 @@ export class OpenAIProvider extends BaseProvider {
         usage: {
           inputTokens: response.usage?.prompt_tokens || 0,
           outputTokens: response.usage?.completion_tokens || 0,
-          totalTokens: response.usage?.total_tokens || 0
+          totalTokens: response.usage?.total_tokens || 0,
         },
         model: response.model,
-        metadata: { id: response.id, created: response.created }
+        metadata: { id: response.id, created: response.created },
       };
 
-      this.emit('response', { messages, response: result, provider: this.name });
+      this.emit('response', {
+        messages,
+        response: result,
+        provider: this.name,
+      });
       return result;
     } catch (error) {
       this.emit('error', { error, messages, provider: this.name });
@@ -228,7 +258,10 @@ export class OpenAIProvider extends BaseProvider {
     }
   }
 
-  async* streamGenerate(messages: ProviderMessage[], options?: Partial<ProviderConfig>): AsyncGenerator<string, ProviderResponse> {
+  async *streamGenerate(
+    messages: ProviderMessage[],
+    options?: Partial<ProviderConfig>
+  ): AsyncGenerator<string, ProviderResponse> {
     if (!this.client) {
       throw new Error('Provider not initialized');
     }
@@ -240,7 +273,7 @@ export class OpenAIProvider extends BaseProvider {
         temperature: options?.temperature || this.config.temperature || 0.7,
         top_p: options?.topP || this.config.topP || 1,
         messages: messages.map(m => ({ role: m.role, content: m.content })),
-        stream: true
+        stream: true,
       });
 
       let fullContent = '';
@@ -260,7 +293,7 @@ export class OpenAIProvider extends BaseProvider {
           usage = {
             inputTokens: chunk.usage.prompt_tokens || 0,
             outputTokens: chunk.usage.completion_tokens || 0,
-            totalTokens: chunk.usage.total_tokens || 0
+            totalTokens: chunk.usage.total_tokens || 0,
           };
         }
       }
@@ -269,7 +302,7 @@ export class OpenAIProvider extends BaseProvider {
         content: fullContent,
         usage,
         model,
-        metadata: { streamed: true }
+        metadata: { streamed: true },
       };
     } catch (error) {
       this.emit('error', { error, messages, provider: this.name });
@@ -290,7 +323,7 @@ export class OpenAIProvider extends BaseProvider {
 
 // Provider Manager
 export class ProviderManager extends EventEmitter {
-  private providers = new Map<string, Provider>();
+  private readonly providers = new Map<string, Provider>();
 
   async register(config: ProviderConfig): Promise<void> {
     let provider: Provider;

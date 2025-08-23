@@ -1,15 +1,22 @@
 /**
  * Log Manager
- * 
+ *
  * Central logging management system that coordinates multiple loggers,
  * manages log routing, handles configuration changes, and provides
  * system-wide logging services.
  */
 
 import { EventEmitter } from 'eventemitter3';
-import { Logger, LogTransport, LogContext, LogLevel, createLogger, createTransportsFromConfig } from './logger.js';
-import { LoggingConfig, LogOutput } from '../config/config-types.js';
-import { BaseSubsystem } from '../kenny/base-subsystem.js';
+import {
+  LogContext,
+  LogLevel,
+  LogTransport,
+  Logger,
+  createLogger,
+  createTransportsFromConfig,
+} from './logger';
+import { LogOutput, LoggingConfig } from '../config/config-types';
+import { BaseSubsystem } from '../kenny/base-subsystem';
 
 // Log manager configuration
 export interface LogManagerConfig extends LoggingConfig {
@@ -60,23 +67,23 @@ export interface LogMetrics {
 export class LogManager extends EventEmitter {
   private config: LogManagerConfig;
   private rootLogger: Logger;
-  private subsystemLoggers = new Map<string, Logger>();
+  private readonly subsystemLoggers = new Map<string, Logger>();
   private routingRules: LogRoutingRule[] = [];
   private metrics: LogMetrics;
   private metricsTimer?: NodeJS.Timeout;
   private archivalTimer?: NodeJS.Timeout;
-  private startTime: Date;
+  private readonly startTime: Date;
 
   constructor(config: LogManagerConfig) {
     super();
-    
+
     this.config = { ...config };
     this.startTime = new Date();
     this.metrics = this.initializeMetrics();
-    
+
     // Create root logger
     this.rootLogger = createLogger(config, config.globalContext);
-    
+
     // Setup routing rules
     if (config.routingRules) {
       this.routingRules = [...config.routingRules];
@@ -84,7 +91,7 @@ export class LogManager extends EventEmitter {
 
     // Setup metrics collection
     this.startMetricsCollection();
-    
+
     // Setup log archival if enabled
     if (config.archivalConfig?.enabled) {
       this.startArchivalScheduler();
@@ -101,7 +108,7 @@ export class LogManager extends EventEmitter {
     if (!this.subsystemLoggers.has(subsystemId)) {
       const subsystemConfig = this.config.subsystemLoggers?.[subsystemId];
       const mergedConfig = this.mergeConfigs(this.config, subsystemConfig);
-      
+
       const context: LogContext = {
         ...this.config.globalContext,
         ...additionalContext,
@@ -109,16 +116,16 @@ export class LogManager extends EventEmitter {
         metadata: {
           ...this.config.globalContext?.metadata,
           ...additionalContext?.metadata,
-          subsystemId
-        }
+          subsystemId,
+        },
       };
 
       const logger = createLogger(mergedConfig, context);
       this.subsystemLoggers.set(subsystemId, logger);
-      
+
       // Setup logger event forwarding
       this.setupLoggerEventForwarding(logger, subsystemId);
-      
+
       this.emit('logger.created', { subsystemId, logger });
     }
 
@@ -149,21 +156,26 @@ export class LogManager extends EventEmitter {
 
       // Update subsystem loggers if their configs changed
       if (config.subsystemLoggers) {
-        for (const [subsystemId, subsystemConfig] of Object.entries(config.subsystemLoggers)) {
+        for (const [subsystemId, subsystemConfig] of Object.entries(
+          config.subsystemLoggers
+        )) {
           if (this.subsystemLoggers.has(subsystemId)) {
             const logger = this.subsystemLoggers.get(subsystemId)!;
             await logger.close();
-            
-            const mergedConfig = this.mergeConfigs(this.config, subsystemConfig);
+
+            const mergedConfig = this.mergeConfigs(
+              this.config,
+              subsystemConfig
+            );
             const context: LogContext = {
               ...this.config.globalContext,
               subsystem: subsystemId,
               metadata: {
                 ...this.config.globalContext?.metadata,
-                subsystemId
-              }
+                subsystemId,
+              },
             };
-            
+
             const newLogger = createLogger(mergedConfig, context);
             this.subsystemLoggers.set(subsystemId, newLogger);
             this.setupLoggerEventForwarding(newLogger, subsystemId);
@@ -182,7 +194,6 @@ export class LogManager extends EventEmitter {
       }
 
       this.emit('config.updated', { oldConfig, newConfig: this.config });
-
     } catch (error) {
       // Rollback on error
       this.config = oldConfig;
@@ -222,11 +233,11 @@ export class LogManager extends EventEmitter {
    */
   resetMetrics(): void {
     this.metrics = this.initializeMetrics();
-    
+
     // Reset logger metrics
     this.rootLogger.resetMetrics();
     this.subsystemLoggers.forEach(logger => logger.resetMetrics());
-    
+
     this.emit('metrics.reset');
   }
 
@@ -236,7 +247,9 @@ export class LogManager extends EventEmitter {
   async flush(): Promise<void> {
     const flushPromises = [
       this.rootLogger.flush(),
-      ...Array.from(this.subsystemLoggers.values()).map(logger => logger.flush())
+      ...Array.from(this.subsystemLoggers.values()).map(logger =>
+        logger.flush()
+      ),
     ];
 
     await Promise.allSettled(flushPromises);
@@ -255,10 +268,10 @@ export class LogManager extends EventEmitter {
       // Implementation would depend on specific archival requirements
       // For now, emit event for external handling
       this.emit('archival.started', { config: this.config.archivalConfig });
-      
+
       // Simulate archival process
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       this.emit('archival.completed', { config: this.config.archivalConfig });
     } catch (error) {
       this.emit('archival.error', { error });
@@ -284,11 +297,13 @@ export class LogManager extends EventEmitter {
     // Close all loggers
     const closePromises = [
       this.rootLogger.close(),
-      ...Array.from(this.subsystemLoggers.values()).map(logger => logger.close())
+      ...Array.from(this.subsystemLoggers.values()).map(logger =>
+        logger.close()
+      ),
     ];
 
     await Promise.allSettled(closePromises);
-    
+
     // Clear maps
     this.subsystemLoggers.clear();
     this.routingRules.length = 0;
@@ -310,13 +325,13 @@ export class LogManager extends EventEmitter {
         info: 0,
         warn: 0,
         error: 0,
-        silent: 0
+        silent: 0,
       },
       logsBySubsystem: {},
       errorRate: 0,
       averageLogsPerMinute: 0,
       transportMetrics: {},
-      uptime: 0
+      uptime: 0,
     };
   }
 
@@ -348,11 +363,11 @@ export class LogManager extends EventEmitter {
     delete logsByLevel.total;
 
     const logsBySubsystem: Record<string, number> = {};
-    
+
     for (const { id, metrics } of subsystemMetrics) {
       totalLogs += metrics.total;
       logsBySubsystem[id] = metrics.total;
-      
+
       // Aggregate by level
       for (const level of Object.keys(logsByLevel) as LogLevel[]) {
         logsByLevel[level] += metrics[level] || 0;
@@ -363,7 +378,8 @@ export class LogManager extends EventEmitter {
     const uptime = Date.now() - this.startTime.getTime();
     const uptimeMinutes = uptime / (1000 * 60);
     const errorRate = totalLogs > 0 ? (logsByLevel.error / totalLogs) * 100 : 0;
-    const averageLogsPerMinute = uptimeMinutes > 0 ? totalLogs / uptimeMinutes : 0;
+    const averageLogsPerMinute =
+      uptimeMinutes > 0 ? totalLogs / uptimeMinutes : 0;
 
     this.metrics = {
       totalLogs,
@@ -372,7 +388,7 @@ export class LogManager extends EventEmitter {
       errorRate,
       averageLogsPerMinute,
       transportMetrics: {}, // TODO: Collect transport-specific metrics
-      uptime
+      uptime,
     };
 
     this.emit('metrics.updated', this.metrics);
@@ -438,11 +454,11 @@ export class LogManager extends EventEmitter {
    * Setup logger event forwarding
    */
   private setupLoggerEventForwarding(logger: Logger, loggerId: string): void {
-    logger.on('log', (entry) => {
+    logger.on('log', entry => {
       this.emit('log.entry', { loggerId, entry });
     });
 
-    logger.on('transport.error', (error) => {
+    logger.on('transport.error', error => {
       this.emit('transport.error', { loggerId, error });
     });
   }
@@ -469,20 +485,31 @@ export class LogManager extends EventEmitter {
   /**
    * Execute a routing action
    */
-  private executeRoutingAction(action: LogRoutingAction, data: { loggerId: string; entry: any }): void {
+  private executeRoutingAction(
+    action: LogRoutingAction,
+    data: { loggerId: string; entry: any }
+  ): void {
     switch (action.type) {
       case 'redirect':
         if (action.target) {
           const targetLogger = this.getLogger(action.target);
           // Re-emit log through target logger
-          targetLogger.info(data.entry.message, data.entry.metadata, data.entry.error);
+          targetLogger.info(
+            data.entry.message,
+            data.entry.metadata,
+            data.entry.error
+          );
         }
         break;
 
       case 'duplicate':
         if (action.target) {
           const targetLogger = this.getLogger(action.target);
-          targetLogger.info(data.entry.message, data.entry.metadata, data.entry.error);
+          targetLogger.info(
+            data.entry.message,
+            data.entry.metadata,
+            data.entry.error
+          );
         }
         break;
 
@@ -504,7 +531,10 @@ export class LogManager extends EventEmitter {
   /**
    * Check if main configuration has changed
    */
-  private hasMainConfigChanged(oldConfig: LogManagerConfig, newConfig: LogManagerConfig): boolean {
+  private hasMainConfigChanged(
+    oldConfig: LogManagerConfig,
+    newConfig: LogManagerConfig
+  ): boolean {
     return (
       oldConfig.level !== newConfig.level ||
       oldConfig.format !== newConfig.format ||
@@ -516,7 +546,10 @@ export class LogManager extends EventEmitter {
   /**
    * Merge logging configurations
    */
-  private mergeConfigs(baseConfig: LoggingConfig, overrideConfig?: Partial<LoggingConfig>): LoggingConfig {
+  private mergeConfigs(
+    baseConfig: LoggingConfig,
+    overrideConfig?: Partial<LoggingConfig>
+  ): LoggingConfig {
     if (!overrideConfig) {
       return baseConfig;
     }
@@ -527,8 +560,8 @@ export class LogManager extends EventEmitter {
       outputs: overrideConfig.outputs || baseConfig.outputs,
       metadata: {
         ...baseConfig.metadata,
-        ...overrideConfig.metadata
-      }
+        ...overrideConfig.metadata,
+      },
     };
   }
 }
@@ -544,49 +577,23 @@ export class LogManagerSubsystem extends BaseSubsystem {
       id: 'log-manager',
       name: 'Log Manager',
       version: '1.0.0',
-      description: 'Central logging management system'
+      description: 'Central logging management system',
     });
   }
 
   async initialize(config: LogManagerConfig): Promise<void> {
-    if (this.status !== 'uninitialized') {
-      throw new Error('Log Manager subsystem is already initialized');
-    }
-
-    try {
-      this.logManager = new LogManager(config);
-      
-      // Forward events
-      this.logManager.on('error', (error) => this.emit('error', error));
-      this.logManager.on('config.updated', (data) => this.emit('config.updated', data));
-      this.logManager.on('metrics.updated', (metrics) => this.emit('metrics.updated', metrics));
-      
-      this.status = 'ready';
-      this.emit('initialized', { config });
-    } catch (error) {
-      this.status = 'error';
-      this.emit('error', error);
-      throw error;
-    }
+    // Call parent initialize which will call our onInitialize
+    await super.initialize(config);
   }
 
   async start(): Promise<void> {
-    if (this.status !== 'ready') {
-      throw new Error('Log Manager subsystem must be initialized before starting');
-    }
-
-    this.status = 'running';
-    this.emit('started');
+    // Call parent start which will call our onStart
+    await super.start();
   }
 
   async stop(): Promise<void> {
-    if (this.status !== 'running') {
-      return;
-    }
-
-    await this.logManager?.flush();
-    this.status = 'stopped';
-    this.emit('stopped');
+    // Call parent stop which will call our onStop
+    await super.stop();
   }
 
   async shutdown(): Promise<void> {
@@ -604,7 +611,7 @@ export class LogManagerSubsystem extends BaseSubsystem {
       return {
         status: 'unhealthy' as const,
         message: 'Log Manager not initialized',
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     }
 
@@ -614,19 +621,43 @@ export class LogManagerSubsystem extends BaseSubsystem {
         status: 'healthy' as const,
         message: `Log Manager running - ${metrics.totalLogs} logs processed`,
         timestamp: new Date(),
-        details: metrics
+        details: metrics,
       };
     } catch (error) {
       return {
         status: 'unhealthy' as const,
         message: `Log Manager error: ${error instanceof Error ? error.message : String(error)}`,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     }
   }
 
   getLogManager(): LogManager | undefined {
     return this.logManager;
+  }
+
+  // Abstract method implementations required by BaseSubsystem
+  protected async onInitialize(config: any): Promise<void> {
+    this.logManager = new LogManager(config);
+
+    // Forward events
+    this.logManager.on('error', error => this.emit('error', error));
+    this.logManager.on('config.updated', data =>
+      this.emit('config.updated', data)
+    );
+    this.logManager.on('metrics.updated', metrics =>
+      this.emit('metrics.updated', metrics)
+    );
+  }
+
+  protected async onStart(): Promise<void> {
+    // Log manager doesn't need special start logic
+  }
+
+  protected async onStop(): Promise<void> {
+    if (this.logManager) {
+      await this.logManager.flush();
+    }
   }
 }
 

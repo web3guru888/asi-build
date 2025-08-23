@@ -1,0 +1,126 @@
+name: Code Quality Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run TypeScript type checking
+      run: npm run typecheck
+      
+    - name: Run ESLint
+      run: npm run lint
+      continue-on-error: true
+      
+    - name: Check code formatting
+      run: npm run format:check
+      
+    - name: Run tests
+      run: npm run test:unit
+      
+    - name: Run security audit
+      run: npm audit --audit-level moderate
+      continue-on-error: true
+      
+    - name: Generate quality report
+      run: npm run quality:report
+      continue-on-error: true
+      
+    - name: Upload quality reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: quality-reports-${{ matrix.node-version }}
+        path: quality-reports/
+        
+    - name: Comment PR with quality results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          try {
+            const reportPath = path.join('quality-reports', 'quality-report.html');
+            if (fs.existsSync(reportPath)) {
+              const reportContent = fs.readFileSync(reportPath, 'utf8');
+              // Extract key metrics from HTML report
+              const scoreMatch = reportContent.match(/class="score">(\d+)\/100/);
+              const gradeMatch = reportContent.match(/Grade: ([A-F][+-]?)/);
+              
+              const score = scoreMatch ? scoreMatch[1] : 'Unknown';
+              const grade = gradeMatch ? gradeMatch[1] : 'Unknown';
+              
+              const comment = `## 📊 Code Quality Report
+              
+**Overall Score:** ${score}/100 (Grade: ${grade})
+**Node Version:** ${{ matrix.node-version }}
+
+View the [detailed quality report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) in the artifacts.
+
+${score < 80 ? '⚠️ **Quality gate failed.** Please address the issues before merging.' : '✅ **Quality gate passed.**'}
+              `;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+          } catch (error) {
+            console.log('Could not generate quality comment:', error.message);
+          }
+          
+  dependency-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Check for outdated dependencies
+      run: npm outdated || true
+      
+    - name: Run comprehensive security audit
+      run: |
+        npm audit --json > security-audit.json || true
+        cat security-audit.json
+        
+    - name: Upload security audit
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-audit
+        path: security-audit.json

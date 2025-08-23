@@ -1,6 +1,6 @@
 /**
  * Model Context Protocol (MCP) Implementation
- * 
+ *
  * Provides MCP support for context sharing and model interoperability.
  */
 
@@ -22,7 +22,7 @@ export class DefaultMCPServer extends EventEmitter implements MCPServer {
 
   async start(): Promise<void> {
     if (this.running) return;
-    
+
     // TODO: Implement MCP server startup
     this.running = true;
     this.emit('mcp:started');
@@ -30,7 +30,7 @@ export class DefaultMCPServer extends EventEmitter implements MCPServer {
 
   async stop(): Promise<void> {
     if (!this.running) return;
-    
+
     // TODO: Implement MCP server shutdown
     this.running = false;
     this.emit('mcp:stopped');

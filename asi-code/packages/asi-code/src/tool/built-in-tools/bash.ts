@@ -1,13 +1,18 @@
 /**
  * Bash Tool - Execute shell commands with safety controls
- * 
+ *
  * Provides secure execution of bash commands with permission checking,
  * timeout controls, and output capturing.
  */
 
-import { spawn, exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
-import { BaseTool, ToolDefinition, ToolExecutionContext, ToolResult } from '../base-tool.js';
+import {
+  BaseTool,
+  ToolDefinition,
+  ToolExecutionContext,
+  ToolResult,
+} from '../base-tool.js';
 
 const execAsync = promisify(exec);
 
@@ -28,7 +33,8 @@ export class BashTool extends BaseTool {
   constructor() {
     const definition: ToolDefinition = {
       name: 'bash',
-      description: 'Execute bash commands with safety controls and permission checking',
+      description:
+        'Execute bash commands with safety controls and permission checking',
       parameters: [
         {
           name: 'command',
@@ -38,10 +44,11 @@ export class BashTool extends BaseTool {
           validation: {
             custom: (value: string) => {
               if (!value.trim()) return 'Command cannot be empty';
-              if (value.length > 1000) return 'Command too long (max 1000 characters)';
+              if (value.length > 1000)
+                return 'Command too long (max 1000 characters)';
               return true;
-            }
-          }
+            },
+          },
         },
         {
           name: 'timeout',
@@ -50,8 +57,8 @@ export class BashTool extends BaseTool {
           default: 30000,
           validation: {
             min: 1000,
-            max: 300000 // 5 minutes max
-          }
+            max: 300000, // 5 minutes max
+          },
         },
         {
           name: 'cwd',
@@ -62,15 +69,15 @@ export class BashTool extends BaseTool {
           name: 'captureStderr',
           type: 'boolean',
           description: 'Whether to capture stderr separately',
-          default: true
+          default: true,
         },
         {
           name: 'shell',
           type: 'string',
           description: 'Shell to use for execution',
           default: '/bin/bash',
-          enum: ['/bin/bash', '/bin/sh', '/usr/bin/zsh']
-        }
+          enum: ['/bin/bash', '/bin/sh', '/usr/bin/zsh'],
+        },
       ],
       category: 'system',
       version: '1.0.0',
@@ -82,46 +89,115 @@ export class BashTool extends BaseTool {
         {
           description: 'List files in current directory',
           parameters: {
-            command: 'ls -la'
-          }
+            command: 'ls -la',
+          },
         },
         {
           description: 'Check disk usage with timeout',
           parameters: {
             command: 'df -h',
-            timeout: 5000
-          }
-        }
-      ]
+            timeout: 5000,
+          },
+        },
+      ],
     };
 
     super(definition);
 
     // Define allowed commands (whitelist approach for maximum safety)
     this.allowedCommands = new Set([
-      'ls', 'pwd', 'echo', 'cat', 'head', 'tail', 'grep', 'find', 'wc', 'sort',
-      'uniq', 'cut', 'awk', 'sed', 'df', 'du', 'ps', 'top', 'whoami', 'id',
-      'date', 'uptime', 'which', 'whereis', 'file', 'stat', 'uname', 'hostname',
-      'git', 'npm', 'node', 'python', 'python3', 'pip', 'pip3', 'bun', 'deno'
+      'ls',
+      'pwd',
+      'echo',
+      'cat',
+      'head',
+      'tail',
+      'grep',
+      'find',
+      'wc',
+      'sort',
+      'uniq',
+      'cut',
+      'awk',
+      'sed',
+      'df',
+      'du',
+      'ps',
+      'top',
+      'whoami',
+      'id',
+      'date',
+      'uptime',
+      'which',
+      'whereis',
+      'file',
+      'stat',
+      'uname',
+      'hostname',
+      'git',
+      'npm',
+      'node',
+      'python',
+      'python3',
+      'pip',
+      'pip3',
+      'bun',
+      'deno',
     ]);
 
     // Define blocked commands (extra protection)
     this.blockedCommands = new Set([
-      'rm', 'rmdir', 'mv', 'cp', 'chmod', 'chown', 'sudo', 'su', 'passwd',
-      'useradd', 'userdel', 'usermod', 'groupadd', 'groupdel', 'kill', 'killall',
-      'pkill', 'reboot', 'shutdown', 'halt', 'init', 'systemctl', 'service',
-      'mount', 'umount', 'fdisk', 'mkfs', 'fsck', 'dd', 'crontab', 'at',
-      'exec', 'eval', 'source', '.', 'bash', 'sh', 'zsh'
+      'rm',
+      'rmdir',
+      'mv',
+      'cp',
+      'chmod',
+      'chown',
+      'sudo',
+      'su',
+      'passwd',
+      'useradd',
+      'userdel',
+      'usermod',
+      'groupadd',
+      'groupdel',
+      'kill',
+      'killall',
+      'pkill',
+      'reboot',
+      'shutdown',
+      'halt',
+      'init',
+      'systemctl',
+      'service',
+      'mount',
+      'umount',
+      'fdisk',
+      'mkfs',
+      'fsck',
+      'dd',
+      'crontab',
+      'at',
+      'exec',
+      'eval',
+      'source',
+      '.',
+      'bash',
+      'sh',
+      'zsh',
     ]);
   }
 
-  async execute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<ToolResult> {
+  async execute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<ToolResult> {
     const {
       command,
       timeout = 30000,
       cwd = context.workingDirectory,
       captureStderr = true,
-      shell = '/bin/bash'
+      shell = '/bin/bash',
     } = parameters;
 
     const startTime = Date.now();
@@ -134,8 +210,8 @@ export class BashTool extends BaseTool {
           success: false,
           error: `Command blocked: ${safetyCheck.reason}`,
           performance: {
-            executionTime: Date.now() - startTime
-          }
+            executionTime: Date.now() - startTime,
+          },
         };
       }
 
@@ -143,20 +219,22 @@ export class BashTool extends BaseTool {
       const result = await this.executeCommand(command, {
         timeout,
         cwd,
-        env: { 
-          ...Object.fromEntries(
-            Object.entries(process.env).filter(([_, value]) => value !== undefined)
-          ) as Record<string, string>, 
-          ...(context.environment || {})
+        env: {
+          ...(Object.fromEntries(
+            Object.entries(process.env).filter(
+              ([_, value]) => value !== undefined
+            )
+          ) as Record<string, string>),
+          ...(context.environment || {}),
         },
         shell,
-        captureStderr
+        captureStderr,
       });
 
       this.emit('executed', {
         command: command.substring(0, 100), // Truncate for logging
         success: true,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       });
 
       return {
@@ -167,34 +245,37 @@ export class BashTool extends BaseTool {
           exitCode: result.exitCode,
           command,
           cwd,
-          shell
+          shell,
         },
         performance: {
           executionTime: Date.now() - startTime,
-          resourcesAccessed: [cwd]
-        }
+          resourcesAccessed: [cwd],
+        },
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
       this.emit('error', {
         command: command.substring(0, 100),
         error: errorMessage,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       });
 
       return {
         success: false,
         error: `Command execution failed: ${errorMessage}`,
         performance: {
-          executionTime: Date.now() - startTime
-        }
+          executionTime: Date.now() - startTime,
+        },
       };
     }
   }
 
-  private performSafetyCheck(command: string, context: ToolExecutionContext): { safe: boolean; reason?: string } {
+  private performSafetyCheck(
+    command: string,
+    context: ToolExecutionContext
+  ): { safe: boolean; reason?: string } {
     // Check for dangerous patterns
     const dangerousPatterns = [
       /rm\s+(-rf|--recursive|--force)/i,
@@ -232,7 +313,10 @@ export class BashTool extends BaseTool {
     if (!context.permissions.includes('dangerous_operations')) {
       // Only allow whitelisted commands
       if (!this.allowedCommands.has(baseCommand)) {
-        return { safe: false, reason: `Command '${baseCommand}' requires dangerous_operations permission` };
+        return {
+          safe: false,
+          reason: `Command '${baseCommand}' requires dangerous_operations permission`,
+        };
       }
     }
 
@@ -245,7 +329,7 @@ export class BashTool extends BaseTool {
   }
 
   private async executeCommand(
-    command: string, 
+    command: string,
     options: BashExecutionOptions
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     const {
@@ -254,7 +338,7 @@ export class BashTool extends BaseTool {
       env = process.env,
       shell = '/bin/bash',
       maxBuffer = 1024 * 1024, // 1MB
-      captureStderr = true
+      captureStderr = true,
     } = options;
 
     return new Promise((resolve, reject) => {
@@ -262,13 +346,13 @@ export class BashTool extends BaseTool {
         cwd,
         env,
         stdio: ['ignore', 'pipe', captureStderr ? 'pipe' : 'ignore'],
-        timeout
+        timeout,
       });
 
       let stdout = '';
       let stderr = '';
 
-      child.stdout?.on('data', (data) => {
+      child.stdout?.on('data', data => {
         stdout += data.toString();
         if (stdout.length > maxBuffer) {
           child.kill('SIGTERM');
@@ -277,7 +361,7 @@ export class BashTool extends BaseTool {
       });
 
       if (captureStderr && child.stderr) {
-        child.stderr.on('data', (data) => {
+        child.stderr.on('data', data => {
           stderr += data.toString();
           if (stderr.length > maxBuffer) {
             child.kill('SIGTERM');
@@ -286,15 +370,15 @@ export class BashTool extends BaseTool {
         });
       }
 
-      child.on('close', (code) => {
+      child.on('close', code => {
         resolve({
           stdout: stdout.trim(),
           stderr: stderr.trim(),
-          exitCode: code || 0
+          exitCode: code || 0,
         });
       });
 
-      child.on('error', (error) => {
+      child.on('error', error => {
         reject(error);
       });
 
@@ -314,16 +398,21 @@ export class BashTool extends BaseTool {
     });
   }
 
-  async beforeExecute(parameters: Record<string, any>, context: ToolExecutionContext): Promise<void> {
+  async beforeExecute(
+    parameters: Record<string, any>,
+    context: ToolExecutionContext
+  ): Promise<void> {
     await super.beforeExecute(parameters, context);
-    
+
     // Additional checks for bash execution
     if (!context.permissions.includes('execute_commands')) {
       throw new Error('Bash tool requires execute_commands permission');
     }
 
     // Log the command execution attempt
-    console.log(`[BashTool] Executing command for user ${context.userId}: ${parameters.command.substring(0, 50)}...`);
+    console.log(
+      `[BashTool] Executing command for user ${context.userId}: ${parameters.command.substring(0, 50)}...`
+    );
   }
 }
 

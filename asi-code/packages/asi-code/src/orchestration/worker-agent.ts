@@ -1,20 +1,20 @@
 /**
  * Worker Agent Implementation
- * 
+ *
  * Extends BaseAgent to provide specialized task execution capabilities.
  * Handles different types of tasks including processing, computation, I/O, and analysis.
  */
 
 import { BaseAgent } from './base-agent.js';
-import { Task, AgentConfig, TaskPriority } from './types.js';
+import { AgentConfig, Task, TaskPriority } from './types.js';
 import { Logger } from '../logging/index.js';
 
 /**
  * Task types that WorkerAgent can handle
  */
-export type TaskType = 
+export type TaskType =
   | 'processing'
-  | 'computation'  
+  | 'computation'
   | 'io'
   | 'analysis'
   | 'validation'
@@ -58,13 +58,13 @@ export interface TaskExecutionMetrics {
  * Worker Agent Implementation
  */
 export class WorkerAgent extends BaseAgent {
-  private taskContexts: Map<string, TaskContext> = new Map();
-  private taskResults: Map<string, TaskResult> = new Map();
-  private maxResultHistory: number = 1000;
+  private readonly taskContexts: Map<string, TaskContext> = new Map();
+  private readonly taskResults: Map<string, TaskResult> = new Map();
+  private readonly maxResultHistory: number = 1000;
 
   constructor(config: AgentConfig, logger?: Logger) {
     super(config, logger);
-    
+
     // Ensure worker agent has required capabilities
     if (!this.config.capabilities.includes('task-execution')) {
       this.config.capabilities.push('task-execution');
@@ -75,15 +75,17 @@ export class WorkerAgent extends BaseAgent {
    * Initialize the worker agent
    */
   protected async onInitialize(): Promise<void> {
-    this.logger.info(`Initializing WorkerAgent ${this.id} with capabilities: ${this.config.capabilities.join(', ')}`);
-    
+    this.logger.info(
+      `Initializing WorkerAgent ${this.id} with capabilities: ${this.config.capabilities.join(', ')}`
+    );
+
     // Initialize task tracking
     this.taskContexts.clear();
     this.taskResults.clear();
-    
+
     // Set up periodic cleanup
     this.startResultCleanup();
-    
+
     this.logger.info(`WorkerAgent ${this.id} initialization complete`);
   }
 
@@ -96,88 +98,93 @@ export class WorkerAgent extends BaseAgent {
       startTime: Date.now(),
       priority: task.priority,
       retryCount: 0,
-      metadata: task.metadata
+      metadata: task.metadata,
     };
 
     this.taskContexts.set(task.id, context);
-    
+
     try {
-      this.logger.info(`WorkerAgent ${this.id} starting execution of task ${task.id} (type: ${task.type})`);
-      
+      this.logger.info(
+        `WorkerAgent ${this.id} starting execution of task ${task.id} (type: ${task.type})`
+      );
+
       // Execute based on task type
       let result: any;
       const startTime = Date.now();
-      
+
       switch (task.type) {
         case 'processing':
           result = await this.executeProcessingTask(task, context);
           break;
-          
+
         case 'computation':
           result = await this.executeComputationTask(task, context);
           break;
-          
+
         case 'io':
           result = await this.executeIOTask(task, context);
           break;
-          
+
         case 'analysis':
           result = await this.executeAnalysisTask(task, context);
           break;
-          
+
         case 'validation':
           result = await this.executeValidationTask(task, context);
           break;
-          
+
         case 'transformation':
           result = await this.executeTransformationTask(task, context);
           break;
-          
+
         case 'integration':
           result = await this.executeIntegrationTask(task, context);
           break;
-          
+
         case 'optimization':
           result = await this.executeOptimizationTask(task, context);
           break;
-          
+
         default:
           result = await this.executeGenericTask(task, context);
           break;
       }
-      
+
       const duration = Date.now() - startTime;
-      
+
       // Create task result
       const taskResult: TaskResult = {
         success: true,
         data: result,
         duration,
-        metrics: this.collectTaskMetrics(task, context, duration)
+        metrics: this.collectTaskMetrics(task, context, duration),
       };
-      
+
       this.taskResults.set(task.id, taskResult);
-      
-      this.logger.info(`WorkerAgent ${this.id} completed task ${task.id} in ${duration}ms`);
-      
+
+      this.logger.info(
+        `WorkerAgent ${this.id} completed task ${task.id} in ${duration}ms`
+      );
+
       return result;
-      
     } catch (error) {
       const duration = Date.now() - context.startTime;
-      
+
       const taskResult: TaskResult = {
         success: false,
         error: error as Error,
         duration,
-        metrics: this.collectTaskMetrics(task, context, duration)
+        metrics: this.collectTaskMetrics(task, context, duration),
       };
-      
+
       this.taskResults.set(task.id, taskResult);
-      
-      this.logger.error(`WorkerAgent ${this.id} failed task ${task.id}:`, error);
-      
+
+      this.logger.error(
+        `WorkerAgent ${this.id} failed task ${task.id}:`,
+        error
+      );
+
       throw error;
-      
     } finally {
       this.taskContexts.delete(task.id);
     }
@@ -189,19 +196,25 @@ export class WorkerAgent extends BaseAgent {
   protected onCanHandle(task: Task): boolean {
     // Check if task type is supported
     const supportedTypes: TaskType[] = [
-      'processing', 'computation', 'io', 'analysis', 
-      'validation', 'transformation', 'integration', 'optimization'
+      'processing',
+      'computation',
+      'io',
+      'analysis',
+      'validation',
+      'transformation',
+      'integration',
+      'optimization',
     ];
-    
+
     if (!supportedTypes.includes(task.type as TaskType)) {
       return false;
     }
-    
+
     // Check priority constraints
     if (task.priority === 'critical' && this.currentTasks.size > 0) {
       return false; // Only handle critical tasks when idle
     }
-    
+
     // Check execution time constraints
     if (task.constraints?.maxExecutionTime) {
       const estimatedTime = this.estimateTaskDuration(task);
@@ -209,7 +222,7 @@ export class WorkerAgent extends BaseAgent {
         return false;
       }
     }
-    
+
     return true;
   }
 
@@ -218,11 +231,13 @@ export class WorkerAgent extends BaseAgent {
    */
   protected async onSuspend(): Promise<void> {
     this.logger.info(`Suspending WorkerAgent ${this.id}`);
-    
+
     // Save current task states if needed
     const activeTasks = Array.from(this.currentTasks);
     if (activeTasks.length > 0) {
-      this.logger.info(`WorkerAgent ${this.id} has ${activeTasks.length} active tasks during suspension`);
+      this.logger.info(
+        `WorkerAgent ${this.id} has ${activeTasks.length} active tasks during suspension`
+      );
     }
   }
 
@@ -231,7 +246,7 @@ export class WorkerAgent extends BaseAgent {
    */
   protected async onResume(): Promise<void> {
     this.logger.info(`Resuming WorkerAgent ${this.id}`);
-    
+
     // Restore any suspended tasks if needed
     // This would involve checking for incomplete tasks and resuming them
   }
@@ -241,11 +256,11 @@ export class WorkerAgent extends BaseAgent {
    */
   protected async onTerminate(): Promise<void> {
     this.logger.info(`Terminating WorkerAgent ${this.id}`);
-    
+
     // Clean up resources
     this.taskContexts.clear();
     this.taskResults.clear();
-    
+
     // Cancel any ongoing operations
     // This would involve cleanup of external resources, connections, etc.
   }
@@ -253,43 +268,55 @@ export class WorkerAgent extends BaseAgent {
   /**
    * Execute processing task
    */
-  private async executeProcessingTask(task: Task, context: TaskContext): Promise<any> {
+  private async executeProcessingTask(
+    task: Task,
+    context: TaskContext
+  ): Promise<any> {
     this.logger.debug(`Executing processing task ${task.id}`);
-    
+
     const { input } = task;
-    if (!input || !input.data) {
+    if (!input?.data) {
       throw new Error('Processing task requires input data');
     }
-    
+
     // Simulate processing logic
-    const processedData = await this.processData(input.data, input.options || {});
-    
+    const processedData = await this.processData(
+      input.data,
+      input.options || {}
+    );
+
     return {
       processedData,
       timestamp: Date.now(),
-      processingTime: Date.now() - context.startTime
+      processingTime: Date.now() - context.startTime,
     };
   }
 
   /**
    * Execute computation task
    */
-  private async executeComputationTask(task: Task, context: TaskContext): Promise<any> {
+  private async executeComputationTask(
+    task: Task,
+    context: TaskContext
+  ): Promise<any> {
     this.logger.debug(`Executing computation task ${task.id}`);
-    
+
     const { input } = task;
-    if (!input || !input.operation) {
+    if (!input?.operation) {
       throw new Error('Computation task requires operation specification');
     }
-    
+
     // Simulate computation logic
-    const result = await this.performComputation(input.operation, input.parameters || {});
-    
+    const result = await this.performComputation(
+      input.operation,
+      input.parameters || {}
+    );
+
     return {
       result,
       operation: input.operation,
       parameters: input.parameters,
-      computationTime: Date.now() - context.startTime
+      computationTime: Date.now() - context.startTime,
     };
   }
 
@@ -298,162 +325,201 @@ export class WorkerAgent extends BaseAgent {
    */
   private async executeIOTask(task: Task, context: TaskContext): Promise<any> {
     this.logger.debug(`Executing I/O task ${task.id}`);
-    
+
     const { input } = task;
-    if (!input || !input.operation) {
+    if (!input?.operation) {
       throw new Error('I/O task requires operation specification');
     }
-    
+
     // Simulate I/O operations
-    const result = await this.performIOOperation(input.operation, input.parameters || {});
-    
+    const result = await this.performIOOperation(
+      input.operation,
+      input.parameters || {}
+    );
+
     return {
       result,
       operation: input.operation,
-      ioTime: Date.now() - context.startTime
+      ioTime: Date.now() - context.startTime,
     };
   }
 
   /**
    * Execute analysis task
    */
-  private async executeAnalysisTask(task: Task, context: TaskContext): Promise<any> {
+  private async executeAnalysisTask(
+    task: Task,
+    context: TaskContext
+  ): Promise<any> {
     this.logger.debug(`Executing analysis task ${task.id}`);
-    
+
     const { input } = task;
-    if (!input || !input.data) {
+    if (!input?.data) {
       throw new Error('Analysis task requires input data');
     }
-    
+
     // Simulate analysis logic
-    const analysis = await this.performAnalysis(input.data, input.options || {});
-    
+    const analysis = await this.performAnalysis(
+      input.data,
+      input.options || {}
+    );
+
     return {
       analysis,
       metrics: analysis.metrics,
       insights: analysis.insights,
-      analysisTime: Date.now() - context.startTime
+      analysisTime: Date.now() - context.startTime,
     };
   }
 
   /**
    * Execute validation task
    */
-  private async executeValidationTask(task: Task, context: TaskContext): Promise<any> {
+  private async executeValidationTask(
+    task: Task,
+    context: TaskContext
+  ): Promise<any> {
     this.logger.debug(`Executing validation task ${task.id}`);
-    
+
     const { input } = task;
-    if (!input || !input.data || !input.rules) {
+    if (!input?.data || !input.rules) {
       throw new Error('Validation task requires data and validation rules');
     }
-    
+
     // Simulate validation logic
     const validation = await this.performValidation(input.data, input.rules);
-    
+
     return {
       isValid: validation.isValid,
       errors: validation.errors,
       warnings: validation.warnings,
-      validationTime: Date.now() - context.startTime
+      validationTime: Date.now() - context.startTime,
     };
   }
 
   /**
    * Execute transformation task
    */
-  private async executeTransformationTask(task: Task, context: TaskContext): Promise<any> {
+  private async executeTransformationTask(
+    task: Task,
+    context: TaskContext
+  ): Promise<any> {
     this.logger.debug(`Executing transformation task ${task.id}`);
-    
+
     const { input } = task;
-    if (!input || !input.data || !input.transformation) {
-      throw new Error('Transformation task requires data and transformation specification');
+    if (!input?.data || !input.transformation) {
+      throw new Error(
+        'Transformation task requires data and transformation specification'
+      );
     }
-    
+
     // Simulate transformation logic
-    const transformed = await this.performTransformation(input.data, input.transformation);
-    
+    const transformed = await this.performTransformation(
+      input.data,
+      input.transformation
+    );
+
     return {
       transformedData: transformed,
       originalSize: this.getDataSize(input.data),
       transformedSize: this.getDataSize(transformed),
-      transformationTime: Date.now() - context.startTime
+      transformationTime: Date.now() - context.startTime,
     };
   }
 
   /**
    * Execute integration task
    */
-  private async executeIntegrationTask(task: Task, context: TaskContext): Promise<any> {
+  private async executeIntegrationTask(
+    task: Task,
+    context: TaskContext
+  ): Promise<any> {
     this.logger.debug(`Executing integration task ${task.id}`);
-    
+
     const { input } = task;
-    if (!input || !input.sources) {
+    if (!input?.sources) {
       throw new Error('Integration task requires data sources');
     }
-    
+
     // Simulate integration logic
-    const integrated = await this.performIntegration(input.sources, input.options || {});
-    
+    const integrated = await this.performIntegration(
+      input.sources,
+      input.options || {}
+    );
+
     return {
       integratedData: integrated,
       sourceCount: input.sources.length,
-      integrationTime: Date.now() - context.startTime
+      integrationTime: Date.now() - context.startTime,
     };
   }
 
   /**
    * Execute optimization task
    */
-  private async executeOptimizationTask(task: Task, context: TaskContext): Promise<any> {
+  private async executeOptimizationTask(
+    task: Task,
+    context: TaskContext
+  ): Promise<any> {
     this.logger.debug(`Executing optimization task ${task.id}`);
-    
+
     const { input } = task;
-    if (!input || !input.target) {
+    if (!input?.target) {
       throw new Error('Optimization task requires optimization target');
     }
-    
+
     // Simulate optimization logic
-    const optimized = await this.performOptimization(input.target, input.constraints || {});
-    
+    const optimized = await this.performOptimization(
+      input.target,
+      input.constraints || {}
+    );
+
     return {
       optimizedResult: optimized.result,
       improvements: optimized.improvements,
-      optimizationTime: Date.now() - context.startTime
+      optimizationTime: Date.now() - context.startTime,
     };
   }
 
   /**
    * Execute generic task
    */
-  private async executeGenericTask(task: Task, context: TaskContext): Promise<any> {
+  private async executeGenericTask(
+    task: Task,
+    context: TaskContext
+  ): Promise<any> {
     this.logger.debug(`Executing generic task ${task.id}`);
-    
+
     // Generic task execution logic
     const result = {
       taskId: task.id,
       type: task.type,
       input: task.input,
       executionTime: Date.now() - context.startTime,
-      status: 'completed'
+      status: 'completed',
     };
-    
+
     // Simulate some processing time
     await this.sleep(Math.random() * 1000);
-    
+
     return result;
   }
 
   /**
    * Collect task execution metrics
    */
-  private collectTaskMetrics(task: Task, context: TaskContext, duration: number): TaskExecutionMetrics {
+  private collectTaskMetrics(
+    task: Task,
+    context: TaskContext,
+    duration: number
+  ): TaskExecutionMetrics {
     const memoryUsage = process.memoryUsage();
-    
+
     return {
       memoryUsage: memoryUsage.heapUsed,
       cpuTime: duration, // Simplified - would use actual CPU time
       ioOperations: this.estimateIOOperations(task),
-      networkCalls: this.estimateNetworkCalls(task)
+      networkCalls: this.estimateNetworkCalls(task),
     };
   }
 
@@ -463,7 +529,7 @@ export class WorkerAgent extends BaseAgent {
   private estimateTaskDuration(task: Task): number {
     // Simple estimation based on task type and size
     const baseTime = 1000; // 1 second
-    
+
     switch (task.type) {
       case 'computation':
         return baseTime * 3;
@@ -512,14 +578,14 @@ export class WorkerAgent extends BaseAgent {
    */
   private cleanupOldResults(): void {
     if (this.taskResults.size <= this.maxResultHistory) return;
-    
+
     const entries = Array.from(this.taskResults.entries());
     const toRemove = entries.length - this.maxResultHistory;
-    
+
     for (let i = 0; i < toRemove; i++) {
       this.taskResults.delete(entries[i][0]);
     }
-    
+
     this.logger.debug(`Cleaned up ${toRemove} old task results`);
   }
 
@@ -537,12 +603,18 @@ export class WorkerAgent extends BaseAgent {
     return { processed: true, data, options };
   }
 
-  private async performComputation(operation: string, parameters: any): Promise<any> {
+  private async performComputation(
+    operation: string,
+    parameters: any
+  ): Promise<any> {
     await this.sleep(800);
     return { operation, parameters, computed: true };
   }
 
-  private async performIOOperation(operation: string, parameters: any): Promise<any> {
+  private async performIOOperation(
+    operation: string,
+    parameters: any
+  ): Promise<any> {
     await this.sleep(300);
     return { operation, parameters, ioResult: true };
   }
@@ -553,7 +625,7 @@ export class WorkerAgent extends BaseAgent {
       metrics: { dataPoints: 100, accuracy: 95 },
       insights: ['Pattern A detected', 'Anomaly in sector B'],
       data,
-      options
+      options,
     };
   }
 
@@ -564,11 +636,14 @@ export class WorkerAgent extends BaseAgent {
       errors: [],
       warnings: [],
       data,
-      rules
+      rules,
     };
   }
 
-  private async performTransformation(data: any, transformation: any): Promise<any> {
+  private async performTransformation(
+    data: any,
+    transformation: any
+  ): Promise<any> {
     await this.sleep(600);
     return { transformed: data, transformation };
   }
@@ -578,12 +653,15 @@ export class WorkerAgent extends BaseAgent {
     return { integrated: sources, options };
   }
 
-  private async performOptimization(target: any, constraints: any): Promise<any> {
+  private async performOptimization(
+    target: any,
+    constraints: any
+  ): Promise<any> {
     await this.sleep(1500);
     return {
       result: target,
       improvements: { efficiency: '+15%', speed: '+25%' },
-      constraints
+      constraints,
     };
   }
 
