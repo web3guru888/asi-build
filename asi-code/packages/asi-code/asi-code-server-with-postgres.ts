@@ -459,6 +459,42 @@ async function startIntegratedServer() {
     });
   });
   
+  // Serve branding assets
+  app.get('/branding/*', (c) => {
+    try {
+      const requestPath = c.req.path;
+      const filePath = join(process.cwd(), 'public', requestPath);
+      
+      if (existsSync(filePath)) {
+        const fileContent = readFileSync(filePath);
+        
+        // Set appropriate content type
+        const ext = filePath.split('.').pop()?.toLowerCase();
+        const contentTypes: Record<string, string> = {
+          'svg': 'image/svg+xml',
+          'png': 'image/png',
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'ico': 'image/x-icon'
+        };
+        
+        const contentType = contentTypes[ext || ''] || 'application/octet-stream';
+        
+        return new Response(fileContent, {
+          headers: {
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=3600'
+          }
+        });
+      }
+      
+      return c.text('Asset not found', 404);
+    } catch (error) {
+      console.error('Error serving branding asset:', error);
+      return c.text('Error serving asset', 500);
+    }
+  });
+  
   // Database stats endpoint
   app.get('/api/stats', async (c) => {
     const stats = await db.getPool().query(`
@@ -550,8 +586,14 @@ async function startIntegratedServer() {
       async message(ws, message) {
         console.log('📨 Received:', message);
         
+        // Ensure ws.data is initialized (handle race condition)
+        if (!ws.data) {
+          console.warn('⚠️ WebSocket data not initialized yet, skipping message');
+          return;
+        }
+        
         // Log inbound message to database
-        if (ws.data?.wsConnectionId) {
+        if (ws.data.wsConnectionId) {
           await db.logWebSocketMessage(ws.data.wsConnectionId, 'inbound', 'message', { raw: message.toString() });
         }
         
@@ -615,7 +657,10 @@ async function startIntegratedServer() {
           
         } catch (error) {
           console.error('❌ WebSocket error:', error);
-          await db.log('error', 'websocket', `WebSocket error: ${error.message}`, { sessionId: ws.data?.sessionId }, ws.data?.sessionId);
+          
+          if (ws.data) {
+            await db.log('error', 'websocket', `WebSocket error: ${error.message}`, { sessionId: ws.data.sessionId }, ws.data.sessionId);
+          }
           
           const errorMessage = {
             type: 'error',
@@ -623,7 +668,10 @@ async function startIntegratedServer() {
             timestamp: new Date().toISOString()
           };
           ws.send(JSON.stringify(errorMessage));
-          await db.logWebSocketMessage(ws.data.wsConnectionId, 'outbound', 'error', errorMessage);
+          
+          if (ws.data?.wsConnectionId) {
+            await db.logWebSocketMessage(ws.data.wsConnectionId, 'outbound', 'error', errorMessage);
+          }
         }
       },
       
