@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Custom SVG Graphs</title>
+  <link rel="stylesheet" href="/styles/main.css" />
+</head>
+<body>
+  <header id="app-header"></header>
+
+  <main class="graph-page">
+    <section class="graph-section">
+      <h2>Sample Line Graph</h2>
+      <div id="line-graph" class="graph-container"></div>
+    </section>
+
+    <section class="graph-section">
+      <h2>Sample Bar Graph</h2>
+      <div id="bar-graph" class="graph-container"></div>
+    </section>
+
+    <section class="graph-section">
+      <h2>Sample Pie Chart</h2>
+      <div id="pie-graph" class="graph-container"></div>
+    </section>
+  </main>
+
+  <footer id="app-footer"></footer>
+
+  <!-- Load TypeScript compiled scripts in correct order -->
+  <script src="/lib/svg-renderer.js"></script>
+  <script src="/lib/data-visualizations.js"></script>
+  <script src="/components/header.js"></script>
+  <script src="/components/footer.js"></script>
+  <script src="/components/graph-container.js"></script>
+  <script src="/demo/sample-data.js"></script>
+  <script src="/main.js"></script>
+</body>
+</html>

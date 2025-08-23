@@ -1,0 +1,23 @@
+# Prettier Ignore
+
+node_modules
+dist
+build
+coverage
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.min.js
+*.bundle.js
+*.log
+public/build
+public/dist
+.storybook
+.vercel
+Dockerfile
+.dockerignore
+.pnpm-lock.yaml
+yarn.lock
+package-lock.json

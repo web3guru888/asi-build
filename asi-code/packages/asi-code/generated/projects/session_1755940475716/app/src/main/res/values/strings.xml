@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">Dog Explorer</string>
+
+    <!-- Navigation Titles -->
+    <string name="title_breeds_list">Dog Breeds</string>
+    <string name="title_breed_detail">Breed Details</string>
+    <string name="title_search">Search Breeds</string>
+    <string name="title_favorites">Favorite Dogs</string>
+
+    <!-- Button Texts -->
+    <string name="button_back">Back</string>
+    <string name="button_view_details">View Details</string>
+    <string name="button_add_to_favorites">Add to Favorites</string>
+    <string name="button_remove_from_favorites">Remove from Favorites</string>
+    <string name="button_retry">Retry</string>
+
+    <!-- Placeholder Texts -->
+    <string name="hint_search_dogs">Search dog breeds...</string>
+    <string name="text_no_results">No dog breeds found matching your search.</string>
+    <string name="text_no_favorites">You haven\'t added any favorite breeds yet.</string>
+    <string name="loading_breeds">Loading dog breeds...</string>
+    <string name="failed_to_load_breeds">Failed to load dog breeds. Please check your connection and try again.</string>
+
+    <!-- Breed Detail Labels -->
+    <string name="label_origin">Origin</string>
+    <string name="label_weight">Weight</string>
+    <string name="label_height">Height</string>
+    <string name="label_lifespan">Lifespan</string>
+    <string name="label_temperament">Temperament</string>
+    <string name="label_bred_for">Bred For</string>
+    <string name="label_breed_group">Breed Group</string>
+    <string name="unknown">Unknown</string>
+
+    <!-- Accessibility -->
+    <string name="desc_dog_image">Dog breed image</string>
+    <string name="desc_favorite_icon">Favorite icon</string>
+    <string name="desc_search_icon">Search icon</string>
+
+    <!-- Toast Messages -->
+    <string name="toast_added_to_favorites">Breed added to favorites!</string>
+    <string name="toast_removed_from_favorites">Breed removed from favorites!</string>
+    <string name="toast_connection_error">No internet connection available.</string>
+
+    <!-- Menu Options -->
+    <string name="menu_refresh">Refresh</string>
+    <string name="menu_clear_search">Clear Search</string>
+    <string name="menu_about">About</string>
+
+    <!-- About Section -->
+    <string name="about_app_title">About Dog Explorer</string>
+    <string name="about_app_content">Welcome to Dog Explorer! Discover detailed information about various dog breeds, save your favorites, and learn more about their characteristics. Perfect for dog lovers and potential pet owners.</string>
+
+    <!-- Screen Titles (used in UI) -->
+    <string name="screen_breed_list_description">List of dog breeds</string>
+    <string name="screen_breed_detail_description">Details about selected dog breed</string>
+
+    <!-- Confirmation Messages -->
+    <string name="confirm_remove_favorite_title">Remove from Favorites?</string>
+    <string name="confirm_remove_favorite_message">Are you sure you want to remove this breed from your favorites?</string>
+    <string name="action_yes">Yes</string>
+    <string name="action_no">No</string>
+</resources>

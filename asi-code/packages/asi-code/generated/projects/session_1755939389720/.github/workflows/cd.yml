@@ -1,0 +1,78 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: |
+          npm run build
+        env:
+          CI: false
+
+      - name: Deploy to web hosting
+        uses: peaceiris/actions-gh-pages@v3
+        if: success()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          allow_empty_commit: false
+          enable_jekyll: false
+          force_orphan: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+
+  notify_on_failure:
+    name: Notify on Deployment Failure
+    needs: deploy
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send failure notification
+        run: |
+          echo "Deployment failed. Please check the workflow run for details."
+
+      - name: Post status to Discord (Optional)
+        if: secrets.DISCORD_WEBHOOK_URL != ''
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d '{"content":"❌ Deployment failed for ${{ github.repository }}. Check ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+  notify_on_success:
+    name: Notify on Deployment Success
+    needs: deploy
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send success notification
+        run: |
+          echo "Deployment succeeded."
+
+      - name: Post status to Discord (Optional)
+        if: secrets.DISCORD_WEBHOOK_URL != ''
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d '{"content":"✅ Successfully deployed ${{ github.repository }} to production! 🚀"}' \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}

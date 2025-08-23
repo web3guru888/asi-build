@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+  <title>Custom Dog SVG Animation Website</title>
+  <link rel="stylesheet" href="styles/main.css" />
+  <!-- Preload critical assets -->
+  <link rel="preload" as="image" href="assets/images/logo.svg" />
+  <link rel="preload" as="image" href="assets/images/dog-icon.svg" />
+  <link rel="preload" as="image" href="assets/images/pawprint.svg" />
+  <link rel="preload" as="image" href="assets/images/bone.svg" />
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/images/dog-icon.svg" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <img src="assets/images/logo.svg" alt="Pawfect Designs Logo" class="logo" id="site-logo" />
+      <h1>Welcome to Pawfect SVG Dog Art</h1>
+      <p>Custom animated dog illustrations crafted with love and code</p>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <section class="hero">
+      <div class="container">
+        <h2>Explore Our Dog SVG Creations</h2>
+        <p>Each dog is uniquely generated with dynamic colors, patterns, and playful animations.</p>
+        <button id="generate-dog-btn" aria-label="Generate a new custom dog illustration">Generate Custom Dog</button>
+      </div>
+    </section>
+
+    <section class="svg-gallery" aria-labelledby="gallery-heading">
+      <div class="container">
+        <h2 id="gallery-heading">Animated Dog Gallery</h2>
+        <div id="dog-animation-container" class="dog-animation-wrapper" role="region" aria-live="polite">
+          <!-- Dog animations will be injected here -->
+        </div>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="container">
+        <h2>Why Choose Our Dog SVGs?</h2>
+        <ul class="feature-list" role="list">
+          <li class="feature-item">
+            <img src="assets/images/pawprint.svg" alt="" aria-hidden="true" class="icon paw-icon" />
+            <h3>100% Vector Quality</h3>
+            <p>Scalable to any size without loss of quality. Perfect for web and print.</p>
+          </li>
+          <li class="feature-item">
+            <img src="assets/images/bone.svg" alt="" aria-hidden="true" class="icon bone-icon" />
+            <h3>Fully Customizable</h3>
+            <p>Easily modify colors, shapes, and animation behaviors via code or interface.</p>
+          </li>
+          <li class="feature-item">
+            <img src="assets/images/dog-icon.svg" alt="" aria-hidden="true" class="icon dog-icon" />
+            <h3>Handcrafted Animations</h3>
+            <p>Smooth, performant animations that bring your dog SVGs to life.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="code-demo">
+      <div class="container">
+        <h2>See How It's Built</h2>
+        <pre id="svg-code-output" class="code-output"><code>// SVG code will appear here after generation</code></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="current-year">2025</span> Pawfect Designs. All rights reserved.</p>
+      <p>Made with ❤️ and TypeScript for dog lovers everywhere.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script type="module">
+    // Set current year in footer
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+
+    // Dynamically load and initialize main.ts
+    import('/scripts/main.ts')
+      .then(module => {
+        if (module && typeof module.init === 'function') {
+          module.init().catch(err => {
+            console.error('Failed to initialize main module:', err);
+          });
+        } else {
+          console.error('Main module does not export init function');
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load main module:', err);
+      });
+  </script>
+</body>
+</html>

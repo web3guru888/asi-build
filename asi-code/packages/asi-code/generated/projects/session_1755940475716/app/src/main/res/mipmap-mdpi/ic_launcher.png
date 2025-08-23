@@ -1,0 +1,1 @@
+Binary files such as `app/src/main/res/mipmap-mdpi/ic_launcher.png` cannot be generated as raw code. Please provide a description of the desired icon or use image design tools to create the launcher asset. For scalable and production-ready results, consider using Android Studio’s Image Asset Studio to generate `ic_launcher.png` variants across all density buckets.

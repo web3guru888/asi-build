@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme extending MaterialComponents for DayNight support -->
+    <style name="Theme.DogExplorer" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color applied to action bars, buttons, and other UI components -->
+        <item name="colorPrimary">@color/purple_500</item>
+        <!-- Darker variant of the primary color used for status bar and contextual actions -->
+        <item name="colorPrimaryDark">@color/purple_700</item>
+        <!-- Accent color used for interactive elements like switches and text fields -->
+        <item name="colorAccent">@color/purple_200</item>
+        <!-- Surface color used for backgrounds of surfaces like cards and menus -->
+        <item name="colorSurface">@android:color/white</item>
+        <!-- Error color used to indicate errors in input fields or feedback states -->
+        <item name="colorError">@android:color/holo_red_dark</item>
+        <!-- Color applied to text and iconography on primary backgrounds -->
+        <item name="android:textColorPrimary">@android:color/black</item>
+        <!-- Color applied to hint text in text fields -->
+        <item name="android:textColorHint">@android:color/darker_gray</item>
+        <!-- Elevation overlays to adjust surface color based on elevation in dark mode -->
+        <item name="elevationOverlayEnabled">true</item>
+        <!-- Default shape appearance for Material components such as buttons and cards -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.DogExplorer.SmallComponent</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.DogExplorer.MediumComponent</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.DogExplorer.LargeComponent</item>
+    </style>
+
+    <!-- Small component shape (e.g., chips, small buttons) -->
+    <style name="ShapeAppearance.DogExplorer.SmallComponent" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">4dp</item>
+    </style>
+
+    <!-- Medium component shape (e.g., cards, dialogs) -->
+    <style name="ShapeAppearance.DogExplorer.MediumComponent" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <!-- Large component shape (e.g., modal sheets, large dialogs) -->
+    <style name="ShapeAppearance.DogExplorer.LargeComponent" parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+
+    <!-- Theme overlay for RecyclerView items to support both light and dark themes -->
+    <style name="ThemeOverlay.DogExplorer.Item" parent="">
+        <item name="android:textColorPrimary">@android:color/black</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+    </style>
+
+    <!-- Bottom navigation theme with proper text colors and icons tinting -->
+    <style name="Widget.DogExplorer.BottomNavigationView" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="itemIconTint">@color/selector_bottom_nav_icon</item>
+        <item name="itemTextColor">@color/selector_bottom_nav_text</item>
+        <item name="backgroundColor">@android:color/white</item>
+    </style>
+
+    <!-- Toolbar theme for consistent styling across screens -->
+    <style name="Widget.DogExplorer.Toolbar" parent="Widget.MaterialComponents.Toolbar">
+        <item name="titleTextAppearance">@style/TextAppearance.DogExplorer.Toolbar.Title</item>
+        <item name="navigationIconTint">@android:color/white</item>
+    </style>
+
+    <!-- Title text appearance for Toolbar -->
+    <style name="TextAppearance.DogExplorer.Toolbar.Title" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textSize">18sp</item>
+        <item name="android:fontFamily">@font/roboto_medium</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <!-- Custom Dialog theme for breed details -->
+    <style name="Theme.DogExplorer.Dialog" parent="Theme.MaterialComponents.DayNight.Dialog">
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorPrimaryDark">@color/purple_700</item>
+        <item name="android:windowElevation">8dp</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.DogExplorer.MediumComponent</item>
+    </style>
+
+    <!-- Fab theme with custom background and ripple -->
+    <style name="Widget.DogExplorer.FloatingActionButton" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="fabBackgroundColor">@color/purple_500</item>
+        <item name="fabRippleColor">@color/purple_200</item>
+        <item name="tint">@android:color/white</item>
+    </style>
+</resources>

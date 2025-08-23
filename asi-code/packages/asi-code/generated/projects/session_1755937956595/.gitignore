@@ -1,0 +1,290 @@
+# .gitignore
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.out
+
+# Test binary, build artifact
+*.test
+
+# Output of the go coverage tool, check https://golang.org/cmd/go/#hdr-Testing_flags
+coverage.out
+coverage/
+profile.out
+cover/
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+# Log files
+*.log
+logs
+*.log.*
+.log/
+
+# Environment variable files
+.env
+.env.local
+*.env
+*.env.*
+.env.backup
+.env.local.backup
+
+# Build outputs
+/bin/
+/dist/
+/build/
+/_build/
+/output/
+/artifacts/
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.swp
+._*
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose*.yml
+.Dockerfile
+.dockerignore
+containerd/
+/docker/
+
+# Kubernetes
+*.kubeconfig
+.kube/
+helm/
+
+# Git
+.hg
+.git
+.gitignore_global
+
+# Tools
+.sonar
+.sonarqube/
+.codecov.yaml
+.coverage
+.nyc_output
+lcov-report
+
+# Infrastructure as Code
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
+.pulumi/
+
+# Dependency Management
+Gopkg.lock
+Gopkg.toml
+
+# Sensitive information
+secrets/
+secret/
+credentials.json
+config/secrets.json
+
+# Local development
+/debug/*
+/tmp/
+/temp/
+/db.sqlite
+/mongodb.log
+
+# API Gateway and Model Server specific
+cmd/gateway/bin/
+cmd/api/bin/
+cmd/model-server/bin/
+internal/api/bin/
+internal/model/bin/
+
+# Generated files
+generated/
+gen/
+
+# MLOps artifacts
+models/
+artifacts/
+checkpoints/
+datasets/
+tmp/
+scratch/
+
+# Configuration files (if not versioned)
+config/local.yaml
+config/development.yaml
+config/staging.yaml
+config/production.yaml
+internal/config/config.local.yaml
+
+# Monitoring and tracing data
+traces/
+metrics/
+prometheus/
+grafana/
+
+# Cache directories
+.cache/
+*cache*
+
+# Remote development
+.devcontainer/
+
+# Vulnerability scanner files
+snyk/
+snyk.json
+
+# Security scanning
+anchore/
+anchore_repos.json
+
+# Secrets detection
+gitleaks.log
+
+# Platform specific
+platform/
+
+# Versioning backups
+*.bak
+*.backup
+
+# Editors ~ files
+**/*~
+
+# Temporary files
+tmp*
+temp*
+
+# OS generated files
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.tmp
+
+# Python artifacts (common in MLOps)
+__pycache__/
+*.pyc
+.pytest_cache/
+.hypothesis/
+
+# Notebooks
+*.ipynb
+*.ipynb_checkpoints
+
+# Node.js (if used in frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store/
+.npm/
+
+# Java (if used)
+target/
+*.jar
+*.war
+*.ear
+
+# .NET (if used)
+[Bb]in/
+[Oo]bj/
+*.sln
+*.csproj
+
+# C/C++ 
+*.o
+*.a
+*.lib
+*.exp
+*.dll
+*.so
+
+# Rust
+/target/
+Cargo.lock
+
+# Terraform Cloud
+.terraform/modules/
+.terraform.tfstate.lock.info
+
+# IDEs and tools
+*.sublime-project
+*.sublime-workspace
+*.atom/*
+*.code-workspace
+
+# Editors
+.vim/
+.viminfo
+.history/
+
+# Local tunnel
+localhost.crt
+localhost.key
+
+# MLOps specific
+model_store/
+model_cache/
+prediction_logs/
+training_runs/
+experiments/
+tensorboard/
+
+# Configuration auto-generated
+config.auto.tfvars
+terraform.tfvars
+
+# Dynamic config
+.settings/
+
+# Development databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets and credentials
+secret.key
+private.key
+public.key
+ssh.key
+.pem
+
+# SSL/TLS certificates
+.cer
+.crt
+.key
+.p12
+.pfx
+
+# OS-specific files
+.DS_Store?
+ehthumbs.db
+Thumbs.db
+
+# Build tools
+Makefile.local
+.env.local
+
+# Logs and profiling
+*.trace
+*.prof
+
+# Snapshots (if using test frameworks)
+__snapshots__/
+
+# IDE auto-saved files
+.recentfiles

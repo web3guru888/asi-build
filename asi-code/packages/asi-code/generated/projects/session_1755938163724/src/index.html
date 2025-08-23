@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Custom SVG-Enhanced Web Application</title>
+  <meta name="description" content="A modern web application with dynamic SVG rendering and responsive design." />
+
+  <!-- Preload critical assets -->
+  <link rel="preload" as="style" href="./styles/main.scss" />
+  <link rel="preload" as="script" href="./main.js" />
+  <link rel="preload" href="./assets/svg/logo.svg" as="image" type="image/svg+xml" />
+
+  <!-- Canonical link -->
+  <link rel="canonical" href="./index.html" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="./assets/svg/icon-home.svg" type="image/svg+xml" />
+
+  <!-- Styling -->
+  <link rel="stylesheet" href="./styles/main.css" />
+
+  <!-- Accessibility support -->
+  <script type="module">
+    import { initializeAccessibility } from './scripts/utils/accessibility';
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        initializeAccessibility();
+      } catch (error) {
+        console.warn('Accessibility initialization failed:', error);
+      }
+    });
+  </script>
+
+  <!-- Load SVGs dynamically -->
+  <script type="module">
+    import { SVGRenderer } from './scripts/components/SVGRenderer';
+    import svgConfig from './scripts/config/svgConfig';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const container = document.getElementById('svg-container');
+      if (!container) return;
+
+      try {
+        const renderer = new SVGRenderer(svgConfig);
+        await renderer.renderAll(container);
+      } catch (error) {
+        console.error('Failed to render SVGs:', error);
+        container.innerHTML = '<p class="error">Failed to load SVG content. Please refresh the page or contact support.</p>';
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <div class="app-wrapper">
+    <!-- Header -->
+    <header class="header" role="banner">
+      <div class="logo-container" aria-label="Company Logo">
+        <!-- Logo will be injected via SVGRenderer or left for JS handling -->
+        <span id="svg-logo"></span>
+      </div>
+      <nav class="navigation" role="navigation" aria-label="Main Navigation">
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a href="#home" class="nav-link" aria-current="page">
+              <span id="icon-home" class="nav-icon" aria-hidden="true"></span>
+              <span class="nav-text">Home</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#profile" class="nav-link">
+              <span id="icon-user" class="nav-icon" aria-hidden="true"></span>
+              <span class="nav-text">Profile</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#settings" class="nav-link">
+              <span id="icon-settings" class="nav-icon" aria-hidden="true"></span>
+              <span class="nav-text">Settings</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main" role="main">
+      <section class="hero" id="hero">
+        <h1>Welcome to the Future of SVG-Powered Interfaces</h1>
+        <p>Dynamic, scalable, and accessible vector graphics integrated seamlessly into modern web applications.</p>
+        <button id="toggle-svg-theme" class="btn-primary">Toggle Dark Theme</button>
+      </section>
+
+      <!-- SVG Container -->
+      <section class="svg-section">
+        <h2>Custom SVG Components</h2>
+        <div id="svg-container" class="svg-grid" aria-label="Interactive SVG elements"></div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+      <p>&copy; <span id="year"></span> Fetch.ai Inc. All rights reserved.</p>
+      <p>Powered by <a href="https://asi1.ai" target="_blank" rel="noopener">ASI:One</a> & Agentverse</p>
+    </footer>
+  </div>
+
+  <!-- Set current year -->
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+
+  <!-- Main app bundle -->
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

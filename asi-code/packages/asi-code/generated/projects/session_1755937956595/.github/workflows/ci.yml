@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Install dependencies
+        run: |
+          go mod download
+          go mod verify
+
+      - name: Run tests
+        run: |
+          go test -v ./...
+
+      - name: Build API Gateway
+        run: |
+          cd cmd/gateway && go build -o ../../bin/gateway
+
+      - name: Build Model Server
+        run: |
+          cd cmd/model-server && go build -o ../../bin/model-server
+
+      - name: Build API Service
+        run: |
+          cd cmd/api && go build -o ../../bin/api
+
+      - name: Security scan
+        run: |
+          go list -json -m all | nancy sleuth
+
+      - name: Static code analysis
+        run: |
+          staticcheck ./...
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        if: success()
+        with:
+          name: binaries
+          path: bin/
+
+  deploy-dev:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Download built artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: binaries
+          path: ./bin
+
+      - name: Deploy to Dev Environment
+        run: |
+          echo "Deploying gateway, api, and model-server to dev environment..."
+          # Placeholder for actual deployment command(s)
+          # Example: kubectl apply -f k8s/dev/
+          # Or: scp bin/* user@dev-server:/opt/mlops-platform/
+        env:
+          DEPLOYMENT_TOKEN: ${{ secrets.DEV_DEPLOYMENT_TOKEN }}
+        # Replace with actual deployment logic as needed
+
+  notify-failure:
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send failure notification
+        run: |
+          echo "Pipeline failed. Please check the logs."
+          # Example integration with Slack, Email, etc.
+          # curl -X POST -H 'Content-type: application/json' \
+          # --data '{"text":"GitHub Actions CI failed for MLOps Platform"}' \
+          # ${{ secrets.NOTIFICATION_WEBHOOK }}

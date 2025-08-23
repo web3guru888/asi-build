@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme for the DogExplorer application -->
+    <style name="Theme.DogExplorer" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Primary brand color applied to action bar and other primary UI elements -->
+        <item name="colorPrimary">@color/purple_500</item>
+        <!-- Darker variant of primary color used for darker areas like status bar -->
+        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <!-- Secondary color used for buttons and interactive elements -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <!-- Color applied to control highlights and ripples -->
+        <item name="colorSecondaryVariant">@color/teal_200</item>
+        <!-- Background color for the application's UI surfaces -->
+        <item name="android:background">@color/dark_background</item>
+        <!-- Color applied to text and icons on dark backgrounds for proper contrast -->
+        <item name="android:textColor">@color/white</item>
+        <!-- Drawer icon tint (used in navigation drawer, if present) -->
+        <item name="drawerArrowStyle">@style/Widget.MaterialComponents.DrawerArrowToggle</item>
+        <!-- Ensure proper theme support for RecyclerView and other components -->
+        <item name="android:windowBackground">@color/dark_window_background</item>
+        <!-- ActionBar title text appearance -->
+        <item name="actionBarStyle">@style/Widget.DogExplorer.ActionBar</item>
+    </style>
+
+    <!-- Custom ActionBar style for dark theme -->
+    <style name="Widget.DogExplorer.ActionBar" parent="Widget.MaterialComponents.ActionBar.Solid">
+        <item name="android:titleTextStyle">
+            @style/TextAppearance.DogExplorer.ActionBar.Title
+        </item>
+    </style>
+
+    <!-- Text appearance for ActionBar title -->
+    <style name="TextAppearance.DogExplorer.ActionBar.Title" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+</resources>

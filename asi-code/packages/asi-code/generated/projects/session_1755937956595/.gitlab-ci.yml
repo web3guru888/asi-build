@@ -1,0 +1,306 @@
+name: MLOps Platform CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Services
+    strategy:
+      matrix:
+        service:
+          - api
+          - gateway
+          - model-server
+
+    runs-on: ubuntu-latest
+
+    container:
+      image: golang:1.22-alpine
+      resources:
+        limits:
+          memory: 2048M
+          cpus: 2
+
+    services:
+      docker:
+        image: docker:dind
+        privileged: true
+        options: >-
+          --driver=overlay2
+          --host=tcp://127.0.0.1:2375
+          --iptables=false
+          --ip-forward=true
+          --log-level=warn
+      minio:
+        image: minio/minio
+        entrypoint: ["/bin/sh", "-c"]
+        command: >
+          mkdir -p /data/ml-models &&
+          /usr/bin/minio server /data --console-address :9001 --address :9000
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        options: >-
+          --health-cmd="curl -f http://localhost:9000/minio/health/live || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+      GOFLAGS: "-mod=readonly"
+      GO_IMPORT_PATH: "mlops-platform"
+
+    before_script:
+      - go version
+      - apk add --no-cache git curl bash build-base
+      - mkdir -p /go/src/${GO_IMPORT_PATH}
+      - cp -r ./* /go/src/${GO_IMPORT_PATH}/
+      - cd /go/src/${GO_IMPORT_PATH}
+      - export PATH="${PATH}:/go/bin"
+
+    script:
+      - |
+        case ${{ matrix.service }} in
+          "api")
+            cd cmd/api
+            go build -trimpath -ldflags="-s -w" -o ../../bin/mlops-api
+            ;;
+          "gateway")
+            cd cmd/gateway
+            go build -trimpath -ldflags="-s -w" -o ../../bin/mlops-gateway
+            ;;
+          "model-server")
+            cd cmd/model-server
+            go build -trimpath -ldflags="-s -w" -o ../../bin/mlops-model-server
+            ;;
+          *)
+            echo "Unknown service: ${{ matrix.service }}"
+            exit 1
+            ;;
+        esac
+      - ls -la ../..
+      - test -f bin/mlops-${{ matrix.service }} || (echo "Binary not built"; exit 1)
+
+    artifacts:
+      name: ${CI_JOB_NAME}_${{ matrix.service }}
+      paths:
+        - bin/mlops-${{ matrix.service }}
+      expire_in: 1 week
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    container:
+      image: golang:1.22-alpine
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: mlops_test
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd=pg_isready
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    environment: test
+    env:
+      DATABASE_URL: "postgres://testuser:testpass@postgres:5432/mlops_test?sslmode=disable"
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: "minioadmin"
+      MINIO_SECRET_KEY: "minioadmin"
+      MODEL_STORAGE_PATH: "/tmp/models"
+      LOG_LEVEL: "debug"
+
+    before_script:
+      - go version
+      - apk add --no-cache git curl
+      - mkdir -p /go/src/mlops-platform
+      - cp -r ./* /go/src/mlops-platform/
+      - cd /go/src/mlops-platform
+      - export PATH="${PATH}:/go/bin"
+
+    script:
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.2
+      - golangci-lint run --timeout=5m
+      - |
+        set +e
+        go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+        TEST_EXIT_CODE=$?
+        set -e
+        [ -f coverage.txt ] || touch coverage.txt
+        exit $TEST_EXIT_CODE
+
+    coverage: '/^coverage:.*(\d+(?:\.\d+)?%)$/'
+    artifacts:
+      reports:
+        coverage_report:
+          coverage_format: cobertura
+          path: coverage.txt
+      paths:
+        - coverage.txt
+
+  build-docker:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [build, test]
+
+    services:
+      docker:
+        image: docker:dind
+        privileged: true
+        options: >-
+          --host=tcp://127.0.0.1:2375
+          --iptables=false
+          --ip-forward=true
+
+    before_script:
+      - |
+        echo "Setting up environment..."
+        apk add --no-cache docker-cli curl jq
+        mkdir -p bin/
+        for service in api gateway model-server; do
+          if [ -f "../build/bin/mlops-$service" ]; then
+            cp "../build/bin/mlops-$service" bin/
+          else
+            echo "Binary for $service not found!"
+            exit 1
+          fi
+        done
+      - export DOCKER_HOST=tcp://127.0.0.1:2375
+      - docker info
+
+    script:
+      - docker build -t mlops-api:latest --build-arg BIN=mlops-api -f Dockerfile.api .
+      - docker build -t mlops-gateway:latest --build-arg BIN=mlops-gateway -f Dockerfile.gateway .
+      - docker build -t mlops-model-server:latest --build-arg BIN=mlops-model-server -f Dockerfile.model-server .
+
+      - |
+        for image in api gateway model-server; do
+          docker image inspect mlops-$image:latest > /dev/null || (echo "Image mlops-$image missing"; exit 1)
+        done
+      - echo "All Docker images built successfully."
+
+    artifacts:
+      paths:
+        - bin/
+      name: docker-binaries
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-docker
+    environment: staging
+    if: >-
+      ${{ github.ref == 'refs/heads/develop' &&
+          github.event_name == 'push' }}
+
+    steps:
+      - name: Deploy with docker-compose
+        run: |
+          mkdir -p /tmp/staging
+          cat > /tmp/staging/docker-compose.yml << EOF
+          version: "3.8"
+          services:
+            mlops-database:
+              image: postgres:15-alpine
+              environment:
+                POSTGRES_DB: mlops_staging
+                POSTGRES_USER: staginguser
+                POSTGRES_PASSWORD: stagingpass
+              ports:
+                - "5433:5432"
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U staginguser -d mlops_staging"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+
+            minio:
+              image: minio/minio
+              command: server /data --console-address :9001
+              environment:
+                MINIO_ROOT_USER: minioadmin
+                MINIO_ROOT_PASSWORD: minioadmin
+              ports:
+                - "9000:9000"
+                - "9001:9001"
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+
+            api:
+              image: mlops-api:latest
+              depends_on:
+                - mlops-database
+                - minio
+              environment:
+                - DATABASE_URL=postgres://staginguser:stagingpass@mlops-database:5432/mlops_staging?sslmode=disable
+                - MINIO_ENDPOINT=minio:9000
+                - MINIO_ACCESS_KEY=minioadmin
+                - MINIO_SECRET_KEY=minioadmin
+              ports:
+                - "8080:8080"
+              healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+
+            gateway:
+              image: mlops-gateway:latest
+              depends_on:
+                - api
+              ports:
+                - "8000:8000"
+              healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+
+            model-server:
+              image: mlops-model-server:latest
+              depends_on:
+                - minio
+              environment:
+                - MINIO_ENDPOINT=minio:9000
+                - MINIO_ACCESS_KEY=minioadmin
+                - MINIO_SECRET_KEY=minioadmin
+                - MODEL_STORAGE_PATH=/models
+              ports:
+                - "9002:9002"
+              healthcheck:
+                test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9002/health"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+          volumes:
+            mlops-model-data:
+            mlops-db-data:
+          EOF
+
+          cd /tmp/staging
+          docker-compose up -d
+          sleep 30
+
+          # Wait for services to be healthy
+          for service in mlops-database minio api gatew

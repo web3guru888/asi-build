@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary colors for dark theme -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+
+    <!-- Secondary colors -->
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+
+    <!-- Background and surface colors -->
+    <color name="black">#FF000000</color>
+    <color name="background">#FF121212</color>
+    <color name="surface">#FF1E1E1E</color>
+
+    <!-- On-surface text and icon colors -->
+    <color name="on_background">#FFFFFFFF</color>
+    <color name="on_surface">#FFFFFFE0</color>
+    <color name="on_surface_variant">#FFFFFF75</color>
+
+    <!-- Error colors -->
+    <color name="error">#FFFF7043</color>
+    <color name="error_container">#FF601410</color>
+    <color name="on_error">#FF000000</color>
+
+    <!-- State colors -->
+    <color name="outline">#FFFFFF54</color>
+    <color name="outline_variant">#FF404040</color>
+
+    <!-- Custom dog-themed accent colors -->
+    <color name="dog_accent">#FFFF9800</color> <!-- Warm orange accent for dog-related UI elements -->
+    <color name="dog_primary_dark">#FF5D4037</color> <!-- Deep brown for headers and app bar -->
+    <color name="favorite_heart">#FFF176</color> <!-- Soft yellow for favorite icons -->
+
+    <!-- Card and list item backgrounds -->
+    <color name="card_background">#FF2B2B2B</color>
+    <color name="list_item_background">#FF242424</color>
+
+    <!-- Divider color -->
+    <color name="divider">#40FFFFFF</color>
+</resources>

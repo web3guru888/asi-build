@@ -1,0 +1,11 @@
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <title>Custom Paw Print</title>
+  <circle cx="12" cy="20" r="6" fill="#8B4513" />
+  <circle cx="18" cy="12" r="6" fill="#8B4513" />
+  <circle cx="30" cy="12" r="6" fill="#8B4513" />
+  <circle cx="36" cy="20" r="6" fill="#8B4513" />
+  <circle cx="24" cy="32" r="10" fill="#8B4513" />
+  <text x="24" y="45" font-size="6" text-anchor="middle" fill="#696969" font-family="Verdana">
+    Woof!
+  </text>
+</svg>

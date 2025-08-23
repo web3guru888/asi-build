@@ -1,0 +1,500 @@
+file: pkg/api/spec/openapi.yaml
+Purpose: OpenAPI 3.0 specification for MLOps platform API
+---
+openapi: 3.0.3
+info:
+  title: MLOps Platform API
+  description: RESTful API for managing machine learning model lifecycle including registration, versioning, deployment, and inference.
+  version: 1.0.0
+  contact:
+    name: Fetch.ai ASI:One
+    url: https://agentverse.ai
+    email: support@agentverse.ai
+servers:
+  - url: https://api.mlops-platform.example.com/v1
+    description: Production server
+  - url: http://localhost:8080/v1
+    description: Local development server
+paths:
+  /models:
+    get:
+      summary: List registered models
+      operationId: listModels
+      tags:
+        - Models
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: Filter models by name
+        - name: version
+          in: query
+          schema:
+            type: string
+          description: Filter by model version (e.g., "latest", "v1", "v2")
+      responses:
+        '200':
+          description: A list of registered models
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModelInfo'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Register a new model
+      operationId: registerModel
+      tags:
+        - Models
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateModelRequest'
+      responses:
+        '201':
+          description: Model created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelInfo'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /models/{modelId}/versions:
+    post:
+      summary: Register a new version of an existing model
+      operationId: registerModelVersion
+      tags:
+        - Models
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The model identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateModelVersionRequest'
+      responses:
+        '201':
+          description: Model version created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelVersionInfo'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Model not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /models/{modelId}/versions/{version}/deploy:
+    post:
+      summary: Deploy a specific model version
+      operationId: deployModelVersion
+      tags:
+        - Deployment
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeployModelRequest'
+      responses:
+        '202':
+          description: Model deployment initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeploymentStatus'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Model version not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /models/{modelId}/versions/{version}/predict:
+    post:
+      summary: Execute inference on a deployed model version
+      operationId: predict
+      tags:
+        - Inference
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Prediction result
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Model version not deployed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Prediction failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /health:
+    get:
+      summary: Health check endpoint
+      operationId: healthCheck
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+components:
+  schemas:
+    ModelInfo:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the model
+          example: "model-123"
+        name:
+          type: string
+          description: Human-readable name of the model
+          example: "fraud-detection-model"
+        description:
+          type: string
+          description: Optional description of the model
+          example: "Detects fraudulent transactions using supervised learning"
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    ModelVersionInfo:
+      type: object
+      required:
+        - modelId
+        - version
+        - url
+        - framework
+        - createdAt
+        - status
+      properties:
+        modelId:
+          type: string
+          description: ID of the parent model
+        version:
+          type: string
+          description: Semantic version of the model
+          example: "v1.2.0"
+        url:
+          type: string
+          format: uri
+          description: Storage location of the model artifact
+        framework:
+          type: string
+          enum: [tensorflow, pytorch, sklearn, onnx, xgboost]
+          description: Machine learning framework used
+        metrics:
+          type: object
+          description: Training evaluation metrics
+          additionalProperties:
+            oneOf:
+              - type: number
+              - type: string
+          example:
+            accuracy: 0.98
+            f1_score: 0.95
+            loss: 0.05
+        metadata:
+          type: object
+          description: Arbitrary metadata about the model version
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when version was registered
+        status:
+          type: string
+          enum: [registered, deployed, archived]
+          description: Current lifecycle status
+
+    CreateModelRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name of the model
+          example: "sentiment-analysis"
+        description:
+          type: string
+          description: Optional model description
+
+    CreateModelVersionRequest:
+      type: object
+      required:
+        - url
+        - framework
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Location of model artifact (S3, GCS, etc.)
+          example: "s3://models-bucket/sentiment-v1.onnx"
+        framework:
+          type: string
+          enum: [tensorflow, pytorch, sklearn, onnx, xgboost]
+          description: Framework used to train the model
+        version:
+          type: string
+          description: Specific version identifier
+          example: "v1.0.0"
+        metrics:
+          type: object
+          description: Evaluation metrics from training
+          additionalProperties:
+            oneOf:
+              - type: number
+              - type: string
+        metadata:
+          type: object
+          description: Additional contextual information
+          additionalProperties: true
+
+    DeployModelRequest:
+      type: object
+      properties:
+        replicas:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 1
+          description: Number of replicas to deploy
+        resources:
+          type: object
+          properties:
+            cpu:
+              type: string
+              example: "500m"
+            memory:
+              type: string
+              example: "2Gi"
+        environment:
+          type: object
+          description: Environment variables for serving container
+          additionalProperties:
+            type: string
+
+    DeploymentStatus:
+      type: object
+      required:
+        - modelId
+        - version
+        - status
+        - message
+        - deployedAt
+      properties:
+        modelId:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+          enum: [pending, deploying, deployed, failed]
+        message:
+          type: string
+          description: Human-readable status message
+        deployedAt:
+          type: string
+          format: date-time
+        url:
+          type: string
+          format: uri
+          description: Endpoint for inference once deployed
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+        details:
+          type: string
+          description: Optional additional details
+
+    HealthStatus:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          description: Service version
+          example: "1.0.0"
+        commit:
+          type: string
+          description: Git commit SHA
+          example: "a1b2c3d4"
+        uptime:
+          type: number
+          description: Uptime in seconds
+        services:
+          type: object
+          description: Status of dependent services
+          additionalProperties:
+            type: boolean
+
+    AuthToken:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: JWT authentication token
+        expiresIn:
+          type: integer
+          description: Time until expiration in seconds
+          example: 3600
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Authorization header using the Bearer scheme
+
+  examples:
+    modelResponse:
+      summary: Example model list response
+      value:
+        - id: "model-001"
+          name: "churn-prediction"
+          description: "Predicts customer churn probability"
+          createdAt: "2024-01-15T14:30:00Z"
+          updatedAt: "2024-01-15T14:30:00Z"
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Models
+    description: Model registration and versioning
+  - name: Deployment
+    description: Model deployment lifecycle
+  - name: Inference
+    description: Model prediction and serving
+  - name: System
+    description: Health checks and system status

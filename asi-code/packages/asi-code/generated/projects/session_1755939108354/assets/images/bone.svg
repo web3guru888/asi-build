@@ -1,0 +1,12 @@
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <title>Dog Bone</title>
+  <path d="M12 16c0-4 3.5-7 8-7s8 3 8 7c0 4-3.5 7-8 7s-8-3-8-7zm24 0c0-4 3.5-7 8-7s8 3 8 7c0 4-3.5 7-8 7s-8-3-8-7z" fill="#F5DEB3"/>
+  <circle cx="16" cy="16" r="5" fill="#DEB887"/>
+  <circle cx="32" cy="16" r="5" fill="#DEB887"/>
+  <rect x="20" y="12" width="8" height="8" fill="#F5DEB3"/>
+  <path d="M12 32c0 4 3.5 7 8 7s8-3 8-7c0-4 3.5-7 8-7s8 3 8 7" fill="#F5DEB3"/>
+  <circle cx="16" cy="32" r="5" fill="#DEB887"/>
+  <circle cx="32" cy="32" r="5" fill="#DEB887"/>
+  <rect x="20" y="28" width="8" height="8" fill="#F5DEB3"/>
+  <path d="M16 16c2-6 6-8 12-8s10 2 12 8c-2 6-6 8-12 8s-10-2-12-8zm0 16c2-6 6-8 12-8s10 2 12 8c-2 6-6 8-12 8s-10-2-12-8z" fill="#D2B48C"/>
+</svg>
