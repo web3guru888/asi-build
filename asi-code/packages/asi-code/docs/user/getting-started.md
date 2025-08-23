@@ -50,6 +50,7 @@ Before installing ASI-Code, ensure you have:
 
 You'll need API keys from at least one AI provider:
 
+- **ASI:One (Recommended)**: Sign up at [asi1.ai](https://asi1.ai) - Fetch.ai's ASI platform
 - **Anthropic**: Sign up at [console.anthropic.com](https://console.anthropic.com)
 - **OpenAI**: Sign up at [platform.openai.com](https://platform.openai.com)
 
@@ -123,16 +124,17 @@ You'll be prompted to configure your setup:
 🚀 Welcome to ASI-Code Setup
 
 ? Select your preferred AI provider: 
-❯ Anthropic Claude (Recommended)
+❯ ASI:One (Fetch.ai) - Recommended
+  Anthropic Claude
   OpenAI GPT
   Custom Provider
 
 ? Enter your API key: [hidden]
 
 ? Choose default model:
-❯ claude-3-sonnet-20240229
-  claude-3-haiku-20240307
-  claude-3-opus-20240229
+❯ asi1-mini (Fast general purpose)
+  asi1-extended (Complex reasoning)
+  asi1-agentic (Agent orchestration)
 
 ? Enable consciousness engine? (Y/n) y
 
@@ -204,11 +206,13 @@ Create a `.env` file in your project directory:
 
 ```bash
 # AI Provider API Keys
+ASI1_API_KEY=your-asi1-key-here      # Recommended: ASI:One from Fetch.ai
+ASI1_MODEL=asi1-mini                 # Choose: asi1-mini, asi1-extended, asi1-agentic
 ANTHROPIC_API_KEY=your-anthropic-key-here
 OPENAI_API_KEY=your-openai-key-here
 
 # Optional: Customize server settings
-ASI_CODE_PORT=3000
+ASI_CODE_PORT=3333
 ASI_CODE_HOST=localhost
 
 # Optional: Enable debug mode
@@ -245,12 +249,12 @@ asi-code tool test <name>  # Test a tool
 curl http://localhost:3000/health
 
 # Create session
-curl -X POST http://localhost:3000/api/v1/sessions \
+curl -X POST http://localhost:3000/api/sessions \
   -H "Content-Type: application/json" \
   -d '{"userId": "test-user"}'
 
 # Send message
-curl -X POST http://localhost:3000/api/v1/sessions/SESSION_ID/messages \
+curl -X POST http://localhost:3000/api/sessions/SESSION_ID/messages \
   -H "Content-Type: application/json" \
   -d '{"content": "Hello, ASI-Code!", "type": "user"}'
 ```

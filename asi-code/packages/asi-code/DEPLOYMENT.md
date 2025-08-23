@@ -1181,7 +1181,7 @@ ASI-Code provides comprehensive health checks:
 curl http://localhost:3000/health
 
 # Detailed health check
-curl http://localhost:3000/api/v1/status
+curl http://localhost:3000/health
 
 # Metrics endpoint
 curl http://localhost:3000/metrics
@@ -1346,7 +1346,7 @@ ps aux | grep asi-code
 top -p $(pgrep asi-code)
 
 # Check Node.js heap
-curl http://localhost:3000/api/v1/status | jq '.memory'
+curl http://localhost:3000/health | jq '.memory'
 
 # Adjust memory limits
 export NODE_OPTIONS="--max-old-space-size=2048"

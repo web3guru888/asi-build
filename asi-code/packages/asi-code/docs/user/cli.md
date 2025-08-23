@@ -190,8 +190,8 @@ $ asi-code start
 
 API endpoints:
   GET  http://localhost:3000/health
-  POST http://localhost:3000/api/v1/sessions
-  GET  http://localhost:3000/api/v1/events (SSE)
+  POST http://localhost:3000/api/sessions
+  GET  http://localhost:3000/api/events (SSE)
 
 WebSocket:
   ws://localhost:3000/ws

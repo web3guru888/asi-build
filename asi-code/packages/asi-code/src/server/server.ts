@@ -191,8 +191,35 @@ export function createServer(config: any): any {
   // For integration tests, return a simplified server interface
   const app = new Hono();
 
-  // Minimal setup for testing
-  setupMiddleware(app, config);
+  // Create default config if not provided
+  const serverConfig = {
+    cors: {
+      origin: config?.cors?.origin || ['*'],
+      credentials: config?.cors?.credentials || true,
+      methods: config?.cors?.methods || ['GET', 'POST', 'PUT', 'DELETE'],
+      allowedHeaders: config?.cors?.allowedHeaders || ['Content-Type', 'Authorization']
+    },
+    rateLimit: {
+      windowMs: config?.rateLimit?.windowMs || 15 * 60 * 1000,
+      maxRequests: config?.rateLimit?.maxRequests || 1000
+    },
+    auth: {
+      enabled: config?.auth?.enabled || false,
+      type: config?.auth?.type || 'jwt'
+    },
+    middleware: {
+      compression: config?.middleware?.compression || false,
+      helmet: config?.middleware?.helmet || false,
+      rateLimiting: config?.middleware?.rateLimiting || {
+        enabled: false
+      },
+      requestLogging: config?.middleware?.requestLogging || false
+    },
+    ...config
+  };
+
+  // Setup middleware with proper config
+  setupMiddleware(app, serverConfig);
 
   const server = {
     app,

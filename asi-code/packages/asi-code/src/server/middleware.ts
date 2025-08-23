@@ -9,6 +9,7 @@ import type { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { HTTPException } from 'hono/http-exception';
+import crypto from 'crypto';
 import type { ServerConfig } from './server.js';
 
 // Rate limiting store
@@ -54,6 +55,20 @@ class MemoryRateLimitStore {
 }
 
 const rateLimitStore = new MemoryRateLimitStore();
+
+// SECURITY FIX: Constant-time string comparison to prevent timing attacks
+function constantTimeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  
+  return result === 0;
+}
 
 // Cleanup rate limit store periodically
 setInterval(() => {
@@ -124,7 +139,8 @@ export function setupMiddleware(app: Hono, config: ServerConfig): void {
         );
       }
 
-      if (apiKey !== config.auth.apiKey) {
+      // SECURITY FIX: Use constant-time comparison to prevent timing attacks
+      if (!apiKey || !constantTimeCompare(apiKey, config.auth.apiKey)) {
         return c.json(
           {
             error: 'Invalid API key',
@@ -138,8 +154,17 @@ export function setupMiddleware(app: Hono, config: ServerConfig): void {
     });
   }
 
-  // Request validation middleware
+  // SECURITY FIX: Enhanced request validation middleware
   app.use('*', async (c, next) => {
+    // Validate request method
+    const allowedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'];
+    if (!allowedMethods.includes(c.req.method)) {
+      return c.json({
+        error: 'Method not allowed',
+        message: 'HTTP method not allowed'
+      }, 405);
+    }
+
     // Validate Content-Type for POST/PUT/PATCH requests
     if (['POST', 'PUT', 'PATCH'].includes(c.req.method)) {
       const contentType = c.req.header('content-type');
@@ -156,6 +181,23 @@ export function setupMiddleware(app: Hono, config: ServerConfig): void {
           },
           400
         );
+      }
+    }
+
+    // SECURITY FIX: Validate request headers for potential attacks
+    const userAgent = c.req.header('user-agent');
+    if (userAgent && userAgent.length > 500) {
+      return c.json({
+        error: 'Invalid request',
+        message: 'User-Agent header too long'
+      }, 400);
+    }
+
+    // Check for suspicious headers
+    const suspiciousHeaders = ['x-forwarded-host', 'x-original-url', 'x-rewrite-url'];
+    for (const header of suspiciousHeaders) {
+      if (c.req.header(header)) {
+        console.warn(`Suspicious header detected: ${header}`);
       }
     }
 
@@ -184,7 +226,13 @@ export function setupMiddleware(app: Hono, config: ServerConfig): void {
     try {
       await next();
     } catch (error) {
-      console.error('Server error:', error);
+      // SECURITY FIX: Log errors safely without exposing sensitive data
+      const errorId = Math.random().toString(36).substr(2, 9);
+      console.error(`Server error [${errorId}]:`, {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        requestId: (c as any).get('requestId')
+      });
 
       if (error instanceof HTTPException) {
         return error.getResponse();
@@ -216,19 +264,19 @@ export function setupMiddleware(app: Hono, config: ServerConfig): void {
           return c.json(
             {
               error: 'Not found',
-              message: error.message,
+              message: 'Resource not found',
+              requestId: (c as any).get('requestId')
             },
             404
           );
         }
 
+        // SECURITY FIX: Never expose detailed error messages in any environment
         return c.json(
           {
             error: 'Internal server error',
-            message:
-              process.env.NODE_ENV === 'development'
-                ? error.message
-                : 'An unexpected error occurred',
+            message: 'An unexpected error occurred',
+            requestId: (c as any).get('requestId')
           },
           500
         );

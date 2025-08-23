@@ -15,6 +15,7 @@ import { WSConnectionManager } from './connection-manager.js';
 import { WSMessageQueue } from './message-queue.js';
 import { WSBinaryManager, WSCompressionManager } from './compression.js';
 import { createDefaultMiddlewareStack } from './middleware.js';
+import { ConnectionMonitor } from './connection-monitor.js';
 import type { WSConnectionState, WSMessage, WSServerEvents } from './types.js';
 import type { ServerConfig } from '../../config/config-types.js';
 import type { ASIServer } from '../server.js';
@@ -30,6 +31,7 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
   private readonly messageQueue: WSMessageQueue;
   private readonly compressionManager: WSCompressionManager;
   private readonly binaryManager: WSBinaryManager;
+  private readonly connectionMonitor: ConnectionMonitor;
   private readonly config: ServerConfig['websocket'];
   private readonly asiServer: ASIServer;
   private readonly wsServer?: WebSocket.Server;
@@ -54,9 +56,22 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
       allowedTypes: this.config.binary?.allowedTypes,
     });
 
+    // Initialize connection monitoring for 10K+ connections
+    this.connectionMonitor = new ConnectionMonitor(this.connectionManager, {
+      healthCheckInterval: 5000, // 5 seconds
+      enableDetailedLogging: false, // Disable in production for performance
+      alertThresholds: {
+        latency: 1000,
+        errorRate: 0.05,
+        memoryUsage: 50 * 1024 * 1024, // 50MB per connection
+        connectionCount: 8000, // Alert at 80% capacity
+      },
+    });
+
     this.setupConnectionManagerEvents();
     this.setupMiddleware();
     this.setupEventHandlers();
+    this.setupMonitoringEvents();
   }
 
   /**
@@ -106,6 +121,29 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
       const { message, filter } = await c.req.json();
       await this.broadcast(message, filter);
       return c.json({ success: true });
+    });
+
+    // Connection monitoring endpoints for 10K+ connection management
+    app.get('/api/websocket/health', c => {
+      const healthReport = this.connectionMonitor.getCurrentHealthReport();
+      return c.json(healthReport || { status: 'initializing' });
+    });
+
+    app.get('/api/websocket/health/history', c => {
+      const timeRange = parseInt(c.req.query('timeRange') || '3600000'); // 1 hour default
+      const history = this.connectionMonitor.getHealthHistory(timeRange);
+      return c.json(history);
+    });
+
+    app.get('/api/websocket/metrics/:connectionId', c => {
+      const connectionId = c.req.param('connectionId');
+      const metrics = this.connectionMonitor.getConnectionMetrics(connectionId);
+      return c.json(metrics);
+    });
+
+    app.get('/api/websocket/uptime', c => {
+      const uptime = this.connectionMonitor.getUptime();
+      return c.json({ uptime, startTime: Date.now() - uptime });
     });
   }
 
@@ -749,11 +787,50 @@ export class WSServer extends EventEmitter<WebSocketServerEvents> {
   }
 
   /**
+   * Setup monitoring event handlers for 10K+ connection management
+   */
+  private setupMonitoringEvents(): void {
+    // Log critical health issues
+    this.connectionMonitor.on('health:critical', (report) => {
+      console.error('🚨 CRITICAL: WebSocket server health is critical!', {
+        connections: report.totalConnections,
+        alerts: report.alerts.length,
+        recommendations: report.recommendations,
+      });
+    });
+
+    this.connectionMonitor.on('health:unhealthy', (report) => {
+      console.warn('⚠️ WARNING: WebSocket server health is unhealthy', {
+        connections: report.totalConnections,
+        backpressureConnections: report.systemMetrics.networkThroughput,
+      });
+    });
+
+    // Handle high-severity alerts
+    this.connectionMonitor.on('alert:critical', (alert) => {
+      console.error('🔥 CRITICAL ALERT:', alert.message);
+      // Could integrate with alerting systems here
+    });
+
+    this.connectionMonitor.on('alert:error', (alert) => {
+      console.error('❌ ERROR ALERT:', alert.message);
+    });
+
+    // Periodic health reporting for 10K+ connection monitoring
+    this.connectionMonitor.on('health:report', (report) => {
+      if (report.totalConnections > 5000) {
+        console.log(`📊 WebSocket Health Report: ${report.totalConnections} connections, Status: ${report.overallStatus}`);
+      }
+    });
+  }
+
+  /**
    * Cleanup resources
    */
   cleanup(): void {
     this.connectionManager.cleanup();
     this.messageQueue.cleanup();
+    this.connectionMonitor.stop();
     this.removeAllListeners();
 
     if (this.wsServer) {

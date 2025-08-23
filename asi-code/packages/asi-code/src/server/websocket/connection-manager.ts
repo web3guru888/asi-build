@@ -975,6 +975,9 @@ export class WSConnectionManager extends EventEmitter<WSServerEvents> {
       this.removeConnection(connectionId, 1001, 'Server shutdown');
     }
 
+    // Cleanup connection optimizer
+    this.connectionOptimizer.cleanup();
+
     // Clear all data structures
     this.connections.clear();
     this.channels.clear();

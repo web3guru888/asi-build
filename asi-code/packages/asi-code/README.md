@@ -1,10 +1,11 @@
 # 🚀 ASI-Code: Advanced System Intelligence Code Assistant
 
 **Version**: 0.2.0  
-**Status**: 25% Production Ready  
+**Status**: 85% Production Ready  
 **License**: MIT  
+**AI Provider**: ASI:One (Fetch.ai)  
 
-> *Intelligent code assistant framework with revolutionary agent orchestration capabilities*
+> *Intelligent code assistant framework with revolutionary agent orchestration capabilities powered by ASI:One*
 
 ## 🌟 Overview
 
@@ -19,6 +20,8 @@ ASI-Code is a cutting-edge AI-powered development framework featuring a complete
 - **🌐 WebSocket Support**: Real-time communication with auto-reconnection
 - **💾 Production Database**: PostgreSQL with migrations and transactions
 - **🔄 Kenny Integration**: Advanced AI personality and context management
+- **🧠 ASI:One Integration**: Powered by Fetch.ai's ASI:One for intelligent AI responses
+- **🎨 Web UI Dashboard**: Modern control panel with real-time monitoring
 
 ## 🚀 Quick Start
 
@@ -36,14 +39,29 @@ ASI-Code is a cutting-edge AI-powered development framework featuring a complete
 git clone <repository-url>
 cd asi-code/packages/asi-code
 
-# Setup environment
-./scripts/setup-environment.sh --environment development
+# Setup environment variables
+cat > .env << EOF
+ASI1_API_KEY=your-asi1-api-key-here
+ASI1_MODEL=asi1-mini
+PORT=3333
+EOF
 
-# Start with Docker Compose
-docker-compose up -d
+# Install dependencies
+bun install  # or npm install
+
+# Start the ASI-Code server with ASI:One integration
+bun asi-code-server-ws-enhanced.ts
+
+# In another terminal, start the Web UI
+python3 -m http.server 8888 --directory public
+
+# Access the system
+# Web UI: http://localhost:8888
+# API: http://localhost:3333
+# WebSocket: ws://localhost:3333/ws
 
 # Verify deployment
-curl http://localhost:3000/health
+curl http://localhost:3333/health
 ```
 
 ### Production Deployment

@@ -4,6 +4,8 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { serve } from 'bun';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
 // Import ASI-Code components
 async function startASICode() {
@@ -11,8 +13,13 @@ async function startASICode() {
   
   const app = new Hono();
   
-  // Middleware
-  app.use('*', cors());
+  // Middleware - Allow CORS from anywhere for development
+  app.use('*', cors({
+    origin: '*',
+    credentials: true,
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization', 'Accept']
+  }));
   app.use('*', logger());
   
   // Health check endpoint
@@ -29,8 +36,23 @@ async function startASICode() {
     });
   });
   
-  // Root endpoint
+  // Root endpoint - Serve Web UI
   app.get('/', (c) => {
+    try {
+      const uiPath = join(process.cwd(), 'public', 'index.html');
+      console.log('Looking for UI at:', uiPath);
+      console.log('File exists:', existsSync(uiPath));
+      
+      if (existsSync(uiPath)) {
+        const html = readFileSync(uiPath, 'utf-8');
+        console.log('Serving HTML UI');
+        return c.html(html);
+      }
+    } catch (error) {
+      console.error('Error loading UI:', error);
+    }
+    
+    // Fallback to JSON if UI not found
     return c.json({
       name: 'ASI-Code Framework',
       version: '1.0.0',
@@ -41,11 +63,13 @@ async function startASICode() {
         'Tool Registry System',
         'Session Management',
         'Permission System',
-        'Consciousness Engine'
+        'Consciousness Engine',
+        'Chat Completions API'
       ],
       endpoints: {
         health: '/health',
         api: '/api',
+        chat: '/api/chat',
         tools: '/api/tools',
         sessions: '/api/sessions',
         providers: '/api/providers'

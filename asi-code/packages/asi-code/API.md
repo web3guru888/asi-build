@@ -404,6 +404,32 @@ List available tools.
 }
 ```
 
+#### GET /api/tools/:name
+
+Get tool schema and details.
+
+**Response:**
+```json
+{
+  "name": "write",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "filePath": {
+        "type": "string",
+        "description": "Path to write the file"
+      },
+      "content": {
+        "type": "string", 
+        "description": "Content to write"
+      }
+    },
+    "required": ["filePath", "content"]
+  },
+  "description": "Write content to files"
+}
+```
+
 #### POST /api/tools/:name/execute
 
 Execute a tool directly (outside of a session context).
@@ -486,6 +512,101 @@ List configured providers.
 }
 ```
 
+#### GET /api/providers/:name
+
+Get specific provider details and capabilities.
+
+**Response:**
+```json
+{
+  "name": "anthropic",
+  "capabilities": {
+    "textGeneration": true,
+    "functionCalling": true,
+    "codeGeneration": true
+  },
+  "config": {
+    "model": "claude-3-sonnet-20240229",
+    "maxTokens": 4000,
+    "temperature": 0.7
+  }
+}
+```
+
+#### POST /api/providers/:name/generate
+
+Generate content using a specific provider.
+
+**Request:**
+```json
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Write a Python function to calculate factorial"
+    }
+  ],
+  "options": {
+    "temperature": 0.7,
+    "maxTokens": 1000
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "response": {
+    "content": "def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)",
+    "model": "claude-3-sonnet-20240229",
+    "usage": {
+      "inputTokens": 15,
+      "outputTokens": 45,
+      "totalTokens": 60
+    }
+  }
+}
+```
+
+### Server-Sent Events (SSE)
+
+#### GET /api/events
+
+Subscribe to server-sent events for real-time updates.
+
+**Response:** Event stream with messages in the format:
+```
+event: connected
+data: {"connectionId": "conn_123_abc"}
+
+event: session:created
+data: {"sessionId": "session_abc123", "userId": "user123"}
+
+event: message:added
+data: {"sessionId": "session_abc123", "messageId": "msg_456", "content": "Hello"}
+```
+
+#### POST /api/events/broadcast
+
+Broadcast custom events to SSE connections.
+
+**Request:**
+```json
+{
+  "event": "custom:notification",
+  "data": {
+    "message": "System maintenance in 5 minutes"
+  },
+  "connectionId": "conn_123_abc"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true
+}
+```
 
 ## WebSocket API
 

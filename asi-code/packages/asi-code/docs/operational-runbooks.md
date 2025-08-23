@@ -92,7 +92,7 @@ This document contains operational runbooks for managing ASI-Code in production.
    ```bash
    # Test critical functionality
    curl -f https://asi-code.company.com/health
-   curl -f https://asi-code.company.com/api/v1/status
+   curl -f https://asi-code.company.com/health
    
    # Check error rates
    # (Prometheus query in Grafana)
@@ -904,7 +904,7 @@ pg_stat_database_numbackends{datname="asicode"}
    curl -f https://asi-code.company.com/health
    
    # Test functionality
-   curl -f https://asi-code.company.com/api/v1/status
+   curl -f https://asi-code.company.com/health
    
    # Check logs
    kubectl logs deployment/asi-code -n asi-code

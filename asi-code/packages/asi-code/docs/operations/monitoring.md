@@ -75,8 +75,8 @@ asi_code_info{version="1.0.0", node_version="18.17.0"} 1
 
 ```typescript
 // Request metrics
-asi_code_http_requests_total{method="POST", endpoint="/api/v1/messages", status="200"} 1234
-asi_code_http_request_duration_seconds{method="POST", endpoint="/api/v1/messages"} 0.245
+asi_code_http_requests_total{method="POST", endpoint="/api/sessions/*/messages", status="200"} 1234
+asi_code_http_request_duration_seconds{method="POST", endpoint="/api/sessions/*/messages"} 0.245
 
 // Session metrics
 asi_code_sessions_active 45
@@ -469,12 +469,12 @@ class HealthChecker {
 curl http://localhost:3000/health
 
 # Detailed health check
-curl http://localhost:3000/api/v1/health/detailed
+curl http://localhost:3000/health
 
-# Component-specific health
-curl http://localhost:3000/api/v1/health/kenny
-curl http://localhost:3000/api/v1/health/consciousness
-curl http://localhost:3000/api/v1/health/providers
+# Component-specific health (via main health endpoint)
+curl http://localhost:3000/health | jq '.components.kenny'
+curl http://localhost:3000/health | jq '.components.consciousness'
+curl http://localhost:3000/health | jq '.components.providers'
 ```
 
 ### Kubernetes Health Checks
@@ -1097,14 +1097,14 @@ curl http://localhost:3000/metrics | grep duration
 DEBUG=asi-code:performance asi-code start
 
 # Profile specific requests
-curl -w "%{time_total}" http://localhost:3000/api/v1/sessions
+curl -w "%{time_total}" http://localhost:3000/api/sessions
 ```
 
 #### Provider Issues
 
 ```bash
 # Check provider health
-curl http://localhost:3000/api/v1/providers
+curl http://localhost:3000/api/providers
 
 # Test provider connectivity
 asi-code provider test anthropic --verbose

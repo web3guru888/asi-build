@@ -6,11 +6,29 @@
  */
 
 import type { Hono } from 'hono';
-import { createReadStream } from 'fs';
+import { createReadStream, readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import type { DefaultASIServer } from './server.js';
 import type { KennyMessage } from '../kenny/index.js';
 
 export function setupRoutes(app: Hono, server: DefaultASIServer): void {
+  // Serve the Web UI at root
+  app.get('/', c => {
+    const uiPath = join(process.cwd(), 'public', 'index.html');
+    if (existsSync(uiPath)) {
+      const html = readFileSync(uiPath, 'utf-8');
+      return c.html(html);
+    }
+    // Fallback message if UI not found
+    return c.json({
+      message: 'ASI-Code Server Running',
+      version: '0.2.0',
+      api: '/api',
+      health: '/health',
+      ui: 'Web UI not found. Please ensure public/index.html exists.'
+    });
+  });
+
   // Health check endpoint
   app.get('/health', c => {
     return c.json({
