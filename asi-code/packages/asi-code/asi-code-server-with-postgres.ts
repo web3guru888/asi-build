@@ -155,37 +155,223 @@ class KennyOrchestrator {
       estimatedHours: architectTask.estimatedHours
     });
     
-    // Add more tasks based on task content (simplified for brevity)
+    // Add comprehensive tasks for all agents
     const lowerTask = task.toLowerCase();
-    if (lowerTask.includes('android') || lowerTask.includes('mobile')) {
-      const mobileTask = {
-        id: `${taskPrefix}-${taskId++}`,
-        name: 'Mobile App Development',
-        agent: 'kenny-frontend',
-        estimatedHours: 16,
-        dependencies: [`${taskPrefix}-1`],
-        canParallel: false,
-        status: 'pending'
-      };
-      subtasks.push(mobileTask);
-      
-      await db.createTask({
-        orchestrationId: orchestration.orchestration_id,
-        taskId: mobileTask.id,
-        name: mobileTask.name,
-        taskType: 'mobile',
-        assignedAgent: mobileTask.agent,
-        canParallel: mobileTask.canParallel,
-        dependencies: mobileTask.dependencies,
-        estimatedHours: mobileTask.estimatedHours
-      });
-    }
+    
+    // Database Design (can run in parallel with frontend after architecture)
+    const databaseTask = {
+      id: `${taskPrefix}-${taskId++}`,
+      name: 'Database Schema & Persistence Design',
+      agent: 'kenny-database',
+      estimatedHours: 6,
+      dependencies: [`${taskPrefix}-1`],
+      canParallel: true,
+      status: 'pending'
+    };
+    subtasks.push(databaseTask);
+    await db.createTask({
+      orchestrationId: orchestration.orchestration_id,
+      taskId: databaseTask.id,
+      name: databaseTask.name,
+      taskType: 'database',
+      assignedAgent: databaseTask.agent,
+      canParallel: databaseTask.canParallel,
+      dependencies: databaseTask.dependencies,
+      estimatedHours: databaseTask.estimatedHours
+    });
+    
+    // Frontend Development (can run in parallel with backend)
+    const frontendTask = {
+      id: `${taskPrefix}-${taskId++}`,
+      name: 'Frontend UI/UX Implementation',
+      agent: 'kenny-frontend',
+      estimatedHours: 12,
+      dependencies: [`${taskPrefix}-1`],
+      canParallel: true,
+      status: 'pending'
+    };
+    subtasks.push(frontendTask);
+    await db.createTask({
+      orchestrationId: orchestration.orchestration_id,
+      taskId: frontendTask.id,
+      name: frontendTask.name,
+      taskType: 'frontend',
+      assignedAgent: frontendTask.agent,
+      canParallel: frontendTask.canParallel,
+      dependencies: frontendTask.dependencies,
+      estimatedHours: frontendTask.estimatedHours
+    });
+    
+    // Backend Development (can run in parallel with frontend)
+    const backendTask = {
+      id: `${taskPrefix}-${taskId++}`,
+      name: 'Backend API & Business Logic',
+      agent: 'kenny-backend',
+      estimatedHours: 10,
+      dependencies: [`${taskPrefix}-1`],
+      canParallel: true,
+      status: 'pending'
+    };
+    subtasks.push(backendTask);
+    await db.createTask({
+      orchestrationId: orchestration.orchestration_id,
+      taskId: backendTask.id,
+      name: backendTask.name,
+      taskType: 'backend',
+      assignedAgent: backendTask.agent,
+      canParallel: backendTask.canParallel,
+      dependencies: backendTask.dependencies,
+      estimatedHours: backendTask.estimatedHours
+    });
+    
+    // Security Implementation
+    const securityTask = {
+      id: `${taskPrefix}-${taskId++}`,
+      name: 'Security & Authentication Implementation',
+      agent: 'kenny-security',
+      estimatedHours: 8,
+      dependencies: [`${taskPrefix}-3`, `${taskPrefix}-4`], // Depends on frontend and backend
+      canParallel: false,
+      status: 'pending'
+    };
+    subtasks.push(securityTask);
+    await db.createTask({
+      orchestrationId: orchestration.orchestration_id,
+      taskId: securityTask.id,
+      name: securityTask.name,
+      taskType: 'security',
+      assignedAgent: securityTask.agent,
+      canParallel: securityTask.canParallel,
+      dependencies: securityTask.dependencies,
+      estimatedHours: securityTask.estimatedHours
+    });
+    
+    // Testing (Worker 1)
+    const testingTask = {
+      id: `${taskPrefix}-${taskId++}`,
+      name: 'Unit & Integration Testing',
+      agent: 'kenny-worker-1',
+      estimatedHours: 6,
+      dependencies: [`${taskPrefix}-3`, `${taskPrefix}-4`], // After frontend/backend
+      canParallel: true,
+      status: 'pending'
+    };
+    subtasks.push(testingTask);
+    await db.createTask({
+      orchestrationId: orchestration.orchestration_id,
+      taskId: testingTask.id,
+      name: testingTask.name,
+      taskType: 'testing',
+      assignedAgent: testingTask.agent,
+      canParallel: testingTask.canParallel,
+      dependencies: testingTask.dependencies,
+      estimatedHours: testingTask.estimatedHours
+    });
+    
+    // Documentation (Worker 2)
+    const docsTask = {
+      id: `${taskPrefix}-${taskId++}`,
+      name: 'Documentation & API Specs',
+      agent: 'kenny-worker-2',
+      estimatedHours: 4,
+      dependencies: [`${taskPrefix}-3`, `${taskPrefix}-4`], // After main development
+      canParallel: true,
+      status: 'pending'
+    };
+    subtasks.push(docsTask);
+    await db.createTask({
+      orchestrationId: orchestration.orchestration_id,
+      taskId: docsTask.id,
+      name: docsTask.name,
+      taskType: 'documentation',
+      assignedAgent: docsTask.agent,
+      canParallel: docsTask.canParallel,
+      dependencies: docsTask.dependencies,
+      estimatedHours: docsTask.estimatedHours
+    });
+    
+    // Deployment (Worker 3)
+    const deploymentTask = {
+      id: `${taskPrefix}-${taskId++}`,
+      name: 'Deployment & CI/CD Setup',
+      agent: 'kenny-worker-3',
+      estimatedHours: 5,
+      dependencies: [`${taskPrefix}-6`], // After testing
+      canParallel: false,
+      status: 'pending'
+    };
+    subtasks.push(deploymentTask);
+    await db.createTask({
+      orchestrationId: orchestration.orchestration_id,
+      taskId: deploymentTask.id,
+      name: deploymentTask.name,
+      taskType: 'deployment',
+      assignedAgent: deploymentTask.agent,
+      canParallel: deploymentTask.canParallel,
+      dependencies: deploymentTask.dependencies,
+      estimatedHours: deploymentTask.estimatedHours
+    });
+    
+    // Create execution plan with proper phases
+    const executionPlan = [
+      {
+        phase: 1,
+        name: 'Architecture & Planning',
+        parallel: false,
+        taskIds: [`${taskPrefix}-1`] // Architecture
+      },
+      {
+        phase: 2,
+        name: 'Parallel Development',
+        parallel: true,
+        taskIds: [`${taskPrefix}-2`, `${taskPrefix}-3`, `${taskPrefix}-4`] // Database, Frontend, Backend in parallel
+      },
+      {
+        phase: 3,
+        name: 'Security & Quality',
+        parallel: true,
+        taskIds: [`${taskPrefix}-5`, `${taskPrefix}-6`, `${taskPrefix}-7`] // Security, Testing, Docs in parallel
+      },
+      {
+        phase: 4,
+        name: 'Deployment',
+        parallel: false,
+        taskIds: [`${taskPrefix}-8`] // Deployment
+      }
+    ];
     
     decomposition.subtasks = subtasks;
+    decomposition.executionPlan = executionPlan;
     decomposition.estimatedHours = subtasks.reduce((sum, t) => sum + t.estimatedHours, 0);
     decomposition.status = 'ready';
     
     return decomposition;
+  }
+  
+  private async executeSingleTask(task: any, ws: any): Promise<void> {
+    console.log(`Updating task ${task.id} to in_progress`);
+    await db.updateTaskStatus(task.id, 'in_progress');
+    
+    ws.send(JSON.stringify({
+      type: 'task-started',
+      taskId: task.id,
+      name: task.name,
+      agent: task.agent
+    }));
+    
+    // Simulate execution (in real system, this would call the actual agent)
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
+    
+    // Update task completion in database
+    await db.updateTaskStatus(task.id, 'completed', `✅ ${task.name} completed by ${task.agent}`);
+    
+    ws.send(JSON.stringify({
+      type: 'task-completed',
+      taskId: task.id,
+      name: task.name,
+      agent: task.agent,
+      result: `✅ ${task.name} completed by ${task.agent}`
+    }));
   }
   
   async executeTask(decomposition: any, ws: any): Promise<void> {
@@ -200,31 +386,46 @@ class KennyOrchestrator {
     }));
     
     try {
-      // Execute with progress tracking
-      for (const task of decomposition.subtasks) {
-        // Update task status in database
-        console.log(`Updating task ${task.id} to in_progress`);
-        await db.updateTaskStatus(task.id, 'in_progress');
-        
-        ws.send(JSON.stringify({
-          type: 'task-started',
-          taskId: task.id,
-          name: task.name,
-          agent: task.agent
-        }));
-        
-        // Simulate execution
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Update task completion in database
-        await db.updateTaskStatus(task.id, 'completed', `✅ ${task.name} completed`);
-        
-        ws.send(JSON.stringify({
-          type: 'task-completed',
-          taskId: task.id,
-          name: task.name,
-          result: `✅ ${task.name} completed`
-        }));
+      // Execute phases with parallel support
+      if (decomposition.executionPlan && decomposition.executionPlan.length > 0) {
+        for (const phase of decomposition.executionPlan) {
+          ws.send(JSON.stringify({
+            type: 'phase-started',
+            phase: phase.phase,
+            name: phase.name,
+            parallel: phase.parallel,
+            taskCount: phase.taskIds.length
+          }));
+          
+          if (phase.parallel) {
+            // Execute tasks in parallel
+            await Promise.all(phase.taskIds.map(async (taskId) => {
+              const task = decomposition.subtasks.find((t: any) => t.id === taskId);
+              if (task) {
+                await this.executeSingleTask(task, ws);
+              }
+            }));
+          } else {
+            // Execute tasks sequentially
+            for (const taskId of phase.taskIds) {
+              const task = decomposition.subtasks.find((t: any) => t.id === taskId);
+              if (task) {
+                await this.executeSingleTask(task, ws);
+              }
+            }
+          }
+          
+          ws.send(JSON.stringify({
+            type: 'phase-completed',
+            phase: phase.phase,
+            name: phase.name
+          }));
+        }
+      } else {
+        // Fallback to sequential execution if no plan
+        for (const task of decomposition.subtasks) {
+          await this.executeSingleTask(task, ws);
+        }
       }
       
       // Generate REAL code files using IntelligentGenerator
