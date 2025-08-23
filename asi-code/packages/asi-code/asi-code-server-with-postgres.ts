@@ -275,7 +275,7 @@ class KennyOrchestrator {
       this.activeExecutions.set(executionId, { decomposition, status: 'completed' });
       
     } catch (error) {
-      await db.log('error', 'orchestration', `Orchestration failed: ${error.message}`, { executionId }, decomposition.sessionId);
+      await db.log('error', 'orchestration', `Orchestration failed: ${error.message}`, { executionId }, decomposition.sessionId, error.stack);
       
       ws.send(JSON.stringify({
         type: 'orchestration-failed',
@@ -660,7 +660,7 @@ async function startIntegratedServer() {
           console.error('❌ WebSocket error:', error);
           
           if (ws.data) {
-            await db.log('error', 'websocket', `WebSocket error: ${error.message}`, { sessionId: ws.data.sessionId }, ws.data.sessionId);
+            await db.log('error', 'websocket', `WebSocket error: ${error.message}`, { sessionId: ws.data.sessionId }, ws.data.sessionId, error.stack);
           }
           
           const errorMessage = {
@@ -694,7 +694,7 @@ async function startIntegratedServer() {
       
       error(ws, error) {
         console.error('❌ WebSocket error:', error);
-        db.log('error', 'websocket', `WebSocket error: ${error.message}`, {}, ws.data?.sessionId).catch(console.error);
+        db.log('error', 'websocket', `WebSocket error: ${error.message}`, {}, ws.data?.sessionId, error.stack).catch(console.error);
       }
     }
   });
