@@ -203,6 +203,7 @@ class KennyOrchestrator {
       // Execute with progress tracking
       for (const task of decomposition.subtasks) {
         // Update task status in database
+        console.log(`Updating task ${task.id} to in_progress`);
         await db.updateTaskStatus(task.id, 'in_progress');
         
         ws.send(JSON.stringify({
@@ -275,7 +276,14 @@ class KennyOrchestrator {
       this.activeExecutions.set(executionId, { decomposition, status: 'completed' });
       
     } catch (error) {
-      await db.log('error', 'orchestration', `Orchestration failed: ${error.message}`, { executionId }, decomposition.sessionId, error.stack);
+      console.error('❌ Orchestration error:', error);
+      console.error('Stack trace:', error.stack);
+      
+      try {
+        await db.log('error', 'orchestration', `Orchestration failed: ${error.message}`, { executionId }, decomposition.sessionId, error.stack || '');
+      } catch (logError) {
+        console.error('Failed to log error:', logError);
+      }
       
       ws.send(JSON.stringify({
         type: 'orchestration-failed',

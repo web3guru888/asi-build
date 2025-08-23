@@ -213,11 +213,11 @@ export class DatabaseClient {
         status = $2,
         result = $3,
         error_message = $4,
-        completed_at = CASE WHEN $2 IN ('completed', 'failed') THEN CURRENT_TIMESTAMP ELSE completed_at END,
-        started_at = CASE WHEN $2 = 'in_progress' AND started_at IS NULL THEN CURRENT_TIMESTAMP ELSE started_at END
+        completed_at = CASE WHEN $5 IN ('completed', 'failed') THEN CURRENT_TIMESTAMP ELSE completed_at END,
+        started_at = CASE WHEN $6 = 'in_progress' AND started_at IS NULL THEN CURRENT_TIMESTAMP ELSE started_at END
       WHERE task_id = $1
     `;
-    await this.pool.query(query, [taskId, status, result, errorMessage]);
+    await this.pool.query(query, [taskId, status, result, errorMessage, status, status]);
   }
 
   // ==========================================
