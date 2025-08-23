@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: asi-code-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: asi_code_db
+      POSTGRES_USER: asi_admin
+      POSTGRES_PASSWORD: asi_secure_pass_2024
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - asi-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U asi_admin -d asi_code_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: asi-code-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@asicode.ai
+      PGADMIN_DEFAULT_PASSWORD: asi_admin_2024
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5434:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - asi-network
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  asi-network:
+    driver: bridge
