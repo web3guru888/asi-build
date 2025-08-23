@@ -129,11 +129,12 @@ class KennyOrchestrator {
     
     // Parse task and generate subtasks (existing logic)
     const subtasks = [];
+    const taskPrefix = `kenny-task-${Date.now()}`;
     let taskId = 1;
     
     // Architecture task
     const architectTask = {
-      id: `kenny-task-${taskId++}`,
+      id: `${taskPrefix}-${taskId++}`,
       name: 'System Architecture Design',
       agent: 'kenny-architect',
       estimatedHours: 4,
@@ -158,11 +159,11 @@ class KennyOrchestrator {
     const lowerTask = task.toLowerCase();
     if (lowerTask.includes('android') || lowerTask.includes('mobile')) {
       const mobileTask = {
-        id: `kenny-task-${taskId++}`,
+        id: `${taskPrefix}-${taskId++}`,
         name: 'Mobile App Development',
         agent: 'kenny-frontend',
         estimatedHours: 16,
-        dependencies: ['kenny-task-1'],
+        dependencies: [`${taskPrefix}-1`],
         canParallel: false,
         status: 'pending'
       };
