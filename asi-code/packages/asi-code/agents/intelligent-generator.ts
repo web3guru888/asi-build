@@ -515,35 +515,47 @@ CMD ["./mlops-platform"]`;
       
       console.log(`📁 Creating ${structure.length} files...`);
       
-      // Step 3: Generate each file with context
-      for (const filePath of structure) {
-        console.log(`  📝 Generating: ${filePath}`);
-        
-        const content = await this.generateFileContent(
-          filePath,
-          context,
-          structure,
-          generatedFiles
-        );
-        
-        // Save to memory for context
-        generatedFiles.push({
-          path: filePath,
-          content,
-          language: this.detectLanguage(filePath),
-          purpose: this.detectPurpose(filePath)
-        });
-        
-        // Write to disk
-        const fullPath = join(projectDir, filePath);
-        const dirPath = dirname(fullPath);
-        
-        if (!existsSync(dirPath)) {
-          mkdirSync(dirPath, { recursive: true });
+      // Step 3: Generate each file with context (limited to prevent timeout)
+      const MAX_FILES = 8; // Limit to prevent timeout with API calls
+      const filesToGenerate = structure.slice(0, MAX_FILES);
+      
+      if (structure.length > MAX_FILES) {
+        console.log(`  ⚠️  Limiting generation to ${MAX_FILES} files (from ${structure.length} total)`);
+      }
+      
+      for (const filePath of filesToGenerate) {
+        try {
+          console.log(`  📝 Generating: ${filePath}`);
+          
+          const content = await this.generateFileContent(
+            filePath,
+            context,
+            structure,
+            generatedFiles
+          );
+          
+          // Save to memory for context
+          generatedFiles.push({
+            path: filePath,
+            content,
+            language: this.detectLanguage(filePath),
+            purpose: this.detectPurpose(filePath)
+          });
+          
+          // Write to disk
+          const fullPath = join(projectDir, filePath);
+          const dirPath = dirname(fullPath);
+          
+          if (!existsSync(dirPath)) {
+            mkdirSync(dirPath, { recursive: true });
+          }
+          
+          writeFileSync(fullPath, content, 'utf-8');
+          savedFiles.push(filePath);
+        } catch (fileError) {
+          console.error(`  ❌ Failed to generate ${filePath}:`, fileError.message);
+          // Continue with next file
         }
-        
-        writeFileSync(fullPath, content, 'utf-8');
-        savedFiles.push(filePath);
       }
       
       // Step 4: Generate README with project info
@@ -552,8 +564,13 @@ CMD ["./mlops-platform"]`;
       writeFileSync(readmePath, readmeContent, 'utf-8');
       savedFiles.push('README.md');
       
+      // Convert relative paths to full paths for database storage
+      const fullPaths = savedFiles.map(file => 
+        `generated/projects/${sessionId}/${file}`
+      );
+      
       console.log(`✅ Successfully generated ${savedFiles.length} files`);
-      return { success: true, files: savedFiles };
+      return { success: true, files: fullPaths };
       
     } catch (error) {
       console.error('❌ Generation failed:', error);

@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (already running on port 5433)
+  # We'll connect to the existing asi-code-postgres container
+  
+  # Hasura GraphQL Engine
+  hasura:
+    image: hasura/graphql-engine:v2.36.0
+    container_name: asi-code-hasura
+    restart: always
+    ports:
+      - "8085:8080"
+    environment:
+      # Database connection - using container name and internal port
+      HASURA_GRAPHQL_DATABASE_URL: postgres://asi_admin:asi_secure_pass_2024@asi-code-postgres:5432/asi_code_db
+      
+      # Enable console
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      
+      # Enable dev mode for easier development
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      
+      # Admin secret for security
+      HASURA_GRAPHQL_ADMIN_SECRET: "asi_hasura_admin_secret_2024"
+      
+      # Enable query logging
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      
+      # Enable telemetry (optional)
+      HASURA_GRAPHQL_ENABLE_TELEMETRY: "false"
+      
+      # Unauthorized role for public access
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: "anonymous"
+      
+      # CORS configuration
+      HASURA_GRAPHQL_CORS_DOMAIN: "*"
+      
+      # WebSocket settings for subscriptions (removed WS_READ_COOKIE due to CORS conflict)
+      HASURA_GRAPHQL_ENABLE_ALLOWLIST: "false"
+      
+      # Live queries for real-time updates
+      HASURA_GRAPHQL_LIVE_QUERIES_MULTIPLEXED_REFETCH_INTERVAL: "1000"
+      HASURA_GRAPHQL_LIVE_QUERIES_MULTIPLEXED_BATCH_SIZE: "100"
+      
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - asi-code_asi-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+networks:
+  asi-code_asi-network:
+    external: true

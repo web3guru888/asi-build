@@ -42,6 +42,14 @@ export class DatabaseClient {
   }
 
   // ==========================================
+  // LOW-LEVEL DATABASE ACCESS
+  // ==========================================
+  
+  async query(text: string, params?: any[]) {
+    return this.pool.query(text, params);
+  }
+
+  // ==========================================
   // SESSION MANAGEMENT
   // ==========================================
 
