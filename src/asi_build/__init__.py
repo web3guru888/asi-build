@@ -15,7 +15,9 @@ Modules:
     optimization — Model optimization (quantization, pruning, distillation)
     quantum — Quantum-classical hybrid computing via Qiskit
     reasoning — Hybrid symbolic-neural reasoning
-    safety — Constitutional AI constraints
+    safety — Constitutional AI constraints + governance (DAO, formal verification,
+              smart contracts, Merkle audit, consensus, entity rights)
+    integrations — LangChain-Memgraph adapter, MCP-Memgraph server, agent tools
     compute — Job scheduling and resource management
     bio_inspired — Evolutionary and swarm optimization algorithms
     deployment — Cloud deployment (CUDO Compute + HuggingFace)

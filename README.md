@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-125%2B-brightgreen)
+![Tests](https://img.shields.io/badge/tests-160%2B-brightgreen)
 ![Status](https://img.shields.io/badge/status-research--alpha-orange)
 
 > ⚠️ **Research Software**: ASI:BUILD is an active research framework, not a production system. Module maturity varies significantly — some are well-implemented and tested, others are structural scaffolding awaiting real backends. See the [Modules](#modules) table for per-module status.
@@ -38,13 +38,20 @@ asi-build/
 │       ├── optimization/           # PyTorch model optimization
 │       ├── quantum/                # Quantum-classical hybrid (Qiskit)
 │       ├── reasoning/              # Hybrid symbolic-neural reasoning
-│       ├── safety/                 # Constitutional AI constraints
+│       ├── safety/                 # Constitutional AI + governance
+│       │   ├── formal_verification.py  # SymPy theorem proving
+│       │   └── governance/         # DAO, consensus, smart contracts,
+│       │                           #   Merkle audit, entity rights
+│       ├── integrations/           # External tool adapters
+│       │   ├── langchain-memgraph/ # LangChain ↔ Memgraph adapter
+│       │   ├── mcp-memgraph/       # MCP server for Memgraph
+│       │   └── agents/             # SQL→graph migration agent + HyGM
 │       ├── compute/                # Job scheduling + GPU allocation
 │       ├── bio_inspired/           # Evolutionary + swarm intelligence
 │       ├── deployment/             # Cloud deployment (CUDO + HuggingFace)
 │       └── memgraph_toolbox/       # Memgraph graph DB tools
-├── tests/                          # Test suite (125+ tests)
-├── examples/                       # Runnable examples
+├── tests/                          # Test suite (160+ tests)
+├── examples/                       # Runnable examples + MiniMind LLM reference
 ├── docs/                           # Documentation + research notes
 ├── configs/                        # Configuration templates
 ├── asi-code/                       # TypeScript AI coding IDE (separate product)
@@ -169,7 +176,8 @@ print(f"Synergy Φ_SI = {synergy.value:.4f} bits")
 | `optimization` | 🟡 Structural | PyTorch quantization, pruning, knowledge distillation | ~900 |
 | `quantum` | 🟡 Structural | Quantum-classical hybrid via Qiskit (circuit templates implemented) | ~700 |
 | `reasoning` | 🟡 Structural | Hybrid symbolic-neural reasoning engine (framework scaffolding) | ~1,100 |
-| `safety` | 🟡 Structural | Constitutional AI constraints, ethical verification (rules defined) | ~600 |
+| `safety` | 🟢 Implemented | Constitutional AI + governance: SymPy formal verification, DAO (quadratic voting, liquid democracy), smart contracts, Merkle audit ledger, entity rights | ~6,800 |
+| `integrations` | 🟢 Implemented | LangChain-Memgraph adapter, MCP-Memgraph server, SQL→graph migration agent, HyGM graph modeling | ~6,300 |
 | `compute` | 🟡 Structural | Job scheduling, resource management, GPU allocation | ~500 |
 | `bio_inspired` | 🟡 Structural | Evolutionary optimization, swarm intelligence | ~700 |
 | `deployment` | 🟡 Structural | CUDO Compute + HuggingFace Transformers deployment | ~600 |
@@ -180,7 +188,8 @@ print(f"Synergy Φ_SI = {synergy.value:.4f} bits")
 - 🟡 **Structural** — Framework and interfaces defined; backends or full implementations pending
 - 🔴 **Experimental** — In development, may be broken
 
-> The `archive/` directory contains experimental modules from v1 (template-generated scaffolding). These are preserved for reference but are not part of the main package and are not tested.
+> The `archive/` directory contains experimental/aspirational modules from v1. These are preserved for reference but are not part of the main package and are not tested.
+> The `examples/` directory includes MiniMind, a third-party small LLM reference project (Apache 2.0).
 
 ---
 
