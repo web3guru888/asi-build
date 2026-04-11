@@ -80,12 +80,12 @@ sys.modules["sklearn"].preprocessing = sys.modules["sklearn.preprocessing"]
 # Try importing the real cryptography package first; only stub if unavailable.
 # Stubbing over a real install breaks other tests (e.g. agi_communication auth).
 try:
-    import cryptography.hazmat.primitives.asymmetric.rsa  # noqa: F401
+    import cryptography.hazmat.backends  # noqa: F401
     import cryptography.hazmat.primitives.asymmetric.padding  # noqa: F401
+    import cryptography.hazmat.primitives.asymmetric.rsa  # noqa: F401
+    import cryptography.hazmat.primitives.ciphers  # noqa: F401
     import cryptography.hazmat.primitives.hashes  # noqa: F401
     import cryptography.hazmat.primitives.serialization  # noqa: F401
-    import cryptography.hazmat.primitives.ciphers  # noqa: F401
-    import cryptography.hazmat.backends  # noqa: F401
 except ImportError:
     _ensure_module("cryptography")
     _ensure_module("cryptography.hazmat")
