@@ -42,6 +42,7 @@ asi-build/
 │       │   ├── formal_verification.py  # SymPy theorem proving
 │       │   └── governance/         # DAO, consensus, smart contracts,
 │       │                           #   Merkle audit, entity rights
+│       ├── integration/            # Cognitive Blackboard + module adapters
 │       ├── integrations/           # External tool adapters
 │       │   ├── langchain-memgraph/ # LangChain ↔ Memgraph adapter
 │       │   ├── mcp-memgraph/       # MCP server for Memgraph
@@ -62,7 +63,7 @@ asi-build/
 │       ├── agi_reproducibility/    # Experiment tracking, PLN validation
 │       ├── agi_communication/      # AGI communication protocols
 │       └── servers/                # MCP + SSE graph servers
-├── tests/                          # Test suite (250+ tests)
+├── tests/                          # Test suite (2,500+ tests)
 ├── examples/                       # Runnable examples + MiniMind LLM reference
 ├── docs/                           # Documentation + research notes
 ├── configs/                        # Configuration templates
@@ -197,6 +198,7 @@ print(f"Transfer Entropy: {profile.transfer_entropy:.4f}")
 | `quantum` | 🟡 Structural | Quantum-classical hybrid via Qiskit (circuit templates implemented) | ~5,300 |
 | `reasoning` | 🟡 Structural | Hybrid symbolic-neural reasoning engine (framework scaffolding) | ~880 |
 | `safety` | 🟢 Implemented | Constitutional AI + governance: SymPy formal verification, DAO (quadratic voting, liquid democracy), smart contracts, Merkle audit ledger, entity rights | ~6,200 |
+| `integration` | 🟢 Implemented | Cognitive Blackboard: shared workspace + EventBus for cross-module communication. Adapters wire consciousness, KG, synergy, reasoning. | ~3,800 |
 | `integrations` | 🟢 Implemented | LangChain-Memgraph adapter, MCP-Memgraph server, SQL→graph migration agent, HyGM graph modeling | ~7,300 |
 | `compute` | 🟡 Structural | Job scheduling, resource management, GPU allocation | ~11,500 |
 | `bio_inspired` | 🟡 Structural | Evolutionary optimization, swarm intelligence | ~4,350 |
@@ -254,7 +256,7 @@ make install
 ### Running Tests
 
 ```bash
-# Run full test suite (250+ tests)
+# Run full test suite (2,500+ tests)
 pytest tests/ -v
 
 # Quick run (stop on first failure)
@@ -307,7 +309,7 @@ ASI:BUILD began in **August 2025** as an ambitious attempt to implement a compre
 In **April 2026**, the project underwent a major restructure:
 - All real, tested code moved to `src/asi_build/`
 - Template-generated and untested scaffolding moved to `archive/`
-- A proper test suite added (250+ tests)
+- A proper test suite added (now 2,500+ tests)
 - Modern Python packaging (`pyproject.toml`)
 - Import paths standardized
 - Public release on [GitHub](https://github.com/web3guru888/asi-build) (MIT license)
