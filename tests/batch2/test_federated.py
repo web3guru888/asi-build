@@ -1,3 +1,6 @@
+import pytest
+tf = pytest.importorskip("tensorflow", reason="tensorflow not installed")
+tensorflow = pytest.importorskip("tensorflow")
 """Tests for federated learning module (Candidate 7)."""
 import pytest
 import numpy as np

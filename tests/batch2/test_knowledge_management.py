@@ -1,5 +1,6 @@
 """Tests for knowledge management module (Candidate 11 — omniscience)."""
 import pytest
+aiohttp = pytest.importorskip("aiohttp", reason="aiohttp not installed")
 import asyncio
 import time
 

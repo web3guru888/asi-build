@@ -1,5 +1,6 @@
 """Tests for neuromorphic computing module (Candidate 10)."""
 import pytest
+psutil = pytest.importorskip("psutil", reason="psutil not installed")
 import numpy as np
 
 

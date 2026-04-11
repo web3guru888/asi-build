@@ -1,77 +1,36 @@
 """
-Holographic UI Framework for Kenny
+Holographic UI Framework
 
-A comprehensive holographic user interface system that provides:
+Provides holographic user interface capabilities including:
+- Spatial mathematics and 3D transformations
+- Light field processing
 - Volumetric display rendering
-- Light field generation
-- Holographic projection mapping
-- 3D gesture recognition
-- Interactive holograms
-- AR overlays
-- Telepresence capabilities
-- Spatial audio integration
+- Gesture recognition
 
-Author: Agent H1 - Holographic Specialist
+Note: Some submodules require optional dependencies (cv2, torch).
 """
 
 __version__ = "1.0.0"
-__author__ = "Agent H1"
 
-from .core import (
-    HolographicEngine,
-    HologramManager,
-    SpatialRenderer,
-    LightFieldProcessor
-)
+def __getattr__(name):
+    """Lazy imports — avoid cascading import errors from missing optional deps."""
+    _lazy = {
+        'HolographicEngine': '.core.engine',
+        'LightFieldProcessor': '.core.light_field',
+        'HolographicConfig': '.core.config',
+        'HolographicBase': '.core.base',
+        'SpatialMath': '.core.math_utils',
+        'HolographicEventSystem': '.core.event_system',
+        'VolumetricDisplay': '.display.volumetric_display',
+    }
+    if name in _lazy:
+        import importlib
+        mod = importlib.import_module(_lazy[name], package=__name__)
+        return getattr(mod, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
-from .display import (
-    VolumetricDisplay,
-    HolographicProjector,
-    DisplayCalibrator
-)
-
-from .gestures import (
-    GestureRecognizer3D,
-    SpatialInteractionHandler,
-    HandTracker
-)
-
-from .visualization import (
-    HolographicDataViz,
-    VolumetricRenderer,
-    InteractiveHologram
-)
-
-from .telepresence import (
-    HolographicTelepresence,
-    RemotePresenceManager,
-    SpatialStreamer
-)
-
-from .ar_overlay import (
-    ARHologramOverlay,
-    MixedRealityEngine,
-    SpatialAnchorSystem
-)
-
-__all__ = [
-    'HolographicEngine',
-    'HologramManager', 
-    'SpatialRenderer',
-    'LightFieldProcessor',
+__all__ = list({
+    'HolographicEngine', 'LightFieldProcessor', 'HolographicConfig',
+    'HolographicBase', 'SpatialMath', 'HolographicEventSystem',
     'VolumetricDisplay',
-    'HolographicProjector',
-    'DisplayCalibrator',
-    'GestureRecognizer3D',
-    'SpatialInteractionHandler',
-    'HandTracker',
-    'HolographicDataViz',
-    'VolumetricRenderer', 
-    'InteractiveHologram',
-    'HolographicTelepresence',
-    'RemotePresenceManager',
-    'SpatialStreamer',
-    'ARHologramOverlay',
-    'MixedRealityEngine',
-    'SpatialAnchorSystem'
-]
+})
