@@ -40,10 +40,10 @@ from src.asi_build.integration import (
     Subscription,
 )
 
-
 # ═══════════════════════════════════════════════════════════════════════
 # HELPERS
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class MockParticipant:
     """A simple mock module implementing BlackboardParticipant."""
@@ -100,7 +100,9 @@ class TransformerModule(MockParticipant):
     def __init__(self, name: str = "transformer"):
         super().__init__(
             name,
-            capabilities=ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.TRANSFORMER,
+            capabilities=ModuleCapability.PRODUCER
+            | ModuleCapability.CONSUMER
+            | ModuleCapability.TRANSFORMER,
         )
 
     def transform(self, entries: Sequence[BlackboardEntry]) -> Sequence[BlackboardEntry]:
@@ -155,6 +157,7 @@ def make_entry(
 # PROTOCOL TESTS
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestModuleCapability:
     def test_single_capability(self):
         assert ModuleCapability.PRODUCER.name == "PRODUCER"
@@ -199,9 +202,7 @@ class TestEntryStatus:
 
 class TestBlackboardEntry:
     def test_creation_defaults(self):
-        entry = BlackboardEntry(
-            topic="test", data={"x": 1}, source_module="mod"
-        )
+        entry = BlackboardEntry(topic="test", data={"x": 1}, source_module="mod")
         assert entry.topic == "test"
         assert entry.data == {"x": 1}
         assert entry.source_module == "mod"
@@ -385,6 +386,7 @@ class TestProtocolCompliance:
 # ═══════════════════════════════════════════════════════════════════════
 # EVENT BUS TESTS
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestEventBusSubscription:
     def test_subscribe_returns_id(self):
@@ -686,6 +688,7 @@ class TestEventBusStats:
 # ═══════════════════════════════════════════════════════════════════════
 # BLACKBOARD TESTS
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestBlackboardPost:
     def test_post_returns_id(self):
@@ -1110,10 +1113,7 @@ class TestBlackboardModuleRegistration:
         bb = CognitiveBlackboard(event_bus=bus)
         bb.register_module(MockParticipant("mod"))
         bb.unregister_module("mod")
-        unreg_events = [
-            e for e in cap.events
-            if e.event_type == "blackboard.module.unregistered"
-        ]
+        unreg_events = [e for e in cap.events if e.event_type == "blackboard.module.unregistered"]
         assert len(unreg_events) == 1
 
 
@@ -1158,6 +1158,7 @@ class TestBlackboardIntrospection:
 # THREAD SAFETY TESTS
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestThreadSafety:
     def test_concurrent_posts(self):
         """Multiple threads posting simultaneously should not lose data."""
@@ -1167,11 +1168,13 @@ class TestThreadSafety:
 
         def poster(thread_id):
             for i in range(n_per_thread):
-                bb.post(make_entry(
-                    topic=f"thread.{thread_id}",
-                    data={"thread": thread_id, "i": i},
-                    source=f"thread_{thread_id}",
-                ))
+                bb.post(
+                    make_entry(
+                        topic=f"thread.{thread_id}",
+                        data={"thread": thread_id, "i": i},
+                        source=f"thread_{thread_id}",
+                    )
+                )
 
         with ThreadPoolExecutor(max_workers=n_threads) as pool:
             futures = [pool.submit(poster, t) for t in range(n_threads)]
@@ -1297,6 +1300,7 @@ class TestAsyncBlackboard:
 # INTEGRATION SCENARIOS
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestIntegrationScenario:
     """End-to-end scenarios simulating real module interactions."""
 
@@ -1317,14 +1321,16 @@ class TestIntegrationScenario:
         bb.register_module(reasoning)
 
         # Consciousness posts Φ measurement
-        bb.post(BlackboardEntry(
-            topic="consciousness.phi",
-            data={"phi": 3.14, "elements": ["a", "b", "c"], "timestamp": time.time()},
-            source_module="consciousness",
-            confidence=0.95,
-            priority=EntryPriority.HIGH,
-            tags=frozenset({"iit", "measurement"}),
-        ))
+        bb.post(
+            BlackboardEntry(
+                topic="consciousness.phi",
+                data={"phi": 3.14, "elements": ["a", "b", "c"], "timestamp": time.time()},
+                source_module="consciousness",
+                confidence=0.95,
+                priority=EntryPriority.HIGH,
+                tags=frozenset({"iit", "measurement"}),
+            )
+        )
 
         # Reasoning queries it
         results = bb.get_by_topic("consciousness")
@@ -1332,10 +1338,12 @@ class TestIntegrationScenario:
         assert results[0].data["phi"] == 3.14
 
         # Structured query with confidence filter
-        high_conf = bb.query(BlackboardQuery(
-            topics=["consciousness"],
-            min_confidence=0.9,
-        ))
+        high_conf = bb.query(
+            BlackboardQuery(
+                topics=["consciousness"],
+                min_confidence=0.9,
+            )
+        )
         assert len(high_conf) == 1
 
     def test_transformer_chain(self):
@@ -1343,12 +1351,14 @@ class TestIntegrationScenario:
         bb = CognitiveBlackboard()
 
         # Post raw observation
-        raw_id = bb.post(BlackboardEntry(
-            topic="observation.raw",
-            data={"temperature": 22.5, "location": "lab_1"},
-            source_module="sensor",
-            confidence=0.99,
-        ))
+        raw_id = bb.post(
+            BlackboardEntry(
+                topic="observation.raw",
+                data={"temperature": 22.5, "location": "lab_1"},
+                source_module="sensor",
+                confidence=0.99,
+            )
+        )
 
         # Transformer reads and enriches
         transformer = TransformerModule()
@@ -1373,21 +1383,25 @@ class TestIntegrationScenario:
         def on_new_entry(event: CognitiveEvent):
             if event.payload.get("topic", "").startswith("stage1"):
                 # React by posting a stage2 entry
-                bb.post(BlackboardEntry(
-                    topic="stage2.result",
-                    data={"from": event.payload["entry_id"]},
-                    source_module="pipeline",
-                ))
+                bb.post(
+                    BlackboardEntry(
+                        topic="stage2.result",
+                        data={"from": event.payload["entry_id"]},
+                        source_module="pipeline",
+                    )
+                )
                 processed.append(event.payload["entry_id"])
 
         bb.event_bus.subscribe("blackboard.entry.added", handler=on_new_entry)
 
         # Post stage1 entry → triggers pipeline
-        bb.post(BlackboardEntry(
-            topic="stage1.input",
-            data={"input": "hello"},
-            source_module="source",
-        ))
+        bb.post(
+            BlackboardEntry(
+                topic="stage1.input",
+                data={"input": "hello"},
+                source_module="source",
+            )
+        )
 
         # Both entries should exist
         assert bb.entry_count == 2
@@ -1407,12 +1421,14 @@ class TestIntegrationScenario:
 
         for domain, module in domains:
             for i in range(5):
-                bb.post(BlackboardEntry(
-                    topic=f"discovery.{domain}",
-                    data={"domain": domain, "finding": f"result_{i}"},
-                    source_module=module,
-                    confidence=0.5 + i * 0.1,
-                ))
+                bb.post(
+                    BlackboardEntry(
+                        topic=f"discovery.{domain}",
+                        data={"domain": domain, "finding": f"result_{i}"},
+                        source_module=module,
+                        confidence=0.5 + i * 0.1,
+                    )
+                )
 
         assert bb.entry_count == 20
 
@@ -1425,10 +1441,12 @@ class TestIntegrationScenario:
         assert len(reasoning) == 5
 
         # Cross-domain query
-        high_conf = bb.query(BlackboardQuery(
-            topics=["discovery"],
-            min_confidence=0.8,
-        ))
+        high_conf = bb.query(
+            BlackboardQuery(
+                topics=["discovery"],
+                min_confidence=0.8,
+            )
+        )
         # Each domain has entries at 0.5, 0.6, 0.7, 0.8, 0.9 → 2 per domain ≥ 0.8
         assert len(high_conf) == 8
 
@@ -1437,11 +1455,13 @@ class TestIntegrationScenario:
         bb = CognitiveBlackboard()
 
         # Initial hypothesis
-        v1_id = bb.post(BlackboardEntry(
-            topic="hypothesis.dark_energy",
-            data={"statement": "Dark energy is constant", "confidence": 0.6},
-            source_module="reasoning",
-        ))
+        v1_id = bb.post(
+            BlackboardEntry(
+                topic="hypothesis.dark_energy",
+                data={"statement": "Dark energy is constant", "confidence": 0.6},
+                source_module="reasoning",
+            )
+        )
 
         # Refined hypothesis supersedes v1
         v2 = BlackboardEntry(
@@ -1457,10 +1477,12 @@ class TestIntegrationScenario:
         assert bb.get(v2_id).parent_id == v1_id
 
         # Active-only query returns only v2
-        active = bb.query(BlackboardQuery(
-            topics=["hypothesis"],
-            statuses={EntryStatus.ACTIVE},
-        ))
+        active = bb.query(
+            BlackboardQuery(
+                topics=["hypothesis"],
+                statuses={EntryStatus.ACTIVE},
+            )
+        )
         assert len(active) == 1
         assert active[0].entry_id == v2_id
 

@@ -49,6 +49,12 @@ Quick Start
 
 __version__ = "1.0.0"
 
+# Blackboard
+from .blackboard import CognitiveBlackboard
+
+# Event bus
+from .events import DeadLetter, EventBus, Subscription
+
 # Protocols and data types
 from .protocols import (
     AsyncBlackboardConsumer,
@@ -70,12 +76,6 @@ from .protocols import (
     ModuleCapability,
     ModuleInfo,
 )
-
-# Event bus
-from .events import DeadLetter, EventBus, Subscription
-
-# Blackboard
-from .blackboard import CognitiveBlackboard
 
 __all__ = [
     # Core

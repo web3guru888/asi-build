@@ -48,6 +48,7 @@ logger = logging.getLogger(__name__)
 # Subscription record
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Subscription:
     """A registered event subscription.
@@ -90,6 +91,7 @@ class DeadLetter:
 # ---------------------------------------------------------------------------
 # EventBus
 # ---------------------------------------------------------------------------
+
 
 class EventBus:
     """Thread-safe, async-compatible event bus with topic-based routing.
@@ -167,10 +169,7 @@ class EventBus:
                 n = len(self._subscriptions)
                 self._subscriptions.clear()
                 return n
-            to_remove = [
-                sid for sid, sub in self._subscriptions.items()
-                if sub.pattern == pattern
-            ]
+            to_remove = [sid for sid, sub in self._subscriptions.items() if sub.pattern == pattern]
             for sid in to_remove:
                 del self._subscriptions[sid]
             return len(to_remove)
@@ -368,9 +367,7 @@ class EventBus:
         matched.sort(key=lambda s: s.priority, reverse=True)
         return matched
 
-    def _record_dead_letter(
-        self, event: CognitiveEvent, sub_id: str, exc: Exception
-    ) -> None:
+    def _record_dead_letter(self, event: CognitiveEvent, sub_id: str, exc: Exception) -> None:
         with self._lock:
             self._error_count += 1
             self._dead_letters.append(
@@ -382,5 +379,7 @@ class EventBus:
             )
         logger.warning(
             "EventBus handler error [sub=%s, event=%s]: %s",
-            sub_id, event.event_type, exc,
+            sub_id,
+            event.event_type,
+            exc,
         )
