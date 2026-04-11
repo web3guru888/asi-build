@@ -37,6 +37,7 @@ Available Adapters
 - ``KnowledgeGraphAdapter``       — TemporalKG, KGPathfinder
 - ``CognitiveSynergyAdapter``     — CognitiveSynergyEngine, SynergyMetrics
 - ``ReasoningAdapter``            — HybridReasoningEngine
+- ``RingsNetworkAdapter``         — Rings P2P Network, DID, Reputation
 
 Utilities
 ~~~~~~~~~
@@ -54,6 +55,7 @@ from .cognitive_synergy_adapter import CognitiveSynergyAdapter
 from .consciousness_adapter import ConsciousnessAdapter
 from .knowledge_graph_adapter import KnowledgeGraphAdapter
 from .reasoning_adapter import ReasoningAdapter
+from .rings_adapter import RingsNetworkAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +64,7 @@ __all__ = [
     "KnowledgeGraphAdapter",
     "CognitiveSynergyAdapter",
     "ReasoningAdapter",
+    "RingsNetworkAdapter",
     "wire_all",
     "production_sweep",
 ]
