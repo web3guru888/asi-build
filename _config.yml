@@ -4,24 +4,14 @@ description: "A modular Python research framework for AI consciousness, cognitiv
 url: "https://web3guru888.github.io"
 baseurl: "/asi-build"
 
-# Theme
-remote_theme: pages-themes/cayman@v0.2.0
-plugins:
-  - jekyll-remote-theme
-  - jekyll-seo-tag
-
-# Navigation
-header_pages:
-  - README.md
+# Use a built-in GitHub Pages theme (no remote_theme plugin needed)
+theme: jekyll-theme-cayman
 
 # GitHub info
-github_username: web3guru888
-github_repo: asi-build
+show_downloads: true
 
 # SEO
 author: "ASI:BUILD Contributors"
-show_downloads: true
-google_analytics: false
 
 # Markdown
 markdown: kramdown
