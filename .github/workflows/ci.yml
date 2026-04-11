@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dev dependencies
+        run: pip install black isort mypy
+      - name: Check formatting (black)
+        run: black --check --diff src/ tests/
+      - name: Check import order (isort)
+        run: isort --check-only --diff src/ tests/
+      - name: Type check (mypy)
+        run: mypy src/
+        continue-on-error: true  # non-blocking until type coverage improves
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install package with dev extras
+        run: pip install -e ".[dev]"
+      - name: Run tests with coverage
+        run: pytest --cov=asi_build --cov-report=xml --cov-report=term-missing -v
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.11'
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install safety
+        run: pip install safety bandit
+      - name: Check for known vulnerabilities
+        run: safety check --file pyproject.toml || true
+      - name: Static security analysis (bandit)
+        run: bandit -r src/ -ll -q
+        continue-on-error: true
