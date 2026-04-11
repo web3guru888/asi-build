@@ -306,7 +306,7 @@ bridge._cleanup()
 - **Wiki**: 105+ pages created in GitLab Wiki
 
 ### Authentication
-- GitLab Token: `glpat-LqRBlwO60YyKQUHk2QGwUW86MQp1OmhvdHY3Cw.01.120xbvdlz`
+- GitLab Token: Set via `GITLAB_TOKEN` environment variable
 
 ### Session Achievements
 - ✅ Migrated to Zereight's MCP server (83 tools)
