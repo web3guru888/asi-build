@@ -75,6 +75,9 @@ ci = [
     "sympy>=1.12",
     "fastapi>=0.100",
     "httpx>=0.25",
+    "PyJWT>=2.8",
+    "psutil>=5.9",
+    "uvicorn>=0.24",
 ]
 all = [
     "asi-build[consciousness,graph,homomorphic,vectordb,quantum,ml,deployment,dev]",

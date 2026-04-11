@@ -362,7 +362,7 @@ class SpectralFeatureExtractor:
             band_powers = {}
             for band_name, (low, high) in self.frequency_bands.items():
                 band_mask = (f >= low) & (f <= high)
-                band_power = np.trapz(psd[band_mask], f[band_mask])
+                band_power = np.trapezoid(psd[band_mask], f[band_mask])
                 band_powers[band_name] = float(band_power)
 
             features[f"ch_{channel}_band_powers"] = band_powers

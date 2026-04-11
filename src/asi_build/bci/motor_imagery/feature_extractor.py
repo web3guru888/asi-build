@@ -190,7 +190,7 @@ class MotorImageryFeatureExtractor(BaseEstimator, TransformerMixin):
                     # Extract band powers
                     for band_name, (low_freq, high_freq) in self.mi_bands.items():
                         band_mask = (f >= low_freq) & (f <= high_freq)
-                        band_power = np.trapz(psd[band_mask], f[band_mask])
+                        band_power = np.trapezoid(psd[band_mask], f[band_mask])
 
                         feature_name = f"{region}_{channel}_{band_name}_power"
                         features[feature_name] = float(band_power)
@@ -338,8 +338,8 @@ class MotorImageryFeatureExtractor(BaseEstimator, TransformerMixin):
 
                 band_mask = (f_left >= low_freq) & (f_left <= high_freq)
 
-                left_power = np.trapz(psd_left[band_mask], f_left[band_mask])
-                right_power = np.trapz(psd_right[band_mask], f_right[band_mask])
+                left_power = np.trapezoid(psd_left[band_mask], f_left[band_mask])
+                right_power = np.trapezoid(psd_right[band_mask], f_right[band_mask])
 
                 # Asymmetry index: (Right - Left) / (Right + Left)
                 if left_power + right_power > 0:

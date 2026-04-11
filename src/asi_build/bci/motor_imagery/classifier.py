@@ -348,7 +348,7 @@ class MotorImageryClassifier:
 
                 for band_name, (low_freq, high_freq) in bands.items():
                     band_mask = (f >= low_freq) & (f <= high_freq)
-                    band_power = np.trapz(psd[band_mask], f[band_mask])
+                    band_power = np.trapezoid(psd[band_mask], f[band_mask])
                     band_powers[f"{channel}_{band_name}"] = float(band_power)
 
         return band_powers

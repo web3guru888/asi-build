@@ -178,12 +178,12 @@ class BCIMetrics:
 
             # Signal power in EEG bands (1-40 Hz)
             signal_mask = (f >= 1) & (f <= 40)
-            signal_power = np.trapz(psd[signal_mask], f[signal_mask])
+            signal_power = np.trapezoid(psd[signal_mask], f[signal_mask])
 
             # Noise power in high frequencies (40-100 Hz)
             noise_mask = (f >= 40) & (f <= min(100, sampling_rate / 2 - 1))
             if np.any(noise_mask):
-                noise_power = np.trapz(psd[noise_mask], f[noise_mask])
+                noise_power = np.trapezoid(psd[noise_mask], f[noise_mask])
                 ch_metrics["snr"] = float(signal_power / (noise_power + 1e-10))
             else:
                 ch_metrics["snr"] = float(signal_power)

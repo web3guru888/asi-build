@@ -143,7 +143,7 @@ class NegotiationProposal:
         utilities = sorted(utilities)
         n = len(utilities)
         cumsum = np.cumsum(utilities)
-        return (n + 1 - 2 * np.sum((n + 1 - i) * utilities[i] for i in range(n)) / cumsum[-1]) / n
+        return (n + 1 - 2 * np.sum(np.fromiter(((n + 1 - i) * utilities[i] for i in range(n)), dtype=float, count=n)) / cumsum[-1]) / n
 
 
 @dataclass

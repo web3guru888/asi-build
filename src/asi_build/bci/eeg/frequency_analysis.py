@@ -142,14 +142,14 @@ class FrequencyAnalyzer:
             f, psd = welch(ch_data, fs=sampling_rate, nperseg=256)
 
             # Extract band powers
-            total_power = np.trapz(psd, f)
+            total_power = np.trapezoid(psd, f)
 
             for band_name, (low_freq, high_freq) in self.frequency_bands.items():
                 # Find frequency indices
                 band_mask = (f >= low_freq) & (f <= high_freq)
 
                 if np.any(band_mask):
-                    band_power = np.trapz(psd[band_mask], f[band_mask])
+                    band_power = np.trapezoid(psd[band_mask], f[band_mask])
 
                     # Absolute power
                     features[f"{channel}_{band_name}_power"] = float(band_power)

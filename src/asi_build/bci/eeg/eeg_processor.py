@@ -551,7 +551,7 @@ class EEGProcessor:
         """Compute power in specific frequency band"""
         f, psd = welch(data, fs=self.sampling_rate, nperseg=256)
         band_mask = (f >= low_freq) & (f <= high_freq)
-        return np.trapz(psd[band_mask], f[band_mask])
+        return np.trapezoid(psd[band_mask], f[band_mask])
 
     def _assess_eeg_quality(self, data: np.ndarray) -> float:
         """Assess EEG signal quality"""
