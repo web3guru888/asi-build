@@ -10,7 +10,7 @@ This file provides orientation for AI coding assistants (Claude, Copilot, Cursor
 
 - **Python**: 3.11+, src layout
 - **Package**: `src/asi_build/` (installable as `asi-build`)
-- **Tests**: `tests/` (pytest, 125+ tests)
+- **Tests**: `tests/` (pytest, 250+ tests)
 - **Config**: `configs/default.yaml` → copy to `config.yaml`
 - **License**: MIT
 
@@ -23,19 +23,32 @@ asi-build/
 ├── src/
 │   └── asi_build/          ← THE REAL CODE — this is what matters
 │       ├── consciousness/   ← GWT, IIT, AST, metacognition (🟢 tested)
-│       ├── cognitive_synergy/ ← Synergy metrics (🟢 tested)
+│       ├── cognitive_synergy/ ← Synergy metrics, engines (🟢 tested)
 │       ├── graph_intelligence/ ← FastToG, Memgraph (🟢 tested)
 │       ├── homomorphic/     ← FHE: BGV/BFV/CKKS (🟢 tested)
 │       ├── knowledge_graph/ ← Bi-temporal KG, A* (🟢 tested)
+│       ├── safety/          ← Constitutional AI, constraints (🟢 tested)
+│       ├── integrations/    ← LangChain, MCP agents (🟢 tested)
+│       ├── bci/             ← Brain-computer interface (🟢 tested)
 │       ├── vectordb/        ← Unified VDB client (🟡 structural)
 │       ├── optimization/    ← PyTorch optimization (🟡 structural)
 │       ├── quantum/         ← Qiskit hybrid (🟡 structural)
 │       ├── reasoning/       ← Symbolic-neural (🟡 structural)
-│       ├── safety/          ← Constitutional AI (🟡 structural)
 │       ├── compute/         ← Job scheduling (🟡 structural)
 │       ├── bio_inspired/    ← Evo + swarm (🟡 structural)
 │       ├── deployment/      ← CUDO + HF (🟡 structural)
-│       └── memgraph_toolbox/ ← Memgraph tools (🟡 structural)
+│       ├── memgraph_toolbox/ ← Memgraph tools (🟡 structural)
+│       ├── blockchain/      ← Blockchain integration (🟡 structural)
+│       ├── distributed_training/ ← Distributed ML training (🟡 structural)
+│       ├── holographic/     ← Holographic memory (🟡 structural)
+│       ├── neuromorphic/    ← Neuromorphic computing (🟡 structural)
+│       ├── pln_accelerator/ ← PLN acceleration (🟡 structural)
+│       ├── knowledge_management/ ← Knowledge mgmt (🟡 structural)
+│       ├── federated/       ← Federated learning (🟡 structural)
+│       ├── agi_economics/   ← AGI economics models (🟡 structural)
+│       ├── agi_reproducibility/ ← AGI reproducibility (🟡 structural)
+│       ├── agi_communication/ ← AGI communication (🟡 structural)
+│       └── servers/         ← Server infrastructure (🟡 structural)
 ├── tests/                  ← pytest tests, one file per module
 ├── examples/               ← Runnable demo scripts
 ├── docs/                   ← Documentation + research notes
@@ -56,10 +69,10 @@ asi-build/
 
 When working on a module, check its status first:
 
-- 🟢 **Implemented** (`consciousness`, `cognitive_synergy`, `graph_intelligence`, `homomorphic`, `knowledge_graph`) — These have real implementations and tests. Treat carefully; bugs here affect real functionality.
-- 🟡 **Structural** (everything else) — Framework is defined but backends may be stubs or incomplete. Safe to extend, but verify what's actually wired up.
+- 🟢 **Implemented** (`consciousness`, `cognitive_synergy`, `graph_intelligence`, `homomorphic`, `knowledge_graph`, `safety`, `integrations`, `bci`) — These have real implementations and tests. Treat carefully; bugs here affect real functionality.
+- 🟡 **Structural** (`vectordb`, `optimization`, `quantum`, `reasoning`, `compute`, `bio_inspired`, `deployment`, `memgraph_toolbox`, `blockchain`, `distributed_training`, `holographic`, `neuromorphic`, `pln_accelerator`, `knowledge_management`, `federated`, `agi_economics`, `agi_reproducibility`, `agi_communication`, `servers`) — Framework is defined but backends may be stubs or incomplete. Safe to extend, but verify what's actually wired up.
 
-The `archive/` directory is v1 scaffolding. **Do not edit files there.** Do not use them as references for "how things work" — they may contain template-generated stubs.
+The `archive/` directory is v1 scaffolding — ~77% of it (150K of 194K LOC) is template-generated scaffolding. Only `agi_reproducibility` has been identified as potentially promote-worthy to `src/`. **Do not edit files there.** Do not use them as references for "how things work."
 
 ---
 
@@ -87,7 +100,8 @@ make test-cov                       # With coverage report
 ```bash
 pip install -e ".[dev]"
 python -c "from asi_build.consciousness import GlobalWorkspaceTheory; print('ok')"
-python -c "from asi_build.knowledge_graph import BiTemporalKnowledgeGraph; print('ok')"
+python -c "from asi_build.knowledge_graph import TemporalKnowledgeGraph; print('ok')"
+python -c "from asi_build.cognitive_synergy import SynergyMetrics; print('ok')"
 ```
 
 ### Formatting
@@ -126,6 +140,21 @@ Both dimensions are indexed. This is important for scientific applications where
 
 The `consciousness` module uses a theory-neutral interface. If you're implementing a new theory, it must implement the same interface as `GlobalWorkspaceTheory`. See `consciousness/base.py` for the abstract base class.
 
+### Init-order pattern in consciousness modules
+
+The consciousness base class calls `_initialize()` from its `__init__()`. This means **subclass attributes must be set before calling `super().__init__()`**, because the base class will invoke `_initialize()` which may depend on those attributes. Pattern:
+
+```python
+class MyTheory(ConsciousnessBase):
+    def __init__(self, config):
+        self.my_attr = config.some_value  # Set BEFORE super().__init__()
+        super().__init__(config)          # This calls _initialize()
+
+    def _initialize(self):
+        # self.my_attr is safe to use here
+        ...
+```
+
 ---
 
 ## Things to Watch Out For
@@ -136,14 +165,30 @@ The `consciousness` module uses a theory-neutral interface. If you're implementi
 - **Parameterize all Cypher queries** — raw string formatting into Cypher queries is a known injection vector (was fixed in 2.0.0, don't reintroduce)
 - The `safety` module is not a security system — it's a research module exploring AI alignment concepts
 
+### Consciousness base class init order
+
+The consciousness base class calls `_initialize()` from `__init__()` — subclass attributes **MUST** be set before `super().__init__()`. Failing to do this causes `AttributeError` during initialization. See the init-order pattern above.
+
+### The `homomorphic` module has known correctness issues
+
+The polynomial ring arithmetic in the `homomorphic` module has known correctness issues. **Do not trust crypto outputs without independent verification.** The BGV/BFV/CKKS implementations are research-grade and not suitable for real cryptographic operations.
+
+### The `cognitive_synergy/__init__.py` uses explicit imports
+
+The `cognitive_synergy/__init__.py` uses explicit imports from subpackages. When adding new public symbols to the module, you must add corresponding import lines there — they won't be auto-discovered.
+
+### `MetacognitiveStrategyInstance` vs `MetacognitiveStrategy`
+
+In `consciousness/metacognition.py`, `MetacognitiveStrategy` is an **Enum** (strategy types), and `MetacognitiveStrategyInstance` is the **dataclass** (an actual strategy instance with parameters). Don't confuse them.
+
 ### The `archive/` directory
 
-Do not treat `archive/` as a source of truth. Files there were generated in 2025 and many contain:
+Do not treat `archive/` as a source of truth. ~77% of its content (150K of 194K LOC) is template-generated scaffolding. Files there were generated in 2025 and many contain:
 - Stub implementations (all `pass` or `raise NotImplementedError`)
 - Template-generated docstrings that don't match actual behavior
 - Import paths that no longer exist
 
-If you need reference implementations, look in `src/asi_build/`.
+Only `agi_reproducibility` has been identified as having real, promote-worthy content. If you need reference implementations, look in `src/asi_build/`.
 
 ### `asi-code/` is a different product
 
@@ -151,7 +196,7 @@ The `asi-code/` directory contains a TypeScript AI coding IDE. It has its own `p
 
 ### Module maturity varies dramatically
 
-`homomorphic` has a complete polynomial ring implementation with BGV/BFV/CKKS. `deployment` is mostly structural. Don't assume all modules are at the same level — always check.
+`homomorphic` has a complete polynomial ring implementation with BGV/BFV/CKKS. `bci` has ~8K LOC across 12 subpackages. `deployment` is mostly structural. Don't assume all modules are at the same level — always check.
 
 ---
 
