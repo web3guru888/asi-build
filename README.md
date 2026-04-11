@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-250%2B-brightgreen)
+[![CI](https://github.com/web3guru888/asi-build/actions/workflows/ci.yml/badge.svg)](https://github.com/web3guru888/asi-build/actions/workflows/ci.yml)
 ![Status](https://img.shields.io/badge/status-research--alpha-orange)
 
 > ⚠️ **Research Software**: ASI:BUILD is an active research framework, not a production system. Module maturity varies significantly — some are well-implemented and tested, others are structural scaffolding awaiting real backends. See the [Modules](#modules) table for per-module status.
