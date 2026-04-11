@@ -26,9 +26,15 @@ from collections import deque
 import networkx as nx
 from sklearn.decomposition import PCA
 
-@dataclass
+@dataclass(eq=False)
 class MentalState:
-    """Representation of a mental state at any order."""
+    """Representation of a mental state at any order.
+
+    Note: eq=False because ``content`` is a torch.Tensor — element-wise
+    comparison cannot be reduced to a single bool, which breaks ``in``
+    checks and ``==`` when used in lists.  Identity comparison (``is``)
+    is the correct semantics for MentalState objects.
+    """
     content: torch.Tensor
     order: int  # 0 = sensory, 1 = first-order thought, 2+ = higher-order thoughts
     confidence: float

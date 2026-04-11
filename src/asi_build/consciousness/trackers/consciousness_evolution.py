@@ -7,8 +7,14 @@ Provides insights into how consciousness emerges and develops over time.
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 from typing import Dict, List, Any, Optional
+
+try:
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
+    plt = None  # type: ignore[assignment]
 from dataclasses import dataclass
 from datetime import datetime
 import json
@@ -132,8 +138,15 @@ class ConsciousnessEvolutionTracker:
         
         return analysis
     
-    def visualize_evolution(self, save_path: Optional[str] = None) -> plt.Figure:
-        """Visualize consciousness evolution over time."""
+    def visualize_evolution(self, save_path: Optional[str] = None):
+        """Visualize consciousness evolution over time.
+
+        Returns a matplotlib Figure, or None if matplotlib is not installed
+        or there is insufficient data.
+        """
+        if not HAS_MATPLOTLIB:
+            self.logger.warning("matplotlib not available — skipping visualization")
+            return None
         if len(self.snapshots) < 2:
             self.logger.warning("Insufficient data for visualization")
             return None
