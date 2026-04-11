@@ -4,9 +4,8 @@ import pytest
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_experimental.graph_transformers import LLMGraphTransformer
-from langchain_openai import ChatOpenAI
-
 from langchain_memgraph.graphs.memgraph import MemgraphLangChain
+from langchain_openai import ChatOpenAI
 
 # Load environment variables from .env
 load_dotenv()
@@ -19,9 +18,7 @@ def memgraph_connection():
     username = os.getenv("MEMGRAPH_USER", "")
     password = os.getenv("MEMGRAPH_PASSWORD", "")
 
-    graph = MemgraphLangChain(
-        url=url, username=username, password=password, refresh_schema=False
-    )
+    graph = MemgraphLangChain(url=url, username=username, password=password, refresh_schema=False)
     yield graph
 
     # Cleanup: clear the database after test
@@ -59,12 +56,8 @@ def test_ingest_and_verify(memgraph_connection, llm_transformer):
     memgraph_connection.add_graph_documents(graph_documents)
 
     # Verify nodes and edges were created
-    node_count = memgraph_connection.query("MATCH (n) RETURN count(n) AS count")[0][
-        "count"
-    ]
-    edge_count = memgraph_connection.query("MATCH ()-[r]->() RETURN count(r) AS count")[
-        0
-    ]["count"]
+    node_count = memgraph_connection.query("MATCH (n) RETURN count(n) AS count")[0]["count"]
+    edge_count = memgraph_connection.query("MATCH ()-[r]->() RETURN count(r) AS count")[0]["count"]
 
     assert node_count > 0, "No nodes were created!"
     assert edge_count > 0, "No edges were created!"

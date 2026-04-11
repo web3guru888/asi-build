@@ -1,4 +1,5 @@
 from typing import Dict, List
+
 from .tool import BaseTool
 
 
@@ -18,9 +19,7 @@ class BaseToolbox:
             ValueError: If a tool with the same name is already in toolbox.
         """
         if tool.name in self._tools:
-            raise ValueError(
-                f"Tool with name '{tool.name}' is already present in toolbox."
-            )
+            raise ValueError(f"Tool with name '{tool.name}' is already present in toolbox.")
         self._tools[tool.name] = tool
 
     def get_tool(self, name: str) -> BaseTool:

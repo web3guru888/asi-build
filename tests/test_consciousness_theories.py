@@ -12,15 +12,17 @@ Covers:
 All tests handle torch gracefully — skip if torch is unavailable.
 """
 
-import pytest
-import numpy as np
-from datetime import datetime
 from dataclasses import dataclass
-from typing import Optional, Dict
+from datetime import datetime
+from typing import Dict, Optional
+
+import numpy as np
+import pytest
 
 # ---------- optional torch ---------
 try:
     import torch
+
     HAS_TORCH = True
 except (ImportError, OSError):
     HAS_TORCH = False
@@ -32,6 +34,7 @@ requires_torch = pytest.mark.skipif(not HAS_TORCH, reason="torch not installed")
 # ===================================================================
 # Helpers
 # ===================================================================
+
 
 def _make_activations(batch=2, time=6, neurons=16):
     """Create a small random activation tensor."""
@@ -51,6 +54,7 @@ def _make_connectivity(n=16):
 @dataclass
 class _FakeProfile:
     """Minimal stand-in for a consciousness assessment profile."""
+
     timestamp: datetime = datetime(2026, 4, 11, 0, 0)
     phi_score: float = 0.6
     gwt_coherence: float = 0.7
@@ -70,12 +74,14 @@ class _FakeProfile:
 # 1. tensor_iit.py  (4 tests)
 # ===================================================================
 
+
 @requires_torch
 class TestTensorIIT:
     """Tests for the IIT 3.0 implementation (tensor_iit.py)."""
 
     def setup_method(self):
         from asi_build.consciousness.theories.tensor_iit import IITCalculator
+
         self.calc = IITCalculator(device="cpu")
 
     def test_compute_phi_small_system(self):
@@ -120,6 +126,7 @@ class TestTensorIIT:
 # 2. biological_markers.py  (3 tests)
 # ===================================================================
 
+
 class TestBiologicalMarkers:
     """Tests for biological consciousness markers (no torch needed)."""
 
@@ -127,6 +134,7 @@ class TestBiologicalMarkers:
         from asi_build.consciousness.benchmarks.biological_markers import (
             BiologicalConsciousnessMarkers,
         )
+
         self.markers = BiologicalConsciousnessMarkers()
 
     def test_compare_metric_to_benchmark_range(self):
@@ -163,6 +171,7 @@ class TestBiologicalMarkers:
 # 3. consciousness_evolution.py  (2 tests)
 # ===================================================================
 
+
 class TestConsciousnessEvolution:
     """Tests for the evolution tracker (no torch needed)."""
 
@@ -170,6 +179,7 @@ class TestConsciousnessEvolution:
         from asi_build.consciousness.trackers.consciousness_evolution import (
             ConsciousnessEvolutionTracker,
         )
+
         self.tracker = ConsciousnessEvolutionTracker()
 
     def _record_n(self, n=10):
@@ -214,6 +224,7 @@ class TestConsciousnessEvolution:
 # 4. higher_order_thought.py  (3 tests)
 # ===================================================================
 
+
 @requires_torch
 class TestHigherOrderThought:
     """Tests for HOT theory implementation."""
@@ -223,22 +234,32 @@ class TestHigherOrderThought:
             HOTTheoryImplementation,
             MentalState,
         )
+
         self.MentalState = MentalState
         self.hot = HOTTheoryImplementation(device="cpu")
 
     def test_transitivity_chain_analysis(self):
         """Build a small chain manually and verify analysis runs without error."""
         s0 = self.MentalState(
-            content=torch.randn(128), order=1, confidence=0.8,
-            temporal_persistence=0.9, referential_target=None,
+            content=torch.randn(128),
+            order=1,
+            confidence=0.8,
+            temporal_persistence=0.9,
+            referential_target=None,
         )
         s1 = self.MentalState(
-            content=torch.randn(128), order=2, confidence=0.7,
-            temporal_persistence=0.8, referential_target=s0,
+            content=torch.randn(128),
+            order=2,
+            confidence=0.7,
+            temporal_persistence=0.8,
+            referential_target=s0,
         )
         s2 = self.MentalState(
-            content=torch.randn(128), order=3, confidence=0.6,
-            temporal_persistence=0.7, referential_target=s1,
+            content=torch.randn(128),
+            order=3,
+            confidence=0.6,
+            temporal_persistence=0.7,
+            referential_target=s1,
         )
         hots = [s1, s2]
         chains = self.hot._analyze_transitivity_chains(hots)
@@ -247,20 +268,29 @@ class TestHigherOrderThought:
     def test_introspective_depth_computation(self):
         """Introspective depth should increase with deeper referential chains."""
         s1 = self.MentalState(
-            content=torch.randn(128), order=2, confidence=0.8,
-            temporal_persistence=0.8, referential_target=None,
+            content=torch.randn(128),
+            order=2,
+            confidence=0.8,
+            temporal_persistence=0.8,
+            referential_target=None,
         )
         depth_0 = self.hot._compute_introspective_depth([s1])
         assert depth_0 == 0  # No chain → depth 0
 
         # Chain: s3 → s2 → s1 (s2 and s1 are HOTs with order > 1)
         s2 = self.MentalState(
-            content=torch.randn(128), order=3, confidence=0.7,
-            temporal_persistence=0.7, referential_target=s1,
+            content=torch.randn(128),
+            order=3,
+            confidence=0.7,
+            temporal_persistence=0.7,
+            referential_target=s1,
         )
         s3 = self.MentalState(
-            content=torch.randn(128), order=4, confidence=0.6,
-            temporal_persistence=0.6, referential_target=s2,
+            content=torch.randn(128),
+            order=4,
+            confidence=0.6,
+            temporal_persistence=0.6,
+            referential_target=s2,
         )
         depth_deep = self.hot._compute_introspective_depth([s1, s2, s3])
         assert depth_deep >= 1
@@ -277,6 +307,7 @@ class TestHigherOrderThought:
 # 5. predictive_processing_tensor.py  (2 tests)
 # ===================================================================
 
+
 @requires_torch
 class TestPredictiveProcessingTensor:
     """Tests for the predictive processing / free energy implementation."""
@@ -285,6 +316,7 @@ class TestPredictiveProcessingTensor:
         from asi_build.consciousness.theories.predictive_processing_tensor import (
             PredictiveProcessingMetrics,
         )
+
         self.pp = PredictiveProcessingMetrics(device="cpu")
 
     def test_free_energy_minimization_assessment(self):
@@ -311,14 +343,16 @@ class TestPredictiveProcessingTensor:
 # 6. Smoke: __init__.py imports  (3 tests)
 # ===================================================================
 
+
 class TestModuleImports:
     """Verify that __init__.py files import correctly."""
 
     def test_benchmarks_init(self):
         from asi_build.consciousness.benchmarks import (
-            BiologicalConsciousnessMarkers,
             BiologicalBenchmark,
+            BiologicalConsciousnessMarkers,
         )
+
         markers = BiologicalConsciousnessMarkers()
         assert "phi_score" in markers.benchmarks
 
@@ -327,15 +361,17 @@ class TestModuleImports:
             ConsciousnessEvolutionTracker,
             ConsciousnessSnapshot,
         )
+
         tracker = ConsciousnessEvolutionTracker()
         assert tracker.snapshots == []
 
     @requires_torch
     def test_theories_init(self):
         from asi_build.consciousness.theories import (
-            TensorIITCalculator,
             HOTTheoryImplementation,
             PredictiveProcessingTensor,
+            TensorIITCalculator,
         )
+
         calc = TensorIITCalculator(device="cpu")
         assert calc.phi_threshold == pytest.approx(1e-6)

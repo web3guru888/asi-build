@@ -6,7 +6,7 @@ meta-learning, and other advanced algorithms.
 """
 
 try:
-    from .personalized_fl import PersonalizedFederatedLearning, FedPerAvg, LocalFinetuning
+    from .personalized_fl import FedPerAvg, LocalFinetuning, PersonalizedFederatedLearning
 except (ImportError, ModuleNotFoundError, SyntaxError):
     PersonalizedFederatedLearning = None
     FedPerAvg = None
@@ -17,7 +17,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     FederatedTransferLearning = None
     FedTransferManager = None
 try:
-    from .async_fl import AsynchronousFederatedLearning, AsyncFedAvg
+    from .async_fl import AsyncFedAvg, AsynchronousFederatedLearning
 except (ImportError, ModuleNotFoundError, SyntaxError):
     AsynchronousFederatedLearning = None
     AsyncFedAvg = None
@@ -36,7 +36,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 __all__ = [
     "PersonalizedFederatedLearning",
     "FedPerAvg",
-    "LocalFinetuning", 
+    "LocalFinetuning",
     "FederatedTransferLearning",
     "FedTransferManager",
     "AsynchronousFederatedLearning",
@@ -45,5 +45,5 @@ __all__ = [
     "FedMAML",
     "FedReptile",
     "CrossSiloFederation",
-    "SiloCoordinator"
+    "SiloCoordinator",
 ]

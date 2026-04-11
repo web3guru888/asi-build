@@ -8,13 +8,15 @@ architecture to support additional database systems like PostgreSQL.
 # This is an example implementation - you would need to install psycopg2
 # pip install psycopg2-binary
 
+import logging
+
 # import psycopg2
 # import psycopg2.extras
-from typing import Dict, List, Any, Optional
-import logging
+from typing import Any, Dict, List, Optional
+
 from ..interface import (
-    DatabaseAnalyzer,
     ColumnInfo,
+    DatabaseAnalyzer,
     ForeignKeyInfo,
     TableInfo,
     TableType,
@@ -26,9 +28,7 @@ logger = logging.getLogger(__name__)
 class PostgreSQLAnalyzer(DatabaseAnalyzer):
     """PostgreSQL-specific implementation of DatabaseAnalyzer."""
 
-    def __init__(
-        self, host: str, user: str, password: str, database: str, port: int = 5432
-    ):
+    def __init__(self, host: str, user: str, password: str, database: str, port: int = 5432):
         """
         Initialize PostgreSQL analyzer.
 
@@ -140,9 +140,7 @@ class PostgreSQLAnalyzer(DatabaseAnalyzer):
         # Implementation would go here
         return []
 
-    def get_table_data(
-        self, table_name: str, limit: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+    def get_table_data(self, table_name: str, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """Get data from a specific table."""
         if not self.connection:
             raise ConnectionError("Not connected to database")

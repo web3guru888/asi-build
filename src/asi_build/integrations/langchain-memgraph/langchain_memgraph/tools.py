@@ -6,19 +6,18 @@ from langchain_core.callbacks import (
     CallbackManagerForToolRun,
 )
 from langchain_core.tools import BaseTool
-from pydantic import BaseModel, ConfigDict, Field
-
 from memgraph_toolbox.api.memgraph import Memgraph
-from memgraph_toolbox.tools.page_rank import PageRankTool
+from memgraph_toolbox.tools.betweenness_centrality import BetweennessCentralityTool
 from memgraph_toolbox.tools.config import ShowConfigTool
+from memgraph_toolbox.tools.constraint import ShowConstraintInfoTool
 from memgraph_toolbox.tools.cypher import CypherTool
+from memgraph_toolbox.tools.index import ShowIndexInfoTool
+from memgraph_toolbox.tools.page_rank import PageRankTool
 from memgraph_toolbox.tools.schema import ShowSchemaInfoTool
 from memgraph_toolbox.tools.storage import ShowStorageInfoTool
 from memgraph_toolbox.tools.trigger import ShowTriggersTool
-from memgraph_toolbox.tools.index import ShowIndexInfoTool
-from memgraph_toolbox.tools.betweenness_centrality import BetweennessCentralityTool
-from memgraph_toolbox.tools.constraint import ShowConstraintInfoTool
 from memgraph_toolbox.utils.logging import logger_init
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BaseMemgraphTool(BaseModel):
@@ -258,9 +257,7 @@ class _BetweennessCentralityToolInput(BaseModel):
         True,
         description="Set to false to consider the direction of relationships. Default is true.",
     )
-    limit: int = Field(
-        10, description="Limit the number of nodes to return. Default is 10."
-    )
+    limit: int = Field(10, description="Limit the number of nodes to return. Default is 10.")
 
 
 class RunBetweennessCentralityTool(BaseMemgraphTool, BaseTool):

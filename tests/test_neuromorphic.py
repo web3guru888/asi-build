@@ -4,6 +4,7 @@ Tests for asi_build.neuromorphic module.
 Tests core neural computing components, hardware simulation, and learning rules.
 Bypasses broken __init__.py files by pre-registering fake modules for missing subpackages.
 """
+
 import sys
 import types
 
@@ -14,18 +15,18 @@ import types
 # ===========================================================================
 
 # neuromorphic/__init__.py uses _try_import (safe), but subpackages below don't.
-for _pkg in ['reservoir', 'vision', 'coding', 'robotics', 'bci']:
-    _key = f'asi_build.neuromorphic.{_pkg}'
+for _pkg in ["reservoir", "vision", "coding", "robotics", "bci"]:
+    _key = f"asi_build.neuromorphic.{_pkg}"
     if _key not in sys.modules:
         sys.modules[_key] = types.ModuleType(_key)
 
 # hardware/__init__.py hard-imports from files that don't exist
 for _mod_name, _attrs in [
-    ('asi_build.neuromorphic.hardware.synaptic_array', ['SynapticArray', 'CrossbarArray']),
-    ('asi_build.neuromorphic.hardware.hardware_simulator', ['HardwareSimulator']),
-    ('asi_build.neuromorphic.hardware.loihi_simulator', ['LoihiChip']),
-    ('asi_build.neuromorphic.hardware.truenorth_simulator', ['TrueNorthChip']),
-    ('asi_build.neuromorphic.hardware.spinnaker_simulator', ['SpiNNakerChip']),
+    ("asi_build.neuromorphic.hardware.synaptic_array", ["SynapticArray", "CrossbarArray"]),
+    ("asi_build.neuromorphic.hardware.hardware_simulator", ["HardwareSimulator"]),
+    ("asi_build.neuromorphic.hardware.loihi_simulator", ["LoihiChip"]),
+    ("asi_build.neuromorphic.hardware.truenorth_simulator", ["TrueNorthChip"]),
+    ("asi_build.neuromorphic.hardware.spinnaker_simulator", ["SpiNNakerChip"]),
 ]:
     if _mod_name not in sys.modules:
         _m = types.ModuleType(_mod_name)
@@ -35,16 +36,41 @@ for _mod_name, _attrs in [
 
 # learning/__init__.py hard-imports from files that don't exist
 for _mod_name, _attrs in [
-    ('asi_build.neuromorphic.learning.homeostatic_plasticity',
-     ['HomeostasticPlasticity', 'SynapticScaling', 'IntrinsicPlasticity', 'ActivityDependentScaling']),
-    ('asi_build.neuromorphic.learning.metaplasticity',
-     ['MetaplasticityLearning', 'BCMRule', 'SlidingThreshold', 'PriorExperienceRule']),
-    ('asi_build.neuromorphic.learning.temporal_learning',
-     ['TemporalLearning', 'SequenceLearning', 'PatternCompletion', 'TemporalMemory']),
-    ('asi_build.neuromorphic.learning.reinforcement',
-     ['ReinforcementLearning', 'DopamineModulation', 'RewardPredictionError', 'ActorCriticLearning']),
-    ('asi_build.neuromorphic.learning.unsupervised',
-     ['UnsupervisedLearning', 'CompetitiveLearning', 'SparseCodeLearning', 'PrincipalComponentLearning']),
+    (
+        "asi_build.neuromorphic.learning.homeostatic_plasticity",
+        [
+            "HomeostasticPlasticity",
+            "SynapticScaling",
+            "IntrinsicPlasticity",
+            "ActivityDependentScaling",
+        ],
+    ),
+    (
+        "asi_build.neuromorphic.learning.metaplasticity",
+        ["MetaplasticityLearning", "BCMRule", "SlidingThreshold", "PriorExperienceRule"],
+    ),
+    (
+        "asi_build.neuromorphic.learning.temporal_learning",
+        ["TemporalLearning", "SequenceLearning", "PatternCompletion", "TemporalMemory"],
+    ),
+    (
+        "asi_build.neuromorphic.learning.reinforcement",
+        [
+            "ReinforcementLearning",
+            "DopamineModulation",
+            "RewardPredictionError",
+            "ActorCriticLearning",
+        ],
+    ),
+    (
+        "asi_build.neuromorphic.learning.unsupervised",
+        [
+            "UnsupervisedLearning",
+            "CompetitiveLearning",
+            "SparseCodeLearning",
+            "PrincipalComponentLearning",
+        ],
+    ),
 ]:
     if _mod_name not in sys.modules:
         _m = types.ModuleType(_mod_name)
@@ -54,15 +80,34 @@ for _mod_name, _attrs in [
 
 # spiking/__init__.py is try/except guarded so safe, but pre-register just in case
 for _mod_name, _attrs in [
-    ('asi_build.neuromorphic.spiking.neuron_models',
-     ['LeakyIntegrateFireNeuron', 'AdaptiveExponentialIF', 'IzhikevichNeuron',
-      'HodgkinHuxleyNeuron', 'SpikingNeuron']),
-    ('asi_build.neuromorphic.spiking.synapse_models',
-     ['ExponentialSynapse', 'AlphaFunctionSynapse', 'STDPSynapse', 'SynapticConnection']),
-    ('asi_build.neuromorphic.spiking.network_builder',
-     ['SpikingNetwork', 'NetworkTopology', 'RandomNetwork', 'SmallWorldNetwork', 'ScaleFreeNetwork']),
-    ('asi_build.neuromorphic.spiking.population',
-     ['NeuronPopulation', 'PopulationConnector', 'PopulationEncoder']),
+    (
+        "asi_build.neuromorphic.spiking.neuron_models",
+        [
+            "LeakyIntegrateFireNeuron",
+            "AdaptiveExponentialIF",
+            "IzhikevichNeuron",
+            "HodgkinHuxleyNeuron",
+            "SpikingNeuron",
+        ],
+    ),
+    (
+        "asi_build.neuromorphic.spiking.synapse_models",
+        ["ExponentialSynapse", "AlphaFunctionSynapse", "STDPSynapse", "SynapticConnection"],
+    ),
+    (
+        "asi_build.neuromorphic.spiking.network_builder",
+        [
+            "SpikingNetwork",
+            "NetworkTopology",
+            "RandomNetwork",
+            "SmallWorldNetwork",
+            "ScaleFreeNetwork",
+        ],
+    ),
+    (
+        "asi_build.neuromorphic.spiking.population",
+        ["NeuronPopulation", "PopulationConnector", "PopulationEncoder"],
+    ),
 ]:
     if _mod_name not in sys.modules:
         _m = types.ModuleType(_mod_name)
@@ -70,40 +115,71 @@ for _mod_name, _attrs in [
             setattr(_m, _a, type(_a, (), {}))
         sys.modules[_mod_name] = _m
 
+import json
+
+import numpy as np
+
 # ===========================================================================
 # Actual imports — now safe
 # ===========================================================================
 import pytest
-import json
-import numpy as np
 
 from asi_build.neuromorphic.core.config import (
-    NeuromorphicConfig, NeuronConfig, SynapseConfig, NetworkConfig,
-    LearningConfig, HardwareConfig, ReservoirConfig, VisionConfig, BCIConfig,
-)
-from asi_build.neuromorphic.core.neural_base import (
-    NeuronBase, SynapseBase, NetworkBase,
-    SpikeEvent, SynapticEvent, NeuralBase,
+    BCIConfig,
+    HardwareConfig,
+    LearningConfig,
+    NetworkConfig,
+    NeuromorphicConfig,
+    NeuronConfig,
+    ReservoirConfig,
+    SynapseConfig,
+    VisionConfig,
 )
 from asi_build.neuromorphic.core.event_processor import (
-    EventQueue, EventProcessor, Event, EventType,
-    SpikeEvent as EPSpikeEvent, SynapticEvent as EPSynapticEvent,
-    PlasticityEvent, EventHandler,
+    Event,
+    EventHandler,
+    EventProcessor,
+    EventQueue,
+    EventType,
+    PlasticityEvent,
+)
+from asi_build.neuromorphic.core.event_processor import SpikeEvent as EPSpikeEvent
+from asi_build.neuromorphic.core.event_processor import SynapticEvent as EPSynapticEvent
+from asi_build.neuromorphic.core.neural_base import (
+    NetworkBase,
+    NeuralBase,
+    NeuronBase,
+    SpikeEvent,
+    SynapseBase,
+    SynapticEvent,
 )
 from asi_build.neuromorphic.core.spike_monitor import (
-    SpikeMonitor, SpikeRecord, MonitoringStats,
+    MonitoringStats,
+    SpikeMonitor,
+    SpikeRecord,
 )
 from asi_build.neuromorphic.core.temporal_dynamics import (
-    TemporalDynamics, TemporalPattern, OscillationState,
+    OscillationState,
+    TemporalDynamics,
+    TemporalPattern,
 )
 from asi_build.neuromorphic.hardware.chip_simulator import (
-    NeuromorphicChip, ChipConfig, CoreState, ChipType,
+    ChipConfig,
+    ChipType,
+    CoreState,
+    NeuromorphicChip,
 )
 from asi_build.neuromorphic.hardware.memristive_device import (
-    MemristiveDevice, MemristorType, MemristorParams,
+    MemristiveDevice,
+    MemristorParams,
+    MemristorType,
 )
 from asi_build.neuromorphic.learning.stdp import (
-    STDPLearning, STDPParameters, PairSTDP, TripletSTDP, VoltageSTDP,
+    PairSTDP,
+    STDPLearning,
+    STDPParameters,
+    TripletSTDP,
+    VoltageSTDP,
 )
 
 # ===========================================================================
@@ -115,10 +191,10 @@ class ConcreteNeuron(NeuronBase):
     """Minimal LIF neuron for testing."""
 
     def compute_membrane_dynamics(self, dt: float) -> float:
-        v = self.state.get('membrane_potential', self.parameters.get('v_rest', -65e-3))
-        v_rest = self.parameters.get('v_rest', -65e-3)
-        tau = self.parameters.get('tau_membrane', 20e-3)
-        I = self.state.get('input_current', 0.0)
+        v = self.state.get("membrane_potential", self.parameters.get("v_rest", -65e-3))
+        v_rest = self.parameters.get("v_rest", -65e-3)
+        tau = self.parameters.get("tau_membrane", 20e-3)
+        I = self.state.get("input_current", 0.0)
         dv_dt = (v_rest - v) / tau + I
         return dv_dt
 
@@ -127,11 +203,11 @@ class ConcreteSynapse(SynapseBase):
     """Minimal synapse for testing."""
 
     def compute_psc(self, spike_event: SpikeEvent) -> float:
-        return self.state['weight'] * spike_event.amplitude
+        return self.state["weight"] * spike_event.amplitude
 
     def _update_plasticity(self, dt: float) -> None:
         # Decay eligibility trace
-        self.state['eligibility_trace'] *= 0.99
+        self.state["eligibility_trace"] *= 0.99
 
 
 class ConcreteNetwork(NetworkBase):
@@ -172,6 +248,7 @@ class ConcreteHandler(EventHandler):
 # ===========================================================================
 #  1. core/config.py
 # ===========================================================================
+
 
 class TestNeuronConfig:
     def test_defaults(self):
@@ -247,10 +324,10 @@ class TestNeuromorphicConfig:
     def test_to_dict(self):
         cfg = NeuromorphicConfig()
         d = cfg.to_dict()
-        assert 'neuron' in d
-        assert 'synapse' in d
-        assert 'hardware' in d
-        assert d['neuron']['tau_membrane'] == pytest.approx(20e-3)
+        assert "neuron" in d
+        assert "synapse" in d
+        assert "hardware" in d
+        assert d["neuron"]["tau_membrane"] == pytest.approx(20e-3)
 
     def test_clone_independence(self):
         cfg = NeuromorphicConfig()
@@ -261,17 +338,17 @@ class TestNeuromorphicConfig:
     def test_get_timing_parameters(self):
         cfg = NeuromorphicConfig()
         timing = cfg.get_timing_parameters()
-        assert 'time_step' in timing
-        assert 'tau_membrane' in timing
-        assert 'refractory_period' in timing
-        assert 'max_delay' in timing
+        assert "time_step" in timing
+        assert "tau_membrane" in timing
+        assert "refractory_period" in timing
+        assert "max_delay" in timing
 
     def test_get_plasticity_parameters(self):
         cfg = NeuromorphicConfig()
         plast = cfg.get_plasticity_parameters()
-        assert 'stdp_enabled' in plast
-        assert plast['stdp_enabled'] is True
-        assert 'dopamine_modulation' in plast
+        assert "stdp_enabled" in plast
+        assert plast["stdp_enabled"] is True
+        assert "dopamine_modulation" in plast
 
     def test_save_load_json(self, tmp_path):
         cfg = NeuromorphicConfig()
@@ -288,12 +365,13 @@ class TestNeuromorphicConfig:
         tuples, so we save a manually-curated dict without tuple fields.
         This is a known limitation of config.save_config() with YAML format."""
         import yaml as _yaml
+
         cfg = NeuromorphicConfig()
         cfg.hardware.num_cores = 64
         fpath = tmp_path / "test_config.yaml"
         # Write only scalar-friendly subset
-        subset = {'hardware': {'num_cores': 64, 'chip_type': 'loihi'}}
-        with open(fpath, 'w') as f:
+        subset = {"hardware": {"num_cores": 64, "chip_type": "loihi"}}
+        with open(fpath, "w") as f:
             _yaml.dump(subset, f, default_flow_style=False)
         cfg2 = NeuromorphicConfig()
         cfg2.load_config(fpath)
@@ -315,6 +393,7 @@ class TestNeuromorphicConfig:
 #  2. core/neural_base.py
 # ===========================================================================
 
+
 class TestSpikeEventDataclass:
     def test_creation(self):
         evt = SpikeEvent(neuron_id=5, timestamp=0.1, amplitude=1.5)
@@ -330,8 +409,9 @@ class TestSpikeEventDataclass:
 
 class TestSynapticEventDataclass:
     def test_creation(self):
-        evt = SynapticEvent(pre_neuron_id=1, post_neuron_id=2,
-                            timestamp=0.05, weight=0.8, delay=0.001)
+        evt = SynapticEvent(
+            pre_neuron_id=1, post_neuron_id=2, timestamp=0.05, weight=0.8, delay=0.001
+        )
         assert evt.pre_neuron_id == 1
         assert evt.event_type == "excitatory"
 
@@ -339,16 +419,16 @@ class TestSynapticEventDataclass:
 class TestNeuronBase:
     def test_initial_state(self):
         n = ConcreteNeuron(neuron_id=0)
-        assert n.state['membrane_potential'] == pytest.approx(-65e-3)
-        assert n.state['input_current'] == pytest.approx(0.0)
-        assert n.state['refractory_until'] == pytest.approx(0.0)
+        assert n.state["membrane_potential"] == pytest.approx(-65e-3)
+        assert n.state["input_current"] == pytest.approx(0.0)
+        assert n.state["refractory_until"] == pytest.approx(0.0)
 
     def test_add_input_current(self):
         n = ConcreteNeuron(neuron_id=0)
         n.add_input_current(5.0)
-        assert n.state['input_current'] == pytest.approx(5.0)
+        assert n.state["input_current"] == pytest.approx(5.0)
         n.add_input_current(3.0)
-        assert n.state['input_current'] == pytest.approx(8.0)
+        assert n.state["input_current"] == pytest.approx(8.0)
 
     def test_firing_rate_no_spikes(self):
         n = ConcreteNeuron(neuron_id=0)
@@ -360,39 +440,39 @@ class TestNeuronBase:
 
     def test_reset(self):
         n = ConcreteNeuron(neuron_id=0)
-        n.state['membrane_potential'] = 0.0
+        n.state["membrane_potential"] = 0.0
         n.current_time = 1.0
         n.reset()
-        assert n.state['membrane_potential'] == pytest.approx(-65e-3)
+        assert n.state["membrane_potential"] == pytest.approx(-65e-3)
         assert n.current_time == pytest.approx(0.0)
-        assert n.state['spike_times'] == []
+        assert n.state["spike_times"] == []
 
     def test_set_get_parameter(self):
         n = ConcreteNeuron(neuron_id=0)
-        n.set_parameter('custom_param', 42)
-        assert n.get_parameter('custom_param') == 42
-        assert n.get_parameter('nonexistent', 'default') == 'default'
+        n.set_parameter("custom_param", 42)
+        assert n.get_parameter("custom_param") == 42
+        assert n.get_parameter("nonexistent", "default") == "default"
 
     def test_get_state(self):
         n = ConcreteNeuron(neuron_id=0)
         state = n.get_state()
-        assert 'membrane_potential' in state
+        assert "membrane_potential" in state
         # Specific variable
-        v = n.get_state('membrane_potential')
+        v = n.get_state("membrane_potential")
         assert v == pytest.approx(-65e-3)
 
     def test_enable_monitoring(self):
         n = ConcreteNeuron(neuron_id=0)
-        n.enable_monitoring(['membrane_potential'])
+        n.enable_monitoring(["membrane_potential"])
         assert n.monitor_enabled is True
-        assert 'membrane_potential' in n.recorded_variables
+        assert "membrane_potential" in n.recorded_variables
 
     def test_get_recorded_data(self):
         n = ConcreteNeuron(neuron_id=0)
-        n.enable_monitoring(['membrane_potential'])
+        n.enable_monitoring(["membrane_potential"])
         # Step the neuron to record data
         n.update(1e-3)
-        data = n.get_recorded_data('membrane_potential')
+        data = n.get_recorded_data("membrane_potential")
         assert len(data) >= 1
 
     def test_add_event_and_process(self):
@@ -413,22 +493,22 @@ class TestNeuronBase:
         """Push membrane potential above threshold → spike → reset."""
         n = ConcreteNeuron(neuron_id=0)
         # Set membrane potential just below threshold, inject large current
-        n.state['membrane_potential'] = -50.5e-3
-        n.state['input_current'] = 100.0  # big current
+        n.state["membrane_potential"] = -50.5e-3
+        n.state["input_current"] = 100.0  # big current
         n.update(1e-3)
         # After update membrane should have been pushed up, spike generated, reset to v_reset
-        if n.state['spike_times']:
-            assert n.state['membrane_potential'] == pytest.approx(-70e-3)
+        if n.state["spike_times"]:
+            assert n.state["membrane_potential"] == pytest.approx(-70e-3)
             assert n.is_refractory()
 
     def test_refractory_period(self):
         """During refractory period, membrane doesn't change."""
         n = ConcreteNeuron(neuron_id=0)
         # Force refractory
-        n.state['refractory_until'] = 10.0
-        v_before = n.state['membrane_potential']
+        n.state["refractory_until"] = 10.0
+        v_before = n.state["membrane_potential"]
         n.update(1e-3)
-        assert n.state['membrane_potential'] == pytest.approx(v_before)
+        assert n.state["membrane_potential"] == pytest.approx(v_before)
 
     def test_add_input_output_synapse(self):
         pre = ConcreteNeuron(neuron_id=0)
@@ -442,9 +522,9 @@ class TestNeuronBase:
     def test_get_info(self):
         n = ConcreteNeuron(neuron_id=7)
         info = n.get_info()
-        assert info['id'] == 7
-        assert info['type'] == 'ConcreteNeuron'
-        assert 'state_keys' in info
+        assert info["id"] == 7
+        assert info["type"] == "ConcreteNeuron"
+        assert "state_keys" in info
 
 
 class TestSynapseBase:
@@ -469,19 +549,19 @@ class TestSynapseBase:
         syn, pre, post = self._make_synapse()
         evt = SpikeEvent(neuron_id=0, timestamp=0.01)
         syn.receive_spike(evt)
-        assert len(syn.state['delayed_spikes']) == 1
-        assert syn.state['last_pre_spike'] == pytest.approx(0.01)
+        assert len(syn.state["delayed_spikes"]) == 1
+        assert syn.state["last_pre_spike"] == pytest.approx(0.01)
         # Delayed spike timestamp = spike + delay
-        delayed = syn.state['delayed_spikes'][0]
-        assert delayed.timestamp == pytest.approx(0.01 + syn.parameters['delay'])
+        delayed = syn.state["delayed_spikes"][0]
+        assert delayed.timestamp == pytest.approx(0.01 + syn.parameters["delay"])
 
     def test_reset(self):
         syn, _, _ = self._make_synapse()
-        syn.state['weight'] = 3.0
-        syn.state['eligibility_trace'] = 0.5
+        syn.state["weight"] = 3.0
+        syn.state["eligibility_trace"] = 0.5
         syn.reset()
         assert syn.get_weight() == pytest.approx(1.0)  # initial_weight
-        assert syn.state['eligibility_trace'] == pytest.approx(0.0)
+        assert syn.state["eligibility_trace"] == pytest.approx(0.0)
 
 
 class TestNetworkBase:
@@ -516,8 +596,8 @@ class TestNetworkBase:
         n = ConcreteNeuron(neuron_id=0)
         net.add_neuron(n)
         state = net.get_network_state()
-        assert state['num_neurons'] == 1
-        assert state['is_running'] is False
+        assert state["num_neurons"] == 1
+        assert state["is_running"] is False
 
     def test_reset(self):
         net = ConcreteNetwork(network_id=0)
@@ -533,25 +613,23 @@ class TestNetworkBase:
 #  3. core/event_processor.py
 # ===========================================================================
 
+
 class TestEventDataclass:
     def test_creation(self):
-        e = Event(event_id="e1", event_type=EventType.SPIKE,
-                  timestamp=0.1, source_id=0)
+        e = Event(event_id="e1", event_type=EventType.SPIKE, timestamp=0.1, source_id=0)
         assert e.event_id == "e1"
         assert e.event_type == EventType.SPIKE
 
     def test_lt_ordering_by_timestamp(self):
-        e1 = Event(event_id="a", event_type=EventType.SPIKE,
-                   timestamp=0.1, source_id=0)
-        e2 = Event(event_id="b", event_type=EventType.SPIKE,
-                   timestamp=0.2, source_id=0)
+        e1 = Event(event_id="a", event_type=EventType.SPIKE, timestamp=0.1, source_id=0)
+        e2 = Event(event_id="b", event_type=EventType.SPIKE, timestamp=0.2, source_id=0)
         assert e1 < e2
 
     def test_lt_ordering_by_priority(self):
-        e1 = Event(event_id="a", event_type=EventType.SPIKE,
-                   timestamp=0.1, source_id=0, priority=5)
-        e2 = Event(event_id="b", event_type=EventType.SPIKE,
-                   timestamp=0.1, source_id=0, priority=10)
+        e1 = Event(event_id="a", event_type=EventType.SPIKE, timestamp=0.1, source_id=0, priority=5)
+        e2 = Event(
+            event_id="b", event_type=EventType.SPIKE, timestamp=0.1, source_id=0, priority=10
+        )
         # Higher priority first → e2 < e1 when same timestamp
         assert e2 < e1
 
@@ -561,11 +639,10 @@ class TestSpecializedEvents:
         e = EPSpikeEvent(neuron_id=5, timestamp=0.01, amplitude=2.0)
         assert e.event_type == EventType.SPIKE
         assert e.source_id == 5
-        assert e.data['amplitude'] == pytest.approx(2.0)
+        assert e.data["amplitude"] == pytest.approx(2.0)
 
     def test_synaptic_event(self):
-        e = EPSynapticEvent(pre_neuron=1, post_neuron=2,
-                            timestamp=0.01, weight=0.5, delay=0.002)
+        e = EPSynapticEvent(pre_neuron=1, post_neuron=2, timestamp=0.01, weight=0.5, delay=0.002)
         assert e.event_type == EventType.SYNAPTIC
         assert e.source_id == 1
         assert e.target_id == 2
@@ -575,7 +652,7 @@ class TestSpecializedEvents:
     def test_plasticity_event(self):
         e = PlasticityEvent(synapse_id=10, timestamp=0.05, weight_change=0.001)
         assert e.event_type == EventType.PLASTICITY
-        assert e.data['weight_change'] == pytest.approx(0.001)
+        assert e.data["weight_change"] == pytest.approx(0.001)
 
 
 class TestEventType:
@@ -589,8 +666,7 @@ class TestEventType:
 class TestEventQueue:
     def test_push_pop(self):
         q = EventQueue()
-        e = Event(event_id="e1", event_type=EventType.SPIKE,
-                  timestamp=0.1, source_id=0)
+        e = Event(event_id="e1", event_type=EventType.SPIKE, timestamp=0.1, source_id=0)
         q.push(e)
         assert q.size() == 1
         out = q.pop()
@@ -599,18 +675,15 @@ class TestEventQueue:
 
     def test_peek(self):
         q = EventQueue()
-        e = Event(event_id="e1", event_type=EventType.SPIKE,
-                  timestamp=0.1, source_id=0)
+        e = Event(event_id="e1", event_type=EventType.SPIKE, timestamp=0.1, source_id=0)
         q.push(e)
         assert q.peek().event_id == "e1"
         assert q.size() == 1  # peek doesn't remove
 
     def test_ordering(self):
         q = EventQueue()
-        e2 = Event(event_id="e2", event_type=EventType.SPIKE,
-                   timestamp=0.2, source_id=0)
-        e1 = Event(event_id="e1", event_type=EventType.SPIKE,
-                   timestamp=0.1, source_id=0)
+        e2 = Event(event_id="e2", event_type=EventType.SPIKE, timestamp=0.2, source_id=0)
+        e1 = Event(event_id="e1", event_type=EventType.SPIKE, timestamp=0.1, source_id=0)
         q.push(e2)
         q.push(e1)
         assert q.pop().event_id == "e1"  # earlier first
@@ -619,28 +692,29 @@ class TestEventQueue:
     def test_clear(self):
         q = EventQueue()
         for i in range(5):
-            q.push(Event(event_id=f"e{i}", event_type=EventType.SPIKE,
-                         timestamp=float(i), source_id=0))
+            q.push(
+                Event(event_id=f"e{i}", event_type=EventType.SPIKE, timestamp=float(i), source_id=0)
+            )
         q.clear()
         assert q.size() == 0
 
     def test_get_stats(self):
         q = EventQueue(max_size=10)
-        q.push(Event(event_id="e1", event_type=EventType.SPIKE,
-                     timestamp=0.1, source_id=0))
+        q.push(Event(event_id="e1", event_type=EventType.SPIKE, timestamp=0.1, source_id=0))
         stats = q.get_stats()
-        assert stats['current_size'] == 1
-        assert stats['max_size'] == 10
-        assert stats['total_events'] == 1
+        assert stats["current_size"] == 1
+        assert stats["max_size"] == 10
+        assert stats["total_events"] == 1
 
     def test_max_size_overflow(self):
         q = EventQueue(max_size=3)
         for i in range(5):
-            q.push(Event(event_id=f"e{i}", event_type=EventType.SPIKE,
-                         timestamp=float(i), source_id=0))
+            q.push(
+                Event(event_id=f"e{i}", event_type=EventType.SPIKE, timestamp=float(i), source_id=0)
+            )
         assert q.size() == 3
         stats = q.get_stats()
-        assert stats['dropped_events'] == 2
+        assert stats["dropped_events"] == 2
 
     def test_pop_empty(self):
         q = EventQueue()
@@ -654,8 +728,7 @@ class TestEventQueue:
 class TestEventHandler:
     def test_concrete_handler(self):
         h = ConcreteHandler()
-        e = Event(event_id="e1", event_type=EventType.SPIKE,
-                  timestamp=0.1, source_id=0)
+        e = Event(event_id="e1", event_type=EventType.SPIKE, timestamp=0.1, source_id=0)
         result = h.handle_event(e)
         assert h.received == [e]
         assert result == []
@@ -711,14 +784,15 @@ class TestEventProcessor:
     def test_get_statistics(self):
         p = self._make_processor()
         stats = p.get_statistics()
-        assert 'events_processed' in stats
-        assert 'events_generated' in stats
-        assert 'queue_size' in stats
+        assert "events_processed" in stats
+        assert "events_generated" in stats
+        assert "queue_size" in stats
 
 
 # ===========================================================================
 #  4. core/spike_monitor.py
 # ===========================================================================
+
 
 class TestSpikeRecord:
     def test_creation(self):
@@ -728,8 +802,8 @@ class TestSpikeRecord:
         assert r.metadata == {}
 
     def test_metadata(self):
-        r = SpikeRecord(neuron_id=0, timestamp=0.0, metadata={'info': 'test'})
-        assert r.metadata['info'] == 'test'
+        r = SpikeRecord(neuron_id=0, timestamp=0.0, metadata={"info": "test"})
+        assert r.metadata["info"] == "test"
 
 
 class TestMonitoringStats:
@@ -816,15 +890,15 @@ class TestSpikeMonitor:
         for i in range(5):
             m.record_spike(neuron_id=0, timestamp=0.1 * i)
         isi = m.get_isi_distribution(neuron_id=0)
-        assert isi['count'] == 4
-        assert isi['mean'] == pytest.approx(0.1, abs=1e-6)
-        assert isi['cv'] == pytest.approx(0.0, abs=1e-6)  # regular → CV≈0
+        assert isi["count"] == 4
+        assert isi["mean"] == pytest.approx(0.1, abs=1e-6)
+        assert isi["cv"] == pytest.approx(0.0, abs=1e-6)  # regular → CV≈0
 
     def test_get_isi_distribution_no_spikes(self):
         m = self._make_monitor()
         isi = m.get_isi_distribution(neuron_id=999)
-        assert isi['mean'] == pytest.approx(0.0)
-        assert isi['intervals'] == []
+        assert isi["mean"] == pytest.approx(0.0)
+        assert isi["intervals"] == []
 
     # Do NOT test initialize() or shutdown() — broken indentation in source
 
@@ -833,24 +907,33 @@ class TestSpikeMonitor:
 #  5. core/temporal_dynamics.py
 # ===========================================================================
 
+
 class _MockTDConfig:
     """Mock config for TemporalDynamics — needs config.hardware.time_step."""
+
     class hardware:
         time_step = 0.001  # 1ms
 
 
 class TestTemporalPattern:
     def test_creation(self):
-        p = TemporalPattern(pattern_id="burst", spike_times=[0, 0.002],
-                            neuron_ids=[0], duration=0.002)
+        p = TemporalPattern(
+            pattern_id="burst", spike_times=[0, 0.002], neuron_ids=[0], duration=0.002
+        )
         assert p.pattern_id == "burst"
         assert p.strength == pytest.approx(1.0)
 
 
 class TestOscillationState:
     def test_creation(self):
-        o = OscillationState(frequency=40.0, amplitude=1.0, phase=0.0,
-                             coherence=0.5, participants=[], last_update=0.0)
+        o = OscillationState(
+            frequency=40.0,
+            amplitude=1.0,
+            phase=0.0,
+            coherence=0.5,
+            participants=[],
+            last_update=0.0,
+        )
         assert o.frequency == pytest.approx(40.0)
 
 
@@ -890,13 +973,13 @@ class TestTemporalDynamics:
         for i in range(4):
             td.register_spike(neuron_id=0, spike_time=0.1 * i)
         stats = td.get_isi_statistics(neuron_id=0)
-        assert stats['mean'] == pytest.approx(0.1, abs=1e-6)
-        assert stats['cv'] == pytest.approx(0.0, abs=1e-6)
+        assert stats["mean"] == pytest.approx(0.1, abs=1e-6)
+        assert stats["cv"] == pytest.approx(0.0, abs=1e-6)
 
     def test_get_isi_statistics_no_data(self):
         td = self._make_td()
         stats = td.get_isi_statistics(neuron_id=999)
-        assert stats['mean'] == pytest.approx(0.0)
+        assert stats["mean"] == pytest.approx(0.0)
 
     def test_detect_burst(self):
         td = self._make_td()
@@ -942,6 +1025,7 @@ class TestTemporalDynamics:
 #  6. hardware/chip_simulator.py
 # ===========================================================================
 
+
 class TestChipType:
     def test_values(self):
         assert ChipType.LOIHI.value == "loihi"
@@ -984,7 +1068,7 @@ class TestNeuromorphicChip:
 
     def test_add_neuron(self):
         chip = self._make_chip()
-        neuron_id = chip.add_neuron(0, {'threshold': -50e-3})
+        neuron_id = chip.add_neuron(0, {"threshold": -50e-3})
         assert neuron_id == 0
         assert chip.cores[0].num_neurons == 1
 
@@ -1023,8 +1107,8 @@ class TestNeuromorphicChip:
         chip = self._make_chip()
         chip.add_neuron(0, {})
         stats = chip.get_chip_statistics()
-        assert stats['total_neurons'] == 1
-        assert stats['num_cores'] == 4
+        assert stats["total_neurons"] == 1
+        assert stats["num_cores"] == 4
 
     def test_reset(self):
         chip = self._make_chip()
@@ -1037,6 +1121,7 @@ class TestNeuromorphicChip:
 # ===========================================================================
 #  7. hardware/memristive_device.py
 # ===========================================================================
+
 
 class TestMemristorType:
     def test_values(self):
@@ -1059,8 +1144,10 @@ class TestMemristorParams:
 class TestMemristiveDevice:
     def _make_device(self, mtype=MemristorType.LINEAR_DRIFT, state=0.5):
         return MemristiveDevice(
-            device_id=0, memristor_type=mtype,
-            params=MemristorParams(), initial_state=state,
+            device_id=0,
+            memristor_type=mtype,
+            params=MemristorParams(),
+            initial_state=state,
         )
 
     def test_creation(self):
@@ -1090,10 +1177,10 @@ class TestMemristiveDevice:
     def test_get_device_info(self):
         d = self._make_device()
         info = d.get_device_info()
-        assert info['device_id'] == 0
-        assert info['type'] == 'linear_drift'
-        assert 'resistance' in info
-        assert 'conductance' in info
+        assert info["device_id"] == 0
+        assert info["type"] == "linear_drift"
+        assert "resistance" in info
+        assert "conductance" in info
 
     def test_apply_voltage_returns_tuple(self):
         d = self._make_device()
@@ -1161,6 +1248,7 @@ class TestMemristiveDevice:
 #  8. learning/stdp.py
 # ===========================================================================
 
+
 class TestSTDPParameters:
     def test_defaults(self):
         p = STDPParameters()
@@ -1185,34 +1273,39 @@ class TestPairSTDP:
     def test_ltp_pre_before_post(self):
         stdp = self._make_stdp()
         # Pre at t=0.01, post at t=0.02 → dt=+0.01 → LTP
-        w = stdp.update_weight(synapse_id=0, pre_spike_time=0.01,
-                               post_spike_time=0.02, current_weight=0.5)
+        w = stdp.update_weight(
+            synapse_id=0, pre_spike_time=0.01, post_spike_time=0.02, current_weight=0.5
+        )
         assert w > 0.5  # weight increased
 
     def test_ltd_post_before_pre(self):
         stdp = self._make_stdp()
         # Post at t=0.01, pre at t=0.02 → dt=-0.01 → LTD
-        w = stdp.update_weight(synapse_id=0, pre_spike_time=0.02,
-                               post_spike_time=0.01, current_weight=0.5)
+        w = stdp.update_weight(
+            synapse_id=0, pre_spike_time=0.02, post_spike_time=0.01, current_weight=0.5
+        )
         assert w < 0.5  # weight decreased
 
     def test_weight_bounds_max(self):
         stdp = self._make_stdp(a_plus=10.0)  # huge LTP
-        w = stdp.update_weight(synapse_id=0, pre_spike_time=0.01,
-                               post_spike_time=0.02, current_weight=0.99)
+        w = stdp.update_weight(
+            synapse_id=0, pre_spike_time=0.01, post_spike_time=0.02, current_weight=0.99
+        )
         assert w <= 1.0  # clamped to w_max
 
     def test_weight_bounds_min(self):
         stdp = self._make_stdp(a_minus=10.0)  # huge LTD
-        w = stdp.update_weight(synapse_id=0, pre_spike_time=0.02,
-                               post_spike_time=0.01, current_weight=0.01)
+        w = stdp.update_weight(
+            synapse_id=0, pre_spike_time=0.02, post_spike_time=0.01, current_weight=0.01
+        )
         assert w >= 0.0  # clamped to w_min
 
     def test_no_change_large_dt(self):
         stdp = self._make_stdp()
         # dt much larger than 5*tau → no change
-        w = stdp.update_weight(synapse_id=0, pre_spike_time=0.0,
-                               post_spike_time=1.0, current_weight=0.5)
+        w = stdp.update_weight(
+            synapse_id=0, pre_spike_time=0.0, post_spike_time=1.0, current_weight=0.5
+        )
         assert w == pytest.approx(0.5)
 
     def test_ltp_decreases_with_dt(self):
@@ -1263,8 +1356,9 @@ class TestSTDPLearningBase:
         stdp = PairSTDP(STDPParameters())
         # Setup: post spike first, then pre spike
         stdp.post_spike_history[42] = [0.01]
-        w = stdp.process_pre_spike(synapse_id=0, spike_time=0.02,
-                                   post_neuron_id=42, current_weight=0.5)
+        w = stdp.process_pre_spike(
+            synapse_id=0, spike_time=0.02, post_neuron_id=42, current_weight=0.5
+        )
         # Pre after post → LTD
         assert w < 0.5
 
@@ -1272,10 +1366,11 @@ class TestSTDPLearningBase:
         stdp = PairSTDP(STDPParameters())
         # Setup: pre spike first
         from collections import deque
+
         stdp.pre_spike_history[0] = deque([0.01], maxlen=100)
         updated = stdp.process_post_spike(
-            post_neuron_id=42, spike_time=0.02,
-            connected_synapses=[(0, 0.5)])
+            post_neuron_id=42, spike_time=0.02, connected_synapses=[(0, 0.5)]
+        )
         assert len(updated) == 1
         syn_id, new_w = updated[0]
         assert new_w > 0.5  # LTP
@@ -1283,18 +1378,18 @@ class TestSTDPLearningBase:
     def test_eligibility_trace(self):
         stdp = PairSTDP(STDPParameters())
         stdp.process_pre_spike(0, 0.01, 42, 0.5)
-        trace = stdp.get_trace_value(0, 0.01, 'pre')
+        trace = stdp.get_trace_value(0, 0.01, "pre")
         assert trace > 0
         # Trace decays over time
-        trace_later = stdp.get_trace_value(0, 0.5, 'pre')
+        trace_later = stdp.get_trace_value(0, 0.5, "pre")
         assert trace_later < trace
 
     def test_get_statistics(self):
         stdp = PairSTDP(STDPParameters())
         stats = stdp.get_statistics()
-        assert 'ltp_events' in stats
-        assert 'ltd_events' in stats
-        assert 'total_weight_change' in stats
+        assert "ltp_events" in stats
+        assert "ltd_events" in stats
+        assert "total_weight_change" in stats
 
     def test_reset(self):
         stdp = PairSTDP(STDPParameters())

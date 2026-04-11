@@ -19,8 +19,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     MechanismDesignEngine = None
 
-__all__ = [
-    'GameTheoryAnalyzer',
-    'NashEquilibriumCalculator',
-    'MechanismDesignEngine'
-]
+__all__ = ["GameTheoryAnalyzer", "NashEquilibriumCalculator", "MechanismDesignEngine"]

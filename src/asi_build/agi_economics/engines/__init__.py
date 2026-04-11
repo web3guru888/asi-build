@@ -18,8 +18,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     LiquidityPoolEngine = None
 
-__all__ = [
-    'TokenEconomicsEngine',
-    'BondingCurveEngine', 
-    'LiquidityPoolEngine'
-]
+__all__ = ["TokenEconomicsEngine", "BondingCurveEngine", "LiquidityPoolEngine"]

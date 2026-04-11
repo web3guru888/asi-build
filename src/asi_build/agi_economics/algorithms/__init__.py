@@ -10,7 +10,7 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     ResourceAllocator = None
 try:
-    from .auction_mechanisms import AuctionMechanism, VickreyAuction, DutchAuction
+    from .auction_mechanisms import AuctionMechanism, DutchAuction, VickreyAuction
 except (ImportError, ModuleNotFoundError, SyntaxError):
     AuctionMechanism = None
     VickreyAuction = None
@@ -21,9 +21,9 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     OptimizationEngine = None
 
 __all__ = [
-    'ResourceAllocator',
-    'AuctionMechanism',
-    'VickreyAuction', 
-    'DutchAuction',
-    'OptimizationEngine'
+    "ResourceAllocator",
+    "AuctionMechanism",
+    "VickreyAuction",
+    "DutchAuction",
+    "OptimizationEngine",
 ]

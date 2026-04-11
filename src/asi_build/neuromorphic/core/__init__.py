@@ -7,7 +7,7 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     NeuromorphicConfig = None
 try:
-    from .manager import NeuromorphicManager  
+    from .manager import NeuromorphicManager
 except (ImportError, ModuleNotFoundError, SyntaxError):
     NeuromorphicManager = None
 try:
@@ -28,10 +28,10 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     SpikeMonitor = None
 
 __all__ = [
-    'NeuromorphicConfig',
-    'NeuromorphicManager',
-    'EventProcessor', 
-    'TemporalDynamics',
-    'NeuralBase',
-    'SpikeMonitor'
+    "NeuromorphicConfig",
+    "NeuromorphicManager",
+    "EventProcessor",
+    "TemporalDynamics",
+    "NeuralBase",
+    "SpikeMonitor",
 ]

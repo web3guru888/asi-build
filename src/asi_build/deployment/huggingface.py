@@ -28,10 +28,13 @@ class HuggingFaceEmbedder(BaseEmbedder):
 
             embeddings = HuggingFaceEndpointEmbeddings(
                 model=self.config.endpoint,
-                huggingfacehub_api_token=self.config.api_key or os.getenv("HUGGINGFACE_ACCESS_TOKEN"),
+                huggingfacehub_api_token=self.config.api_key
+                or os.getenv("HUGGINGFACE_ACCESS_TOKEN"),
             )
         else:
-            embeddings = HuggingFaceEmbeddings(model_name=self.config.model, model_kwargs=self.config.model_kwargs)
+            embeddings = HuggingFaceEmbeddings(
+                model_name=self.config.model, model_kwargs=self.config.model_kwargs
+            )
 
         embedding_fn = BaseEmbedder._langchain_default_concept(embeddings)
         self.set_embedding_fn(embedding_fn=embedding_fn)

@@ -18,8 +18,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     GovernanceSystem = None
 
-__all__ = [
-    'ValueAlignmentEngine',
-    'ReputationSystem',
-    'GovernanceSystem'
-]
+__all__ = ["ValueAlignmentEngine", "ReputationSystem", "GovernanceSystem"]

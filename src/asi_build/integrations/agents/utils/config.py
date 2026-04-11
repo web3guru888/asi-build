@@ -6,8 +6,8 @@ for different environments and use cases.
 """
 
 import os
-from typing import Dict, Any, Optional
 from dataclasses import dataclass
+from typing import Any, Dict, Optional
 
 
 @dataclass
@@ -52,12 +52,8 @@ class MigrationConfig:
             # OpenAI settings
             openai_api_key=os.getenv("OPENAI_API_KEY", ""),
             # Migration settings
-            relationship_naming_strategy=os.getenv(
-                "RELATIONSHIP_NAMING_STRATEGY", "table_based"
-            ),
-            interactive_table_selection=os.getenv(
-                "INTERACTIVE_TABLE_SELECTION", "true"
-            ).lower()
+            relationship_naming_strategy=os.getenv("RELATIONSHIP_NAMING_STRATEGY", "table_based"),
+            interactive_table_selection=os.getenv("INTERACTIVE_TABLE_SELECTION", "true").lower()
             == "true",
         )
 
@@ -154,9 +150,7 @@ def get_preset_config(preset_name: str) -> Optional[Dict[str, Any]]:
     return presets.get(preset_name)
 
 
-def merge_config_with_preset(
-    config: MigrationConfig, preset_name: str
-) -> MigrationConfig:
+def merge_config_with_preset(config: MigrationConfig, preset_name: str) -> MigrationConfig:
     """
     Merge configuration with a preset, keeping existing values.
 

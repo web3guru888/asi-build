@@ -25,6 +25,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+
 pytest.importorskip("torch")
 import torch
 
@@ -33,18 +34,28 @@ import torch
 # can be imported without actually installing web3, dash, plotly, etc.
 # ---------------------------------------------------------------------------
 
+
 def _ensure_mock_module(name):
     """Insert a MagicMock into sys.modules if the real module is absent."""
     if name not in sys.modules:
         sys.modules[name] = MagicMock()
 
+
 for _mod in (
-    "web3", "web3.auto", "eth_account",
+    "web3",
+    "web3.auto",
+    "eth_account",
     "ipfshttpclient",
-    "dash", "dash.dcc", "dash.html",
-    "plotly", "plotly.graph_objects", "plotly.express", "plotly.subplots",
+    "dash",
+    "dash.dcc",
+    "dash.html",
+    "plotly",
+    "plotly.graph_objects",
+    "plotly.express",
+    "plotly.subplots",
     "pandas",
-    "websocket", "websockets",
+    "websocket",
+    "websockets",
 ):
     _ensure_mock_module(_mod)
 
@@ -340,6 +351,7 @@ class TestGlobalErrorHandler:
     def test_get_global_creates_default(self):
         # Reset to make test idempotent
         import asi_build.distributed_training.core.error_handling as mod
+
         mod._global_error_handler = None
         handler = get_global_error_handler()
         assert isinstance(handler, ErrorHandler)
@@ -386,9 +398,14 @@ class TestAttackType:
 class TestNodeBehavior:
     def test_dataclass_fields(self):
         nb = NodeBehavior(
-            node_id="n1", gradient_norms=[1.0], submission_times=[time.time()],
-            accuracy_contributions=[0.9], similarity_scores=[0.95],
-            reputation_score=0.5, trust_score=0.5, detected_attacks=[],
+            node_id="n1",
+            gradient_norms=[1.0],
+            submission_times=[time.time()],
+            accuracy_contributions=[0.9],
+            similarity_scores=[0.95],
+            reputation_score=0.5,
+            trust_score=0.5,
+            detected_attacks=[],
             last_evaluation=time.time(),
         )
         assert nb.node_id == "n1"
@@ -450,9 +467,14 @@ class TestByzantineDetector:
     def test_get_trusted_nodes_filters_low_rep(self):
         det = ByzantineDetector({})
         det.node_behaviors["bad"] = NodeBehavior(
-            node_id="bad", gradient_norms=[], submission_times=[],
-            accuracy_contributions=[], similarity_scores=[],
-            reputation_score=0.1, trust_score=0.1, detected_attacks=[],
+            node_id="bad",
+            gradient_norms=[],
+            submission_times=[],
+            accuracy_contributions=[],
+            similarity_scores=[],
+            reputation_score=0.1,
+            trust_score=0.1,
+            detected_attacks=[],
             last_evaluation=time.time(),
         )
         trusted = det.get_trusted_nodes(["bad", "new_node"], min_trust_score=0.3)
@@ -478,9 +500,7 @@ class TestByzantineDetector:
         groups = det.detect_coordinated_attacks(grads)
         # Should detect at least one sybil group
         assert len(groups) >= 1
-        sybil_detected = any(
-            {"sybil_0", "sybil_1", "sybil_2"}.issubset(g) for g in groups
-        )
+        sybil_detected = any({"sybil_0", "sybil_1", "sybil_2"}.issubset(g) for g in groups)
         assert sybil_detected
 
 
@@ -502,10 +522,12 @@ class TestByzantineTolerantAggregator:
         assert 0.0 <= result.confidence_score <= 1.0
 
     def test_krum_aggregation(self):
-        agg = ByzantineTolerantAggregator({
-            "aggregation_method": "krum",
-            "byzantine_ratio": 0.2,
-        })
+        agg = ByzantineTolerantAggregator(
+            {
+                "aggregation_method": "krum",
+                "byzantine_ratio": 0.2,
+            }
+        )
         grads = _make_gradients(6)
         result = asyncio.get_event_loop().run_until_complete(agg.aggregate(grads))
         assert "param" in result.aggregated_gradients
@@ -513,10 +535,12 @@ class TestByzantineTolerantAggregator:
         assert len(result.honest_participants) > 0
 
     def test_trimmed_mean_aggregation(self):
-        agg = ByzantineTolerantAggregator({
-            "aggregation_method": "trimmed_mean",
-            "byzantine_ratio": 0.2,
-        })
+        agg = ByzantineTolerantAggregator(
+            {
+                "aggregation_method": "trimmed_mean",
+                "byzantine_ratio": 0.2,
+            }
+        )
         grads = _make_gradients(6)
         result = asyncio.get_event_loop().run_until_complete(agg.aggregate(grads))
         assert "param" in result.aggregated_gradients
@@ -590,8 +614,12 @@ class TestAdaptiveByzantineDefense:
         defense = AdaptiveByzantineDefense({"adaptation_rate": 0.5})
         old_eff = defense.defense_effectiveness["krum"]
         mock_result = AggregationResult(
-            aggregated_gradients={}, honest_participants=[], suspected_byzantine=[],
-            confidence_score=0.9, aggregation_method="krum", detection_stats={},
+            aggregated_gradients={},
+            honest_participants=[],
+            suspected_byzantine=[],
+            confidence_score=0.9,
+            aggregation_method="krum",
+            detection_stats={},
         )
         defense._update_effectiveness("krum", mock_result)
         new_eff = defense.defense_effectiveness["krum"]
@@ -619,8 +647,8 @@ class TestAdaptiveByzantineDefense:
 
 from asi_build.distributed_training.core.dataset_sharding import (
     AdaptiveSharding,
-    DataShard,
     DatasetMetadata,
+    DataShard,
     DistributedDatasetManager,
     IIDSharding,
     NonIIDSharding,
@@ -644,9 +672,13 @@ class _MockDataset:
 class TestDataShard:
     def test_dataclass_roundtrip(self):
         shard = DataShard(
-            shard_id="s1", node_id="n1", data_indices=[0, 1, 2],
-            label_distribution={"0": 2, "1": 1}, size=3,
-            checksum="abc123", created_at=time.time(),
+            shard_id="s1",
+            node_id="n1",
+            data_indices=[0, 1, 2],
+            label_distribution={"0": 2, "1": 1},
+            size=3,
+            checksum="abc123",
+            created_at=time.time(),
         )
         d = asdict(shard)
         assert d["shard_id"] == "s1"
@@ -656,9 +688,13 @@ class TestDataShard:
 class TestDatasetMetadata:
     def test_dataclass_fields(self):
         md = DatasetMetadata(
-            dataset_id="ds1", total_samples=1000, num_classes=10,
-            feature_dim=784, class_distribution={"0": 100},
-            data_type="vision", sharding_strategy="iid",
+            dataset_id="ds1",
+            total_samples=1000,
+            num_classes=10,
+            feature_dim=784,
+            class_distribution={"0": 100},
+            data_type="vision",
+            sharding_strategy="iid",
         )
         assert md.total_samples == 1000
 
@@ -823,11 +859,11 @@ class TestDistributedDatasetManager:
 
 from asi_build.distributed_training.core.gradient_compression import (
     AdaptiveCompressor,
+    CommunicationOptimizer,
     CompressionStats,
+    QuantizationCompressor,
     SignSGDCompressor,
     TopKSparsification,
-    QuantizationCompressor,
-    CommunicationOptimizer,
 )
 
 
@@ -940,9 +976,7 @@ class TestAdaptiveCompressor:
         c = AdaptiveCompressor({})
         # Fill history beyond 100
         for i in range(150):
-            c.compression_history.append(
-                CompressionStats(100, 50, 0.5, 0.01, 0.01, "topk")
-            )
+            c.compression_history.append(CompressionStats(100, 50, 0.5, 0.01, 0.01, "topk"))
         assert len(c.compression_history) == 150
         # Next compression will prune
         # We can't easily run compress without lz4/brotli, but test the pruning mechanism
@@ -978,8 +1012,12 @@ class TestCommunicationOptimizer:
 class TestCompressionStats:
     def test_dataclass(self):
         cs = CompressionStats(
-            original_size=1000, compressed_size=100, compression_ratio=0.1,
-            compression_time=0.5, decompression_time=0.3, algorithm="topk",
+            original_size=1000,
+            compressed_size=100,
+            compression_ratio=0.1,
+            compression_time=0.5,
+            decompression_time=0.3,
+            algorithm="topk",
         )
         assert cs.original_size == 1000
         assert cs.algorithm == "topk"
@@ -999,9 +1037,15 @@ from asi_build.distributed_training.p2p.node_discovery import (
 
 def _make_peer(peer_id, reputation=0.5, port=8080):
     return PeerInfo(
-        peer_id=peer_id, ip_address="127.0.0.1", port=port,
-        public_key="", capabilities={}, last_seen=time.time(),
-        reputation=reputation, is_bootstrap=False, version="1.0.0",
+        peer_id=peer_id,
+        ip_address="127.0.0.1",
+        port=port,
+        public_key="",
+        capabilities={},
+        last_seen=time.time(),
+        reputation=reputation,
+        is_bootstrap=False,
+        version="1.0.0",
         network_id="test",
     )
 
@@ -1016,9 +1060,14 @@ class TestPeerInfo:
 class TestNetworkMessage:
     def test_dataclass_fields(self):
         msg = NetworkMessage(
-            message_id="m1", message_type="heartbeat", sender_id="s1",
-            recipient_id=None, payload={}, timestamp=time.time(),
-            ttl=60, signature=None,
+            message_id="m1",
+            message_type="heartbeat",
+            sender_id="s1",
+            recipient_id=None,
+            payload={},
+            timestamp=time.time(),
+            ttl=60,
+            signature=None,
         )
         assert msg.message_type == "heartbeat"
         assert msg.recipient_id is None
@@ -1119,31 +1168,23 @@ class TestDistributedHashTable:
 class TestGossipProtocol:
     def test_should_gossip_new_broadcast(self):
         gp = GossipProtocol("node1")
-        msg = NetworkMessage(
-            "m1", "heartbeat", "sender", None, {}, time.time(), 60, None
-        )
+        msg = NetworkMessage("m1", "heartbeat", "sender", None, {}, time.time(), 60, None)
         assert gp.should_gossip_message(msg) is True
 
     def test_should_not_gossip_expired(self):
         gp = GossipProtocol("node1")
-        msg = NetworkMessage(
-            "m1", "heartbeat", "sender", None, {}, time.time() - 200, 60, None
-        )
+        msg = NetworkMessage("m1", "heartbeat", "sender", None, {}, time.time() - 200, 60, None)
         assert gp.should_gossip_message(msg) is False
 
     def test_should_not_gossip_duplicate(self):
         gp = GossipProtocol("node1")
-        msg = NetworkMessage(
-            "m1", "heartbeat", "sender", None, {}, time.time(), 60, None
-        )
+        msg = NetworkMessage("m1", "heartbeat", "sender", None, {}, time.time(), 60, None)
         gp.cache_message(msg)
         assert gp.should_gossip_message(msg) is False
 
     def test_should_not_gossip_direct_message_for_others(self):
         gp = GossipProtocol("node1")
-        msg = NetworkMessage(
-            "m1", "direct", "sender", "node2", {}, time.time(), 60, None
-        )
+        msg = NetworkMessage("m1", "direct", "sender", "node2", {}, time.time(), 60, None)
         assert gp.should_gossip_message(msg) is False
 
     def test_cache_message_cleanup(self):
@@ -1154,9 +1195,7 @@ class TestGossipProtocol:
         )
         gp.message_cache["old"] = old_msg
         # Add new message triggers cleanup
-        new_msg = NetworkMessage(
-            "new", "heartbeat", "sender", None, {}, time.time(), 60, None
-        )
+        new_msg = NetworkMessage("new", "heartbeat", "sender", None, {}, time.time(), 60, None)
         gp.cache_message(new_msg)
         assert "old" not in gp.message_cache
         assert "new" in gp.message_cache
@@ -1180,8 +1219,8 @@ class TestGossipProtocol:
 from asi_build.distributed_training.privacy.secure_aggregation import (
     DifferentialPrivacyMechanism,
     PrivacyAudit,
-    ShamirSecretSharing,
     SecretShare,
+    ShamirSecretSharing,
 )
 
 
@@ -1318,12 +1357,18 @@ from asi_build.distributed_training.blockchain.agix_rewards import (
 )
 
 
-def _make_contribution(node_id="node_1", data_processed=1000, accuracy=0.9,
-                        timestamp=None, round_id="r1"):
+def _make_contribution(
+    node_id="node_1", data_processed=1000, accuracy=0.9, timestamp=None, round_id="r1"
+):
     return ComputeContribution(
-        node_id=node_id, round_id=round_id, data_processed=data_processed,
-        compute_time=60.0, gpu_hours=1.0, model_accuracy=accuracy,
-        bandwidth_used=1024, timestamp=timestamp or time.time(),
+        node_id=node_id,
+        round_id=round_id,
+        data_processed=data_processed,
+        compute_time=60.0,
+        gpu_hours=1.0,
+        model_accuracy=accuracy,
+        bandwidth_used=1024,
+        timestamp=timestamp or time.time(),
     )
 
 
@@ -1429,34 +1474,25 @@ class TestAntiSybilMechanism:
     def test_no_sybils_when_normal(self):
         asm = AntiSybilMechanism({"ip_clustering_threshold": 3})
         contribs = [
-            _make_contribution(node_id=f"n_{i}", timestamp=time.time() + i * 100)
-            for i in range(3)
+            _make_contribution(node_id=f"n_{i}", timestamp=time.time() + i * 100) for i in range(3)
         ]
-        meta = {
-            f"n_{i}": {"ip_address": f"10.0.0.{i}"} for i in range(3)
-        }
+        meta = {f"n_{i}": {"ip_address": f"10.0.0.{i}"} for i in range(3)}
         suspicious = asm.detect_sybil_nodes(contribs, meta)
         assert suspicious == []
 
     def test_ip_clustering_detection(self):
         asm = AntiSybilMechanism({"ip_clustering_threshold": 2})
         contribs = [
-            _make_contribution(node_id=f"n_{i}", timestamp=time.time() + i * 100)
-            for i in range(5)
+            _make_contribution(node_id=f"n_{i}", timestamp=time.time() + i * 100) for i in range(5)
         ]
-        meta = {
-            f"n_{i}": {"ip_address": "10.0.0.1"} for i in range(5)
-        }
+        meta = {f"n_{i}": {"ip_address": "10.0.0.1"} for i in range(5)}
         suspicious = asm.detect_sybil_nodes(contribs, meta)
         assert len(suspicious) >= 3
 
     def test_timing_correlation_detection(self):
         asm = AntiSybilMechanism({"ip_clustering_threshold": 100})
         base_ts = time.time()
-        contribs = [
-            _make_contribution(node_id=f"n_{i}", timestamp=base_ts + 1)
-            for i in range(3)
-        ]
+        contribs = [_make_contribution(node_id=f"n_{i}", timestamp=base_ts + 1) for i in range(3)]
         meta = {f"n_{i}": {"ip_address": f"10.{i}.0.1"} for i in range(3)}
         suspicious = asm.detect_sybil_nodes(contribs, meta)
         assert len(suspicious) > 0
@@ -1464,9 +1500,13 @@ class TestAntiSybilMechanism:
     def test_filter_rewards_for_sybils(self):
         asm = AntiSybilMechanism({})
         calc = RewardCalculation(
-            node_id="bad", base_reward=Decimal("10"), quality_bonus=Decimal("5"),
-            consistency_bonus=Decimal("3"), early_submission_bonus=Decimal("2"),
-            total_reward=Decimal("20"), agix_amount=Decimal("20"),
+            node_id="bad",
+            base_reward=Decimal("10"),
+            quality_bonus=Decimal("5"),
+            consistency_bonus=Decimal("3"),
+            early_submission_bonus=Decimal("2"),
+            total_reward=Decimal("20"),
+            agix_amount=Decimal("20"),
         )
         filtered = asm.filter_rewards_for_sybils([calc], ["bad"])
         assert filtered[0].agix_amount == Decimal("2")  # 20 * 0.1
@@ -1487,18 +1527,30 @@ from asi_build.distributed_training.monitoring.dashboard import (
 
 def _make_training_metrics(node_id="n1", round_id="r1", loss=0.5, accuracy=0.8, batch_time=1.0):
     return TrainingMetrics(
-        node_id=node_id, round_id=round_id, epoch=1, loss=loss,
-        accuracy=accuracy, learning_rate=0.001, batch_time=batch_time,
-        communication_time=0.1, memory_usage=50.0, gpu_utilization=70.0,
+        node_id=node_id,
+        round_id=round_id,
+        epoch=1,
+        loss=loss,
+        accuracy=accuracy,
+        learning_rate=0.001,
+        batch_time=batch_time,
+        communication_time=0.1,
+        memory_usage=50.0,
+        gpu_utilization=70.0,
         timestamp=time.time(),
     )
 
 
 def _make_network_metrics(round_id="r1", total=10, active=8, loss=0.5, accuracy=0.8):
     return NetworkMetrics(
-        round_id=round_id, total_nodes=total, active_nodes=active,
-        avg_loss=loss, avg_accuracy=accuracy, consensus_time=30.0,
-        data_transmitted_mb=100.0, byzantine_nodes_detected=0,
+        round_id=round_id,
+        total_nodes=total,
+        active_nodes=active,
+        avg_loss=loss,
+        avg_accuracy=accuracy,
+        consensus_time=30.0,
+        data_transmitted_mb=100.0,
+        byzantine_nodes_detected=0,
         timestamp=time.time(),
     )
 
@@ -1519,8 +1571,12 @@ class TestNetworkMetrics:
 class TestSystemHealth:
     def test_dataclass_fields(self):
         h = SystemHealth(
-            timestamp=time.time(), cpu_usage=50.0, memory_usage=60.0,
-            disk_usage=70.0, network_latency=10.0, active_connections=5,
+            timestamp=time.time(),
+            cpu_usage=50.0,
+            memory_usage=60.0,
+            disk_usage=70.0,
+            network_latency=10.0,
+            active_connections=5,
             error_rate=0.01,
         )
         assert h.cpu_usage == 50.0
@@ -1587,9 +1643,13 @@ class TestMetricsCollector:
     def test_network_health_healthy(self):
         mc = MetricsCollector({})
         for i in range(10):
-            mc.record_network_metrics(_make_network_metrics(
-                round_id=f"r{i}", total=10, active=9,
-            ))
+            mc.record_network_metrics(
+                _make_network_metrics(
+                    round_id=f"r{i}",
+                    total=10,
+                    active=9,
+                )
+            )
         health = mc.get_network_health_status()
         assert health["status"] == "healthy"
         assert health["health_score"] >= 80
@@ -1597,9 +1657,13 @@ class TestMetricsCollector:
     def test_network_health_warning_low_participation(self):
         mc = MetricsCollector({})
         for i in range(10):
-            mc.record_network_metrics(_make_network_metrics(
-                round_id=f"r{i}", total=10, active=5,
-            ))
+            mc.record_network_metrics(
+                _make_network_metrics(
+                    round_id=f"r{i}",
+                    total=10,
+                    active=5,
+                )
+            )
         health = mc.get_network_health_status()
         assert health["status"] in ("warning", "critical")
 
@@ -1615,20 +1679,38 @@ class TestPerformanceAnalyzer:
         # Record normal metrics for 5 nodes (need enough data points)
         for i in range(5):
             for j in range(10):
-                mc.record_training_metrics(TrainingMetrics(
-                    node_id=f"normal_{i}", round_id="r1", epoch=j, loss=0.5,
-                    accuracy=0.8, learning_rate=0.001, batch_time=1.0,
-                    communication_time=0.1, memory_usage=50.0,
-                    gpu_utilization=70.0, timestamp=time.time() + j,
-                ))
+                mc.record_training_metrics(
+                    TrainingMetrics(
+                        node_id=f"normal_{i}",
+                        round_id="r1",
+                        epoch=j,
+                        loss=0.5,
+                        accuracy=0.8,
+                        learning_rate=0.001,
+                        batch_time=1.0,
+                        communication_time=0.1,
+                        memory_usage=50.0,
+                        gpu_utilization=70.0,
+                        timestamp=time.time() + j,
+                    )
+                )
         # Record outlier with wildly different values
         for j in range(10):
-            mc.record_training_metrics(TrainingMetrics(
-                node_id="outlier", round_id="r1", epoch=j, loss=50.0,
-                accuracy=0.01, learning_rate=0.001, batch_time=500.0,
-                communication_time=0.1, memory_usage=50.0,
-                gpu_utilization=70.0, timestamp=time.time() + j,
-            ))
+            mc.record_training_metrics(
+                TrainingMetrics(
+                    node_id="outlier",
+                    round_id="r1",
+                    epoch=j,
+                    loss=50.0,
+                    accuracy=0.01,
+                    learning_rate=0.001,
+                    batch_time=500.0,
+                    communication_time=0.1,
+                    memory_usage=50.0,
+                    gpu_utilization=70.0,
+                    timestamp=time.time() + j,
+                )
+            )
         pa = PerformanceAnalyzer(mc)
         anomalies = pa.detect_performance_anomalies()
         outlier_anomalies = [a for a in anomalies if a["node_id"] == "outlier"]
@@ -1643,12 +1725,19 @@ class TestPerformanceAnalyzer:
     def test_convergence_analysis(self):
         mc = MetricsCollector({})
         for i in range(10):
-            mc.record_network_metrics(NetworkMetrics(
-                round_id=f"r{i}", total_nodes=10, active_nodes=9,
-                avg_loss=1.0 - i * 0.05, avg_accuracy=0.5 + i * 0.05,
-                consensus_time=30, data_transmitted_mb=100,
-                byzantine_nodes_detected=0, timestamp=time.time(),
-            ))
+            mc.record_network_metrics(
+                NetworkMetrics(
+                    round_id=f"r{i}",
+                    total_nodes=10,
+                    active_nodes=9,
+                    avg_loss=1.0 - i * 0.05,
+                    avg_accuracy=0.5 + i * 0.05,
+                    consensus_time=30,
+                    data_transmitted_mb=100,
+                    byzantine_nodes_detected=0,
+                    timestamp=time.time(),
+                )
+            )
         pa = PerformanceAnalyzer(mc)
         result = pa._analyze_convergence()
         assert result["status"] in ("converging", "stable", "converged")
@@ -1662,12 +1751,12 @@ class TestPerformanceAnalyzer:
     def test_node_efficiency_ranking(self):
         mc = MetricsCollector({})
         for i in range(5):
-            mc.record_training_metrics(_make_training_metrics(
-                node_id="fast", loss=0.5, accuracy=0.9, batch_time=0.5
-            ))
-            mc.record_training_metrics(_make_training_metrics(
-                node_id="slow", loss=0.8, accuracy=0.6, batch_time=5.0
-            ))
+            mc.record_training_metrics(
+                _make_training_metrics(node_id="fast", loss=0.5, accuracy=0.9, batch_time=0.5)
+            )
+            mc.record_training_metrics(
+                _make_training_metrics(node_id="slow", loss=0.8, accuracy=0.6, batch_time=5.0)
+            )
         pa = PerformanceAnalyzer(mc)
         rankings = pa._rank_node_efficiency()
         assert len(rankings) >= 2
@@ -1675,12 +1764,21 @@ class TestPerformanceAnalyzer:
     def test_resource_recommendations_high_memory(self):
         mc = MetricsCollector({})
         for _ in range(5):
-            mc.record_training_metrics(TrainingMetrics(
-                node_id="n1", round_id="r1", epoch=1, loss=0.5,
-                accuracy=0.8, learning_rate=0.001, batch_time=1.0,
-                communication_time=0.1, memory_usage=95.0,
-                gpu_utilization=50.0, timestamp=time.time(),
-            ))
+            mc.record_training_metrics(
+                TrainingMetrics(
+                    node_id="n1",
+                    round_id="r1",
+                    epoch=1,
+                    loss=0.5,
+                    accuracy=0.8,
+                    learning_rate=0.001,
+                    batch_time=1.0,
+                    communication_time=0.1,
+                    memory_usage=95.0,
+                    gpu_utilization=50.0,
+                    timestamp=time.time(),
+                )
+            )
         pa = PerformanceAnalyzer(mc)
         recs = pa._generate_resource_recommendations()
         memory_recs = [r for r in recs if r["type"] == "memory_pressure"]
@@ -1689,12 +1787,21 @@ class TestPerformanceAnalyzer:
     def test_resource_recommendations_low_gpu(self):
         mc = MetricsCollector({})
         for _ in range(5):
-            mc.record_training_metrics(TrainingMetrics(
-                node_id="n1", round_id="r1", epoch=1, loss=0.5,
-                accuracy=0.8, learning_rate=0.001, batch_time=1.0,
-                communication_time=0.1, memory_usage=50.0,
-                gpu_utilization=30.0, timestamp=time.time(),
-            ))
+            mc.record_training_metrics(
+                TrainingMetrics(
+                    node_id="n1",
+                    round_id="r1",
+                    epoch=1,
+                    loss=0.5,
+                    accuracy=0.8,
+                    learning_rate=0.001,
+                    batch_time=1.0,
+                    communication_time=0.1,
+                    memory_usage=50.0,
+                    gpu_utilization=30.0,
+                    timestamp=time.time(),
+                )
+            )
         pa = PerformanceAnalyzer(mc)
         recs = pa._generate_resource_recommendations()
         gpu_recs = [r for r in recs if r["type"] == "gpu_underutilization"]
@@ -1727,10 +1834,15 @@ from asi_build.distributed_training.core.federated_orchestrator import (
 class TestFederatedOrchestratorDataclasses:
     def test_node_info(self):
         ni = NodeInfo(
-            node_id="n1", ip_address="10.0.0.1", port=8080,
-            capabilities={"gpu": True}, compute_power=2.0,
-            last_heartbeat=time.time(), reputation_score=0.5,
-            stake_amount=100.0, status="active",
+            node_id="n1",
+            ip_address="10.0.0.1",
+            port=8080,
+            capabilities={"gpu": True},
+            compute_power=2.0,
+            last_heartbeat=time.time(),
+            reputation_score=0.5,
+            stake_amount=100.0,
+            status="active",
         )
         assert ni.node_id == "n1"
         assert ni.capabilities["gpu"] is True
@@ -1738,19 +1850,27 @@ class TestFederatedOrchestratorDataclasses:
 
     def test_training_round(self):
         tr = TrainingRound(
-            round_id="r1", global_model_hash="abc",
-            participants=["n1", "n2"], start_time=time.time(),
-            deadline=time.time() + 600, min_participants=2,
-            max_participants=10, status="active",
+            round_id="r1",
+            global_model_hash="abc",
+            participants=["n1", "n2"],
+            start_time=time.time(),
+            deadline=time.time() + 600,
+            min_participants=2,
+            max_participants=10,
+            status="active",
         )
         assert tr.round_id == "r1"
         assert "n1" in tr.participants
 
     def test_model_update(self):
         mu = ModelUpdate(
-            node_id="n1", round_id="r1", model_diff=b"binary_data",
-            data_size=1000, compute_proof="proof_hash",
-            signature="sig", timestamp=time.time(),
+            node_id="n1",
+            round_id="r1",
+            model_diff=b"binary_data",
+            data_size=1000,
+            compute_proof="proof_hash",
+            signature="sig",
+            timestamp=time.time(),
         )
         assert mu.data_size == 1000
 
@@ -1768,10 +1888,15 @@ from asi_build.distributed_training.blockchain.checkpoint_manager import (
 class TestCheckpointDataclasses:
     def test_model_checkpoint(self):
         mc = ModelCheckpoint(
-            checkpoint_id="cp1", model_hash="abc", ipfs_hash="Qm123",
-            filecoin_deal_id=None, creator_address="0x123",
-            timestamp=time.time(), round_number=5,
-            accuracy_metrics={"val_acc": 0.95}, size_bytes=1024 * 1024,
+            checkpoint_id="cp1",
+            model_hash="abc",
+            ipfs_hash="Qm123",
+            filecoin_deal_id=None,
+            creator_address="0x123",
+            timestamp=time.time(),
+            round_number=5,
+            accuracy_metrics={"val_acc": 0.95},
+            size_bytes=1024 * 1024,
             encryption_key=None,
         )
         assert mc.round_number == 5
@@ -1779,8 +1904,11 @@ class TestCheckpointDataclasses:
 
     def test_checkpoint_verification(self):
         cv = CheckpointVerification(
-            checkpoint_id="cp1", is_valid=True, verification_hash="abc",
-            verifier_address="0x456", timestamp=time.time(),
+            checkpoint_id="cp1",
+            is_valid=True,
+            verification_hash="abc",
+            verifier_address="0x456",
+            timestamp=time.time(),
         )
         assert cv.is_valid is True
 

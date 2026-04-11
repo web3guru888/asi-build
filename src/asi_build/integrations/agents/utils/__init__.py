@@ -7,21 +7,21 @@ database probing, configuration management, and other common functionality.
 
 try:
     from .environment import (
-    MigrationEnvironmentError,
-    DatabaseConnectionError,
-    load_environment,
-    get_required_environment_variables,
-    get_optional_environment_variables,
-    validate_environment_variables,
-    get_mysql_config,
-    get_memgraph_config,
-    probe_mysql_connection,
-    probe_memgraph_connection,
-    validate_openai_api_key,
-    setup_and_validate_environment,
-    probe_all_connections,
-    print_environment_help,
-    print_troubleshooting_help,
+        DatabaseConnectionError,
+        MigrationEnvironmentError,
+        get_memgraph_config,
+        get_mysql_config,
+        get_optional_environment_variables,
+        get_required_environment_variables,
+        load_environment,
+        print_environment_help,
+        print_troubleshooting_help,
+        probe_all_connections,
+        probe_memgraph_connection,
+        probe_mysql_connection,
+        setup_and_validate_environment,
+        validate_environment_variables,
+        validate_openai_api_key,
     )
 except (ImportError, ModuleNotFoundError, SyntaxError):
     MigrationEnvironmentError = None
@@ -42,11 +42,11 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 
 try:
     from .config import (
-    MigrationConfig,
-    get_preset_config,
-    merge_config_with_preset,
-    print_config_summary,
-    get_available_presets,
+        MigrationConfig,
+        get_available_presets,
+        get_preset_config,
+        merge_config_with_preset,
+        print_config_summary,
     )
 except (ImportError, ModuleNotFoundError, SyntaxError):
     MigrationConfig = None

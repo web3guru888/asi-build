@@ -13,12 +13,12 @@ Strategy: register stubs in sys.modules for everything missing BEFORE any
 asi_build.federated import.
 """
 
+import math
 import sys
 import types
-import math
 
-import pytest
 import numpy as np
+import pytest
 
 # ============================================================================
 # Phase 1: Pre-import mocking
@@ -61,9 +61,12 @@ sys.modules["tensorflow.keras"].optimizers = sys.modules["tensorflow.keras.optim
 
 # --- 1b. scipy ---
 _ensure_module("scipy")
-_ensure_module("scipy.stats", {
-    "norm": type("norm", (), {"cdf": staticmethod(lambda x: 0.5)}),
-})
+_ensure_module(
+    "scipy.stats",
+    {
+        "norm": type("norm", (), {"cdf": staticmethod(lambda x: 0.5)}),
+    },
+)
 sys.modules["scipy"].stats = sys.modules["scipy.stats"]
 
 # --- 1c. sklearn ---
@@ -82,24 +85,42 @@ _ensure_module("cryptography.hazmat.primitives.serialization")
 _ensure_module("cryptography.hazmat.primitives.asymmetric")
 _ensure_module("cryptography.hazmat.primitives.asymmetric.rsa")
 _ensure_module("cryptography.hazmat.primitives.asymmetric.padding")
-_ensure_module("cryptography.hazmat.primitives.ciphers", {
-    "Cipher": _stub_class("Cipher"),
-    "algorithms": types.ModuleType("algorithms"),
-    "modes": types.ModuleType("modes"),
-})
-_ensure_module("cryptography.hazmat.backends", {
-    "default_backend": lambda: None,
-})
+_ensure_module(
+    "cryptography.hazmat.primitives.ciphers",
+    {
+        "Cipher": _stub_class("Cipher"),
+        "algorithms": types.ModuleType("algorithms"),
+        "modes": types.ModuleType("modes"),
+    },
+)
+_ensure_module(
+    "cryptography.hazmat.backends",
+    {
+        "default_backend": lambda: None,
+    },
+)
 
 # Wire cryptography hierarchy
 sys.modules["cryptography"].hazmat = sys.modules["cryptography.hazmat"]
 sys.modules["cryptography.hazmat"].primitives = sys.modules["cryptography.hazmat.primitives"]
-sys.modules["cryptography.hazmat.primitives"].hashes = sys.modules["cryptography.hazmat.primitives.hashes"]
-sys.modules["cryptography.hazmat.primitives"].serialization = sys.modules["cryptography.hazmat.primitives.serialization"]
-sys.modules["cryptography.hazmat.primitives"].asymmetric = sys.modules["cryptography.hazmat.primitives.asymmetric"]
-sys.modules["cryptography.hazmat.primitives.asymmetric"].rsa = sys.modules["cryptography.hazmat.primitives.asymmetric.rsa"]
-sys.modules["cryptography.hazmat.primitives.asymmetric"].padding = sys.modules["cryptography.hazmat.primitives.asymmetric.padding"]
-sys.modules["cryptography.hazmat.primitives"].ciphers = sys.modules["cryptography.hazmat.primitives.ciphers"]
+sys.modules["cryptography.hazmat.primitives"].hashes = sys.modules[
+    "cryptography.hazmat.primitives.hashes"
+]
+sys.modules["cryptography.hazmat.primitives"].serialization = sys.modules[
+    "cryptography.hazmat.primitives.serialization"
+]
+sys.modules["cryptography.hazmat.primitives"].asymmetric = sys.modules[
+    "cryptography.hazmat.primitives.asymmetric"
+]
+sys.modules["cryptography.hazmat.primitives.asymmetric"].rsa = sys.modules[
+    "cryptography.hazmat.primitives.asymmetric.rsa"
+]
+sys.modules["cryptography.hazmat.primitives.asymmetric"].padding = sys.modules[
+    "cryptography.hazmat.primitives.asymmetric.padding"
+]
+sys.modules["cryptography.hazmat.primitives"].ciphers = sys.modules[
+    "cryptography.hazmat.primitives.ciphers"
+]
 sys.modules["cryptography.hazmat"].backends = sys.modules["cryptography.hazmat.backends"]
 
 # --- 1e. Missing federated sub-modules ---
@@ -107,97 +128,124 @@ sys.modules["cryptography.hazmat"].backends = sys.modules["cryptography.hazmat.b
 # aggregation: fedprox, scaffold, fednova
 for _name in ["fedprox", "scaffold", "fednova"]:
     _full = f"asi_build.federated.aggregation.{_name}"
-    _ensure_module(_full, {
-        "FedProxAggregator": _stub_class("FedProxAggregator"),
-        "SCAFFOLDAggregator": _stub_class("SCAFFOLDAggregator"),
-        "FedNovaAggregator": _stub_class("FedNovaAggregator"),
-    })
+    _ensure_module(
+        _full,
+        {
+            "FedProxAggregator": _stub_class("FedProxAggregator"),
+            "SCAFFOLDAggregator": _stub_class("SCAFFOLDAggregator"),
+            "FedNovaAggregator": _stub_class("FedNovaAggregator"),
+        },
+    )
 
 # privacy: privacy_accountant, noise_mechanisms, secure_computation, anonymization
-_ensure_module("asi_build.federated.privacy.privacy_accountant", {
-    "PrivacyAccountant": _stub_class("PrivacyAccountant"),
-    "RDPAccountant": _stub_class("RDPAccountant"),
-})
-_ensure_module("asi_build.federated.privacy.noise_mechanisms", {
-    "AdaptiveNoiseManager": _stub_class("AdaptiveNoiseManager"),
-    "PrivacyBudgetTracker": _stub_class("PrivacyBudgetTracker"),
-})
-_ensure_module("asi_build.federated.privacy.secure_computation", {
-    "SecureComputationManager": _stub_class("SecureComputationManager"),
-})
-_ensure_module("asi_build.federated.privacy.anonymization", {
-    "DataAnonymizer": _stub_class("DataAnonymizer"),
-    "KAnonymity": _stub_class("KAnonymity"),
-})
+_ensure_module(
+    "asi_build.federated.privacy.privacy_accountant",
+    {
+        "PrivacyAccountant": _stub_class("PrivacyAccountant"),
+        "RDPAccountant": _stub_class("RDPAccountant"),
+    },
+)
+_ensure_module(
+    "asi_build.federated.privacy.noise_mechanisms",
+    {
+        "AdaptiveNoiseManager": _stub_class("AdaptiveNoiseManager"),
+        "PrivacyBudgetTracker": _stub_class("PrivacyBudgetTracker"),
+    },
+)
+_ensure_module(
+    "asi_build.federated.privacy.secure_computation",
+    {
+        "SecureComputationManager": _stub_class("SecureComputationManager"),
+    },
+)
+_ensure_module(
+    "asi_build.federated.privacy.anonymization",
+    {
+        "DataAnonymizer": _stub_class("DataAnonymizer"),
+        "KAnonymity": _stub_class("KAnonymity"),
+    },
+)
 
 # utils: data_utils, visualization
-_ensure_module("asi_build.federated.utils.data_utils", {
-    "DataPartitioner": _stub_class("DataPartitioner"),
-    "IIDPartitioner": _stub_class("IIDPartitioner"),
-    "NonIIDPartitioner": _stub_class("NonIIDPartitioner"),
-})
-_ensure_module("asi_build.federated.utils.visualization", {
-    "FederatedVisualizer": _stub_class("FederatedVisualizer"),
-})
+_ensure_module(
+    "asi_build.federated.utils.data_utils",
+    {
+        "DataPartitioner": _stub_class("DataPartitioner"),
+        "IIDPartitioner": _stub_class("IIDPartitioner"),
+        "NonIIDPartitioner": _stub_class("NonIIDPartitioner"),
+    },
+)
+_ensure_module(
+    "asi_build.federated.utils.visualization",
+    {
+        "FederatedVisualizer": _stub_class("FederatedVisualizer"),
+    },
+)
 
 # communication package (entire directory missing)
-_ensure_module("asi_build.federated.communication", {
-    "FederatedCommunicationProtocol": _stub_class("FederatedCommunicationProtocol"),
-})
-_ensure_module("asi_build.federated.communication.protocols", {
-    "FederatedCommunicationProtocol": _stub_class("FederatedCommunicationProtocol"),
-})
+_ensure_module(
+    "asi_build.federated.communication",
+    {
+        "FederatedCommunicationProtocol": _stub_class("FederatedCommunicationProtocol"),
+    },
+)
+_ensure_module(
+    "asi_build.federated.communication.protocols",
+    {
+        "FederatedCommunicationProtocol": _stub_class("FederatedCommunicationProtocol"),
+    },
+)
 
 # ============================================================================
 # Phase 2: Actual imports
 # ============================================================================
 
+from asi_build.federated.aggregation.base_aggregator import BaseAggregator  # noqa: E402
+from asi_build.federated.aggregation.fedavg import FedAvgAggregator  # noqa: E402
+from asi_build.federated.aggregation.secure_aggregation import SecretSharing  # noqa: E402
 from asi_build.federated.core.config import (  # noqa: E402
-    AggregationType,
-    PrivacyMechanism,
-    CommunicationProtocol,
-    PrivacyConfig,
-    SecurityConfig,
-    CompressionConfig,
-    ClientConfig,
-    ServerConfig,
-    FederatedConfig,
     DEFAULT_CONFIG,
     SECURE_CONFIG,
+    AggregationType,
+    ClientConfig,
+    CommunicationProtocol,
+    CompressionConfig,
+    FederatedConfig,
+    PrivacyConfig,
+    PrivacyMechanism,
+    SecurityConfig,
+    ServerConfig,
 )
 from asi_build.federated.core.exceptions import (  # noqa: E402
-    FederatedLearningError,
-    CommunicationError,
     AggregationError,
+    CommunicationError,
+    FederatedLearningError,
     PrivacyError,
     SecurityError,
     ValidationError,
 )
-from asi_build.federated.aggregation.base_aggregator import BaseAggregator  # noqa: E402
-from asi_build.federated.aggregation.fedavg import FedAvgAggregator  # noqa: E402
-from asi_build.federated.utils.metrics import (  # noqa: E402
-    FederatedMetrics,
-    PerformanceTracker,
-    ConvergenceTracker,
-)
-from asi_build.federated.utils.model_compression import (  # noqa: E402
-    QuantizationCompressor,
-    PruningCompressor,
-    create_compressor,
-    CompressionManager,
-)
-from asi_build.federated.aggregation.secure_aggregation import SecretSharing  # noqa: E402
 from asi_build.federated.privacy.differential_privacy import (  # noqa: E402
-    LaplaceMechanism,
-    GaussianMechanism,
     DifferentialPrivacyManager,
+    GaussianMechanism,
+    LaplaceMechanism,
     RenyiDifferentialPrivacy,
 )
-
+from asi_build.federated.utils.metrics import (  # noqa: E402
+    ConvergenceTracker,
+    FederatedMetrics,
+    PerformanceTracker,
+)
+from asi_build.federated.utils.model_compression import (  # noqa: E402
+    CompressionManager,
+    PruningCompressor,
+    QuantizationCompressor,
+    create_compressor,
+)
 
 # ============================================================================
 # Helpers
 # ============================================================================
+
 
 def _make_client_update(client_id, weights, data_size=100, metrics=None):
     """Build a client-update dict for aggregator tests."""
@@ -216,6 +264,7 @@ def _rand_weights(shapes=((4, 3), (3,)), seed=None):
 # ############################################################################
 # 1. Config — 13 tests
 # ############################################################################
+
 
 class TestEnums:
     def test_aggregation_type_values(self):
@@ -309,6 +358,7 @@ class TestFederatedConfig:
 # 2. Exceptions — 8 tests
 # ############################################################################
 
+
 class TestExceptions:
     def test_base_with_details(self):
         e = FederatedLearningError("boom", details={"k": "v"})
@@ -353,6 +403,7 @@ class TestExceptions:
 # 3. BaseAggregator — 8 tests (via FedAvgAggregator as concrete subclass)
 # ############################################################################
 
+
 class TestBaseAggregator:
     def test_validate_passes(self):
         agg = FedAvgAggregator()
@@ -369,8 +420,10 @@ class TestBaseAggregator:
 
     def test_validate_missing_field(self):
         agg = FedAvgAggregator()
-        bad = [{"client_id": "c1", "weights": _rand_weights()},  # no data_size
-               _make_client_update("c2", _rand_weights())]
+        bad = [
+            {"client_id": "c1", "weights": _rand_weights()},  # no data_size
+            _make_client_update("c2", _rand_weights()),
+        ]
         with pytest.raises(AggregationError, match="missing required field"):
             agg.validate_updates(bad)
 
@@ -408,6 +461,7 @@ class TestBaseAggregator:
 # 4. FedAvg — 8 tests
 # ############################################################################
 
+
 class TestFedAvg:
     def _updates(self, n=3, data_size=100, seed=42):
         rng = np.random.RandomState(seed)
@@ -440,10 +494,12 @@ class TestFedAvg:
     def test_adaptive_weights(self):
         agg = FedAvgAggregator(config={"adaptive_weighting": True})
         updates = [
-            _make_client_update("c1", _rand_weights(seed=1), 100,
-                                metrics={"loss": 0.1, "accuracy": 0.95}),
-            _make_client_update("c2", _rand_weights(seed=2), 100,
-                                metrics={"loss": 5.0, "accuracy": 0.1}),
+            _make_client_update(
+                "c1", _rand_weights(seed=1), 100, metrics={"loss": 0.1, "accuracy": 0.95}
+            ),
+            _make_client_update(
+                "c2", _rand_weights(seed=2), 100, metrics={"loss": 5.0, "accuracy": 0.1}
+            ),
         ]
         w = agg._compute_adaptive_weights(updates)
         assert w[0] > w[1]
@@ -491,6 +547,7 @@ class TestFedAvg:
 # ############################################################################
 # 5. Metrics — 8 tests
 # ############################################################################
+
 
 class TestFederatedMetrics:
     def test_record_and_summary(self):
@@ -566,6 +623,7 @@ class TestConvergenceTracker:
 # 6. ModelCompression — 6 tests
 # ############################################################################
 
+
 class TestQuantization:
     def test_roundtrip(self):
         qc = QuantizationCompressor({"quantization_bits": 8})
@@ -602,10 +660,10 @@ class TestPruning:
 
 class TestCompressorFactory:
     def test_factory(self):
-        assert isinstance(create_compressor("quantization", {"quantization_bits": 4}),
-                          QuantizationCompressor)
-        assert isinstance(create_compressor("pruning", {"sparsity_ratio": 0.2}),
-                          PruningCompressor)
+        assert isinstance(
+            create_compressor("quantization", {"quantization_bits": 4}), QuantizationCompressor
+        )
+        assert isinstance(create_compressor("pruning", {"sparsity_ratio": 0.2}), PruningCompressor)
 
     def test_unknown_raises(self):
         with pytest.raises(ValueError, match="Unknown compression"):
@@ -614,10 +672,12 @@ class TestCompressorFactory:
 
 class TestCompressionManager:
     def test_multi_stage(self):
-        mgr = CompressionManager([
-            {"type": "pruning", "sparsity_ratio": 0.2, "method": "magnitude"},
-            {"type": "quantization", "quantization_bits": 8},
-        ])
+        mgr = CompressionManager(
+            [
+                {"type": "pruning", "sparsity_ratio": 0.2, "method": "magnitude"},
+                {"type": "quantization", "quantization_bits": 8},
+            ]
+        )
         compressed, meta = mgr.compress_weights(_rand_weights(shapes=((20, 10),), seed=5))
         assert len(meta["compression_stages"]) == 2
 
@@ -625,6 +685,7 @@ class TestCompressionManager:
 # ############################################################################
 # 7. SecretSharing — 4 tests
 # ############################################################################
+
 
 class TestSecretSharing:
     def test_polynomial_length(self):
@@ -654,6 +715,7 @@ class TestSecretSharing:
 # ############################################################################
 # 8. Differential Privacy — 7 tests
 # ############################################################################
+
 
 class TestLaplace:
     def test_shape_preserved(self):

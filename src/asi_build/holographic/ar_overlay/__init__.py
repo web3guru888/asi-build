@@ -8,9 +8,9 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     MixedRealityEngine = None
 
 __all__ = [
-    'AROverlayManager',
-    'MixedRealityEngine',
-    'SpatialAnchorSystem',
-    'ObjectTracker',
-    'OcclusionManager'
+    "AROverlayManager",
+    "MixedRealityEngine",
+    "SpatialAnchorSystem",
+    "ObjectTracker",
+    "OcclusionManager",
 ]

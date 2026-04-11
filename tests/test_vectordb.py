@@ -7,12 +7,12 @@ transformers) at the sys.modules level before importing any vectordb code.
 The asi_build package tree is imported normally.
 """
 
-import sys
-import types
 import hashlib
-import time
 import math
 import os
+import sys
+import time
+import types
 
 # ---------------------------------------------------------------------------
 # Pre-import mocking: Block external deps that cause ImportError.
@@ -20,10 +20,16 @@ import os
 # ---------------------------------------------------------------------------
 
 _MOCK_EXTERNAL = [
-    "qdrant_client", "qdrant_client.models",
+    "qdrant_client",
+    "qdrant_client.models",
     "pinecone",
-    "weaviate", "weaviate.classes", "weaviate.classes.config", "weaviate.classes.query",
-    "torch", "torch.nn", "torch.nn.functional",
+    "weaviate",
+    "weaviate.classes",
+    "weaviate.classes.config",
+    "weaviate.classes.query",
+    "torch",
+    "torch.nn",
+    "torch.nn.functional",
     "sentence_transformers",
     "openai",
     "cohere",
@@ -37,7 +43,9 @@ for _pkg in _MOCK_EXTERNAL:
 # Give torch the minimal API surface that embeddings.py probes at import time
 _torch = sys.modules["torch"]
 _torch.device = lambda *a, **kw: "cpu"
-_torch.no_grad = lambda: type("ctx", (), {"__enter__": lambda s: None, "__exit__": lambda s, *a: None})()
+_torch.no_grad = lambda: type(
+    "ctx", (), {"__enter__": lambda s: None, "__exit__": lambda s, *a: None}
+)()
 if not hasattr(_torch, "cuda"):
     _cuda = types.ModuleType("torch.cuda")
     _cuda.is_available = lambda: False
@@ -48,11 +56,12 @@ if not hasattr(_torch, "cuda"):
 if "/shared/asi-build/src" not in sys.path:
     sys.path.insert(0, "/shared/asi-build/src")
 
+import numpy
+
 # ---------------------------------------------------------------------------
 # Now import pytest (after path setup so conftest can find things)
 # ---------------------------------------------------------------------------
 import pytest
-import numpy
 
 # ---------------------------------------------------------------------------
 # Import vectordb modules — each guarded so a failure skips gracefully
@@ -60,62 +69,90 @@ import numpy
 
 try:
     from asi_build.vectordb.core.config import (
-        DatabaseConfig, PineconeConfig, WeaviateConfig, QdrantConfig,
-        EmbeddingConfig, SearchConfig, VectorDBConfig,
+        DatabaseConfig,
+        EmbeddingConfig,
+        PineconeConfig,
+        QdrantConfig,
+        SearchConfig,
+        VectorDBConfig,
+        WeaviateConfig,
     )
+
     HAS_CONFIG = True
 except Exception as _e:
     HAS_CONFIG = False
 
 try:
     from asi_build.vectordb.core.utils import (
-        VectorUtils, TextUtils, PerformanceMonitor, VectorStats,
-        PerformanceMetrics, timed_operation, performance_monitor,
+        PerformanceMetrics,
+        PerformanceMonitor,
+        TextUtils,
+        VectorStats,
+        VectorUtils,
+        performance_monitor,
+        timed_operation,
     )
+
     HAS_UTILS = True
 except Exception as _e:
     HAS_UTILS = False
 
 try:
     from asi_build.vectordb.core.search import (
-        SearchResult, SearchQuery, SearchStats,
-        QueryExpander, ResultReranker,
+        QueryExpander,
+        ResultReranker,
+        SearchQuery,
+        SearchResult,
+        SearchStats,
     )
+
     HAS_SEARCH = True
 except Exception as _e:
     HAS_SEARCH = False
 
 try:
     from asi_build.vectordb.api.retrieval import (
-        QueryOptimizer, FacetProcessor, FacetResult,
-        RetrievalQuery, RetrievalResult, QueryCache,
+        FacetProcessor,
+        FacetResult,
+        QueryCache,
+        QueryOptimizer,
+        RetrievalQuery,
+        RetrievalResult,
     )
+
     HAS_RETRIEVAL = True
 except Exception as _e:
     HAS_RETRIEVAL = False
 
 try:
     from asi_build.vectordb.api.indexing import (
-        Document, IndexingJob, DocumentProcessor, IndexingStats,
+        Document,
+        DocumentProcessor,
+        IndexingJob,
+        IndexingStats,
     )
+
     HAS_INDEXING = True
 except Exception as _e:
     HAS_INDEXING = False
 
 try:
     from asi_build.vectordb.databases.pinecone_client import PineconeSearchResult
+
     HAS_PINECONE_DC = True
 except Exception:
     HAS_PINECONE_DC = False
 
 try:
     from asi_build.vectordb.databases.weaviate_client import WeaviateSearchResult
+
     HAS_WEAVIATE_DC = True
 except Exception:
     HAS_WEAVIATE_DC = False
 
 try:
     from asi_build.vectordb.databases.qdrant_client import QdrantSearchResult
+
     HAS_QDRANT_DC = True
 except Exception:
     HAS_QDRANT_DC = False
@@ -124,6 +161,7 @@ except Exception:
 # ===================================================================
 # 1. Config dataclasses — 6 tests
 # ===================================================================
+
 
 @pytest.mark.skipif(not HAS_CONFIG, reason="config import failed")
 class TestDatabaseConfig:
@@ -177,6 +215,7 @@ class TestDatabaseConfig:
 # ===================================================================
 # 2. VectorDBConfig — 13 tests
 # ===================================================================
+
 
 @pytest.mark.skipif(not HAS_CONFIG, reason="config import failed")
 class TestVectorDBConfig:
@@ -263,6 +302,7 @@ class TestVectorDBConfig:
 # ===================================================================
 # 3. VectorUtils — 13 tests
 # ===================================================================
+
 
 @pytest.mark.skipif(not HAS_UTILS, reason="utils import failed")
 class TestVectorUtils:
@@ -351,6 +391,7 @@ class TestVectorUtils:
 # 4. TextUtils — 8 tests
 # ===================================================================
 
+
 @pytest.mark.skipif(not HAS_UTILS, reason="utils import failed")
 class TestTextUtils:
     def test_clean_text_whitespace(self):
@@ -381,8 +422,9 @@ class TestTextUtils:
 
     def test_split_text_chunks_overlap(self):
         text = "A" * 50 + "B" * 50 + "C" * 50 + "D" * 50
-        chunks = TextUtils.split_text_chunks(text, chunk_size=80, overlap=20,
-                                              preserve_sentences=False)
+        chunks = TextUtils.split_text_chunks(
+            text, chunk_size=80, overlap=20, preserve_sentences=False
+        )
         assert len(chunks) >= 2
 
     def test_generate_text_id_deterministic(self):
@@ -407,6 +449,7 @@ class TestTextUtils:
 # ===================================================================
 # 5. PerformanceMonitor — 5 tests
 # ===================================================================
+
 
 @pytest.mark.skipif(not HAS_UTILS, reason="utils import failed")
 class TestPerformanceMonitor:
@@ -477,11 +520,13 @@ class TestPerformanceMonitor:
 # 6. Search dataclasses — 3 tests
 # ===================================================================
 
+
 @pytest.mark.skipif(not HAS_SEARCH, reason="search import failed")
 class TestSearchDataclasses:
     def test_search_result_creation(self):
-        sr = SearchResult(id="r1", score=0.95, content="hello",
-                          metadata={"k": "v"}, source_db="pinecone")
+        sr = SearchResult(
+            id="r1", score=0.95, content="hello", metadata={"k": "v"}, source_db="pinecone"
+        )
         assert sr.id == "r1"
         assert sr.score == 0.95
         assert sr.vector is None
@@ -494,16 +539,23 @@ class TestSearchDataclasses:
         assert "pinecone" in sq.database_weights
 
     def test_search_stats_creation(self):
-        ss = SearchStats(query="test", total_results=5,
-                         databases_searched=["qdrant"],
-                         search_time=0.1, embedding_time=0.05,
-                         rerank_time=0.02, top_score=0.9, avg_score=0.8)
+        ss = SearchStats(
+            query="test",
+            total_results=5,
+            databases_searched=["qdrant"],
+            search_time=0.1,
+            embedding_time=0.05,
+            rerank_time=0.02,
+            top_score=0.9,
+            avg_score=0.8,
+        )
         assert ss.total_results == 5
 
 
 # ===================================================================
 # 7. QueryExpander — 4 tests
 # ===================================================================
+
 
 @pytest.mark.skipif(not HAS_SEARCH, reason="search import failed")
 class TestQueryExpander:
@@ -534,15 +586,22 @@ class TestQueryExpander:
 # 8. ResultReranker — 4 tests
 # ===================================================================
 
+
 @pytest.mark.skipif(not HAS_SEARCH, reason="search import failed")
 class TestResultReranker:
     def test_rerank_basic(self):
         rr = ResultReranker()
         results = [
-            SearchResult(id="1", score=0.8, content="ai machine learning topic",
-                         metadata={}, source_db="test"),
-            SearchResult(id="2", score=0.9, content="unrelated content here",
-                         metadata={}, source_db="test"),
+            SearchResult(
+                id="1",
+                score=0.8,
+                content="ai machine learning topic",
+                metadata={},
+                source_db="test",
+            ),
+            SearchResult(
+                id="2", score=0.9, content="unrelated content here", metadata={}, source_db="test"
+            ),
         ]
         reranked = rr.rerank_results(results, "ai machine learning")
         assert len(reranked) == 2
@@ -560,15 +619,13 @@ class TestResultReranker:
 
     def test_boost_content_length(self):
         rr = ResultReranker()
-        r = SearchResult(id="1", score=0.5, content="x" * 500,
-                         metadata={}, source_db="t")
+        r = SearchResult(id="1", score=0.5, content="x" * 500, metadata={}, source_db="t")
         boost = rr._calculate_boost_score(r, "test")
         assert boost >= 0.05
 
     def test_boost_keyword_match(self):
         rr = ResultReranker()
-        r = SearchResult(id="1", score=0.5, content="hello world query",
-                         metadata={}, source_db="t")
+        r = SearchResult(id="1", score=0.5, content="hello world query", metadata={}, source_db="t")
         boost = rr._calculate_boost_score(r, "hello world")
         assert boost >= 0.1
 
@@ -576,6 +633,7 @@ class TestResultReranker:
 # ===================================================================
 # 9. QueryOptimizer (retrieval.py) — 7 tests
 # ===================================================================
+
 
 @pytest.mark.skipif(not HAS_RETRIEVAL, reason="retrieval import failed")
 class TestQueryOptimizer:
@@ -630,18 +688,21 @@ class TestQueryOptimizer:
 # 10. FacetProcessor (retrieval.py) — 3 tests
 # ===================================================================
 
-@pytest.mark.skipif(not HAS_RETRIEVAL or not HAS_SEARCH,
-                    reason="retrieval/search import failed")
+
+@pytest.mark.skipif(not HAS_RETRIEVAL or not HAS_SEARCH, reason="retrieval/search import failed")
 class TestFacetProcessor:
     def test_compute_category_facet(self):
         fp = FacetProcessor()
         results = [
-            SearchResult(id="1", score=0.9, content="a",
-                         metadata={"category": "science"}, source_db="t"),
-            SearchResult(id="2", score=0.8, content="b",
-                         metadata={"category": "science"}, source_db="t"),
-            SearchResult(id="3", score=0.7, content="c",
-                         metadata={"category": "tech"}, source_db="t"),
+            SearchResult(
+                id="1", score=0.9, content="a", metadata={"category": "science"}, source_db="t"
+            ),
+            SearchResult(
+                id="2", score=0.8, content="b", metadata={"category": "science"}, source_db="t"
+            ),
+            SearchResult(
+                id="3", score=0.7, content="c", metadata={"category": "tech"}, source_db="t"
+            ),
         ]
         facets = fp.compute_facets(results, ["category"])
         assert "category" in facets
@@ -652,12 +713,9 @@ class TestFacetProcessor:
     def test_compute_content_length_facet(self):
         fp = FacetProcessor()
         results = [
-            SearchResult(id="1", score=0.9, content="a" * 50,
-                         metadata={}, source_db="t"),
-            SearchResult(id="2", score=0.8, content="b" * 300,
-                         metadata={}, source_db="t"),
-            SearchResult(id="3", score=0.7, content="c" * 800,
-                         metadata={}, source_db="t"),
+            SearchResult(id="1", score=0.9, content="a" * 50, metadata={}, source_db="t"),
+            SearchResult(id="2", score=0.8, content="b" * 300, metadata={}, source_db="t"),
+            SearchResult(id="3", score=0.7, content="c" * 800, metadata={}, source_db="t"),
         ]
         facets = fp.compute_facets(results, ["content_length"])
         vals = facets["content_length"].values
@@ -668,10 +726,10 @@ class TestFacetProcessor:
     def test_compute_tags_facet(self):
         fp = FacetProcessor()
         results = [
-            SearchResult(id="1", score=0.9, content="a",
-                         metadata={"tags": ["ml", "ai"]}, source_db="t"),
-            SearchResult(id="2", score=0.8, content="b",
-                         metadata={"tags": ["ml"]}, source_db="t"),
+            SearchResult(
+                id="1", score=0.9, content="a", metadata={"tags": ["ml", "ai"]}, source_db="t"
+            ),
+            SearchResult(id="2", score=0.8, content="b", metadata={"tags": ["ml"]}, source_db="t"),
         ]
         facets = fp.compute_facets(results, ["tags"])
         assert facets["tags"].values["ml"] == 2
@@ -681,6 +739,7 @@ class TestFacetProcessor:
 # ===================================================================
 # 11. QueryCache (retrieval.py) — 2 tests
 # ===================================================================
+
 
 @pytest.mark.skipif(not HAS_RETRIEVAL, reason="retrieval import failed")
 class TestQueryCache:
@@ -707,6 +766,7 @@ class TestQueryCache:
 # 12. Document + DocumentProcessor (indexing.py) — 7 tests
 # ===================================================================
 
+
 @pytest.mark.skipif(not HAS_INDEXING, reason="indexing import failed")
 class TestDocument:
     def test_auto_id(self):
@@ -725,8 +785,15 @@ class TestDocument:
         assert doc.id == "custom-id"
 
     def test_to_dict(self):
-        doc = Document(id="d1", content="hello", title="t1", source="s1",
-                       category="cat", tags=["a", "b"], metadata={"k": "v"})
+        doc = Document(
+            id="d1",
+            content="hello",
+            title="t1",
+            source="s1",
+            category="cat",
+            tags=["a", "b"],
+            metadata={"k": "v"},
+        )
         d = doc.to_dict()
         assert d["id"] == "d1"
         assert d["content"] == "hello"
@@ -752,8 +819,7 @@ class TestDocumentProcessor:
         assert result[0].id.startswith("d1_")
 
     def test_chunk_metadata(self):
-        dp = DocumentProcessor(chunk_size=100, chunk_overlap=10,
-                                extract_keywords=False)
+        dp = DocumentProcessor(chunk_size=100, chunk_overlap=10, extract_keywords=False)
         doc = Document(id="d1", content="word " * 200)
         result = dp.process_document(doc)
         meta = result[0].metadata
@@ -777,6 +843,7 @@ class TestIndexingJob:
 # 13. Database client dataclasses — 3 tests
 # ===================================================================
 
+
 @pytest.mark.skipif(not HAS_PINECONE_DC, reason="pinecone_client import failed")
 class TestPineconeSearchResult:
     def test_creation(self):
@@ -788,9 +855,9 @@ class TestPineconeSearchResult:
 @pytest.mark.skipif(not HAS_WEAVIATE_DC, reason="weaviate_client import failed")
 class TestWeaviateSearchResult:
     def test_creation(self):
-        r = WeaviateSearchResult(id="w1", score=0.8,
-                                  metadata={"k": "v"},
-                                  properties={"content": "hello"})
+        r = WeaviateSearchResult(
+            id="w1", score=0.8, metadata={"k": "v"}, properties={"content": "hello"}
+        )
         assert r.id == "w1"
         assert r.vector is None
         assert r.explanation is None
@@ -807,6 +874,7 @@ class TestQdrantSearchResult:
 # ===================================================================
 # 14. RetrievalQuery + RetrievalResult dataclasses — 2 tests
 # ===================================================================
+
 
 @pytest.mark.skipif(not HAS_RETRIEVAL, reason="retrieval import failed")
 class TestRetrievalDataclasses:
@@ -827,6 +895,7 @@ class TestRetrievalDataclasses:
 # ===================================================================
 # 15. Global timed_operation decorator — 1 test
 # ===================================================================
+
 
 @pytest.mark.skipif(not HAS_UTILS, reason="utils import failed")
 class TestGlobalTimedOperation:

@@ -22,13 +22,12 @@ from langchain_core.prompts import (
     MessagesPlaceholder,
 )
 from langchain_core.runnables import Runnable
-from pydantic import Field
-
 from langchain_memgraph.chains.prompts import (
     MEMGRAPH_GENERATION_PROMPT,
     MEMGRAPH_QA_PROMPT,
 )
 from memgraph_toolbox.api.memgraph import Memgraph
+from pydantic import Field
 
 INTERMEDIATE_STEPS_KEY = "intermediate_steps"
 
@@ -57,9 +56,7 @@ def extract_cypher(text: str) -> str:
     return matches[0] if matches else text
 
 
-def get_function_response(
-    question: str, context: List[Dict[str, Any]]
-) -> List[BaseMessage]:
+def get_function_response(question: str, context: List[Dict[str, Any]]) -> List[BaseMessage]:
     TOOL_ID = "call_H7fABDuzEau48T10Qn0Lsh0D"
     messages = [
         AIMessage(
@@ -200,18 +197,12 @@ class MemgraphQAChain(Chain):
                 " not allowed. Please pass prompt via qa_llm_kwargs."
             )
         use_qa_llm_kwargs = qa_llm_kwargs if qa_llm_kwargs is not None else {}
-        use_cypher_llm_kwargs = (
-            cypher_llm_kwargs if cypher_llm_kwargs is not None else {}
-        )
+        use_cypher_llm_kwargs = cypher_llm_kwargs if cypher_llm_kwargs is not None else {}
         if "prompt" not in use_qa_llm_kwargs:
-            use_qa_llm_kwargs["prompt"] = (
-                qa_prompt if qa_prompt is not None else MEMGRAPH_QA_PROMPT
-            )
+            use_qa_llm_kwargs["prompt"] = qa_prompt if qa_prompt is not None else MEMGRAPH_QA_PROMPT
         if "prompt" not in use_cypher_llm_kwargs:
             use_cypher_llm_kwargs["prompt"] = (
-                cypher_prompt
-                if cypher_prompt is not None
-                else MEMGRAPH_GENERATION_PROMPT
+                cypher_prompt if cypher_prompt is not None else MEMGRAPH_GENERATION_PROMPT
             )
 
         qa_llm = qa_llm or llm
@@ -238,8 +229,7 @@ class MemgraphQAChain(Chain):
             cypher_generation_chain = prompt | llm_to_use | StrOutputParser()  # type: ignore[arg-type]
         else:
             raise ValueError(
-                "Missing required components for the cypher generation chain: "
-                "'prompt' or 'llm'"
+                "Missing required components for the cypher generation chain: " "'prompt' or 'llm'"
             )
 
         graph_schema = kwargs["graph"].get_schema
@@ -269,16 +259,12 @@ class MemgraphQAChain(Chain):
 
         intermediate_steps: List = []
 
-        generated_cypher = self.cypher_generation_chain.invoke(
-            args, callbacks=callbacks
-        )
+        generated_cypher = self.cypher_generation_chain.invoke(args, callbacks=callbacks)
         # Extract Cypher code if it is wrapped in backticks
         generated_cypher = extract_cypher(generated_cypher)
 
         _run_manager.on_text("Generated Cypher:", end="\n", verbose=self.verbose)
-        _run_manager.on_text(
-            generated_cypher, color="green", end="\n", verbose=self.verbose
-        )
+        _run_manager.on_text(generated_cypher, color="green", end="\n", verbose=self.verbose)
 
         intermediate_steps.append({"query": generated_cypher})
 
@@ -293,9 +279,7 @@ class MemgraphQAChain(Chain):
             result = context
         else:
             _run_manager.on_text("Full Context:", end="\n", verbose=self.verbose)
-            _run_manager.on_text(
-                str(context), color="green", end="\n", verbose=self.verbose
-            )
+            _run_manager.on_text(str(context), color="green", end="\n", verbose=self.verbose)
 
             intermediate_steps.append({"context": context})
             if self.use_function_response:

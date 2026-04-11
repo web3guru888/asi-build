@@ -1,7 +1,9 @@
 """Tests for holographic module (Candidate 8)."""
-import pytest
-import numpy as np
+
 import math
+
+import numpy as np
+import pytest
 
 
 class TestSpatialMath:
@@ -9,14 +11,17 @@ class TestSpatialMath:
 
     def _math(self):
         from src.asi_build.holographic.core.math_utils import SpatialMath
+
         return SpatialMath
 
     def _vec(self, x, y, z):
         from src.asi_build.holographic.core.base import Vector3D
+
         return Vector3D(x, y, z)
 
     def _quat(self, w, x, y, z):
         from src.asi_build.holographic.core.base import Quaternion
+
         return Quaternion(w, x, y, z)
 
     def test_distance_3d(self):
@@ -85,14 +90,12 @@ class TestSpatialMath:
 
     def test_perspective_matrix_shape(self):
         sm = self._math()
-        mat = sm.create_perspective_matrix(math.radians(60), 16/9, 0.1, 100)
+        mat = sm.create_perspective_matrix(math.radians(60), 16 / 9, 0.1, 100)
         assert mat.shape == (4, 4)
 
     def test_look_at_matrix_shape(self):
         sm = self._math()
-        mat = sm.create_look_at_matrix(
-            self._vec(0, 0, 5), self._vec(0, 0, 0), self._vec(0, 1, 0)
-        )
+        mat = sm.create_look_at_matrix(self._vec(0, 0, 5), self._vec(0, 0, 0), self._vec(0, 1, 0))
         assert mat.shape == (4, 4)
 
     def test_ray_sphere_intersection_hit(self):
@@ -131,8 +134,10 @@ class TestVolumeRenderer:
 
     def test_ray_box_intersection(self):
         from src.asi_build.holographic.display.volumetric_display import VolumeRenderer
+
         vr = VolumeRenderer((32, 32, 32))
         from src.asi_build.holographic.core.base import Vector3D
+
         origin = Vector3D(0, 0, 5)
         direction = Vector3D(0, 0, -1)
         t_min, t_max = vr._ray_box_intersection(origin, direction)
@@ -140,8 +145,9 @@ class TestVolumeRenderer:
         assert t_min >= 0
 
     def test_trilinear_interpolation_center(self):
-        from src.asi_build.holographic.display.volumetric_display import VolumeRenderer
         from src.asi_build.holographic.core.base import Vector3D
+        from src.asi_build.holographic.display.volumetric_display import VolumeRenderer
+
         vr = VolumeRenderer((16, 16, 16))
         # Set all voxels to 1
         vr.volume_data.fill(1.0)
@@ -150,8 +156,9 @@ class TestVolumeRenderer:
         assert all(s >= 0 for s in sample)
 
     def test_add_voxel_within_bounds(self):
-        from src.asi_build.holographic.display.volumetric_display import VolumeRenderer
         from src.asi_build.holographic.core.base import Vector3D
+        from src.asi_build.holographic.display.volumetric_display import VolumeRenderer
+
         vr = VolumeRenderer((16, 16, 16))
         vr.add_voxel(Vector3D(0, 0, 0), (1.0, 0.0, 0.0, 1.0), intensity=0.8)
         assert vr.density_data.max() > 0

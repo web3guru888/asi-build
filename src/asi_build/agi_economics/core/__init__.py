@@ -23,10 +23,10 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     pass
 
 __all__ = [
-    'BaseEconomicEngine',
-    'EconomicConfig', 
-    'AGIEconomicsError',
-    'TokenType',
-    'ResourceType',
-    'AgentType'
+    "BaseEconomicEngine",
+    "EconomicConfig",
+    "AGIEconomicsError",
+    "TokenType",
+    "ResourceType",
+    "AgentType",
 ]

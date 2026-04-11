@@ -31,11 +31,11 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     SelfOrganizationMechanism = None
 
 __all__ = [
-    'CognitiveSynergyEngine',
-    'PRIMUSFoundation', 
-    'SynergyMetrics',
-    'EmergentPropertyDetector',
-    'SelfOrganizationMechanism'
+    "CognitiveSynergyEngine",
+    "PRIMUSFoundation",
+    "SynergyMetrics",
+    "EmergentPropertyDetector",
+    "SelfOrganizationMechanism",
 ]
 
-__version__ = '1.0.0'
+__version__ = "1.0.0"

@@ -1,15 +1,13 @@
 import asyncio
-from typing import Optional
 from contextlib import AsyncExitStack
+from typing import Optional
 
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
-
+import pytest
 from anthropic import Anthropic
 from dotenv import load_dotenv
-
-from mcp_memgraph import run_query, get_schema
-import pytest
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from mcp_memgraph import get_schema, run_query
 
 pytestmark = pytest.mark.asyncio  # Mark all tests in this file as asyncio-compatible
 
@@ -37,13 +35,9 @@ class MCPClient:
             raise ValueError("Server script must be a .py or .js file")
 
         command = "python" if is_python else "node"
-        server_params = StdioServerParameters(
-            command=command, args=[server_script_path], env=None
-        )
+        server_params = StdioServerParameters(command=command, args=[server_script_path], env=None)
 
-        stdio_transport = await self.exit_stack.enter_async_context(
-            stdio_client(server_params)
-        )
+        stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
         self.stdio, self.write = stdio_transport
         self.session = await self.exit_stack.enter_async_context(
             ClientSession(self.stdio, self.write)
@@ -118,9 +112,7 @@ async def test_tools_and_resources():
         response = await client.session.list_resources()
         available_resources = [str(resource.uri) for resource in response.resources]
 
-        assert len(available_tools) == len(
-            expected_tools
-        ), "Mismatch in number of tools"
+        assert len(available_tools) == len(expected_tools), "Mismatch in number of tools"
         for tool in expected_tools:
             assert tool in available_tools, f"Tool '{tool}' is missing from the server"
 

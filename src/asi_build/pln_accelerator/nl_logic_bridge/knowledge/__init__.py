@@ -19,4 +19,9 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     CycIntegration = None
 
-__all__ = ["CommonsenseReasoner", "KnowledgeGraphBuilder", "ConceptNetIntegration", "CycIntegration"]
+__all__ = [
+    "CommonsenseReasoner",
+    "KnowledgeGraphBuilder",
+    "ConceptNetIntegration",
+    "CycIntegration",
+]

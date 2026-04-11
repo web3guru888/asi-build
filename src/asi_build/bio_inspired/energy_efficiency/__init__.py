@@ -7,7 +7,7 @@ plausible energy constraints.
 """
 
 try:
-    from .energy_metrics import EnergyMetrics, EnergyCalculator, MetabolicCost
+    from .energy_metrics import EnergyCalculator, EnergyMetrics, MetabolicCost
 except (ImportError, ModuleNotFoundError, SyntaxError):
     EnergyMetrics = None
     EnergyCalculator = None
@@ -20,13 +20,13 @@ except ImportError:
     NeuralEnergyBenchmark = None
 
 try:
-    from .power_management import PowerManager, EnergyOptimizer
+    from .power_management import EnergyOptimizer, PowerManager
 except ImportError:
     PowerManager = None
     EnergyOptimizer = None
 
 try:
-    from .thermal_dynamics import ThermalModel, CoolingSystem
+    from .thermal_dynamics import CoolingSystem, ThermalModel
 except ImportError:
     ThermalModel = None
     CoolingSystem = None
@@ -36,9 +36,9 @@ __all__ = [
     "EnergyCalculator",
     "MetabolicCost",
     "BiologicalEfficiencyComparator",
-    "NeuralEnergyBenchmark", 
+    "NeuralEnergyBenchmark",
     "PowerManager",
     "EnergyOptimizer",
     "ThermalModel",
-    "CoolingSystem"
+    "CoolingSystem",
 ]

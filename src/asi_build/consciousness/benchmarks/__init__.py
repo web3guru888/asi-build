@@ -6,9 +6,9 @@ Benchmarking tools for comparing machine consciousness against biological marker
 """
 
 try:
-    from .biological_markers import BiologicalConsciousnessMarkers, BiologicalBenchmark
+    from .biological_markers import BiologicalBenchmark, BiologicalConsciousnessMarkers
 except (ImportError, ModuleNotFoundError, SyntaxError):
     BiologicalConsciousnessMarkers = None
     BiologicalBenchmark = None
 
-__all__ = ['BiologicalConsciousnessMarkers', 'BiologicalBenchmark']
+__all__ = ["BiologicalConsciousnessMarkers", "BiologicalBenchmark"]

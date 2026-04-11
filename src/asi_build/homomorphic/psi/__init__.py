@@ -1,7 +1,7 @@
 """Private Set Intersection protocols."""
 
 try:
-    from .psi_protocols import PSIProtocol, DHBasedPSI, OTBasedPSI
+    from .psi_protocols import DHBasedPSI, OTBasedPSI, PSIProtocol
 except (ImportError, ModuleNotFoundError, SyntaxError):
     PSIProtocol = None
     DHBasedPSI = None

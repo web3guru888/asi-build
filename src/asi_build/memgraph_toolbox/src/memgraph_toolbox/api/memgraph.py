@@ -1,6 +1,8 @@
-from typing import Any, Dict, List, Optional
 import os
+from typing import Any, Dict, List, Optional
+
 from neo4j import GraphDatabase
+
 from ..utils.serialization import serialize_record_data
 
 
@@ -39,9 +41,7 @@ class Memgraph:
         username = username or os.environ.get("MEMGRAPH_USER", "")
         password = password or os.environ.get("MEMGRAPH_PASSWORD", "")
 
-        self.driver = GraphDatabase.driver(
-            url, auth=(username, password), **(driver_config or {})
-        )
+        self.driver = GraphDatabase.driver(url, auth=(username, password), **(driver_config or {}))
 
         self.database = database or os.environ.get("MEMGRAPH_DATABASE", "memgraph")
 
@@ -90,8 +90,7 @@ class Memgraph:
                 (
                     (  # isCallInTransactionError
                         e.code == "Neo.DatabaseError.Statement.ExecutionFailed"
-                        or e.code
-                        == "Neo.DatabaseError.Transaction.TransactionStartFailed"
+                        or e.code == "Neo.DatabaseError.Transaction.TransactionStartFailed"
                     )
                     and "in an implicit transaction" in e.message
                 )

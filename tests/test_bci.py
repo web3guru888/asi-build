@@ -6,13 +6,15 @@ metrics, and configuration.
 """
 
 import math
-import pytest
+
 import numpy as np
+import pytest
 from scipy.signal import butter, filtfilt
 
 # BCI modules require mne (optional). Skip gracefully if not installed.
 try:
     import mne
+
     HAS_MNE = True
 except ImportError:
     HAS_MNE = False
@@ -20,6 +22,7 @@ except ImportError:
 # ════════════════════════════════════════════════════════
 # Signal Utilities
 # ════════════════════════════════════════════════════════
+
 
 @pytest.mark.skipif(not HAS_MNE, reason="mne not installed")
 class TestSignalUtilities:
@@ -30,9 +33,9 @@ class TestSignalUtilities:
         from asi_build.bci.utils.signal_utils import SignalUtilities
 
         fs = 250.0
-        t = np.arange(0, 2, 1/fs)
+        t = np.arange(0, 2, 1 / fs)
         # 10 Hz (in-band) + 50 Hz (out-of-band) + DC offset
-        sig = np.sin(2*np.pi*10*t) + 0.5*np.sin(2*np.pi*50*t) + 3.0
+        sig = np.sin(2 * np.pi * 10 * t) + 0.5 * np.sin(2 * np.pi * 50 * t) + 3.0
 
         filtered = SignalUtilities.bandpass_filter(sig, 5.0, 20.0, fs)
 
@@ -46,8 +49,8 @@ class TestSignalUtilities:
         from asi_build.bci.utils.signal_utils import SignalUtilities
 
         fs = 250.0
-        t = np.arange(0, 2, 1/fs)
-        data = np.stack([np.sin(2*np.pi*10*t), np.sin(2*np.pi*15*t)])
+        t = np.arange(0, 2, 1 / fs)
+        data = np.stack([np.sin(2 * np.pi * 10 * t), np.sin(2 * np.pi * 15 * t)])
 
         filtered = SignalUtilities.bandpass_filter(data, 5.0, 30.0, fs)
         assert filtered.shape == data.shape
@@ -57,13 +60,14 @@ class TestSignalUtilities:
         from asi_build.bci.utils.signal_utils import SignalUtilities
 
         fs = 250.0
-        t = np.arange(0, 2, 1/fs)
-        sig = np.sin(2*np.pi*10*t) + np.sin(2*np.pi*50*t)
+        t = np.arange(0, 2, 1 / fs)
+        sig = np.sin(2 * np.pi * 10 * t) + np.sin(2 * np.pi * 50 * t)
 
         filtered = SignalUtilities.notch_filter(sig, 50.0, fs)
 
         # Compute power at 50 Hz before and after
         from scipy.signal import welch
+
         _, psd_before = welch(sig, fs=fs, nperseg=256)
         f, psd_after = welch(filtered, fs=fs, nperseg=256)
         idx50 = np.argmin(np.abs(f - 50))
@@ -75,8 +79,8 @@ class TestSignalUtilities:
         from asi_build.bci.utils.signal_utils import SignalUtilities
 
         fs = 250.0
-        t = np.arange(0, 4, 1/fs)
-        sig = np.sin(2*np.pi*10*t)
+        t = np.arange(0, 4, 1 / fs)
+        sig = np.sin(2 * np.pi * 10 * t)
 
         f, psd = SignalUtilities.compute_psd(sig, fs, nperseg=256)
 
@@ -100,7 +104,7 @@ class TestSignalUtilities:
         from asi_build.bci.utils.signal_utils import SignalUtilities
 
         data = np.random.randn(100) * 5 + 10
-        normed = SignalUtilities.normalize_signal(data, 'zscore')
+        normed = SignalUtilities.normalize_signal(data, "zscore")
 
         assert abs(np.mean(normed)) < 0.1
         assert abs(np.std(normed) - 1.0) < 0.1
@@ -110,12 +114,14 @@ class TestSignalUtilities:
 # Frequency Analysis
 # ════════════════════════════════════════════════════════
 
+
 @pytest.mark.skipif(not HAS_MNE, reason="mne not installed")
 class TestFrequencyAnalysis:
     """Tests for FrequencyAnalyzer — spectral features, band powers."""
 
     def _make_config(self):
         from asi_build.bci.core.config import BCIConfig
+
         return BCIConfig()
 
     def test_spectral_features_keys(self):
@@ -145,6 +151,7 @@ class TestFrequencyAnalysis:
 # CSP Processor
 # ════════════════════════════════════════════════════════
 
+
 @pytest.mark.skipif(not HAS_MNE, reason="mne not installed")
 class TestCSPProcessor:
     """Tests for Common Spatial Patterns."""
@@ -163,10 +170,10 @@ class TestCSPProcessor:
         for i in range(n_trials):
             trial = np.random.randn(n_channels, n_samples) * 0.3
             if i % 2 == 0:  # class 0
-                trial[0] += 2.0 * np.sin(2*np.pi*10*t)
+                trial[0] += 2.0 * np.sin(2 * np.pi * 10 * t)
                 labels.append(0)
             else:  # class 1
-                trial[2] += 2.0 * np.sin(2*np.pi*10*t)
+                trial[2] += 2.0 * np.sin(2 * np.pi * 10 * t)
                 labels.append(1)
             trials.append(trial)
 
@@ -216,25 +223,28 @@ class TestCSPProcessor:
 # SSVEP Detector
 # ════════════════════════════════════════════════════════
 
+
 @pytest.mark.skipif(not HAS_MNE, reason="mne not installed")
 class TestSSVEPDetector:
     """Tests for SSVEP detection (CCA, PSD-based)."""
 
     def _make_ssvep_signal(self, freq=10.0, fs=250.0, duration=4.0, n_channels=4):
         """Generate synthetic SSVEP at target frequency."""
-        t = np.arange(0, duration, 1/fs)
+        t = np.arange(0, duration, 1 / fs)
         data = np.zeros((n_channels, len(t)))
         for ch in range(n_channels):
             # SSVEP fundamental + 2nd harmonic + noise
-            data[ch] = (np.sin(2*np.pi*freq*t)
-                       + 0.5*np.sin(2*np.pi*2*freq*t)
-                       + 0.3*np.random.randn(len(t)))
+            data[ch] = (
+                np.sin(2 * np.pi * freq * t)
+                + 0.5 * np.sin(2 * np.pi * 2 * freq * t)
+                + 0.3 * np.random.randn(len(t))
+            )
         return data
 
     def test_cca_reference_generation(self):
         """CCA reference signals have correct shape and frequency."""
-        from asi_build.bci.ssvep.detector import SSVEPDetector
         from asi_build.bci.core.config import BCIConfig
+        from asi_build.bci.ssvep.detector import SSVEPDetector
 
         config = BCIConfig()
         det = SSVEPDetector(config)
@@ -254,6 +264,7 @@ class TestSSVEPDetector:
 # Metrics — ITR
 # ════════════════════════════════════════════════════════
 
+
 @pytest.mark.skipif(not HAS_MNE, reason="mne not installed")
 class TestBCIMetrics:
     """Tests for Information Transfer Rate and classification metrics."""
@@ -264,26 +275,23 @@ class TestBCIMetrics:
 
         # Wolpaw formula: B = log2(N) + P*log2(P) + (1-P)*log2((1-P)/(N-1))
         # With P=0.999 (capped), N=4: B ≈ log2(4) = 2 bits
-        itr = BCIMetrics.information_transfer_rate(accuracy=1.0, n_classes=4,
-                                                    selection_time=1.0)
+        itr = BCIMetrics.information_transfer_rate(accuracy=1.0, n_classes=4, selection_time=1.0)
         assert itr > 100  # Should be close to 120 bits/min
 
     def test_itr_chance_level_is_zero(self):
         """At chance accuracy, ITR should be 0."""
         from asi_build.bci.utils.metrics import BCIMetrics
 
-        itr = BCIMetrics.information_transfer_rate(accuracy=0.25, n_classes=4,
-                                                    selection_time=1.0)
+        itr = BCIMetrics.information_transfer_rate(accuracy=0.25, n_classes=4, selection_time=1.0)
         assert itr == 0.0
 
     def test_itr_increases_with_accuracy(self):
         """ITR should increase monotonically with accuracy (above chance)."""
         from asi_build.bci.utils.metrics import BCIMetrics
 
-        itrs = [BCIMetrics.information_transfer_rate(acc, 4, 1.0)
-                for acc in [0.4, 0.6, 0.8, 0.95]]
+        itrs = [BCIMetrics.information_transfer_rate(acc, 4, 1.0) for acc in [0.4, 0.6, 0.8, 0.95]]
         for i in range(len(itrs) - 1):
-            assert itrs[i+1] > itrs[i], f"ITR should increase: {itrs}"
+            assert itrs[i + 1] > itrs[i], f"ITR should increase: {itrs}"
 
     def test_classification_metrics(self):
         """Classification metrics returns accuracy, precision, recall, F1."""
@@ -294,13 +302,14 @@ class TestBCIMetrics:
 
         metrics = BCIMetrics.classification_metrics(y_true, y_pred)
 
-        assert 'accuracy' in metrics
-        assert 0 < metrics['accuracy'] < 1.0
+        assert "accuracy" in metrics
+        assert 0 < metrics["accuracy"] < 1.0
 
 
 # ════════════════════════════════════════════════════════
 # Config
 # ════════════════════════════════════════════════════════
+
 
 class TestBCIConfig:
     """Test BCIConfig serialization."""
@@ -320,12 +329,13 @@ class TestBCIConfig:
         config = BCIConfig()
         d = config._to_dict()
         assert isinstance(d, dict)
-        assert 'device' in d or 'signal_processing' in d
+        assert "device" in d or "signal_processing" in d
 
 
 # ════════════════════════════════════════════════════════
 # Artifact Removal
 # ════════════════════════════════════════════════════════
+
 
 @pytest.mark.skipif(not HAS_MNE, reason="mne not installed")
 class TestArtifactRemoval:
@@ -333,6 +343,7 @@ class TestArtifactRemoval:
 
     def _make_config(self):
         from asi_build.bci.core.config import BCIConfig
+
         return BCIConfig()
 
     def test_line_noise_removal(self):
@@ -343,17 +354,22 @@ class TestArtifactRemoval:
         remover = ArtifactRemover(config)
         fs = config.device.sampling_rate
         n_ch = len(config.device.channels)
-        t = np.arange(0, 2, 1/fs)
+        t = np.arange(0, 2, 1 / fs)
 
         # Build multi-channel data with 50Hz line noise
         data = np.zeros((n_ch, len(t)))
         for ch in range(n_ch):
-            data[ch] = np.sin(2*np.pi*10*t) + 0.5*np.sin(2*np.pi*50*t) + 0.1*np.random.randn(len(t))
+            data[ch] = (
+                np.sin(2 * np.pi * 10 * t)
+                + 0.5 * np.sin(2 * np.pi * 50 * t)
+                + 0.1 * np.random.randn(len(t))
+            )
 
         cleaned = remover._remove_line_noise(data)
 
         # Power at 50 Hz should be reduced in first channel
         from scipy.signal import welch as welch_fn
+
         f, psd_raw = welch_fn(data[0], fs=fs, nperseg=256)
         f, psd_clean = welch_fn(cleaned[0], fs=fs, nperseg=256)
         idx50 = np.argmin(np.abs(f - 50))
@@ -381,14 +397,15 @@ class TestArtifactRemoval:
 # EEG Processor — Higuchi FD fix verification
 # ════════════════════════════════════════════════════════
 
+
 @pytest.mark.skipif(not HAS_MNE, reason="mne not installed")
 class TestHiguchiFD:
     """Verify the Higuchi fractal dimension fix."""
 
     def test_higuchi_fd_white_noise(self):
         """White noise should have FD ≈ 2.0 (space-filling)."""
-        from asi_build.bci.eeg.eeg_processor import EEGProcessor
         from asi_build.bci.core.config import BCIConfig
+        from asi_build.bci.eeg.eeg_processor import EEGProcessor
 
         proc = EEGProcessor(BCIConfig())
         np.random.seed(42)
@@ -400,12 +417,12 @@ class TestHiguchiFD:
 
     def test_higuchi_fd_sine_wave(self):
         """Sine wave should have FD ≈ 1.0 (smooth curve)."""
-        from asi_build.bci.eeg.eeg_processor import EEGProcessor
         from asi_build.bci.core.config import BCIConfig
+        from asi_build.bci.eeg.eeg_processor import EEGProcessor
 
         proc = EEGProcessor(BCIConfig())
         t = np.arange(1000) / 250.0
-        sine = np.sin(2*np.pi*10*t)
+        sine = np.sin(2 * np.pi * 10 * t)
         fd = proc._higuchi_fractal_dimension(sine, k_max=10)
 
         # Sine wave FD should be close to 1.0

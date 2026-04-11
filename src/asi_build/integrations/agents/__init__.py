@@ -33,7 +33,7 @@ result = agent.migrate(mysql_config, memgraph_config)
 
 # Main exports
 try:
-    from .core import SQLToMemgraphAgent, HyGM
+    from .core import HyGM, SQLToMemgraphAgent
 except (ImportError, ModuleNotFoundError, SyntaxError):
     SQLToMemgraphAgent = None
     HyGM = None

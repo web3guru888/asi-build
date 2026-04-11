@@ -9,37 +9,39 @@ All imports rely on torch which IS available (CPU-only).
 """
 
 import pytest
+
 pytest.importorskip("torch")
-import torch
-import torch.nn as nn
-import numpy as np
 import time
 
-from asi_build.optimization.src import get_config, CONFIG
+import numpy as np
+import torch
+import torch.nn as nn
+
+from asi_build.optimization.src import CONFIG, get_config
 from asi_build.optimization.src.architecture import (
-    VLAConfig,
-    VisionModule,
-    LanguageModule,
     ActionModule,
+    LanguageModule,
+    VisionModule,
+    VLAConfig,
     VLAPlusPlus,
     create_vla_model,
 )
 from asi_build.optimization.src.model_optimization import (
-    OptimizationConfig,
-    ModelQuantizer,
-    ModelPruner,
     KnowledgeDistiller,
+    ModelPruner,
+    ModelQuantizer,
+    OptimizationConfig,
     VLAOptimizationPipeline,
 )
 from asi_build.optimization.src.training import (
-    TrainingConfig,
     LoRALayer,
+    TrainingConfig,
 )
-
 
 # ===================================================================
 # Module-level __init__ / CONFIG
 # ===================================================================
+
 
 class TestModuleInit:
 
@@ -67,6 +69,7 @@ class TestModuleInit:
 # VLAConfig
 # ===================================================================
 
+
 class TestVLAConfig:
 
     def test_defaults(self):
@@ -92,6 +95,7 @@ class TestVLAConfig:
 # ===================================================================
 # VisionModule
 # ===================================================================
+
 
 class TestVisionModule:
 
@@ -135,6 +139,7 @@ class TestVisionModule:
 # LanguageModule
 # ===================================================================
 
+
 class TestLanguageModule:
 
     def test_creation(self):
@@ -165,6 +170,7 @@ class TestLanguageModule:
 # ===================================================================
 # ActionModule
 # ===================================================================
+
 
 class TestActionModule:
 
@@ -197,6 +203,7 @@ class TestActionModule:
 # ===================================================================
 # VLAPlusPlus (full model)
 # ===================================================================
+
 
 class TestVLAPlusPlus:
 
@@ -271,6 +278,7 @@ class TestVLAPlusPlus:
 # OptimizationConfig
 # ===================================================================
 
+
 class TestOptimizationConfig:
 
     def test_defaults(self):
@@ -288,6 +296,7 @@ class TestOptimizationConfig:
 # ===================================================================
 # ModelQuantizer
 # ===================================================================
+
 
 class TestModelQuantizer:
 
@@ -320,6 +329,7 @@ class TestModelQuantizer:
 # ===================================================================
 # ModelPruner
 # ===================================================================
+
 
 class TestModelPruner:
 
@@ -361,6 +371,7 @@ class TestModelPruner:
 # KnowledgeDistiller
 # ===================================================================
 
+
 class TestKnowledgeDistiller:
 
     def test_init(self):
@@ -386,6 +397,7 @@ class TestKnowledgeDistiller:
 # ===================================================================
 # VLAOptimizationPipeline
 # ===================================================================
+
 
 class TestVLAOptimizationPipeline:
 
@@ -416,6 +428,7 @@ class TestVLAOptimizationPipeline:
 # TrainingConfig
 # ===================================================================
 
+
 class TestTrainingConfig:
 
     def test_defaults(self):
@@ -444,6 +457,7 @@ class TestTrainingConfig:
 # ===================================================================
 # LoRALayer
 # ===================================================================
+
 
 class TestLoRALayer:
 
@@ -496,6 +510,7 @@ class TestLoRALayer:
 # ===================================================================
 # End-to-end integration smoke test
 # ===================================================================
+
 
 class TestEndToEnd:
 

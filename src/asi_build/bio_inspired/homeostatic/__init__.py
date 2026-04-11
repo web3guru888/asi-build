@@ -16,7 +16,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     AllostasisController = None
     AllostaticState = None
 try:
-    from .stress_response import StressResponseSystem, StressLevel
+    from .stress_response import StressLevel, StressResponseSystem
 except (ImportError, ModuleNotFoundError, SyntaxError):
     StressResponseSystem = None
     StressLevel = None
@@ -29,10 +29,10 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 __all__ = [
     "HomeostaticRegulator",
     "HomeostaticVariable",
-    "AllostasisController", 
+    "AllostasisController",
     "AllostaticState",
     "StressResponseSystem",
     "StressLevel",
     "EnergyBalanceManager",
-    "MetabolicState"
+    "MetabolicState",
 ]

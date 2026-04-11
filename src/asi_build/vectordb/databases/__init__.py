@@ -13,8 +13,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     QdrantClient = None
 
-__all__ = [
-    "PineconeClient",
-    "WeaviateClient",
-    "QdrantClient"
-]
+__all__ = ["PineconeClient", "WeaviateClient", "QdrantClient"]

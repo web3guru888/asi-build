@@ -6,9 +6,9 @@ to ensure compatibility with HyGM and the migration system.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class TableType(Enum):
@@ -165,9 +165,7 @@ class DatabaseAnalyzer(ABC):
         pass
 
     @abstractmethod
-    def get_table_data(
-        self, table_name: str, limit: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+    def get_table_data(self, table_name: str, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """
         Get data from a specific table.
 
@@ -251,9 +249,7 @@ class DatabaseAnalyzer(ABC):
         # Consider it a join table if:
         # - At least 2 FKs and FK ratio > 0.5, OR
         # - All columns are FKs or metadata columns
-        return (len(table_info.foreign_keys) >= 2 and fk_ratio > 0.5) or len(
-            non_fk_columns
-        ) == 0
+        return (len(table_info.foreign_keys) >= 2 and fk_ratio > 0.5) or len(non_fk_columns) == 0
 
     def determine_table_type(self, table_info: TableInfo) -> TableType:
         """
@@ -359,10 +355,7 @@ class DatabaseAnalyzer(ABC):
                     }
 
                     for col in table_info.columns:
-                        if (
-                            col.name not in fk_columns
-                            and col.name.lower() not in metadata_columns
-                        ):
+                        if col.name not in fk_columns and col.name.lower() not in metadata_columns:
                             additional_properties.append(col.name)
 
                     relationships.append(

@@ -3,7 +3,7 @@ Secure Multi-Party Computation (MPC) framework.
 """
 
 try:
-    from .protocols import SecretSharingProtocol, BGWProtocol, GMWProtocol
+    from .protocols import BGWProtocol, GMWProtocol, SecretSharingProtocol
 except (ImportError, ModuleNotFoundError, SyntaxError):
     SecretSharingProtocol = None
     BGWProtocol = None
@@ -13,7 +13,7 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     ShamirSecretSharing = None
 try:
-    from .beaver import BeaverTriples  
+    from .beaver import BeaverTriples
 except (ImportError, ModuleNotFoundError, SyntaxError):
     BeaverTriples = None
 try:
@@ -37,25 +37,19 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 __all__ = [
     # Core protocols
     "SecretSharingProtocol",
-    "BGWProtocol", 
+    "BGWProtocol",
     "GMWProtocol",
-    
     # Secret sharing
     "ShamirSecretSharing",
-    
     # Preprocessing
     "BeaverTriples",
-    
     # Garbled circuits
     "GarbledCircuits",
-    
     # Oblivious transfer
     "ObliviousTransfer",
-    
     # Zero knowledge
     "ZKProofs",
-    
     # MPC engine
     "MPCEngine",
-    "MPCParty"
+    "MPCParty",
 ]

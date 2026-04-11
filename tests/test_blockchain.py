@@ -12,9 +12,9 @@ Testable pure-Python files:
 """
 
 import importlib.util
+import json
 import os
 import sys
-import json
 import tempfile
 from datetime import datetime
 from unittest.mock import patch
@@ -90,7 +90,9 @@ except Exception as exc:
 # ===================================================================
 #  HashManager tests
 # ===================================================================
-@pytest.mark.skipif(not HAS_HASH, reason=f"hash_manager import failed: {_hash_err if not HAS_HASH else ''}")
+@pytest.mark.skipif(
+    not HAS_HASH, reason=f"hash_manager import failed: {_hash_err if not HAS_HASH else ''}"
+)
 class TestHashManager:
     """Tests for HashManager basic hashing operations."""
 
@@ -399,9 +401,9 @@ class TestHashChain:
         chain = HashChain()
         chain.add_block("evidence of bug")
         # Because of the double datetime.now() call, verification fails:
-        assert chain.verify_chain() is False, (
-            "If this starts passing, the timestamp bug in add_block() may have been fixed!"
-        )
+        assert (
+            chain.verify_chain() is False
+        ), "If this starts passing, the timestamp bug in add_block() may have been fixed!"
 
     def test_verify_chain_works_with_frozen_time(self):
         """
@@ -424,7 +426,9 @@ class TestHashChain:
 # ===================================================================
 #  NetworkConfig tests
 # ===================================================================
-@pytest.mark.skipif(not HAS_NET, reason=f"network_config import failed: {_net_err if not HAS_NET else ''}")
+@pytest.mark.skipif(
+    not HAS_NET, reason=f"network_config import failed: {_net_err if not HAS_NET else ''}"
+)
 class TestNetworkConfig:
 
     def test_ethereum_mainnet_chain_id(self):

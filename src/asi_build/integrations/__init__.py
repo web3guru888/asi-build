@@ -28,6 +28,7 @@ def __getattr__(name: str):
     if name == "agents":
         try:
             import importlib
+
             _agents = importlib.import_module("asi_build.integrations.agents")
             globals()["agents"] = _agents
             return _agents
@@ -42,6 +43,7 @@ def __getattr__(name: str):
     if name == "langchain_memgraph":
         try:
             import importlib
+
             _mod = importlib.import_module(
                 "asi_build.integrations.langchain-memgraph.langchain_memgraph"
             )
@@ -57,9 +59,8 @@ def __getattr__(name: str):
     if name == "mcp_memgraph":
         try:
             import importlib
-            _mod = importlib.import_module(
-                "asi_build.integrations.mcp-memgraph.src.mcp_memgraph"
-            )
+
+            _mod = importlib.import_module("asi_build.integrations.mcp-memgraph.src.mcp_memgraph")
             globals()["mcp_memgraph"] = _mod
             return _mod
         except (ImportError, ModuleNotFoundError) as exc:

@@ -5,9 +5,10 @@ This module provides a factory pattern for creating appropriate database
 analyzers based on the database type or connection parameters.
 """
 
-from typing import Dict, Any, Type
-from .interface import DatabaseAnalyzer
+from typing import Any, Dict, Type
+
 from .adapters.mysql import MySQLAnalyzer
+from .interface import DatabaseAnalyzer
 
 
 class DatabaseAnalyzerFactory:
@@ -24,9 +25,7 @@ class DatabaseAnalyzerFactory:
     }
 
     @classmethod
-    def create_analyzer(
-        cls, database_type: str, **connection_params
-    ) -> DatabaseAnalyzer:
+    def create_analyzer(cls, database_type: str, **connection_params) -> DatabaseAnalyzer:
         """
         Create a database analyzer for the specified database type.
 
@@ -160,9 +159,7 @@ class DatabaseAnalyzerFactory:
         return list(cls._analyzers.keys())
 
     @classmethod
-    def register_analyzer(
-        cls, database_type: str, analyzer_class: Type[DatabaseAnalyzer]
-    ) -> None:
+    def register_analyzer(cls, database_type: str, analyzer_class: Type[DatabaseAnalyzer]) -> None:
         """
         Register a new database analyzer.
 

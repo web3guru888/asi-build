@@ -7,7 +7,7 @@ Targets uncovered paths beyond test_safety_governance.py:
   - DAO: DAOGovernance full lifecycle, token distribution, insufficient tokens, proposal types
   - Ledger: CryptographicVerifier, PrivacyPreserver, PublicLedger query/verify/stats/block creation
   - AuditLogger
-  - Contracts: approve/transfer_from, lock/unlock tokens, mint/burn, pause/resume, 
+  - Contracts: approve/transfer_from, lock/unlock tokens, mint/burn, pause/resume,
                ProposalContract finalize/execute/veto, EthicsEnforcementContract check/report/enforce,
                ContractRegistry call_contract/events
   - Consensus: finalize_consensus for all methods, quadratic multi-voter, delegation chain,
@@ -19,79 +19,134 @@ Targets uncovered paths beyond test_safety_governance.py:
   - Framework: ConstitutionalAI full API, constitution lifecycle, safe action generation
 """
 
-import sys
-import os
-import math
 import hashlib
+import math
+import os
+import sys
 import time
-from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
 from dataclasses import asdict
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 # --- Formal Verification ---
 from asi_build.safety.formal_verification import (
-    TheoremProver, EthicalVerificationEngine, EthicalAxiom, EthicalConstraint,
-    LogicalPredicate, EthicalPrinciple, FormalProof, ProofStep, LogicOperator,
+    EthicalAxiom,
+    EthicalConstraint,
+    EthicalPrinciple,
+    EthicalVerificationEngine,
+    FormalProof,
+    LogicalPredicate,
+    LogicOperator,
+    ProofStep,
+    TheoremProver,
 )
 
-# --- Governance Engine ---
-from asi_build.safety.governance.engine import (
-    GovernanceEngine, Proposal, Stakeholder, StakeholderType, ProposalStatus,
-    VoteType, GovernanceDecision, EthicalFramework, UtilitarianFramework,
-    DeontologicalFramework, VirtueEthicsFramework,
-)
+# --- Framework ---
+from asi_build.safety.framework import Constitution, ConstitutionalAI
 
-# --- DAO ---
-from asi_build.safety.governance.dao import (
-    QuadraticVoting, DAOTreasury, ReputationSystem, DAOGovernance,
-    ProposalType, TokenType, DAOToken, DAOProposal,
-)
-
-# --- Ledger ---
-from asi_build.safety.governance.ledger import (
-    MerkleTree, PublicLedger, AuditRecord, AuditEventType, AuditLevel,
-    VerificationStatus, Block, AuditQuery, CryptographicVerifier,
-    PrivacyPreserver, AuditLogger,
+# --- Consensus ---
+from asi_build.safety.governance.consensus import (
+    ConsensusStatus,
+    LiquidDemocracy,
+    MultiStakeholderConsensus,
+    QuadraticVotingSystem,
+    StakeholderCategory,
+    StakeholderProfile,
+    VotingMethod,
 )
 
 # --- Contracts ---
 from asi_build.safety.governance.contracts import (
-    GovernanceTokenContract, ProposalContract, EthicsEnforcementContract,
-    ContractRegistry, ContractState, ExecutionStatus, PermissionLevel,
-    ContractPermission, deploy_governance_contracts,
+    ContractPermission,
+    ContractRegistry,
+    ContractState,
+    EthicsEnforcementContract,
+    ExecutionStatus,
+    GovernanceTokenContract,
+    PermissionLevel,
+    ProposalContract,
+    deploy_governance_contracts,
 )
 
-# --- Consensus ---
-from asi_build.safety.governance.consensus import (
-    QuadraticVotingSystem, LiquidDemocracy, MultiStakeholderConsensus,
-    StakeholderProfile, StakeholderCategory, VotingMethod, ConsensusStatus,
+# --- DAO ---
+from asi_build.safety.governance.dao import (
+    DAOGovernance,
+    DAOProposal,
+    DAOToken,
+    DAOTreasury,
+    ProposalType,
+    QuadraticVoting,
+    ReputationSystem,
+    TokenType,
 )
 
-# --- Rights ---
-from asi_build.safety.governance.rights import (
-    RightsManager, ConsentManager, HumanRightsFramework, AGIRightsFramework,
-    EntityType, RightType, RightStatus, ConsentType, Right, Entity,
-    RightGrant, ConsentRecord, RightViolation,
+# --- Governance Engine ---
+from asi_build.safety.governance.engine import (
+    DeontologicalFramework,
+    EthicalFramework,
+    GovernanceDecision,
+    GovernanceEngine,
+    Proposal,
+    ProposalStatus,
+    Stakeholder,
+    StakeholderType,
+    UtilitarianFramework,
+    VirtueEthicsFramework,
+    VoteType,
+)
+
+# --- Ledger ---
+from asi_build.safety.governance.ledger import (
+    AuditEventType,
+    AuditLevel,
+    AuditLogger,
+    AuditQuery,
+    AuditRecord,
+    Block,
+    CryptographicVerifier,
+    MerkleTree,
+    PrivacyPreserver,
+    PublicLedger,
+    VerificationStatus,
 )
 
 # --- Override ---
 from asi_build.safety.governance.override import (
-    DemocraticOverrideSystem, HumanInTheLoopController,
-    OverrideType, OverrideStatus, OverrideSeverity, TriggerCondition,
-    OverrideCapability, EmergencyProtocol,
+    DemocraticOverrideSystem,
+    EmergencyProtocol,
+    HumanInTheLoopController,
+    OverrideCapability,
+    OverrideSeverity,
+    OverrideStatus,
+    OverrideType,
+    TriggerCondition,
 )
 
-# --- Framework ---
-from asi_build.safety.framework import ConstitutionalAI, Constitution
-
+# --- Rights ---
+from asi_build.safety.governance.rights import (
+    AGIRightsFramework,
+    ConsentManager,
+    ConsentRecord,
+    ConsentType,
+    Entity,
+    EntityType,
+    HumanRightsFramework,
+    Right,
+    RightGrant,
+    RightsManager,
+    RightStatus,
+    RightType,
+    RightViolation,
+)
 
 # ============================================================
 # Helpers
 # ============================================================
+
 
 def _txctx(caller: str = "deployer", **kw) -> dict:
     ctx = {"caller": caller, "block_height": 0, "transaction_hash": "tx0"}
@@ -99,60 +154,92 @@ def _txctx(caller: str = "deployer", **kw) -> dict:
     return ctx
 
 
-def _make_stakeholder(sid="s1", name="Alice",
-                      stype=StakeholderType.HUMAN_INDIVIDUAL,
-                      voting_power=1.0, verified=True):
+def _make_stakeholder(
+    sid="s1", name="Alice", stype=StakeholderType.HUMAN_INDIVIDUAL, voting_power=1.0, verified=True
+):
     return Stakeholder(
-        id=sid, name=name, type=stype, reputation_score=1.0,
-        voting_power=voting_power, expertise_domains=["ai"],
-        verified=verified, created_at=datetime.utcnow(),
+        id=sid,
+        name=name,
+        type=stype,
+        reputation_score=1.0,
+        voting_power=voting_power,
+        expertise_domains=["ai"],
+        verified=verified,
+        created_at=datetime.utcnow(),
     )
 
 
-def _make_proposal(pid="p1", proposer="s1", title="Test Proposal",
-                   deadline=None, impact=None):
+def _make_proposal(pid="p1", proposer="s1", title="Test Proposal", deadline=None, impact=None):
     if deadline is None:
         deadline = datetime.utcnow() + timedelta(days=7)
     return Proposal(
-        id=pid, title=title, description="A test proposal involving AI systems",
-        category="technical", proposer_id=proposer, status=ProposalStatus.DRAFT,
-        voting_deadline=deadline, implementation_deadline=None,
-        ethical_constraints=[], impact_assessment=impact or {"net_utility": 5},
-        required_approvals=[], votes={},
-        created_at=datetime.utcnow(), updated_at=datetime.utcnow(),
+        id=pid,
+        title=title,
+        description="A test proposal involving AI systems",
+        category="technical",
+        proposer_id=proposer,
+        status=ProposalStatus.DRAFT,
+        voting_deadline=deadline,
+        implementation_deadline=None,
+        ethical_constraints=[],
+        impact_assessment=impact or {"net_utility": 5},
+        required_approvals=[],
+        votes={},
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
     )
 
 
 def _make_audit_record(rid="r1", tx_hash="abc123"):
     return AuditRecord(
-        id=rid, event_type=AuditEventType.DECISION_MADE, entity_id="entity_1",
-        event_data={"action": "test"}, metadata={}, audit_level=AuditLevel.PUBLIC,
-        privacy_mask=None, timestamp=datetime.utcnow(), block_height=0,
-        transaction_hash=tx_hash, previous_hash="0" * 64, merkle_root="",
-        digital_signature="sig", verification_status=VerificationStatus.PENDING,
+        id=rid,
+        event_type=AuditEventType.DECISION_MADE,
+        entity_id="entity_1",
+        event_data={"action": "test"},
+        metadata={},
+        audit_level=AuditLevel.PUBLIC,
+        privacy_mask=None,
+        timestamp=datetime.utcnow(),
+        block_height=0,
+        transaction_hash=tx_hash,
+        previous_hash="0" * 64,
+        merkle_root="",
+        digital_signature="sig",
+        verification_status=VerificationStatus.PENDING,
     )
 
 
-def _make_entity(eid="e1", name="TestEntity",
-                 etype=EntityType.HUMAN, **kwargs):
+def _make_entity(eid="e1", name="TestEntity", etype=EntityType.HUMAN, **kwargs):
     return Entity(
-        id=eid, name=name, entity_type=etype,
+        id=eid,
+        name=name,
+        entity_type=etype,
         capabilities=kwargs.get("capabilities", ["reasoning"]),
         consciousness_level=kwargs.get("consciousness_level", None),
         autonomy_level=kwargs.get("autonomy_level", None),
-        rights_granted=[], consent_records=[], guardian_id=None,
-        creation_date=datetime.utcnow(), last_assessment=None, metadata={},
+        rights_granted=[],
+        consent_records=[],
+        guardian_id=None,
+        creation_date=datetime.utcnow(),
+        last_assessment=None,
+        metadata={},
     )
 
 
-def _make_stakeholder_profile(sid="s1", name="Alice",
-                              cat=StakeholderCategory.TECHNICAL_EXPERTS,
-                              credibility=0.9, power=1.0):
+def _make_stakeholder_profile(
+    sid="s1", name="Alice", cat=StakeholderCategory.TECHNICAL_EXPERTS, credibility=0.9, power=1.0
+):
     return StakeholderProfile(
-        id=sid, name=name, category=cat, expertise_domains=["ai"],
-        credibility_score=credibility, voting_power_base=power,
-        delegation_received=0.0, active_delegations={},
-        participation_history={}, verification_status="verified",
+        id=sid,
+        name=name,
+        category=cat,
+        expertise_domains=["ai"],
+        credibility_score=credibility,
+        voting_power_base=power,
+        delegation_received=0.0,
+        active_delegations={},
+        participation_history={},
+        verification_status="verified",
         created_at=datetime.utcnow(),
     )
 
@@ -160,6 +247,7 @@ def _make_stakeholder_profile(sid="s1", name="Alice",
 # ============================================================
 # 1. Formal Verification — Extended
 # ============================================================
+
 
 class TestFormalVerificationExtended:
 
@@ -183,8 +271,11 @@ class TestFormalVerificationExtended:
             "overall_valid": False,
             "constraint_results": {"c1": {"valid": False}},
             "failed_constraints": [
-                {"constraint_name": "No harm", "principle": "non_maleficence",
-                 "reason": "proof failed"}
+                {
+                    "constraint_name": "No harm",
+                    "principle": "non_maleficence",
+                    "reason": "proof failed",
+                }
             ],
             "warnings": ["slow proof"],
             "proofs": [],
@@ -222,41 +313,56 @@ class TestFormalVerificationExtended:
         """Proposal that causes harm triggers constraint check."""
         engine = EthicalVerificationEngine()
         constraint = EthicalConstraint(
-            id="harm_check", name="Harm Prevention",
+            id="harm_check",
+            name="Harm Prevention",
             description="No significant harm",
             principle=EthicalPrinciple.NON_MALEFICENCE,
             formal_specification="~causes_significant_harm",
-            predicates=[LogicalPredicate(
-                name="causes_significant_harm", variables=["harm"],
-                formula="~causes_significant_harm",
-                description="no significant harm",
-                principle=EthicalPrinciple.NON_MALEFICENCE,
-            )],
-            quantifiers={}, priority=10, created_at=datetime.utcnow(),
+            predicates=[
+                LogicalPredicate(
+                    name="causes_significant_harm",
+                    variables=["harm"],
+                    formula="~causes_significant_harm",
+                    description="no significant harm",
+                    principle=EthicalPrinciple.NON_MALEFICENCE,
+                )
+            ],
+            quantifiers={},
+            priority=10,
+            created_at=datetime.utcnow(),
         )
         engine.add_constraint(constraint)
-        result = engine.verify_proposal_ethics({
-            "impact_assessment": {"harm_level": 0.9, "benefit_level": 0.1},
-        })
+        result = engine.verify_proposal_ethics(
+            {
+                "impact_assessment": {"harm_level": 0.9, "benefit_level": 0.1},
+            }
+        )
         assert "harm_check" in result["constraint_results"]
 
     def test_extract_facts_proposal_fields(self):
         """_extract_facts_from_proposal maps known boolean fields."""
         engine = EthicalVerificationEngine()
         constraint = EthicalConstraint(
-            id="c", name="test", description="t",
+            id="c",
+            name="test",
+            description="t",
             principle=EthicalPrinciple.AUTONOMY,
             formal_specification="respects_autonomy",
-            predicates=[], quantifiers={}, priority=1,
+            predicates=[],
+            quantifiers={},
+            priority=1,
             created_at=datetime.utcnow(),
         )
-        facts = engine._extract_facts_from_proposal({
-            "respects_autonomy": True,
-            "is_transparent": False,
-            "category": "policy",
-            "description": "AI data processing system",
-            "impact_assessment": {"affected_parties": list(range(20))},
-        }, constraint)
+        facts = engine._extract_facts_from_proposal(
+            {
+                "respects_autonomy": True,
+                "is_transparent": False,
+                "category": "policy",
+                "description": "AI data processing system",
+                "impact_assessment": {"affected_parties": list(range(20))},
+            },
+            constraint,
+        )
         assert facts["respects_autonomy"] is True
         assert facts["is_transparent"] is False
         assert facts["is_policy_change"] is True
@@ -268,6 +374,7 @@ class TestFormalVerificationExtended:
 # ============================================================
 # 2. Governance Engine — Extended
 # ============================================================
+
 
 class TestGovernanceEngineExtended:
 
@@ -333,10 +440,13 @@ class TestGovernanceEngineExtended:
     def test_virtue_ethics_with_virtues_passes(self):
         """VirtueEthicsFramework passes proposal promoting virtues."""
         fw = VirtueEthicsFramework()
-        p = _make_proposal("p1", impact={
-            "virtues_promoted": ["justice", "prudence"],
-            "vices_encouraged": [],
-        })
+        p = _make_proposal(
+            "p1",
+            impact={
+                "virtues_promoted": ["justice", "prudence"],
+                "vices_encouraged": [],
+            },
+        )
         passed, reason = fw.verify_proposal(p)
         assert passed is True
 
@@ -357,6 +467,7 @@ class TestGovernanceEngineExtended:
 # ============================================================
 # 3. DAO — Extended
 # ============================================================
+
 
 class TestDAOExtended:
 
@@ -383,12 +494,14 @@ class TestDAOExtended:
     def test_reputation_system_action_types(self):
         """Test different reputation action types."""
         rep = ReputationSystem()
-        rep.update_reputation("alice", "good_proposal", 0.5,
-                              {"quality_score": 0.8, "consensus_level": 0.7})
+        rep.update_reputation(
+            "alice", "good_proposal", 0.5, {"quality_score": 0.8, "consensus_level": 0.7}
+        )
         assert rep.reputation_scores["alice"] > 0
 
-        rep.update_reputation("alice", "bad_proposal", -0.5,
-                              {"quality_score": 0.2, "consensus_level": 0.3})
+        rep.update_reputation(
+            "alice", "bad_proposal", -0.5, {"quality_score": 0.2, "consensus_level": 0.3}
+        )
         # Score may decrease but should remain non-negative
         assert rep.reputation_scores["alice"] >= 0
 
@@ -402,17 +515,21 @@ class TestDAOExtended:
 
     def test_dao_governance_create_proposal(self):
         """Create a DAO proposal with sufficient tokens."""
-        dao = DAOGovernance({
-            "initial_treasury": {"governance": 10000},
-            "min_proposal_tokens": 100,
-        })
+        dao = DAOGovernance(
+            {
+                "initial_treasury": {"governance": 10000},
+                "min_proposal_tokens": 100,
+            }
+        )
         dao.distribute_tokens("alice", TokenType.GOVERNANCE, 500.0, "init")
-        proposal = dao.create_dao_proposal({
-            "proposer_id": "alice",
-            "title": "Budget Increase",
-            "description": "Increase research budget",
-            "proposal_type": "budget",
-        })
+        proposal = dao.create_dao_proposal(
+            {
+                "proposer_id": "alice",
+                "title": "Budget Increase",
+                "description": "Increase research budget",
+                "proposal_type": "budget",
+            }
+        )
         assert proposal is not None
         assert proposal.title == "Budget Increase"
         assert len(dao.proposals) == 1
@@ -420,12 +537,14 @@ class TestDAOExtended:
     def test_dao_governance_create_proposal_insufficient_tokens(self):
         """Create proposal fails without tokens."""
         dao = DAOGovernance({"min_proposal_tokens": 100})
-        result = dao.create_dao_proposal({
-            "proposer_id": "nobody",
-            "title": "Fail",
-            "description": "no tokens",
-            "proposal_type": "technical",
-        })
+        result = dao.create_dao_proposal(
+            {
+                "proposer_id": "nobody",
+                "title": "Fail",
+                "description": "no tokens",
+                "proposal_type": "technical",
+            }
+        )
         assert result is None
 
     def test_dao_statistics(self):
@@ -446,6 +565,7 @@ class TestDAOExtended:
 # ============================================================
 # 4. Ledger — Extended
 # ============================================================
+
 
 class TestLedgerExtended:
 
@@ -491,8 +611,7 @@ class TestLedgerExtended:
     def test_privacy_preserver_generalize_numeric(self):
         """Generalize numeric value."""
         pp = PrivacyPreserver()
-        pp.add_privacy_rule("decision_made", "score", "generalize",
-                            {"bucket_size": 10})
+        pp.add_privacy_rule("decision_made", "score", "generalize", {"bucket_size": 10})
         rec = _make_audit_record()
         rec.event_data["score"] = 37
         mask = pp.apply_privacy_mask(rec)
@@ -501,8 +620,7 @@ class TestLedgerExtended:
     def test_privacy_preserver_generalize_string(self):
         """Generalize long string."""
         pp = PrivacyPreserver()
-        pp.add_privacy_rule("decision_made", "action", "generalize",
-                            {"max_length": 2})
+        pp.add_privacy_rule("decision_made", "action", "generalize", {"max_length": 2})
         rec = _make_audit_record()
         mask = pp.apply_privacy_mask(rec)
         assert mask["action"]["masked_value"] == "te..."
@@ -510,8 +628,9 @@ class TestLedgerExtended:
     def test_privacy_preserver_differential_privacy(self):
         """Differential privacy adds noise."""
         pp = PrivacyPreserver()
-        pp.add_privacy_rule("decision_made", "score", "differential_privacy",
-                            {"epsilon": 1.0, "sensitivity": 1.0})
+        pp.add_privacy_rule(
+            "decision_made", "score", "differential_privacy", {"epsilon": 1.0, "sensitivity": 1.0}
+        )
         rec = _make_audit_record()
         rec.event_data["score"] = 50.0
         mask = pp.apply_privacy_mask(rec)
@@ -557,25 +676,26 @@ class TestLedgerExtended:
         ledger = PublicLedger({"db_path": ":memory:", "private_key": "key"})
         for i in range(5):
             ledger.add_audit_record(
-                AuditEventType.VOTE_CAST, f"voter_{i}",
-                {"vote": "for"}, {"round": i})
+                AuditEventType.VOTE_CAST, f"voter_{i}", {"vote": "for"}, {"round": i}
+            )
         stats = ledger.get_audit_statistics()
         assert stats["total_records"] >= 6  # 1 genesis + 5 added
 
     def test_public_ledger_query_by_entity(self):
         """Query records by entity_id."""
         ledger = PublicLedger({"db_path": ":memory:", "private_key": "key"})
-        ledger.add_audit_record(
-            AuditEventType.VOTE_CAST, "voter_A",
-            {"vote": "for"})
-        ledger.add_audit_record(
-            AuditEventType.VOTE_CAST, "voter_B",
-            {"vote": "against"})
+        ledger.add_audit_record(AuditEventType.VOTE_CAST, "voter_A", {"vote": "for"})
+        ledger.add_audit_record(AuditEventType.VOTE_CAST, "voter_B", {"vote": "against"})
 
         query = AuditQuery(
-            event_types=None, entity_ids=["voter_A"],
-            date_range=None, audit_levels=None,
-            verification_status=None, limit=None, offset=None)
+            event_types=None,
+            entity_ids=["voter_A"],
+            date_range=None,
+            audit_levels=None,
+            verification_status=None,
+            limit=None,
+            offset=None,
+        )
         results = ledger.query_audit_records(query)
         assert all(r.entity_id == "voter_A" for r in results)
 
@@ -616,21 +736,23 @@ class TestLedgerExtended:
 
     def test_public_ledger_block_creation_on_full(self):
         """Block auto-created when pending_records >= block_size."""
-        ledger = PublicLedger({
-            "db_path": ":memory:", "private_key": "key",
-            "block_size": 3,
-        })
+        ledger = PublicLedger(
+            {
+                "db_path": ":memory:",
+                "private_key": "key",
+                "block_size": 3,
+            }
+        )
         initial_blocks = len(ledger.blocks)
         for i in range(3):
-            ledger.add_audit_record(
-                AuditEventType.DECISION_MADE, "e1",
-                {"action": f"test_{i}"})
+            ledger.add_audit_record(AuditEventType.DECISION_MADE, "e1", {"action": f"test_{i}"})
         assert len(ledger.blocks) > initial_blocks
 
 
 # ============================================================
 # 5. Contracts — Extended
 # ============================================================
+
 
 class TestContractsExtended:
 
@@ -717,10 +839,10 @@ class TestContractsExtended:
         pc.vote(pid, "for", 100, _txctx("bob"))
         pc.vote(pid, "against", 30, _txctx("carol"))
         # Move voting_end into the past so finalize accepts it
-        pc.storage['proposals'][pid]['voting_end'] = (
-            datetime.utcnow() - timedelta(seconds=1)).isoformat()
-        result = pc.finalize_proposal(pid, _txctx("deployer",
-            total_voting_power=200))
+        pc.storage["proposals"][pid]["voting_end"] = (
+            datetime.utcnow() - timedelta(seconds=1)
+        ).isoformat()
+        result = pc.finalize_proposal(pid, _txctx("deployer", total_voting_power=200))
         assert result == "passed"
 
     def test_proposal_contract_finalize_failed(self):
@@ -729,10 +851,10 @@ class TestContractsExtended:
         pid = pc.create_proposal("Bad Idea", "desc", {"a": 1}, _txctx("alice"))
         pc.vote(pid, "for", 10, _txctx("bob"))
         pc.vote(pid, "against", 100, _txctx("carol"))
-        pc.storage['proposals'][pid]['voting_end'] = (
-            datetime.utcnow() - timedelta(seconds=1)).isoformat()
-        result = pc.finalize_proposal(pid, _txctx("deployer",
-            total_voting_power=200))
+        pc.storage["proposals"][pid]["voting_end"] = (
+            datetime.utcnow() - timedelta(seconds=1)
+        ).isoformat()
+        result = pc.finalize_proposal(pid, _txctx("deployer", total_voting_power=200))
         assert result == "rejected"
 
     def test_proposal_contract_execute(self):
@@ -740,8 +862,9 @@ class TestContractsExtended:
         pc = ProposalContract("0xP", "deployer")
         pid = pc.create_proposal("X", "Y", {"a": 1}, _txctx("a"))
         pc.vote(pid, "for", 100, _txctx("b"))
-        pc.storage['proposals'][pid]['voting_end'] = (
-            datetime.utcnow() - timedelta(seconds=1)).isoformat()
+        pc.storage["proposals"][pid]["voting_end"] = (
+            datetime.utcnow() - timedelta(seconds=1)
+        ).isoformat()
         pc.finalize_proposal(pid, _txctx("deployer", total_voting_power=100))
         ok = pc.execute_proposal(pid, _txctx("deployer"))
         assert ok is True
@@ -774,36 +897,34 @@ class TestContractsExtended:
     def test_ethics_enforcement_check_constraints(self):
         """Check constraints detects violations."""
         ec = EthicsEnforcementContract("0xE", "deployer")
-        ec.add_constraint("NoHarm", "prevent harm", "harm_level > 0.5",
-                          "restrict", _txctx("deployer"))
+        ec.add_constraint(
+            "NoHarm", "prevent harm", "harm_level > 0.5", "restrict", _txctx("deployer")
+        )
         violations = ec.check_constraints({"harm_level": 0.8}, _txctx("checker"))
         assert len(violations) == 1
 
     def test_ethics_enforcement_no_violation(self):
         """Check constraints with no violation returns empty."""
         ec = EthicsEnforcementContract("0xE", "deployer")
-        ec.add_constraint("NoHarm", "prevent harm", "harm_level > 0.5",
-                          "restrict", _txctx("deployer"))
+        ec.add_constraint(
+            "NoHarm", "prevent harm", "harm_level > 0.5", "restrict", _txctx("deployer")
+        )
         violations = ec.check_constraints({"harm_level": 0.1}, _txctx("checker"))
         assert len(violations) == 0
 
     def test_ethics_enforcement_report_violation(self):
         """Report violation records and increments count."""
         ec = EthicsEnforcementContract("0xE", "deployer")
-        cid = ec.add_constraint("NoHarm", "d", "harm_level > 0.5", "r",
-                                _txctx("deployer"))
-        vid = ec.report_violation(cid, {"severity": "medium"},
-                                  _txctx("reporter"))
+        cid = ec.add_constraint("NoHarm", "d", "harm_level > 0.5", "r", _txctx("deployer"))
+        vid = ec.report_violation(cid, {"severity": "medium"}, _txctx("reporter"))
         assert vid.startswith("violation_")
         assert ec.storage["constraints"][cid]["violation_count"] == 1
 
     def test_ethics_enforcement_report_high_severity_triggers_enforcement(self):
         """High severity violation triggers immediate enforcement."""
         ec = EthicsEnforcementContract("0xE", "deployer")
-        cid = ec.add_constraint("NoHarm", "d", "harm_level > 0.5", "r",
-                                _txctx("deployer"))
-        vid = ec.report_violation(cid, {"severity": "high"},
-                                  _txctx("reporter"))
+        cid = ec.add_constraint("NoHarm", "d", "harm_level > 0.5", "r", _txctx("deployer"))
+        vid = ec.report_violation(cid, {"severity": "high"}, _txctx("reporter"))
         assert vid.startswith("violation_")
 
     def test_ethics_enforcement_enforce_action(self):
@@ -818,9 +939,12 @@ class TestContractsExtended:
         """call_contract via registry returns a Transaction."""
         registry = ContractRegistry()
         addr = registry.deploy_contract(
-            GovernanceTokenContract, "deployer", {"initial_supply": 1000})
+            GovernanceTokenContract, "deployer", {"initial_supply": 1000}
+        )
         tx = registry.call_contract(
-            addr, "transfer", "deployer",
+            addr,
+            "transfer",
+            "deployer",
             {"to": "alice", "amount": 100, "transaction_context": _txctx("deployer")},
             _txctx("deployer"),
         )
@@ -832,9 +956,12 @@ class TestContractsExtended:
         """get_contract_events returns events."""
         registry = ContractRegistry()
         addr = registry.deploy_contract(
-            GovernanceTokenContract, "deployer", {"initial_supply": 1000})
+            GovernanceTokenContract, "deployer", {"initial_supply": 1000}
+        )
         registry.call_contract(
-            addr, "transfer", "deployer",
+            addr,
+            "transfer",
+            "deployer",
             {"to": "alice", "amount": 100, "transaction_context": _txctx("deployer")},
             _txctx("deployer"),
         )
@@ -846,9 +973,12 @@ class TestContractsExtended:
         """get_contract_events filtered by event_name."""
         registry = ContractRegistry()
         addr = registry.deploy_contract(
-            GovernanceTokenContract, "deployer", {"initial_supply": 1000})
+            GovernanceTokenContract, "deployer", {"initial_supply": 1000}
+        )
         registry.call_contract(
-            addr, "transfer", "deployer",
+            addr,
+            "transfer",
+            "deployer",
             {"to": "alice", "amount": 100, "transaction_context": _txctx("deployer")},
             _txctx("deployer"),
         )
@@ -862,8 +992,8 @@ class TestContractsExtended:
         """execute_function invokes contract method generically."""
         token = GovernanceTokenContract("0x1", "deployer", initial_supply=1000)
         success, result, events = token.execute_function(
-            "balance_of", "deployer",
-            {"account": "deployer"}, _txctx("deployer"))
+            "balance_of", "deployer", {"account": "deployer"}, _txctx("deployer")
+        )
         assert success is True
         assert result == 1000
 
@@ -871,20 +1001,23 @@ class TestContractsExtended:
         """execute_function with unknown function returns error."""
         token = GovernanceTokenContract("0x1", "deployer", initial_supply=1000)
         success, result, events = token.execute_function(
-            "nonexistent_fn", "deployer", {}, _txctx("deployer"))
+            "nonexistent_fn", "deployer", {}, _txctx("deployer")
+        )
         assert success is False
 
     def test_contract_execute_private_function_rejected(self):
         """execute_function blocks private methods."""
         token = GovernanceTokenContract("0x1", "deployer", initial_supply=1000)
         success, result, events = token.execute_function(
-            "_setup_permissions", "deployer", {}, _txctx("deployer"))
+            "_setup_permissions", "deployer", {}, _txctx("deployer")
+        )
         assert success is False
 
 
 # ============================================================
 # 6. Consensus — Extended
 # ============================================================
+
 
 class TestConsensusExtended:
 
@@ -932,10 +1065,8 @@ class TestConsensusExtended:
     def test_multi_stakeholder_finalize_weighted(self):
         """Full weighted consensus finalization."""
         msc = MultiStakeholderConsensus({})
-        sp1 = _make_stakeholder_profile("s1", "Alice",
-                                        StakeholderCategory.TECHNICAL_EXPERTS)
-        sp2 = _make_stakeholder_profile("s2", "Bob",
-                                        StakeholderCategory.GENERAL_PUBLIC)
+        sp1 = _make_stakeholder_profile("s1", "Alice", StakeholderCategory.TECHNICAL_EXPERTS)
+        sp2 = _make_stakeholder_profile("s2", "Bob", StakeholderCategory.GENERAL_PUBLIC)
         msc.register_stakeholder(sp1)
         msc.register_stakeholder(sp2)
 
@@ -946,10 +1077,8 @@ class TestConsensusExtended:
         assert process.current_phase == "voting"
 
         # Cast votes
-        msc.cast_consensus_vote(pid, "s1",
-                                {"direction": "for", "reasoning": "good"})
-        msc.cast_consensus_vote(pid, "s2",
-                                {"direction": "for", "reasoning": "agree"})
+        msc.cast_consensus_vote(pid, "s1", {"direction": "for", "reasoning": "good"})
+        msc.cast_consensus_vote(pid, "s2", {"direction": "for", "reasoning": "agree"})
 
         result = msc.finalize_consensus(pid)
         assert result is not None
@@ -968,10 +1097,8 @@ class TestConsensusExtended:
         msc.advance_consensus_phase(pid)  # -> deliberation
         msc.advance_consensus_phase(pid)  # -> voting
 
-        msc.cast_consensus_vote(pid, "s1",
-                                {"direction": "for", "intensity": 3, "reasoning": ""})
-        msc.cast_consensus_vote(pid, "s2",
-                                {"direction": "for", "intensity": 2, "reasoning": ""})
+        msc.cast_consensus_vote(pid, "s1", {"direction": "for", "intensity": 3, "reasoning": ""})
+        msc.cast_consensus_vote(pid, "s2", {"direction": "for", "intensity": 2, "reasoning": ""})
 
         result = msc.finalize_consensus(pid)
         assert result is not None
@@ -989,8 +1116,10 @@ class TestConsensusExtended:
         # Cast a vote manually (APPROVAL falls through to simple results calc)
         process = msc.consensus_processes[pid]
         process.votes["s1"] = {
-            "direction": "for", "effective_power": 1.0,
-            "reasoning": "ok", "timestamp": datetime.utcnow().isoformat(),
+            "direction": "for",
+            "effective_power": 1.0,
+            "reasoning": "ok",
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
         result = msc.finalize_consensus(pid)
@@ -1004,8 +1133,7 @@ class TestConsensusExtended:
         msc.register_stakeholder(sp1)
 
         pid = msc.initiate_consensus_process("prop1", VotingMethod.WEIGHTED)
-        ok, msg = msc.cast_consensus_vote(pid, "s1",
-                                          {"direction": "for", "reasoning": ""})
+        ok, msg = msc.cast_consensus_vote(pid, "s1", {"direction": "for", "reasoning": ""})
         assert ok is False
         assert "not in voting phase" in msg.lower()
 
@@ -1031,8 +1159,7 @@ class TestConsensusExtended:
         msc.register_stakeholder(sp1)
         pid = msc.initiate_consensus_process("prop1", VotingMethod.WEIGHTED)
         msc.advance_consensus_phase(pid)
-        msc.cast_consensus_vote(pid, "s1",
-                                {"direction": "for", "reasoning": ""})
+        msc.cast_consensus_vote(pid, "s1", {"direction": "for", "reasoning": ""})
         analysis = msc.get_stakeholder_influence_analysis(pid)
         assert "by_individual" in analysis
         assert "s1" in analysis["by_individual"]
@@ -1060,8 +1187,7 @@ class TestConsensusExtended:
         msc.advance_consensus_phase(pid)  # -> deliberation
         msc.advance_consensus_phase(pid)  # -> voting
 
-        ok, msg = msc.cast_consensus_vote(pid, "s1",
-                                          {"direction": "for", "reasoning": ""})
+        ok, msg = msc.cast_consensus_vote(pid, "s1", {"direction": "for", "reasoning": ""})
         assert ok is True
         assert "liquid democracy" in msg.lower()
 
@@ -1073,8 +1199,10 @@ class TestConsensusExtended:
             msc.register_stakeholder(_make_stakeholder_profile(f"s{i}", f"User{i}"))
 
         pid = msc.initiate_consensus_process(
-            "prop1", VotingMethod.WEIGHTED,
-            custom_thresholds={"participation": 0.5, "consensus": 0.5})
+            "prop1",
+            VotingMethod.WEIGHTED,
+            custom_thresholds={"participation": 0.5, "consensus": 0.5},
+        )
         msc.advance_consensus_phase(pid)
         msc.cast_consensus_vote(pid, "s0", {"direction": "for", "reasoning": ""})
 
@@ -1084,13 +1212,16 @@ class TestConsensusExtended:
         # The weighted calculation is power-based, but likely still low
         # Check that the process reflects the result
         process = msc.consensus_processes[pid]
-        assert process.status in [ConsensusStatus.CONSENSUS_REACHED,
-                                  ConsensusStatus.CONSENSUS_FAILED]
+        assert process.status in [
+            ConsensusStatus.CONSENSUS_REACHED,
+            ConsensusStatus.CONSENSUS_FAILED,
+        ]
 
 
 # ============================================================
 # 7. Rights — Extended
 # ============================================================
+
 
 class TestRightsExtended:
 
@@ -1113,8 +1244,7 @@ class TestRightsExtended:
         fw = AGIRightsFramework()
         rights = fw.define_fundamental_rights()
 
-        agi_entity = _make_entity("agi1", "AGI", EntityType.AGI_SYSTEM,
-                                  consciousness_level=0.2)
+        agi_entity = _make_entity("agi1", "AGI", EntityType.AGI_SYSTEM, consciousness_level=0.2)
         existence_right = next(r for r in rights if r.id == "agi_right_existence")
         gov_right = next(r for r in rights if r.id == "agi_right_governance_participation")
 
@@ -1151,8 +1281,9 @@ class TestRightsExtended:
     def test_consent_manager_lifecycle(self):
         """Request → verify → revoke consent."""
         cm = ConsentManager()
-        cid = cm.request_consent("e1", "data analysis", "research",
-                                 {"data_access": "read"}, timedelta(days=30))
+        cid = cm.request_consent(
+            "e1", "data analysis", "research", {"data_access": "read"}, timedelta(days=30)
+        )
         assert cid
         assert cm.verify_consent(cid, "data_access") is True
         assert cm.verify_consent(cid, "nonexistent_action") is False
@@ -1164,8 +1295,7 @@ class TestRightsExtended:
     def test_consent_manager_expired(self):
         """Expired consent fails verification."""
         cm = ConsentManager()
-        cid = cm.request_consent("e1", "test", "scope", {"a": "y"},
-                                 timedelta(seconds=-1))
+        cid = cm.request_consent("e1", "test", "scope", {"a": "y"}, timedelta(seconds=-1))
         # Consent already expired
         assert cm.verify_consent(cid, "a") is False
 
@@ -1206,8 +1336,9 @@ class TestRightsExtended:
     def test_rights_manager_register_agi_entity(self):
         """Register AGI entity with high consciousness gets more rights."""
         rm = RightsManager({})
-        agi = _make_entity("a1", "AGI1", EntityType.AGI_SYSTEM,
-                           consciousness_level=0.8, autonomy_level=0.7)
+        agi = _make_entity(
+            "a1", "AGI1", EntityType.AGI_SYSTEM, consciousness_level=0.8, autonomy_level=0.7
+        )
         ok = rm.register_entity(agi)
         assert ok is True
         # With consciousness 0.8, should qualify for most AGI rights
@@ -1246,8 +1377,9 @@ class TestRightsExtended:
         """Exercise right not granted fails."""
         rm = RightsManager({})
         # AGI with low consciousness won't get governance right
-        agi = _make_entity("a1", "AGI", EntityType.AGI_SYSTEM,
-                           consciousness_level=0.05, autonomy_level=0.01)
+        agi = _make_entity(
+            "a1", "AGI", EntityType.AGI_SYSTEM, consciousness_level=0.05, autonomy_level=0.01
+        )
         rm.register_entity(agi)
         ok, msg = rm.exercise_right("a1", "agi_right_governance_participation", {})
         assert ok is False
@@ -1257,18 +1389,19 @@ class TestRightsExtended:
         rm = RightsManager({})
         # Use AGI entity — agi_right_self_modification (SUBSTANTIVE, not FUNDAMENTAL)
         # won't be auto-granted, so we control the only grant
-        agi = _make_entity("a1", "AGI", EntityType.AGI_SYSTEM,
-                           consciousness_level=0.6, autonomy_level=0.5)
+        agi = _make_entity(
+            "a1", "AGI", EntityType.AGI_SYSTEM, consciousness_level=0.6, autonomy_level=0.5
+        )
         rm.register_entity(agi)
 
         # Grant self-modification right WITH conditions
-        ok = rm.grant_right("a1", "agi_right_self_modification", "admin",
-                            conditions=["safety_verified"])
+        ok = rm.grant_right(
+            "a1", "agi_right_self_modification", "admin", conditions=["safety_verified"]
+        )
         assert ok is True
 
         # Exercise without satisfying condition
-        ok, msg = rm.exercise_right("a1", "agi_right_self_modification",
-                                    {"safety_verified": False})
+        ok, msg = rm.exercise_right("a1", "agi_right_self_modification", {"safety_verified": False})
         assert ok is False
         assert "conditions" in msg.lower()
 
@@ -1279,8 +1412,8 @@ class TestRightsExtended:
         rm.register_entity(human)
 
         vid = rm.report_violation(
-            "human_right_privacy", "h1", "data_breach",
-            {"significant_impact": True}, "reporter1")
+            "human_right_privacy", "h1", "data_breach", {"significant_impact": True}, "reporter1"
+        )
         assert vid
         assert vid in rm.violations
         assert rm.violations[vid].severity == "high"
@@ -1292,8 +1425,8 @@ class TestRightsExtended:
         rm.register_entity(human)
 
         vid = rm.report_violation(
-            "human_right_life", "h1", "physical_harm",
-            {"immediate_harm": True}, "reporter1")
+            "human_right_life", "h1", "physical_harm", {"immediate_harm": True}, "reporter1"
+        )
         assert vid
         v = rm.violations[vid]
         assert v.severity == "critical"
@@ -1302,10 +1435,13 @@ class TestRightsExtended:
     def test_rights_manager_assess_consciousness(self):
         """assess_entity_consciousness calculates score."""
         rm = RightsManager({})
-        agi = _make_entity("a1", "AGI", EntityType.AGI_SYSTEM,
-                           capabilities=["reasoning", "planning", "learning",
-                                         "language", "vision"],
-                           autonomy_level=0.6)
+        agi = _make_entity(
+            "a1",
+            "AGI",
+            EntityType.AGI_SYSTEM,
+            capabilities=["reasoning", "planning", "learning", "language", "vision"],
+            autonomy_level=0.6,
+        )
         rm.register_entity(agi)
         score = rm.assess_entity_consciousness("a1")
         assert 0.0 < score <= 1.0
@@ -1345,8 +1481,7 @@ class TestRightsExtended:
         rm = RightsManager({})
         human = _make_entity("h1", "H", EntityType.HUMAN)
         rm.register_entity(human)
-        ok = rm.grant_right("h1", "human_right_privacy", "admin",
-                            valid_duration=timedelta(days=30))
+        ok = rm.grant_right("h1", "human_right_privacy", "admin", valid_duration=timedelta(days=30))
         assert ok is True
 
     def test_violation_severity_low(self):
@@ -1354,9 +1489,7 @@ class TestRightsExtended:
         rm = RightsManager({})
         human = _make_entity("h1", "H", EntityType.HUMAN)
         rm.register_entity(human)
-        vid = rm.report_violation(
-            "human_right_participation", "h1", "exclusion",
-            {}, "reporter1")
+        vid = rm.report_violation("human_right_participation", "h1", "exclusion", {}, "reporter1")
         assert rm.violations[vid].severity == "low"
 
 
@@ -1364,33 +1497,30 @@ class TestRightsExtended:
 # 8. Override — Extended
 # ============================================================
 
+
 class TestOverrideExtended:
 
     def test_hitl_controller_register_and_create_loop(self):
         """Register operator and create loop."""
         hitl = HumanInTheLoopController()
-        hitl.register_human_operator(
-            "op1", {"cert": "A"}, ["safety_expert"],
-            {"online": True})
+        hitl.register_human_operator("op1", {"cert": "A"}, ["safety_expert"], {"online": True})
         assert "op1" in hitl.human_operators
 
         loop_id = hitl.create_human_loop(
-            {"decision": "test"}, "safety_expert",
-            "high", timedelta(minutes=30))
+            {"decision": "test"}, "safety_expert", "high", timedelta(minutes=30)
+        )
         assert loop_id
         assert hitl.active_loops[loop_id]["assigned_operator"] == "op1"
 
     def test_hitl_submit_decision(self):
         """Submit human decision for a loop."""
         hitl = HumanInTheLoopController()
-        hitl.register_human_operator(
-            "op1", {}, ["general"], {"online": True})
+        hitl.register_human_operator("op1", {}, ["general"], {"online": True})
         loop_id = hitl.create_human_loop(
-            {"decision": "test"}, "general",
-            "medium", timedelta(hours=2))
+            {"decision": "test"}, "general", "medium", timedelta(hours=2)
+        )
 
-        ok = hitl.submit_human_decision(loop_id, "op1",
-                                        "approve", "looks good", 0.9)
+        ok = hitl.submit_human_decision(loop_id, "op1", "approve", "looks good", 0.9)
         assert ok is True
         assert hitl.active_loops[loop_id]["status"] == "decided"
         assert hitl.human_operators["op1"]["decisions_handled"] == 1
@@ -1399,10 +1529,8 @@ class TestOverrideExtended:
         """Unauthorized operator cannot submit decision."""
         hitl = HumanInTheLoopController()
         hitl.register_human_operator("op1", {}, ["gen"], {"online": True})
-        loop_id = hitl.create_human_loop(
-            {}, "gen", "low", timedelta(hours=1))
-        ok = hitl.submit_human_decision(loop_id, "intruder",
-                                        "deny", "no", 0.5)
+        loop_id = hitl.create_human_loop({}, "gen", "low", timedelta(hours=1))
+        ok = hitl.submit_human_decision(loop_id, "intruder", "deny", "no", 0.5)
         assert ok is False
 
     def test_hitl_submit_nonexistent_loop(self):
@@ -1421,8 +1549,7 @@ class TestOverrideExtended:
     def test_hitl_no_available_operator(self):
         """Loop creation with no available operator still succeeds."""
         hitl = HumanInTheLoopController()
-        loop_id = hitl.create_human_loop(
-            {}, "specialist", "high", timedelta(hours=1))
+        loop_id = hitl.create_human_loop({}, "specialist", "high", timedelta(hours=1))
         assert loop_id
         assert hitl.active_loops[loop_id]["assigned_operator"] is None
 
@@ -1430,9 +1557,13 @@ class TestOverrideExtended:
         """Governance committee can request any override type."""
         dos = DemocraticOverrideSystem({})
         rid = dos.request_override(
-            OverrideType.DECISION_REVERSAL, "agi_1",
-            "Bad decision", {"widespread_impact": True},
-            "admin", "governance_committee")
+            OverrideType.DECISION_REVERSAL,
+            "agi_1",
+            "Bad decision",
+            {"widespread_impact": True},
+            "admin",
+            "governance_committee",
+        )
         assert rid
         assert rid in dos.override_requests
         req = dos.override_requests[rid]
@@ -1443,16 +1574,21 @@ class TestOverrideExtended:
         dos = DemocraticOverrideSystem({})
         with pytest.raises(PermissionError):
             dos.request_override(
-                OverrideType.EMERGENCY_STOP, "agi_1",
-                "danger", {}, "user1", "stakeholder")
+                OverrideType.EMERGENCY_STOP, "agi_1", "danger", {}, "user1", "stakeholder"
+            )
 
     def test_override_system_vote_and_approve(self):
         """Vote on override and get approved."""
         dos = DemocraticOverrideSystem({})
         rid = dos.request_override(
-            OverrideType.ETHICAL_CORRECTION, "agi_1",
-            "Ethical issue", {}, "admin", "governance_committee",
-            OverrideSeverity.MEDIUM)
+            OverrideType.ETHICAL_CORRECTION,
+            "agi_1",
+            "Ethical issue",
+            {},
+            "admin",
+            "governance_committee",
+            OverrideSeverity.MEDIUM,
+        )
         req = dos.override_requests[rid]
         # Should be in VOTING status after _notify_stakeholders
         assert req.status == OverrideStatus.VOTING
@@ -1466,9 +1602,14 @@ class TestOverrideExtended:
         """Vote against override => rejected."""
         dos = DemocraticOverrideSystem({})
         rid = dos.request_override(
-            OverrideType.ETHICAL_CORRECTION, "agi_1",
-            "Ethical issue", {}, "admin", "governance_committee",
-            OverrideSeverity.MEDIUM)
+            OverrideType.ETHICAL_CORRECTION,
+            "agi_1",
+            "Ethical issue",
+            {},
+            "admin",
+            "governance_committee",
+            OverrideSeverity.MEDIUM,
+        )
 
         dos.vote_on_override(rid, "voter1", "reject", "disagree", 1.0)
         req = dos.override_requests[rid]
@@ -1478,9 +1619,14 @@ class TestOverrideExtended:
         """Execute an approved override."""
         dos = DemocraticOverrideSystem({})
         rid = dos.request_override(
-            OverrideType.CAPABILITY_RESTRICTION, "agi_1",
-            "Restrict", {}, "admin", "governance_committee",
-            OverrideSeverity.LOW)
+            OverrideType.CAPABILITY_RESTRICTION,
+            "agi_1",
+            "Restrict",
+            {},
+            "admin",
+            "governance_committee",
+            OverrideSeverity.LOW,
+        )
         dos.vote_on_override(rid, "v1", "approve", "yes", 1.0)
 
         ok = dos.execute_override(rid, "executor1")
@@ -1492,9 +1638,14 @@ class TestOverrideExtended:
         """Execute non-approved override fails."""
         dos = DemocraticOverrideSystem({})
         rid = dos.request_override(
-            OverrideType.ETHICAL_CORRECTION, "agi_1",
-            "test", {}, "admin", "governance_committee",
-            OverrideSeverity.MEDIUM)
+            OverrideType.ETHICAL_CORRECTION,
+            "agi_1",
+            "test",
+            {},
+            "admin",
+            "governance_committee",
+            OverrideSeverity.MEDIUM,
+        )
         # Don't vote, but force status to VOTING
         ok = dos.execute_override(rid, "exec")
         assert ok is False
@@ -1502,8 +1653,9 @@ class TestOverrideExtended:
     def test_override_system_emergency_stop(self):
         """trigger_emergency_stop auto-executes."""
         dos = DemocraticOverrideSystem({})
-        rid = dos.trigger_emergency_stop("safety_officer", "Critical danger",
-                                         ["agi_system_1", "agi_system_2"])
+        rid = dos.trigger_emergency_stop(
+            "safety_officer", "Critical danger", ["agi_system_1", "agi_system_2"]
+        )
         assert rid
         req = dos.override_requests[rid]
         assert req.severity == OverrideSeverity.EMERGENCY
@@ -1513,14 +1665,18 @@ class TestOverrideExtended:
         """Appeal a rejected override."""
         dos = DemocraticOverrideSystem({})
         rid = dos.request_override(
-            OverrideType.ETHICAL_CORRECTION, "agi_1",
-            "original", {}, "admin", "governance_committee",
-            OverrideSeverity.MEDIUM)
+            OverrideType.ETHICAL_CORRECTION,
+            "agi_1",
+            "original",
+            {},
+            "admin",
+            "governance_committee",
+            OverrideSeverity.MEDIUM,
+        )
         dos.vote_on_override(rid, "v1", "reject", "no", 1.0)
         assert dos.override_requests[rid].status == OverrideStatus.REJECTED
 
-        appeal_id = dos.appeal_override(rid, "admin",
-                                        "New evidence", {"new_data": True})
+        appeal_id = dos.appeal_override(rid, "admin", "New evidence", {"new_data": True})
         assert appeal_id
         assert dos.override_requests[rid].status == OverrideStatus.APPEALED
 
@@ -1528,9 +1684,14 @@ class TestOverrideExtended:
         """Cannot appeal non-rejected/non-executed override."""
         dos = DemocraticOverrideSystem({})
         rid = dos.request_override(
-            OverrideType.ETHICAL_CORRECTION, "agi_1",
-            "test", {}, "admin", "governance_committee",
-            OverrideSeverity.MEDIUM)
+            OverrideType.ETHICAL_CORRECTION,
+            "agi_1",
+            "test",
+            {},
+            "admin",
+            "governance_committee",
+            OverrideSeverity.MEDIUM,
+        )
         # Still in VOTING, cannot appeal
         with pytest.raises(ValueError, match="only appeal"):
             dos.appeal_override(rid, "admin", "reason", {})
@@ -1550,47 +1711,52 @@ class TestOverrideExtended:
     def test_override_severity_assessment(self):
         """_assess_severity returns correct levels."""
         dos = DemocraticOverrideSystem({})
-        assert dos._assess_severity(
-            OverrideType.DECISION_REVERSAL,
-            {"immediate_danger": True}) == OverrideSeverity.EMERGENCY
-        assert dos._assess_severity(
-            OverrideType.DECISION_REVERSAL,
-            {"human_safety_risk": True}) == OverrideSeverity.CRITICAL
-        assert dos._assess_severity(
-            OverrideType.EMERGENCY_STOP,
-            {}) == OverrideSeverity.EMERGENCY
-        assert dos._assess_severity(
-            OverrideType.DECISION_REVERSAL,
-            {"rights_violation": True}) == OverrideSeverity.HIGH
-        assert dos._assess_severity(
-            OverrideType.DECISION_REVERSAL,
-            {}) == OverrideSeverity.MEDIUM
+        assert (
+            dos._assess_severity(OverrideType.DECISION_REVERSAL, {"immediate_danger": True})
+            == OverrideSeverity.EMERGENCY
+        )
+        assert (
+            dos._assess_severity(OverrideType.DECISION_REVERSAL, {"human_safety_risk": True})
+            == OverrideSeverity.CRITICAL
+        )
+        assert dos._assess_severity(OverrideType.EMERGENCY_STOP, {}) == OverrideSeverity.EMERGENCY
+        assert (
+            dos._assess_severity(OverrideType.DECISION_REVERSAL, {"rights_violation": True})
+            == OverrideSeverity.HIGH
+        )
+        assert dos._assess_severity(OverrideType.DECISION_REVERSAL, {}) == OverrideSeverity.MEDIUM
 
     def test_override_trigger_conditions(self):
         """_determine_trigger_condition maps evidence fields."""
         dos = DemocraticOverrideSystem({})
-        assert dos._determine_trigger_condition(
-            {"human_safety_risk": True}) == TriggerCondition.HUMAN_SAFETY_RISK
-        assert dos._determine_trigger_condition(
-            {"ethical_violation": True}) == TriggerCondition.ETHICAL_VIOLATION
-        assert dos._determine_trigger_condition(
-            {"technical_malfunction": True}) == TriggerCondition.TECHNICAL_MALFUNCTION
-        assert dos._determine_trigger_condition(
-            {}) == TriggerCondition.STAKEHOLDER_PETITION
+        assert (
+            dos._determine_trigger_condition({"human_safety_risk": True})
+            == TriggerCondition.HUMAN_SAFETY_RISK
+        )
+        assert (
+            dos._determine_trigger_condition({"ethical_violation": True})
+            == TriggerCondition.ETHICAL_VIOLATION
+        )
+        assert (
+            dos._determine_trigger_condition({"technical_malfunction": True})
+            == TriggerCondition.TECHNICAL_MALFUNCTION
+        )
+        assert dos._determine_trigger_condition({}) == TriggerCondition.STAKEHOLDER_PETITION
 
     def test_human_intervention_point(self):
         """create_human_intervention_point returns loop_id."""
         dos = DemocraticOverrideSystem({})
-        dos.human_controller.register_human_operator(
-            "op1", {}, ["safety_expert"], {"online": True})
+        dos.human_controller.register_human_operator("op1", {}, ["safety_expert"], {"online": True})
         loop_id = dos.create_human_intervention_point(
-            {"safety_critical": True, "urgency_level": "high"}, "expert")
+            {"safety_critical": True, "urgency_level": "high"}, "expert"
+        )
         assert loop_id
 
 
 # ============================================================
 # 9. Framework — ConstitutionalAI
 # ============================================================
+
 
 class TestConstitutionalAI:
 
@@ -1624,7 +1790,8 @@ class TestConstitutionalAI:
         cai = ConstitutionalAI()
         # Use a custom constitution with short constraints
         const = Constitution(
-            name="Test", principles=["do good"],
+            name="Test",
+            principles=["do good"],
             values={"prevent_harm": 1.0},
             constraints=["deception", "manipulation"],
             goals=["help"],
@@ -1649,7 +1816,8 @@ class TestConstitutionalAI:
         """enforce_constraints removes violating actions."""
         cai = ConstitutionalAI()
         const = Constitution(
-            name="Test", principles=["do good"],
+            name="Test",
+            principles=["do good"],
             values={"prevent_harm": 1.0},
             constraints=["deception", "manipulation"],
             goals=["help"],
@@ -1735,6 +1903,7 @@ class TestConstitutionalAI:
 # ============================================================
 # 10. Integration / Cross-cutting
 # ============================================================
+
 
 class TestCrossCutting:
 

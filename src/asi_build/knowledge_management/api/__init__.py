@@ -13,4 +13,4 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     create_api_server = None
     run_api_server = None
 
-__all__ = ['KnowledgeAPI', 'KnowledgeAPIClient', 'create_api_server', 'run_api_server']
+__all__ = ["KnowledgeAPI", "KnowledgeAPIClient", "create_api_server", "run_api_server"]

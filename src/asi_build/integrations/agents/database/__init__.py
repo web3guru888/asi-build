@@ -7,13 +7,13 @@ for analyzing SQL database structures.
 
 try:
     from .interface import (
-    DatabaseAnalyzer,
-    ColumnInfo,
-    ForeignKeyInfo,
-    TableInfo,
-    TableType,
-    RelationshipInfo,
-    DatabaseStructure,
+        ColumnInfo,
+        DatabaseAnalyzer,
+        DatabaseStructure,
+        ForeignKeyInfo,
+        RelationshipInfo,
+        TableInfo,
+        TableType,
     )
 except (ImportError, ModuleNotFoundError, SyntaxError):
     DatabaseAnalyzer = None

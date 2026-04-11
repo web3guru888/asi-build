@@ -20,32 +20,46 @@ free energy assessment, etc.).
 """
 
 try:
-    from .tensor_iit import IITCalculator as TensorIITCalculator, PhiComplex, ConceptualStructure
+    from .tensor_iit import ConceptualStructure
+    from .tensor_iit import IITCalculator as TensorIITCalculator
+    from .tensor_iit import PhiComplex
+
     try:
-        from .higher_order_thought import HOTTheoryImplementation, HOTStructure, ConsciousnessMetrics, MentalState
+        from .higher_order_thought import (
+            ConsciousnessMetrics,
+            HOTStructure,
+            HOTTheoryImplementation,
+            MentalState,
+        )
     except (ImportError, ModuleNotFoundError, SyntaxError):
         HOTTheoryImplementation = None
         HOTStructure = None
         ConsciousnessMetrics = None
         MentalState = None
     try:
-        from .predictive_processing_tensor import PredictiveProcessingMetrics as PredictiveProcessingTensor, PredictiveHierarchy, ConsciousPredictionMetrics
+        from .predictive_processing_tensor import (
+            ConsciousPredictionMetrics,
+            PredictiveHierarchy,
+        )
+        from .predictive_processing_tensor import (
+            PredictiveProcessingMetrics as PredictiveProcessingTensor,
+        )
     except (ImportError, ModuleNotFoundError, SyntaxError):
         PredictiveProcessingTensor = None
         PredictiveHierarchy = None
         ConsciousPredictionMetrics = None
 
     __all__ = [
-        'TensorIITCalculator',
-        'PhiComplex',
-        'ConceptualStructure',
-        'HOTTheoryImplementation',
-        'HOTStructure',
-        'ConsciousnessMetrics',
-        'MentalState',
-        'PredictiveProcessingTensor',
-        'PredictiveHierarchy',
-        'ConsciousPredictionMetrics',
+        "TensorIITCalculator",
+        "PhiComplex",
+        "ConceptualStructure",
+        "HOTTheoryImplementation",
+        "HOTStructure",
+        "ConsciousnessMetrics",
+        "MentalState",
+        "PredictiveProcessingTensor",
+        "PredictiveHierarchy",
+        "ConsciousPredictionMetrics",
     ]
 except (ImportError, OSError):
     # torch may not be available

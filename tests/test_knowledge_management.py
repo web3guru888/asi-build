@@ -7,39 +7,58 @@ Covers: KnowledgeGraphManager, InformationAggregator, IntelligentSearch,
 """
 
 import pytest
+
 pytest.importorskip("aiohttp")
 import asyncio
+import os
+import sys
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
 from dataclasses import asdict
+from unittest.mock import AsyncMock, MagicMock, patch
 
-import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from asi_build.knowledge_management.core.knowledge_graph_manager import (
-    KnowledgeGraphManager, KnowledgeNode, KnowledgeRelationship, GraphAnalysisResult,
-)
 from asi_build.knowledge_management.core.information_aggregator import (
-    InformationAggregator, InformationSource, AggregatedInformation,
+    AggregatedInformation,
+    InformationAggregator,
+    InformationSource,
 )
 from asi_build.knowledge_management.core.knowledge_engine import (
-    KnowledgeQuery, KnowledgeResult,
+    KnowledgeQuery,
+    KnowledgeResult,
 )
-from asi_build.knowledge_management.search.intelligent_search import (
-    IntelligentSearch, SearchQuery, SearchResult, SearchResponse,
-)
-from asi_build.knowledge_management.validation.quality_controller import (
-    QualityController, ValidationRule, ValidationResult,
-)
-from asi_build.knowledge_management.synthesis.predictive_synthesizer import (
-    PredictiveSynthesizer, SynthesisQuery, KnowledgeSynthesis, Prediction,
+from asi_build.knowledge_management.core.knowledge_graph_manager import (
+    GraphAnalysisResult,
+    KnowledgeGraphManager,
+    KnowledgeNode,
+    KnowledgeRelationship,
 )
 from asi_build.knowledge_management.learning.contextual_learner import (
-    ContextualLearner, LearningPattern, LearningEvent, AdaptationRule,
+    AdaptationRule,
+    ContextualLearner,
+    LearningEvent,
+    LearningPattern,
+)
+from asi_build.knowledge_management.search.intelligent_search import (
+    IntelligentSearch,
+    SearchQuery,
+    SearchResponse,
+    SearchResult,
+)
+from asi_build.knowledge_management.synthesis.predictive_synthesizer import (
+    KnowledgeSynthesis,
+    Prediction,
+    PredictiveSynthesizer,
+    SynthesisQuery,
+)
+from asi_build.knowledge_management.validation.quality_controller import (
+    QualityController,
+    ValidationResult,
+    ValidationRule,
 )
 
-
 # ── Dataclass tests ─────────────────────────────────────────────────────
+
 
 class TestDataclasses:
     def test_knowledge_query_defaults(self):
@@ -54,8 +73,10 @@ class TestDataclasses:
 
     def test_knowledge_relationship_defaults(self):
         r = KnowledgeRelationship(
-            source_id="a", target_id="b",
-            relationship_type="relates_to", properties={},
+            source_id="a",
+            target_id="b",
+            relationship_type="relates_to",
+            properties={},
         )
         assert r.strength == 1.0
         assert r.confidence == 1.0
@@ -83,7 +104,8 @@ class TestDataclasses:
 
     def test_learning_pattern_defaults(self):
         lp = LearningPattern(
-            pattern_id="p1", pattern_type="query",
+            pattern_id="p1",
+            pattern_type="query",
             pattern_data={"a": 1},
         )
         assert lp.frequency == 1
@@ -92,23 +114,29 @@ class TestDataclasses:
 
     def test_learning_event_defaults(self):
         le = LearningEvent(
-            event_id="e1", event_type="interaction",
-            query="test", result_quality=0.8, processing_time=1.0,
+            event_id="e1",
+            event_type="interaction",
+            query="test",
+            result_quality=0.8,
+            processing_time=1.0,
         )
         assert le.timestamp is not None
         assert le.user_feedback is None
 
     def test_adaptation_rule_defaults(self):
         ar = AdaptationRule(
-            rule_id="r1", rule_type="perf",
-            condition={"x": {"gt": 5}}, action={"y": 1},
+            rule_id="r1",
+            rule_type="perf",
+            condition={"x": {"gt": 5}},
+            action={"y": 1},
         )
         assert ar.effectiveness == 0.5
         assert ar.enabled is True
 
     def test_validation_rule_defaults(self):
         vr = ValidationRule(
-            name="test", rule_type="accuracy",
+            name="test",
+            rule_type="accuracy",
             check_function="check_test",
         )
         assert vr.weight == 1.0
@@ -116,6 +144,7 @@ class TestDataclasses:
 
 
 # ── KnowledgeGraphManager ───────────────────────────────────────────────
+
 
 class TestKnowledgeGraphManager:
     def test_init_defaults(self):
@@ -182,8 +211,12 @@ class TestKnowledgeGraphManager:
                 id=nid, label=concept, node_type="concept", properties={}
             )
             mgr.graph.add_node(nid)
-        mgr.graph.add_edge("concept_alpha", "concept_beta", relationship_type="relates_to", strength=0.8)
-        mgr.graph.add_edge("concept_beta", "concept_gamma", relationship_type="enables", strength=0.9)
+        mgr.graph.add_edge(
+            "concept_alpha", "concept_beta", relationship_type="relates_to", strength=0.8
+        )
+        mgr.graph.add_edge(
+            "concept_beta", "concept_gamma", relationship_type="enables", strength=0.9
+        )
 
         sub = mgr.get_knowledge_subgraph(["alpha"], max_depth=1)
         assert "alpha" in sub["nodes"]
@@ -199,6 +232,7 @@ class TestKnowledgeGraphManager:
 
 
 # ── InformationAggregator ───────────────────────────────────────────────
+
 
 class TestInformationAggregator:
     def test_init_sources(self):
@@ -264,6 +298,7 @@ class TestInformationAggregator:
 
 # ── IntelligentSearch ───────────────────────────────────────────────────
 
+
 class TestIntelligentSearch:
     def test_init(self):
         search = IntelligentSearch()
@@ -308,7 +343,10 @@ class TestIntelligentSearch:
     def test_assess_query_complexity(self):
         search = IntelligentSearch()
         assert search._assess_query_complexity("hi there") == "simple"
-        assert search._assess_query_complexity("this is a moderate length query for search") == "moderate"
+        assert (
+            search._assess_query_complexity("this is a moderate length query for search")
+            == "moderate"
+        )
         assert search._assess_query_complexity(" ".join(["word"] * 15)) == "complex"
 
     def test_highlight_text(self):
@@ -331,8 +369,18 @@ class TestIntelligentSearch:
         search = IntelligentSearch()
         query = SearchQuery(query="automation workflow")
         corpus = [
-            {"text": "automation workflow testing system", "source": "s1", "confidence": 0.8, "metadata": {}},
-            {"text": "unrelated content about cooking", "source": "s2", "confidence": 0.5, "metadata": {}},
+            {
+                "text": "automation workflow testing system",
+                "source": "s1",
+                "confidence": 0.8,
+                "metadata": {},
+            },
+            {
+                "text": "unrelated content about cooking",
+                "source": "s2",
+                "confidence": 0.5,
+                "metadata": {},
+            },
         ]
         results = await search._keyword_search(query, corpus)
         assert len(results) >= 1
@@ -362,6 +410,7 @@ class TestIntelligentSearch:
 
 
 # ── QualityController ───────────────────────────────────────────────────
+
 
 class TestQualityController:
     def test_init_rules(self):
@@ -468,6 +517,7 @@ class TestQualityController:
 
 # ── PredictiveSynthesizer ──────────────────────────────────────────────
 
+
 class TestPredictiveSynthesizer:
     def test_init(self):
         ps = PredictiveSynthesizer()
@@ -561,6 +611,7 @@ class TestPredictiveSynthesizer:
 
 # ── ContextualLearner ───────────────────────────────────────────────────
 
+
 class TestContextualLearner:
     def test_init(self):
         learner = ContextualLearner(config={"persistence_enabled": False})
@@ -591,18 +642,12 @@ class TestContextualLearner:
 
     def test_evaluate_conditions_gt(self):
         learner = ContextualLearner(config={"persistence_enabled": False})
-        assert learner._evaluate_conditions(
-            {"x": {"gt": 5}}, {"x": 10}
-        ) is True
-        assert learner._evaluate_conditions(
-            {"x": {"gt": 5}}, {"x": 3}
-        ) is False
+        assert learner._evaluate_conditions({"x": {"gt": 5}}, {"x": 10}) is True
+        assert learner._evaluate_conditions({"x": {"gt": 5}}, {"x": 3}) is False
 
     def test_evaluate_conditions_lt(self):
         learner = ContextualLearner(config={"persistence_enabled": False})
-        assert learner._evaluate_conditions(
-            {"x": {"lt": 10}}, {"x": 5}
-        ) is True
+        assert learner._evaluate_conditions({"x": {"lt": 10}}, {"x": 5}) is True
 
     def test_calculate_trend(self):
         learner = ContextualLearner(config={"persistence_enabled": False})
@@ -625,9 +670,11 @@ class TestContextualLearner:
     async def test_extract_query_patterns(self):
         learner = ContextualLearner(config={"persistence_enabled": False})
         event = LearningEvent(
-            event_id="e1", event_type="query_interaction",
+            event_id="e1",
+            event_type="query_interaction",
             query="how to build a website",
-            result_quality=0.8, processing_time=3.0,
+            result_quality=0.8,
+            processing_time=3.0,
         )
         patterns = await learner._extract_query_patterns(event)
         assert len(patterns) >= 2  # length + type patterns
@@ -638,8 +685,11 @@ class TestContextualLearner:
     async def test_extract_performance_patterns(self):
         learner = ContextualLearner(config={"persistence_enabled": False})
         event = LearningEvent(
-            event_id="e1", event_type="interaction",
-            query="test", result_quality=0.5, processing_time=2.0,
+            event_id="e1",
+            event_type="interaction",
+            query="test",
+            result_quality=0.5,
+            processing_time=2.0,
             system_metrics={"source_count": 3},
         )
         patterns = await learner._extract_performance_patterns(event)
@@ -648,7 +698,8 @@ class TestContextualLearner:
     def test_update_performance_model(self):
         learner = ContextualLearner(config={"persistence_enabled": False})
         pattern = LearningPattern(
-            pattern_id="time_fast", pattern_type="performance",
+            pattern_id="time_fast",
+            pattern_type="performance",
             pattern_data={"processing_time": 1.0, "quality": 0.9},
         )
         learner._update_performance_model(pattern)

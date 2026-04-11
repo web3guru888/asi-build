@@ -6,29 +6,31 @@ Real-time streaming access to Kenny Graph data via Server-Sent Events
 
 import asyncio
 import json
-import time
-from datetime import datetime
-from typing import Dict, Any, Optional
 import logging
-from pathlib import Path
-
-from fastapi import FastAPI, Request
-from fastapi.responses import StreamingResponse, HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+import os
 
 # Kenny Graph imports
 import sys
-import os
-sys.path.append('/home/ubuntu/code/kenny/src')
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import uvicorn
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, StreamingResponse
+
+sys.path.append("/home/ubuntu/code/kenny/src")
+
+import sqlite3
 
 from neo4j import GraphDatabase
-import sqlite3
 
 app = FastAPI(
     title="Kenny Graph SSE API",
     description="Real-time streaming access to Kenny Graph MCP server",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Enable CORS for web clients
@@ -49,11 +51,12 @@ UPDATE_INTERVAL = 5  # seconds
 current_stats = {}
 connected_clients = set()
 
+
 class KennyGraphSSE:
     def __init__(self):
         self.driver = None
         self.logger = logging.getLogger(__name__)
-        
+
     async def connect_memgraph(self):
         """Connect to Memgraph/Kenny Graph"""
         try:
@@ -69,7 +72,7 @@ class KennyGraphSSE:
             self.logger.error(f"Failed to connect to Memgraph: {e}")
             return False
         return False
-    
+
     def get_kenny_graph_stats(self) -> Dict[str, Any]:
         """Get real-time Kenny Graph statistics"""
         stats = {
@@ -79,9 +82,9 @@ class KennyGraphSSE:
             "relationships": 0,
             "node_types": [],
             "relationship_types": [],
-            "recent_activity": []
+            "recent_activity": [],
         }
-        
+
         try:
             if self.driver:
                 with self.driver.session() as session:
@@ -90,13 +93,13 @@ class KennyGraphSSE:
                     record = result.single()
                     if record:
                         stats["nodes"] = record["total"]
-                    
+
                     # Get relationship count
                     result = session.run("MATCH ()-[r]->() RETURN count(r) as total")
                     record = result.single()
                     if record:
                         stats["relationships"] = record["total"]
-                    
+
                     # Get node types
                     result = session.run("""
                         MATCH (n) 
@@ -104,10 +107,9 @@ class KennyGraphSSE:
                         ORDER BY count DESC LIMIT 10
                     """)
                     stats["node_types"] = [
-                        {"labels": record["types"], "count": record["count"]}
-                        for record in result
+                        {"labels": record["types"], "count": record["count"]} for record in result
                     ]
-                    
+
                     # Get relationship types
                     result = session.run("""
                         MATCH ()-[r]->() 
@@ -115,36 +117,31 @@ class KennyGraphSSE:
                         ORDER BY count DESC LIMIT 10
                     """)
                     stats["relationship_types"] = [
-                        {"type": record["type"], "count": record["count"]}
-                        for record in result
+                        {"type": record["type"], "count": record["count"]} for record in result
                     ]
-                    
+
                     stats["status"] = "connected"
-                    
+
         except Exception as e:
             self.logger.error(f"Error getting Kenny Graph stats: {e}")
             stats["status"] = "error"
             stats["error"] = str(e)
-        
+
         return stats
-    
+
     def get_kenny_analysis_stats(self) -> Dict[str, Any]:
         """Get Kenny analysis database statistics"""
-        stats = {
-            "total_analyses": 0,
-            "recent_analyses": [],
-            "performance_metrics": {}
-        }
-        
+        stats = {"total_analyses": 0, "recent_analyses": [], "performance_metrics": {}}
+
         try:
             if os.path.exists(KENNY_DB_PATH):
                 conn = sqlite3.connect(KENNY_DB_PATH)
                 cursor = conn.cursor()
-                
+
                 # Get total analyses
                 cursor.execute("SELECT COUNT(*) FROM kenny_analyses")
                 stats["total_analyses"] = cursor.fetchone()[0]
-                
+
                 # Get recent analyses
                 cursor.execute("""
                     SELECT timestamp, analysis_type, elements_found, apps_found, duration
@@ -158,11 +155,11 @@ class KennyGraphSSE:
                         "type": row[1],
                         "elements": row[2],
                         "apps": row[3],
-                        "duration": row[4]
+                        "duration": row[4],
                     }
                     for row in cursor.fetchall()
                 ]
-                
+
                 # Get performance metrics
                 cursor.execute("""
                     SELECT 
@@ -179,36 +176,39 @@ class KennyGraphSSE:
                         "avg_duration": round(row[0], 2),
                         "avg_elements": round(row[1], 2),
                         "avg_apps": round(row[2], 2),
-                        "recent_count": row[3]
+                        "recent_count": row[3],
                     }
-                
+
                 conn.close()
-                
+
         except Exception as e:
             self.logger.error(f"Error getting Kenny analysis stats: {e}")
             stats["error"] = str(e)
-        
+
         return stats
-    
+
     def get_supervisor_stats(self) -> Dict[str, Any]:
         """Get supervisor dashboard statistics"""
         supervisor_file = "/home/ubuntu/code/kenny/supervisor_dashboard.json"
         try:
             if os.path.exists(supervisor_file):
-                with open(supervisor_file, 'r') as f:
+                with open(supervisor_file, "r") as f:
                     return json.load(f)
         except Exception as e:
             self.logger.error(f"Error reading supervisor stats: {e}")
-        
+
         return {"error": "Supervisor stats unavailable"}
 
+
 kenny_sse = KennyGraphSSE()
+
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize connections on startup"""
     logging.basicConfig(level=logging.INFO)
     await kenny_sse.connect_memgraph()
+
 
 @app.get("/")
 async def root():
@@ -222,24 +222,26 @@ async def root():
             "/sse/combined": "Combined real-time data",
             "/stats/current": "Current snapshot of all stats",
             "/health": "Health check",
-            "/demo": "SSE demo page"
+            "/demo": "SSE demo page",
         },
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
+
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
     graph_connected = kenny_sse.driver is not None
     analysis_db_exists = os.path.exists(KENNY_DB_PATH)
-    
+
     return {
         "status": "healthy" if graph_connected else "degraded",
         "kenny_graph_connected": graph_connected,
         "analysis_db_available": analysis_db_exists,
         "timestamp": datetime.utcnow().isoformat(),
-        "uptime": time.time()
+        "uptime": time.time(),
     }
+
 
 @app.get("/stats/current")
 async def current_stats():
@@ -248,8 +250,9 @@ async def current_stats():
         "kenny_graph": kenny_sse.get_kenny_graph_stats(),
         "kenny_analysis": kenny_sse.get_kenny_analysis_stats(),
         "supervisor": kenny_sse.get_supervisor_stats(),
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
+
 
 async def generate_kenny_graph_stream():
     """Generate real-time Kenny Graph data stream"""
@@ -260,12 +263,10 @@ async def generate_kenny_graph_stream():
             yield f"data: {data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
         except Exception as e:
-            error_data = json.dumps({
-                "error": str(e),
-                "timestamp": datetime.utcnow().isoformat()
-            })
+            error_data = json.dumps({"error": str(e), "timestamp": datetime.utcnow().isoformat()})
             yield f"data: {error_data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
+
 
 async def generate_supervisor_stream():
     """Generate real-time supervisor metrics stream"""
@@ -276,12 +277,10 @@ async def generate_supervisor_stream():
             yield f"data: {data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
         except Exception as e:
-            error_data = json.dumps({
-                "error": str(e),
-                "timestamp": datetime.utcnow().isoformat()
-            })
+            error_data = json.dumps({"error": str(e), "timestamp": datetime.utcnow().isoformat()})
             yield f"data: {error_data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
+
 
 async def generate_combined_stream():
     """Generate combined real-time data stream"""
@@ -291,18 +290,16 @@ async def generate_combined_stream():
                 "kenny_graph": kenny_sse.get_kenny_graph_stats(),
                 "kenny_analysis": kenny_sse.get_kenny_analysis_stats(),
                 "supervisor": kenny_sse.get_supervisor_stats(),
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             }
             data = json.dumps(combined_stats)
             yield f"data: {data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
         except Exception as e:
-            error_data = json.dumps({
-                "error": str(e),
-                "timestamp": datetime.utcnow().isoformat()
-            })
+            error_data = json.dumps({"error": str(e), "timestamp": datetime.utcnow().isoformat()})
             yield f"data: {error_data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
+
 
 @app.get("/sse/kenny-graph")
 async def kenny_graph_sse(request: Request):
@@ -314,9 +311,10 @@ async def kenny_graph_sse(request: Request):
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Cache-Control"
-        }
+            "Access-Control-Allow-Headers": "Cache-Control",
+        },
     )
+
 
 @app.get("/sse/supervisor")
 async def supervisor_sse(request: Request):
@@ -328,9 +326,10 @@ async def supervisor_sse(request: Request):
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Cache-Control"
-        }
+            "Access-Control-Allow-Headers": "Cache-Control",
+        },
     )
+
 
 @app.get("/sse/combined")
 async def combined_sse(request: Request):
@@ -342,9 +341,10 @@ async def combined_sse(request: Request):
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Cache-Control"
-        }
+            "Access-Control-Allow-Headers": "Cache-Control",
+        },
     )
+
 
 @app.get("/demo", response_class=HTMLResponse)
 async def sse_demo():
@@ -501,26 +501,22 @@ async def sse_demo():
 </html>
     """)
 
+
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Kenny Graph SSE Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
     parser.add_argument("--port", type=int, default=8080, help="Port to bind to")
     parser.add_argument("--reload", action="store_true", help="Enable auto-reload")
-    
+
     args = parser.parse_args()
-    
+
     print(f"🚀 Starting Kenny Graph SSE Server on {args.host}:{args.port}")
     print(f"📊 Demo page: http://{args.host}:{args.port}/demo")
     print(f"🔗 SSE endpoints:")
     print(f"   - Kenny Graph: http://{args.host}:{args.port}/sse/kenny-graph")
     print(f"   - Supervisor: http://{args.host}:{args.port}/sse/supervisor")
     print(f"   - Combined: http://{args.host}:{args.port}/sse/combined")
-    
-    uvicorn.run(
-        "kenny_graph_sse_server:app",
-        host=args.host,
-        port=args.port,
-        reload=args.reload
-    )
+
+    uvicorn.run("kenny_graph_sse_server:app", host=args.host, port=args.port, reload=args.reload)

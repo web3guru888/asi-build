@@ -16,15 +16,15 @@ __version__ = "1.0.0"
 __author__ = "Kenny AGI Agent Army"
 __license__ = "Proprietary"
 
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Core configuration
 CONFIG = {
     "model": {
         "vision_params": 100_000_000,  # 100M parameters
-        "language_params": 150_000_000,  # 150M parameters  
-        "action_params": 100_000_000,    # 100M parameters
-        "total_params": 350_000_000,     # 350M total
+        "language_params": 150_000_000,  # 150M parameters
+        "action_params": 100_000_000,  # 100M parameters
+        "total_params": 350_000_000,  # 350M total
     },
     "training": {
         "batch_size": 32,
@@ -46,8 +46,9 @@ CONFIG = {
         "gpu_type": "RTX 4090",
         "max_budget": 2500,
         "distributed": True,
-    }
+    },
 }
+
 
 def get_config() -> Dict[str, Any]:
     """Return VLA++ configuration."""

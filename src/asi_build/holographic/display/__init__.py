@@ -9,10 +9,10 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     VolumetricDisplayManager = None
 
 __all__ = [
-    'VolumetricDisplay',
-    'VolumetricDisplayManager', 
-    'HolographicProjector',
-    'DisplayCalibrator',
-    'LightFieldDisplay',
-    'DisplayRenderer'
+    "VolumetricDisplay",
+    "VolumetricDisplayManager",
+    "HolographicProjector",
+    "DisplayCalibrator",
+    "LightFieldDisplay",
+    "DisplayRenderer",
 ]

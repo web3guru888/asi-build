@@ -22,9 +22,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     ValidationUtils = None
 
-__all__ = [
-    'SignalUtilities',
-    'BCIVisualizer',
-    'BCIMetrics',
-    'ValidationUtils'
-]
+__all__ = ["SignalUtilities", "BCIVisualizer", "BCIMetrics", "ValidationUtils"]

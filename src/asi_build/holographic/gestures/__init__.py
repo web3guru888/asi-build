@@ -3,16 +3,16 @@
 """
 
 try:
-    from .hand_tracker import HandTracker, HandLandmarks
+    from .hand_tracker import HandLandmarks, HandTracker
 except (ImportError, ModuleNotFoundError, SyntaxError):
     HandTracker = None
     HandLandmarks = None
 
 __all__ = [
-    'GestureRecognizer3D',
-    'HandTracker',
-    'HandLandmarks',
-    'SpatialInteractionHandler', 
-    'GestureManager',
-    'NeuralGestureProcessor'
+    "GestureRecognizer3D",
+    "HandTracker",
+    "HandLandmarks",
+    "SpatialInteractionHandler",
+    "GestureManager",
+    "NeuralGestureProcessor",
 ]

@@ -30,9 +30,9 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     ComplianceChecker = None
 try:
     from .formal_verification import (
-    TheoremProver,
-    EthicalVerificationEngine,
-    EthicalAxiom,
+        EthicalAxiom,
+        EthicalVerificationEngine,
+        TheoremProver,
     )
 except (ImportError, ModuleNotFoundError, SyntaxError):
     TheoremProver = None

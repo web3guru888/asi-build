@@ -37,9 +37,9 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 __all__ = [
     "BaseAggregator",
     "FedAvgAggregator",
-    "FedProxAggregator", 
+    "FedProxAggregator",
     "SecureAggregator",
     "ByzantineRobustAggregator",
     "SCAFFOLDAggregator",
-    "FedNovaAggregator"
+    "FedNovaAggregator",
 ]

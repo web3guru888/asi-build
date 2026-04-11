@@ -6,10 +6,10 @@ Comprehensive validation and quality assurance for knowledge processing.
 """
 
 try:
-    from .quality_controller import QualityController, ValidationRule, ValidationResult
+    from .quality_controller import QualityController, ValidationResult, ValidationRule
 except (ImportError, ModuleNotFoundError, SyntaxError):
     QualityController = None
     ValidationRule = None
     ValidationResult = None
 
-__all__ = ['QualityController', 'ValidationRule', 'ValidationResult']
+__all__ = ["QualityController", "ValidationRule", "ValidationResult"]

@@ -10,8 +10,9 @@ Covers:
 """
 
 import time
-import pytest
+
 import numpy as np
+import pytest
 
 from asi_build.consciousness.base_consciousness import (
     BaseConsciousness,
@@ -30,15 +31,15 @@ from asi_build.consciousness.integrated_information import (
     SystemElement,
 )
 from asi_build.consciousness.memory_integration import (
+    ConsolidationState,
     MemoryIntegration,
     MemoryType,
-    ConsolidationState,
 )
-
 
 # =========================================================================
 # Section 1 — Data-class / enum sanity
 # =========================================================================
+
 
 class TestConsciousnessDataTypes:
     """Basic tests for the consciousness data types."""
@@ -96,6 +97,7 @@ class TestConsciousnessDataTypes:
 # Section 2 — Subclass instantiation (relies on conftest patch)
 # =========================================================================
 
+
 class TestSubclassInstantiation:
     """
     Every BaseConsciousness subclass should be instantiable after the
@@ -104,36 +106,44 @@ class TestSubclassInstantiation:
     """
 
     # Classes that already have _initialize on main (5)
-    @pytest.mark.parametrize("cls_name", [
-        "GlobalWorkspaceTheory",
-        "IntegratedInformationTheory",
-        "AttentionSchemaTheory",
-        "PredictiveProcessing",
-        "MetacognitionSystem",
-    ])
+    @pytest.mark.parametrize(
+        "cls_name",
+        [
+            "GlobalWorkspaceTheory",
+            "IntegratedInformationTheory",
+            "AttentionSchemaTheory",
+            "PredictiveProcessing",
+            "MetacognitionSystem",
+        ],
+    )
     def test_instantiate_classes_with_initialize(self, cls_name):
         """Classes with their own _initialize instantiate cleanly."""
         import asi_build.consciousness as ce
+
         cls = getattr(ce, cls_name)
         obj = cls()
         assert obj.state == ConsciousnessState.INACTIVE or obj.state == ConsciousnessState.ACTIVE
         assert isinstance(obj.metrics, ConsciousnessMetrics)
 
     # Classes that are patched by conftest (9)
-    @pytest.mark.parametrize("cls_name", [
-        "ConsciousnessOrchestrator",
-        "EmotionalConsciousness",
-        "TheoryOfMind",
-        "MemoryIntegration",
-        "QualiaProcessor",
-        "RecursiveSelfImprovement",
-        "SelfAwarenessEngine",
-        "SensoryIntegration",
-        "TemporalConsciousness",
-    ])
+    @pytest.mark.parametrize(
+        "cls_name",
+        [
+            "ConsciousnessOrchestrator",
+            "EmotionalConsciousness",
+            "TheoryOfMind",
+            "MemoryIntegration",
+            "QualiaProcessor",
+            "RecursiveSelfImprovement",
+            "SelfAwarenessEngine",
+            "SensoryIntegration",
+            "TemporalConsciousness",
+        ],
+    )
     def test_instantiate_patched_classes(self, cls_name):
         """Classes patched with no-op _initialize also instantiate."""
         import asi_build.consciousness as ce
+
         cls = getattr(ce, cls_name)
         obj = cls()
         assert obj.name  # every subclass passes a name to super().__init__
@@ -143,6 +153,7 @@ class TestSubclassInstantiation:
 # =========================================================================
 # Section 3 — BaseConsciousness infrastructure
 # =========================================================================
+
 
 class TestBaseConsciousnessInfra:
     """Test common BaseConsciousness infrastructure using GWT as a concrete class."""
@@ -170,9 +181,7 @@ class TestBaseConsciousnessInfra:
         """State-change callbacks fire on _set_state."""
         gwt = GlobalWorkspaceTheory()
         transitions = []
-        gwt.add_state_change_callback(
-            lambda name, old, new: transitions.append((name, old, new))
-        )
+        gwt.add_state_change_callback(lambda name, old, new: transitions.append((name, old, new)))
         gwt._set_state(ConsciousnessState.PROCESSING)
         assert len(transitions) == 1
         assert transitions[0][2] == ConsciousnessState.PROCESSING
@@ -208,6 +217,7 @@ class TestBaseConsciousnessInfra:
 # =========================================================================
 # Section 4 — Global Workspace Theory
 # =========================================================================
+
 
 class TestGlobalWorkspaceTheory:
     """Tests for GWT competition, broadcast, and processor management."""
@@ -256,10 +266,12 @@ class TestGlobalWorkspaceTheory:
 
     def test_workspace_enforces_max_size(self):
         """Workspace buffer never exceeds max_workspace_size."""
-        gwt = GlobalWorkspaceTheory(config={
-            "max_workspace_size": 3,
-            "competition_threshold": 999.0,  # prevent broadcast from draining
-        })
+        gwt = GlobalWorkspaceTheory(
+            config={
+                "max_workspace_size": 3,
+                "competition_threshold": 999.0,  # prevent broadcast from draining
+            }
+        )
         for i in range(10):
             c = WorkspaceContent(f"c{i}", {"tags": []}, "test", activation_level=0.01)
             gwt.workspace_buffer.append(c)
@@ -297,7 +309,9 @@ class TestGlobalWorkspaceTheory:
     def test_workspace_content_calculate_strength(self):
         """WorkspaceContent.calculate_strength returns a positive float."""
         content = WorkspaceContent(
-            "c1", {}, "test",
+            "c1",
+            {},
+            "test",
             activation_level=0.5,
             support_coalition={"a", "b"},
         )
@@ -309,8 +323,10 @@ class TestGlobalWorkspaceTheory:
         gwt = GlobalWorkspaceTheory()
         state = gwt.get_current_state()
         expected_keys = [
-            "workspace_buffer_size", "active_processors",
-            "total_broadcasts", "competition_events",
+            "workspace_buffer_size",
+            "active_processors",
+            "total_broadcasts",
+            "competition_events",
         ]
         for k in expected_keys:
             assert k in state
@@ -319,6 +335,7 @@ class TestGlobalWorkspaceTheory:
 # =========================================================================
 # Section 5 — Integrated Information Theory
 # =========================================================================
+
 
 class TestIntegratedInformationTheory:
     """Tests for IIT Φ computation and system management."""
@@ -408,7 +425,9 @@ class TestIntegratedInformationTheory:
 
     def test_system_element_threshold_activation(self):
         """SystemElement threshold activation produces 0 or 1."""
-        elem = SystemElement("e", state=0.0, inputs={"a"}, activation_function="threshold", threshold=0.5)
+        elem = SystemElement(
+            "e", state=0.0, inputs={"a"}, activation_function="threshold", threshold=0.5
+        )
         elem.update_state({"a": 1.0}, {"a": 1.0})
         assert elem.state == 1.0
         elem.update_state({"a": 0.1}, {"a": 1.0})
@@ -426,6 +445,7 @@ class TestIntegratedInformationTheory:
 # =========================================================================
 # Section 6 — Memory Integration
 # =========================================================================
+
 
 class TestMemoryIntegration:
     """Tests for memory store, retrieve, consolidation, and working memory."""

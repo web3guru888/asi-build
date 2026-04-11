@@ -20,10 +20,10 @@ from asi_build.cognitive_synergy.core.synergy_metrics import (
     SynergyProfile,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_metrics(history_length=5000, sampling_rate=10.0):
     """Create a SynergyMetrics with defaults that keep window_size small.
@@ -47,13 +47,16 @@ def _feed_pair(sm: SynergyMetrics, name: str, x: np.ndarray, y: np.ndarray):
 # Section 1 — Dataclass sanity
 # =========================================================================
 
+
 class TestDataclasses:
     """Tests for SynergyMeasurement and SynergyProfile."""
 
     def test_synergy_measurement_creation(self):
         """SynergyMeasurement can be created with required fields."""
         m = SynergyMeasurement(
-            measurement_type="mi", value=0.5, confidence=0.9,
+            measurement_type="mi",
+            value=0.5,
+            confidence=0.9,
             timestamp=time.time(),
         )
         assert m.value == 0.5
@@ -70,6 +73,7 @@ class TestDataclasses:
 # =========================================================================
 # Section 2 — Mutual Information
 # =========================================================================
+
 
 class TestMutualInformation:
     """Tests for _compute_mutual_information."""
@@ -113,6 +117,7 @@ class TestMutualInformation:
 # Section 3 — Transfer Entropy
 # =========================================================================
 
+
 class TestTransferEntropy:
     """Tests for _compute_transfer_entropy."""
 
@@ -152,6 +157,7 @@ class TestTransferEntropy:
 # =========================================================================
 # Section 4 — Phase Locking Value (PLV)
 # =========================================================================
+
 
 class TestPhaseLockingValue:
     """Tests for _compute_phase_coupling (PLV)."""
@@ -198,6 +204,7 @@ class TestPhaseLockingValue:
 # Section 5 — Coherence
 # =========================================================================
 
+
 class TestCoherence:
     """Tests for _compute_coherence (spectral)."""
 
@@ -229,6 +236,7 @@ class TestCoherence:
 # =========================================================================
 # Section 6 — Emergence & Integration & Complexity Resonance
 # =========================================================================
+
 
 class TestCompositeMetrics:
     """Tests for emergence_index, integration_index, and complexity_resonance."""
@@ -291,6 +299,7 @@ class TestCompositeMetrics:
 # Section 7 — Edge cases
 # =========================================================================
 
+
 class TestEdgeCases:
     """Edge cases and robustness."""
 
@@ -325,9 +334,15 @@ class TestEdgeCases:
         profile = sm.compute_synergy_profile("bounded")
         assert profile is not None
 
-        for attr in ["mutual_information", "transfer_entropy", "phase_coupling",
-                     "coherence", "emergence_index", "integration_index",
-                     "complexity_resonance"]:
+        for attr in [
+            "mutual_information",
+            "transfer_entropy",
+            "phase_coupling",
+            "coherence",
+            "emergence_index",
+            "integration_index",
+            "complexity_resonance",
+        ]:
             val = getattr(profile, attr)
             assert 0.0 <= val <= 1.0, f"{attr} = {val} out of bounds"
 
@@ -335,6 +350,7 @@ class TestEdgeCases:
 # =========================================================================
 # Section 8 — Composite helpers
 # =========================================================================
+
 
 class TestCompositeHelpers:
     """Tests for get_synergy_strength, get_emergence_indicators, compute_global_synergy."""
@@ -392,6 +408,7 @@ class TestCompositeHelpers:
 # =========================================================================
 # Section 9 — Internal helpers (white-box)
 # =========================================================================
+
 
 class TestInternalHelpers:
     """White-box tests for internal helper methods."""

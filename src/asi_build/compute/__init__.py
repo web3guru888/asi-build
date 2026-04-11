@@ -32,8 +32,8 @@ __author__ = "Kenny AGI Team"
 
 __all__ = [
     "ComputePoolManager",
-    "ResourceAllocator", 
+    "ResourceAllocator",
     "JobScheduler",
     "MetricsCollector",
-    "ResourcePredictor"
+    "ResourcePredictor",
 ]

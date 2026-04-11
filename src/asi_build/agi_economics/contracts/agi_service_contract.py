@@ -6,15 +6,17 @@ Smart contract templates for AGI services with payment, escrow,
 and reputation integration.
 """
 
-from typing import Dict, List, Any, Optional
-from decimal import Decimal
-from dataclasses import dataclass
-from enum import Enum
-import time
 import json
+import time
+from dataclasses import dataclass
+from decimal import Decimal
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
 
 class ContractState(Enum):
     """States of service contract"""
+
     CREATED = "created"
     FUNDED = "funded"
     IN_PROGRESS = "in_progress"
@@ -22,57 +24,59 @@ class ContractState(Enum):
     DISPUTED = "disputed"
     CANCELLED = "cancelled"
 
+
 @dataclass
 class ServiceContractTemplate:
     """Template for AGI service smart contracts"""
-    
+
     # Contract metadata
     contract_address: str
     contract_version: str = "1.0.0"
-    
+
     # Service details
     service_id: str = ""
     service_type: str = ""
     service_description: str = ""
-    
+
     # Parties
     client_address: str = ""
     provider_address: str = ""
-    
+
     # Financial terms
-    payment_amount: Decimal = Decimal('0')
+    payment_amount: Decimal = Decimal("0")
     token_address: str = ""  # AGIX token contract
-    escrow_percentage: Decimal = Decimal('0.1')  # 10% escrow
-    
+    escrow_percentage: Decimal = Decimal("0.1")  # 10% escrow
+
     # Service terms
     delivery_deadline: int = 0
     quality_requirements: Dict[str, Any] = None
-    
+
     # Contract state
     state: ContractState = ContractState.CREATED
     created_at: int = 0
-    
+
     def __post_init__(self):
         if self.quality_requirements is None:
             self.quality_requirements = {}
         if self.created_at == 0:
             self.created_at = int(time.time())
 
+
 class AGIServiceContract:
     """
     Smart contract template generator for AGI services with:
     - Automated payments
-    - Escrow functionality  
+    - Escrow functionality
     - Reputation integration
     - Dispute resolution
     - Quality assurance
     """
-    
+
     @staticmethod
     def generate_solidity_contract(template: ServiceContractTemplate) -> str:
         """Generate Solidity smart contract code"""
-        
-        contract_code = f'''
+
+        contract_code = f"""
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
@@ -437,15 +441,15 @@ contract AGIServiceContract_{template.service_id} is ReentrancyGuard, Pausable, 
         return paymentToken.balanceOf(address(this));
     }}
 }}
-'''
-        
+"""
+
         return contract_code.strip()
-    
+
     @staticmethod
     def generate_deployment_script(template: ServiceContractTemplate) -> str:
         """Generate deployment script for the contract"""
-        
-        script = f'''
+
+        script = f"""
 # AGI Service Contract Deployment Script
 # Service: {template.service_type}
 # Generated: {time.strftime("%Y-%m-%d %H:%M:%S")}
@@ -509,15 +513,15 @@ main()
         console.error(error);
         process.exit(1);
     }});
-'''
-        
+"""
+
         return script.strip()
-    
+
     @staticmethod
     def generate_interface_abi() -> str:
         """Generate ABI interface for frontend integration"""
-        
-        abi = '''
+
+        abi = """
 [
   {
     "inputs": [
@@ -601,10 +605,10 @@ main()
     "type": "function"
   }
 ]
-        '''
-        
+        """
+
         return abi.strip()
-    
+
     @staticmethod
     def create_service_contract(
         service_id: str,
@@ -614,13 +618,13 @@ main()
         payment_amount: Decimal,
         token_address: str = "0x5B7533812759B45C2B44C19e320ba2cD2681b542",  # AGIX mainnet
         delivery_deadline: Optional[int] = None,
-        quality_requirements: Optional[Dict[str, Any]] = None
+        quality_requirements: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, str]:
         """Create a complete service contract package"""
-        
+
         if delivery_deadline is None:
             delivery_deadline = int(time.time()) + 86400 * 7  # 1 week from now
-        
+
         template = ServiceContractTemplate(
             contract_address="",  # Will be filled after deployment
             service_id=service_id,
@@ -631,31 +635,32 @@ main()
             payment_amount=payment_amount,
             token_address=token_address,
             delivery_deadline=delivery_deadline,
-            quality_requirements=quality_requirements or {}
+            quality_requirements=quality_requirements or {},
         )
-        
+
         return {
             "solidity_code": AGIServiceContract.generate_solidity_contract(template),
             "deployment_script": AGIServiceContract.generate_deployment_script(template),
             "abi": AGIServiceContract.generate_interface_abi(),
-            "template_config": json.dumps({
-                "service_id": template.service_id,
-                "service_type": template.service_type,
-                "client_address": template.client_address,
-                "provider_address": template.provider_address,
-                "payment_amount": str(template.payment_amount),
-                "delivery_deadline": template.delivery_deadline,
-                "quality_requirements": template.quality_requirements
-            }, indent=2)
-        }'''
-        
-        return contract_code.strip()
-    
+            "template_config": json.dumps(
+                {
+                    "service_id": template.service_id,
+                    "service_type": template.service_type,
+                    "client_address": template.client_address,
+                    "provider_address": template.provider_address,
+                    "payment_amount": str(template.payment_amount),
+                    "delivery_deadline": template.delivery_deadline,
+                    "quality_requirements": template.quality_requirements,
+                },
+                indent=2,
+            ),
+        }
+
     @staticmethod
     def generate_deployment_script(template: ServiceContractTemplate) -> str:
         """Generate deployment script for the contract"""
-        
-        script = f'''
+
+        script = f"""
 # AGI Service Contract Deployment Script
 # Service: {template.service_type}
 # Generated: {time.strftime("%Y-%m-%d %H:%M:%S")}
@@ -702,6 +707,6 @@ main()
         console.error(error);
         process.exit(1);
     }});
-'''
-        
+"""
+
         return script.strip()

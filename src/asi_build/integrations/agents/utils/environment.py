@@ -5,9 +5,10 @@ This module handles environment variable validation, database connection
 probing, and configuration setup for the MySQL to Memgraph migration agent.
 """
 
-import os
 import logging
-from typing import Dict, List, Tuple, Optional
+import os
+from typing import Dict, List, Optional, Tuple
+
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
@@ -126,9 +127,7 @@ def probe_mysql_connection(mysql_config: Dict[str, str]) -> Tuple[bool, Optional
         return False, f"Connection error: {e}"
 
 
-def probe_memgraph_connection(
-    memgraph_config: Dict[str, str]
-) -> Tuple[bool, Optional[str]]:
+def probe_memgraph_connection(memgraph_config: Dict[str, str]) -> Tuple[bool, Optional[str]]:
     """
     Test Memgraph database connection.
 
@@ -175,9 +174,7 @@ def validate_openai_api_key() -> Tuple[bool, Optional[str]]:
         # Import here to avoid circular imports
         from langchain_openai import ChatOpenAI
 
-        llm = ChatOpenAI(
-            model="gpt-4o-mini", temperature=0.1, api_key=api_key, max_tokens=10
-        )
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.1, api_key=api_key, max_tokens=10)
 
         # Test with a minimal request
         llm.invoke("Test")
@@ -209,9 +206,7 @@ def setup_and_validate_environment() -> Tuple[Dict[str, str], Dict[str, str]]:
         error_msg = "Missing required environment variables:\n"
         for var in missing_vars:
             error_msg += f"  - {var}\n"
-        error_msg += (
-            "\nPlease check your .env file and ensure all " "required variables are set"
-        )
+        error_msg += "\nPlease check your .env file and ensure all " "required variables are set"
         raise MigrationEnvironmentError(error_msg)
 
     # Get configurations
@@ -222,9 +217,7 @@ def setup_and_validate_environment() -> Tuple[Dict[str, str], Dict[str, str]]:
     return mysql_config, memgraph_config
 
 
-def probe_all_connections(
-    mysql_config: Dict[str, str], memgraph_config: Dict[str, str]
-) -> None:
+def probe_all_connections(mysql_config: Dict[str, str], memgraph_config: Dict[str, str]) -> None:
     """
     Probe all database connections and validate API keys.
 

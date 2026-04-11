@@ -16,18 +16,18 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     DataManager = None
     EncryptedDataManager = None
 try:
-    from .pinning_service import PinningService, PinataService, InfuraService
+    from .pinning_service import InfuraService, PinataService, PinningService
 except (ImportError, ModuleNotFoundError, SyntaxError):
     PinningService = None
     PinataService = None
     InfuraService = None
 
 __all__ = [
-    'IPFSClient',
-    'IPFSError', 
-    'DataManager',
-    'EncryptedDataManager',
-    'PinningService',
-    'PinataService',
-    'InfuraService'
+    "IPFSClient",
+    "IPFSError",
+    "DataManager",
+    "EncryptedDataManager",
+    "PinningService",
+    "PinataService",
+    "InfuraService",
 ]

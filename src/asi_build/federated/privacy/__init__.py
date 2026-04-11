@@ -6,7 +6,11 @@ and other privacy-preserving techniques.
 """
 
 try:
-    from .differential_privacy import DifferentialPrivacyManager, GaussianMechanism, LaplaceMechanism
+    from .differential_privacy import (
+        DifferentialPrivacyManager,
+        GaussianMechanism,
+        LaplaceMechanism,
+    )
 except (ImportError, ModuleNotFoundError, SyntaxError):
     DifferentialPrivacyManager = None
     GaussianMechanism = None
@@ -33,7 +37,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 
 __all__ = [
     "DifferentialPrivacyManager",
-    "GaussianMechanism", 
+    "GaussianMechanism",
     "LaplaceMechanism",
     "PrivacyAccountant",
     "RDPAccountant",
@@ -41,5 +45,5 @@ __all__ = [
     "PrivacyBudgetTracker",
     "SecureComputationManager",
     "DataAnonymizer",
-    "KAnonymity"
+    "KAnonymity",
 ]

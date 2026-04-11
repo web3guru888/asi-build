@@ -4,9 +4,8 @@ from getpass import getpass
 import pytest
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
-from langgraph.prebuilt import create_react_agent
-
 from langchain_memgraph import MemgraphToolkit
+from langgraph.prebuilt import create_react_agent
 from memgraph_toolbox.api.memgraph import Memgraph
 
 # Load environment variables
@@ -58,9 +57,7 @@ def test_seed_graph(memgraph_connection):
     memgraph_connection.query(query)
 
     # Verify nodes exist
-    game_exists = memgraph_connection.query(
-        """MATCH (c:Character {name: 'Jon Snow'}) RETURN c"""
-    )
+    game_exists = memgraph_connection.query("""MATCH (c:Character {name: 'Jon Snow'}) RETURN c""")
     assert len(game_exists) > 0, "Game node not created!"
 
 
@@ -78,6 +75,4 @@ def test_memgraph_agent(memgraph_agent):
         event["messages"][-1].pretty_print()
 
     assert last_event, "Agent did not return any results!"
-    assert "Jon Snow" in str(
-        last_event["messages"][-1]
-    ), "Expected 'Jon Snow' in the final result!"
+    assert "Jon Snow" in str(last_event["messages"][-1]), "Expected 'Jon Snow' in the final result!"

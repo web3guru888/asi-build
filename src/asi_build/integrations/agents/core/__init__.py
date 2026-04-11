@@ -9,7 +9,7 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     SQLToMemgraphAgent = None
 try:
-    from .graph_modeling import HyGM, GraphModel, GraphNode, GraphRelationship
+    from .graph_modeling import GraphModel, GraphNode, GraphRelationship, HyGM
 except (ImportError, ModuleNotFoundError, SyntaxError):
     HyGM = None
     GraphModel = None

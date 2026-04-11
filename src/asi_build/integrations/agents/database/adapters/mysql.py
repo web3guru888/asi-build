@@ -4,12 +4,14 @@ MySQL-specific database analyzer implementation.
 This module provides MySQL-specific implementation of the DatabaseAnalyzer interface.
 """
 
-import mysql.connector
-from typing import Dict, List, Any, Optional
 import logging
+from typing import Any, Dict, List, Optional
+
+import mysql.connector
+
 from ..interface import (
-    DatabaseAnalyzer,
     ColumnInfo,
+    DatabaseAnalyzer,
     ForeignKeyInfo,
     TableInfo,
     TableType,
@@ -21,9 +23,7 @@ logger = logging.getLogger(__name__)
 class MySQLAnalyzer(DatabaseAnalyzer):
     """MySQL-specific implementation of DatabaseAnalyzer."""
 
-    def __init__(
-        self, host: str, user: str, password: str, database: str, port: int = 3306
-    ):
+    def __init__(self, host: str, user: str, password: str, database: str, port: int = 3306):
         """
         Initialize MySQL analyzer.
 
@@ -127,9 +127,7 @@ class MySQLAnalyzer(DatabaseAnalyzer):
                     # If we can't parse the parameters as integers, it's
                     # likely an enum, set, etc.
                     # Keep the full type definition including parameters
-                    logger.debug(
-                        "Could not parse type parameters for " "%s: %s", data_type, e
-                    )
+                    logger.debug("Could not parse type parameters for " "%s: %s", data_type, e)
                     # Don't modify data_type in this case, keep it as is
                     continue
 
@@ -198,9 +196,7 @@ class MySQLAnalyzer(DatabaseAnalyzer):
         cursor.close()
         return foreign_keys
 
-    def get_table_data(
-        self, table_name: str, limit: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+    def get_table_data(self, table_name: str, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """Get data from a specific table."""
         if not self.connection:
             raise ConnectionError("Not connected to database")

@@ -8,9 +8,9 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     TelepresenceManager = None
 
 __all__ = [
-    'TelepresenceManager',
-    'RemotePresenceManager',
-    'SpatialStreamer',
-    'HologramEncoder',
-    'PresenceRenderer'
+    "TelepresenceManager",
+    "RemotePresenceManager",
+    "SpatialStreamer",
+    "HologramEncoder",
+    "PresenceRenderer",
 ]

@@ -6,7 +6,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     EncryptedDatabase = None
     EncryptedQuery = None
 try:
-    from .encrypted_indexing import EncryptedIndex, BloomFilterIndex
+    from .encrypted_indexing import BloomFilterIndex, EncryptedIndex
 except (ImportError, ModuleNotFoundError, SyntaxError):
     EncryptedIndex = None
     BloomFilterIndex = None
@@ -16,4 +16,11 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     EncryptedSearch = None
     SearchableEncryption = None
 
-__all__ = ["EncryptedDatabase", "EncryptedQuery", "EncryptedIndex", "BloomFilterIndex", "EncryptedSearch", "SearchableEncryption"]
+__all__ = [
+    "EncryptedDatabase",
+    "EncryptedQuery",
+    "EncryptedIndex",
+    "BloomFilterIndex",
+    "EncryptedSearch",
+    "SearchableEncryption",
+]

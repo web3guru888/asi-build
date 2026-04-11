@@ -11,7 +11,7 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     PerceptionEngine = None
 try:
-    from .action_engine import ActionEngine  
+    from .action_engine import ActionEngine
 except (ImportError, ModuleNotFoundError, SyntaxError):
     ActionEngine = None
 try:
@@ -19,4 +19,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     SensorimotorSynergy = None
 
-__all__ = ['PerceptionEngine', 'ActionEngine', 'SensorimotorSynergy']
+__all__ = ["PerceptionEngine", "ActionEngine", "SensorimotorSynergy"]

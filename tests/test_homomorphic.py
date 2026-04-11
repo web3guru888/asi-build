@@ -17,23 +17,35 @@ negative for realistic parameters). Tests that need FHEParameters construct
 them directly using a helper that bypasses the generator.
 """
 
-import sys, math, random
+import math
+import random
+import sys
+
 sys.path.insert(0, "/shared/asi-build/src")
 
 import pytest
+
+from asi_build.homomorphic.core.base import (
+    CiphertextBase,
+    EncryptionException,
+    EvaluationException,
+    FHEConfiguration,
+    FHEException,
+    NoiseException,
+    ParameterException,
+    PlaintextBase,
+    SchemeType,
+    SecurityLevel,
+)
 
 # ---------------------------------------------------------------------------
 # Safe direct-module imports
 # ---------------------------------------------------------------------------
 from asi_build.homomorphic.core.modular import ModularArithmetic
-from asi_build.homomorphic.core.base import (
-    SecurityLevel, SchemeType, FHEConfiguration, CiphertextBase, PlaintextBase,
-    FHEException, ParameterException, EncryptionException, EvaluationException,
-    NoiseException,
-)
 
 try:
     import numpy as np
+
     HAS_NUMPY = True
 except ImportError:
     HAS_NUMPY = False
@@ -41,19 +53,24 @@ except ImportError:
 needs_numpy = pytest.mark.skipif(not HAS_NUMPY, reason="numpy required")
 
 if HAS_NUMPY:
-    from asi_build.homomorphic.core.parameters import FHEParameters, ParameterGenerator
-    from asi_build.homomorphic.core.polynomial import PolynomialRing, Polynomial
-    from asi_build.homomorphic.core.keys import (
-        KeyGenerator, SecretKey, PublicKey, RelinearizationKeys, KeyMetadata,
-    )
     from asi_build.homomorphic.core.encryption import Ciphertext, Plaintext
-    from asi_build.homomorphic.core.noise import NoiseEstimator, NoiseManager
     from asi_build.homomorphic.core.evaluation import Evaluator
+    from asi_build.homomorphic.core.keys import (
+        KeyGenerator,
+        KeyMetadata,
+        PublicKey,
+        RelinearizationKeys,
+        SecretKey,
+    )
+    from asi_build.homomorphic.core.noise import NoiseEstimator, NoiseManager
+    from asi_build.homomorphic.core.parameters import FHEParameters, ParameterGenerator
+    from asi_build.homomorphic.core.polynomial import Polynomial, PolynomialRing
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_bfv_params(n: int = 4096):
     """Build FHEParameters that bypass the broken security check.
@@ -632,11 +649,13 @@ class TestEvaluator:
         # Create two simple ciphertexts (size 2 each, same level/NTT form)
         ct_a = Ciphertext(
             [ring.random_polynomial(), ring.random_polynomial()],
-            level=0, is_ntt_form=False,
+            level=0,
+            is_ntt_form=False,
         )
         ct_b = Ciphertext(
             [ring.random_polynomial(), ring.random_polynomial()],
-            level=0, is_ntt_form=False,
+            level=0,
+            is_ntt_form=False,
         )
         return evaluator, ring, ct_a, ct_b
 

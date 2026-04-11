@@ -11,7 +11,7 @@ This module provides a comprehensive federated learning framework with:
 """
 
 try:
-    from .core.base import FederatedClient, FederatedServer, FederatedModel
+    from .core.base import FederatedClient, FederatedModel, FederatedServer
 except (ImportError, ModuleNotFoundError, SyntaxError):
     FederatedClient = None
     FederatedServer = None
@@ -76,31 +76,26 @@ __author__ = "Kenny AI Systems"
 __all__ = [
     # Core components
     "FederatedClient",
-    "FederatedServer", 
+    "FederatedServer",
     "FederatedModel",
     "FederatedConfig",
     "FederatedManager",
-    
     # Aggregation methods
     "FedAvgAggregator",
     "SecureAggregator",
     "ByzantineRobustAggregator",
-    
     # Privacy mechanisms
     "DifferentialPrivacyManager",
-    
     # Advanced algorithms
     "PersonalizedFederatedLearning",
     "FederatedTransferLearning",
     "AsynchronousFederatedLearning",
     "FederatedMetaLearning",
-    
     # Communication
     "FederatedCommunicationProtocol",
-    
     # Utilities
     "ModelCompressor",
-    "FederatedMetrics"
+    "FederatedMetrics",
 ]
 
 # Framework metadata
@@ -109,14 +104,23 @@ FRAMEWORK_INFO = {
     "version": __version__,
     "description": "Production-ready federated learning framework with advanced privacy and security features",
     "supported_algorithms": [
-        "FedAvg", "FedProx", "FedNova", "SCAFFOLD",
-        "Personalized FL", "Meta-Learning", "Transfer Learning",
-        "Byzantine-Robust", "Asynchronous FL", "Cross-Silo"
+        "FedAvg",
+        "FedProx",
+        "FedNova",
+        "SCAFFOLD",
+        "Personalized FL",
+        "Meta-Learning",
+        "Transfer Learning",
+        "Byzantine-Robust",
+        "Asynchronous FL",
+        "Cross-Silo",
     ],
     "privacy_features": [
-        "Differential Privacy", "Secure Aggregation", 
-        "Homomorphic Encryption", "Secret Sharing"
+        "Differential Privacy",
+        "Secure Aggregation",
+        "Homomorphic Encryption",
+        "Secret Sharing",
     ],
     "frameworks": ["TensorFlow", "PyTorch", "JAX"],
-    "deployment": ["Local", "Cloud", "Edge", "Hybrid"]
+    "deployment": ["Local", "Cloud", "Edge", "Hybrid"],
 }

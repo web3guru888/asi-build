@@ -17,12 +17,12 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     GraphQLAPI = None
     create_graphql_app = None
 try:
-    from .websocket_api import WebSocketAPI, AuditEventSubscription
+    from .websocket_api import AuditEventSubscription, WebSocketAPI
 except (ImportError, ModuleNotFoundError, SyntaxError):
     WebSocketAPI = None
     AuditEventSubscription = None
 try:
-    from .auth import AuthManager, APIKey, JWTAuth
+    from .auth import APIKey, AuthManager, JWTAuth
 except (ImportError, ModuleNotFoundError, SyntaxError):
     AuthManager = None
     APIKey = None
@@ -33,25 +33,25 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     RequestValidator = None
     ResponseValidator = None
 try:
-    from .middleware import CORSMiddleware, RateLimitMiddleware, LoggingMiddleware
+    from .middleware import CORSMiddleware, LoggingMiddleware, RateLimitMiddleware
 except (ImportError, ModuleNotFoundError, SyntaxError):
     CORSMiddleware = None
     RateLimitMiddleware = None
     LoggingMiddleware = None
 
 __all__ = [
-    'AuditTrailAPI',
-    'create_app',
-    'GraphQLAPI',
-    'create_graphql_app',
-    'WebSocketAPI',
-    'AuditEventSubscription',
-    'AuthManager',
-    'APIKey',
-    'JWTAuth',
-    'RequestValidator',
-    'ResponseValidator',
-    'CORSMiddleware',
-    'RateLimitMiddleware',
-    'LoggingMiddleware'
+    "AuditTrailAPI",
+    "create_app",
+    "GraphQLAPI",
+    "create_graphql_app",
+    "WebSocketAPI",
+    "AuditEventSubscription",
+    "AuthManager",
+    "APIKey",
+    "JWTAuth",
+    "RequestValidator",
+    "ResponseValidator",
+    "CORSMiddleware",
+    "RateLimitMiddleware",
+    "LoggingMiddleware",
 ]

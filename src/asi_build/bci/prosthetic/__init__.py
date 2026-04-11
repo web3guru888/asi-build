@@ -23,8 +23,8 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     EnvironmentalController = None
 
 __all__ = [
-    'ProstheticController',
-    'LimbController',
-    'WheelchairController',
-    'EnvironmentalController'
+    "ProstheticController",
+    "LimbController",
+    "WheelchairController",
+    "EnvironmentalController",
 ]

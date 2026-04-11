@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 
 # ── Data models ────────────────────────────────────────────────────────
 
+
 @dataclass
 class PathResult:
     """Result of an A* pathfinding operation.
@@ -103,6 +104,7 @@ DEFAULT_BASE_COST = 0.5
 
 # ── Helpers ────────────────────────────────────────────────────────────
 
+
 def _cosine_similarity(v1: List[float], v2: List[float]) -> float:
     """Cosine similarity between two vectors (pure Python, no numpy)."""
     if len(v1) != len(v2) or len(v1) == 0:
@@ -125,6 +127,7 @@ def _normalise(entity: str) -> str:
 
 
 # ── Pathfinder ─────────────────────────────────────────────────────────
+
 
 class KGPathfinder:
     """A* pathfinder over a :class:`TemporalKnowledgeGraph`.
@@ -268,7 +271,10 @@ class KGPathfinder:
         # No path found
         logger.warning(
             "No path %s→%s (explored %d nodes in %d iterations)",
-            start_id, goal_id, nodes_explored, iterations,
+            start_id,
+            goal_id,
+            nodes_explored,
+            iterations,
         )
         return self._empty_result(nodes_explored=nodes_explored)
 
@@ -409,7 +415,9 @@ class KGPathfinder:
                 emb = self._embedding_fn(entity)
             except Exception as exc:
                 logger.debug(
-                    "Embedding lookup failed for %s: %s", entity, exc,
+                    "Embedding lookup failed for %s: %s",
+                    entity,
+                    exc,
                 )
 
         self._embedding_cache[entity] = emb
@@ -436,19 +444,23 @@ class KGPathfinder:
         for i in range(len(path) - 1):
             edge = self._get_best_edge(path[i], path[i + 1])
             if edge:
-                edges.append({
-                    "source": path[i],
-                    "target": path[i + 1],
-                    **edge,
-                })
+                edges.append(
+                    {
+                        "source": path[i],
+                        "target": path[i + 1],
+                        **edge,
+                    }
+                )
             else:
-                edges.append({
-                    "source": path[i],
-                    "target": path[i + 1],
-                    "triple_id": "",
-                    "predicate": "unknown",
-                    "confidence": 0.0,
-                })
+                edges.append(
+                    {
+                        "source": path[i],
+                        "target": path[i + 1],
+                        "triple_id": "",
+                        "predicate": "unknown",
+                        "confidence": 0.0,
+                    }
+                )
         return edges
 
     def _path_depth(self, came_from: Dict[str, str], node: str) -> int:

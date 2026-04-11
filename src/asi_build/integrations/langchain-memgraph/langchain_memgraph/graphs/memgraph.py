@@ -2,12 +2,10 @@ import logging
 from hashlib import md5
 from typing import Any, Dict, List, Optional
 
-from memgraph_toolbox.api.memgraph import Memgraph
 from langchain_core.utils import get_from_dict_or_env
-
 from langchain_memgraph.graphs.graph_document import GraphDocument, Node, Relationship
 from langchain_memgraph.graphs.graph_store import GraphStore
-
+from memgraph_toolbox.api.memgraph import Memgraph
 
 logger = logging.getLogger(__name__)
 
@@ -109,8 +107,7 @@ def get_schema_subset(data: Dict[str, Any]) -> Dict[str, Any]:
                     {
                         "key": prop["key"],
                         "types": [
-                            {"type": type_item["type"].lower()}
-                            for type_item in prop["types"]
+                            {"type": type_item["type"].lower()} for type_item in prop["types"]
                         ],
                     }
                     for prop in edge["properties"]
@@ -127,8 +124,7 @@ def get_schema_subset(data: Dict[str, Any]) -> Dict[str, Any]:
                     {
                         "key": prop["key"],
                         "types": [
-                            {"type": type_item["type"].lower()}
-                            for type_item in prop["types"]
+                            {"type": type_item["type"].lower()} for type_item in prop["types"]
                         ],
                     }
                     for prop in node["properties"]
@@ -161,9 +157,7 @@ def get_reformated_schema(
                 "properties": [
                     {
                         "key": prop["key"],
-                        "types": [
-                            {"type": type_item.lower()} for type_item in prop["types"]
-                        ],
+                        "types": [{"type": type_item.lower()} for type_item in prop["types"]],
                     }
                     for prop in node["properties"]
                     if node["properties"][0]["key"] != ""
@@ -185,9 +179,7 @@ def transform_schema_to_text(schema: Dict[str, Any]) -> str:
             continue
         node_props_data += "  properties:\n"
         for prop in node["properties"]:
-            prop_types_str = " or ".join(
-                {prop_types["type"] for prop_types in prop["types"]}
-            )
+            prop_types_str = " or ".join({prop_types["type"] for prop_types in prop["types"]})
             node_props_data += f"    - {prop['key']}: {prop_types_str}\n"
 
     for rel in schema["edges"]:
@@ -241,15 +233,11 @@ def _transform_relationships(
         rel_dict = {
             "type": _remove_backticks(rel.type),
             "source_label": (
-                [BASE_ENTITY_LABEL]
-                if baseEntityLabel
-                else [_remove_backticks(rel.source.type)]
+                [BASE_ENTITY_LABEL] if baseEntityLabel else [_remove_backticks(rel.source.type)]
             ),
             "source_id": rel.source.id,
             "target_label": (
-                [BASE_ENTITY_LABEL]
-                if baseEntityLabel
-                else [_remove_backticks(rel.target.type)]
+                [BASE_ENTITY_LABEL] if baseEntityLabel else [_remove_backticks(rel.target.type)]
             ),
             "target_id": rel.target.id,
         }
@@ -337,9 +325,7 @@ class MemgraphLangChain(GraphStore, Memgraph):
         """Returns the structured schema of the Graph database"""
         return self.structured_schema
 
-    def query(
-        self, query: str, params: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+    def query(self, query: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """
         Execute a Cypher query and return results as a list of dictionaries.
 
@@ -378,9 +364,7 @@ class MemgraphLangChain(GraphStore, Memgraph):
             return
 
         except (Neo4jError, ValueError) as e:
-            logger.info(
-                "SHOW SCHEMA INFO query failed or returned no data; falling back: %s", e
-            )
+            logger.info("SHOW SCHEMA INFO query failed or returned no data; falling back: %s", e)
             if (
                 e.code == "Memgraph.ClientError.MemgraphError.MemgraphError"
                 and "SchemaInfo disabled" in e.message
@@ -425,9 +409,7 @@ class MemgraphLangChain(GraphStore, Memgraph):
         """
 
         if baseEntityLabel:
-            self.query(
-                f"CREATE CONSTRAINT ON (b:{BASE_ENTITY_LABEL}) ASSERT b.id IS UNIQUE;"
-            )
+            self.query(f"CREATE CONSTRAINT ON (b:{BASE_ENTITY_LABEL}) ASSERT b.id IS UNIQUE;")
             self.query(f"CREATE INDEX ON :{BASE_ENTITY_LABEL}(id);")
             self.query(f"CREATE INDEX ON :{BASE_ENTITY_LABEL};")
 

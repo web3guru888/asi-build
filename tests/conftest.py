@@ -16,11 +16,11 @@ and the missing/broken _initialize methods.  Once merged, these
 patches become harmless.
 """
 
+import importlib
+import logging
 import os
 import sys
 import types
-import importlib
-import logging
 
 import pytest
 
@@ -41,7 +41,8 @@ for _mod_name in ("neo4j", "mgclient"):
         _stub = types.ModuleType(_mod_name)
         if _mod_name == "neo4j":
             _stub.GraphDatabase = type(
-                "GraphDatabase", (),
+                "GraphDatabase",
+                (),
                 {"driver": staticmethod(lambda *a, **kw: None)},
             )
         sys.modules[_mod_name] = _stub
@@ -68,25 +69,29 @@ from asi_build.consciousness.base_consciousness import (  # noqa: E402
 # Save the original __init__
 _original_base_init = BaseConsciousness.__init__
 
+
 def _patched_base_init(self, name, config=None):
     """BaseConsciousness.__init__ without the premature _initialize() call."""
     self.name = name
     self.config = config or {}
     self.state = ConsciousnessState.INACTIVE
     from asi_build.consciousness.base_consciousness import ConsciousnessMetrics
+
     self.metrics = ConsciousnessMetrics()
 
     import threading
+
     self.event_queue = []
     self.event_handlers = {}
     self.event_lock = threading.Lock()
     self.processing_thread = None
     self.should_stop = threading.Event()
-    self.update_interval = self.config.get('update_interval', 0.1)
+    self.update_interval = self.config.get("update_interval", 0.1)
     self.logger = logging.getLogger(f"consciousness.{name}")
     self.state_change_callbacks = []
     # NOTE: _initialize() is NOT called here — subclass __init__ will
     #       call it after setting up its own attributes.
+
 
 BaseConsciousness.__init__ = _patched_base_init
 
@@ -116,6 +121,7 @@ for _mod in _CONSCIOUSNESS_MODULES:
     except Exception:
         pass
 
+
 # ---------------------------------------------------------------------------
 # Add no-op _initialize to subclasses that lack it, and fix broken ones.
 # Also clear __abstractmethods__ so ABC allows instantiation.
@@ -123,6 +129,7 @@ for _mod in _CONSCIOUSNESS_MODULES:
 def _noop_initialize(self):
     """No-op placeholder for missing/broken _initialize (test patch)."""
     pass
+
 
 # Classes whose _initialize works correctly (when called at the right time)
 _WORKING_INITIALIZE = {
@@ -140,11 +147,13 @@ for _cls in BaseConsciousness.__subclasses__():
     if hasattr(_cls, "__abstractmethods__") and _cls.__abstractmethods__:
         _cls.__abstractmethods__ = frozenset()
 
+
 # ---------------------------------------------------------------------------
 # Wrap each subclass __init__ to call _initialize() AFTER setup.
 # ---------------------------------------------------------------------------
 def _make_init_wrapper(original_init, cls_name):
     """Create a wrapper that calls _initialize() after the original __init__."""
+
     def wrapper(self, *args, **kwargs):
         original_init(self, *args, **kwargs)
         # Call _initialize if it hasn't been called yet
@@ -153,7 +162,9 @@ def _make_init_wrapper(original_init, cls_name):
             self._initialize()
         except Exception as e:
             logger.debug(f"{cls_name}._initialize() failed: {e}")
+
     return wrapper
+
 
 for _cls in BaseConsciousness.__subclasses__():
     if "__init__" in _cls.__dict__:

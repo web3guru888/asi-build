@@ -2,7 +2,6 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
-
 from mem0.configs.embeddings.base import BaseEmbedderConfig
 from mem0.embeddings.huggingface import HuggingFaceEmbedding
 
@@ -33,7 +32,9 @@ def test_embed_custom_model(mock_sentence_transformer):
     mock_sentence_transformer.encode.return_value = np.array([0.4, 0.5, 0.6])
     result = embedder.embed("Custom model test")
 
-    mock_sentence_transformer.encode.assert_called_once_with("Custom model test", convert_to_numpy=True)
+    mock_sentence_transformer.encode.assert_called_once_with(
+        "Custom model test", convert_to_numpy=True
+    )
     assert result == [0.4, 0.5, 0.6]
 
 
@@ -44,7 +45,9 @@ def test_embed_with_model_kwargs(mock_sentence_transformer):
     mock_sentence_transformer.encode.return_value = np.array([0.7, 0.8, 0.9])
     result = embedder.embed("Test with device")
 
-    mock_sentence_transformer.encode.assert_called_once_with("Test with device", convert_to_numpy=True)
+    mock_sentence_transformer.encode.assert_called_once_with(
+        "Test with device", convert_to_numpy=True
+    )
     assert result == [0.7, 0.8, 0.9]
 
 
@@ -65,7 +68,9 @@ def test_embed_with_custom_embedding_dims(mock_sentence_transformer):
     mock_sentence_transformer.encode.return_value = np.array([1.0, 1.1, 1.2])
     result = embedder.embed("Custom embedding dims")
 
-    mock_sentence_transformer.encode.assert_called_once_with("Custom embedding dims", convert_to_numpy=True)
+    mock_sentence_transformer.encode.assert_called_once_with(
+        "Custom embedding dims", convert_to_numpy=True
+    )
 
     assert embedder.config.embedding_dims == 768
 

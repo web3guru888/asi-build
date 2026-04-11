@@ -40,9 +40,9 @@ logger = logging.getLogger(__name__)
 # ── Pheromone defaults (from STAN_X v8 SPEC.md FR-014) ────────────────
 
 DEFAULT_DECAY_RATES: Dict[str, float] = {
-    "success": 0.03,     # slow decay — marks confirmed paths
-    "traversal": 0.08,   # moderate — general usage tracking
-    "recency": 0.15,     # fast decay — recent-access signal
+    "success": 0.03,  # slow decay — marks confirmed paths
+    "traversal": 0.08,  # moderate — general usage tracking
+    "recency": 0.15,  # fast decay — recent-access signal
 }
 
 PHEROMONE_CHANNELS = ("success", "traversal", "recency")
@@ -228,8 +228,12 @@ class TemporalKnowledgeGraph:
 
         logger.debug(
             "Added triple %s: %s %s %s (conf=%.2f, type=%s)",
-            triple_id, norm_subject, predicate, norm_object,
-            confidence, statement_type,
+            triple_id,
+            norm_subject,
+            predicate,
+            norm_object,
+            confidence,
+            statement_type,
         )
         return triple_id
 
@@ -420,14 +424,16 @@ class TemporalKnowledgeGraph:
         conflicts = []
         for row in rows:
             old_conf = float(row["confidence"]) if row["confidence"] else 0.0
-            conflicts.append({
-                "triple_id": row["id"],
-                "subject": row["subject"],
-                "predicate": row["predicate"],
-                "object": row["object"],
-                "confidence": old_conf,
-                "dominated": new_confidence > old_conf,
-            })
+            conflicts.append(
+                {
+                    "triple_id": row["id"],
+                    "subject": row["subject"],
+                    "predicate": row["predicate"],
+                    "object": row["object"],
+                    "confidence": old_conf,
+                    "dominated": new_confidence > old_conf,
+                }
+            )
 
         return conflicts
 
@@ -459,7 +465,10 @@ class TemporalKnowledgeGraph:
             had equal or higher confidence).
         """
         conflicts = self.detect_contradictions(
-            subject, predicate, new_object, new_confidence,
+            subject,
+            predicate,
+            new_object,
+            new_confidence,
         )
 
         invalidated: List[str] = []
@@ -480,7 +489,8 @@ class TemporalKnowledgeGraph:
                 invalidated.append(conflict["triple_id"])
                 logger.warning(
                     "Invalidated contradictory triple %s: %s",
-                    conflict["triple_id"], reason,
+                    conflict["triple_id"],
+                    reason,
                 )
             else:
                 kept.append(conflict["triple_id"])
@@ -678,36 +688,28 @@ class TemporalKnowledgeGraph:
             ``avg_confidence``.
         """
         total = self._scalar("SELECT COUNT(*) FROM triples")
-        active = self._scalar(
-            "SELECT COUNT(*) FROM triples WHERE invalid_at IS NULL"
-        )
+        active = self._scalar("SELECT COUNT(*) FROM triples WHERE invalid_at IS NULL")
         invalidated = total - active
         subjects = self._scalar("SELECT COUNT(DISTINCT subject) FROM triples")
         objects = self._scalar("SELECT COUNT(DISTINCT object) FROM triples")
-        predicates = self._scalar(
-            "SELECT COUNT(DISTINCT predicate) FROM triples"
-        )
+        predicates = self._scalar("SELECT COUNT(DISTINCT predicate) FROM triples")
 
         # Unique entities = union of subjects and objects
-        entities = self._scalar(
-            """SELECT COUNT(*) FROM (
+        entities = self._scalar("""SELECT COUNT(*) FROM (
                    SELECT subject AS entity FROM triples
                    UNION
                    SELECT object AS entity FROM triples
-               )"""
+               )""")
+
+        avg_conf = (
+            self._scalar("SELECT AVG(confidence) FROM triples WHERE invalid_at IS NULL") or 0.0
         )
 
-        avg_conf = self._scalar(
-            "SELECT AVG(confidence) FROM triples WHERE invalid_at IS NULL"
-        ) or 0.0
-
         # Statement type breakdown
-        type_rows = self._conn.execute(
-            """SELECT statement_type, COUNT(*) as cnt
+        type_rows = self._conn.execute("""SELECT statement_type, COUNT(*) as cnt
                FROM triples
                WHERE invalid_at IS NULL
-               GROUP BY statement_type"""
-        ).fetchall()
+               GROUP BY statement_type""").fetchall()
         statement_types = {row["statement_type"]: row["cnt"] for row in type_rows}
 
         return {
@@ -748,8 +750,7 @@ class TemporalKnowledgeGraph:
         """
         if channel not in PHEROMONE_CHANNELS:
             raise ValueError(
-                f"Invalid pheromone channel '{channel}'. "
-                f"Must be one of {PHEROMONE_CHANNELS}"
+                f"Invalid pheromone channel '{channel}'. " f"Must be one of {PHEROMONE_CHANNELS}"
             )
 
         col = f"pheromone_{channel}"
@@ -760,7 +761,9 @@ class TemporalKnowledgeGraph:
         self._conn.commit()
         logger.debug(
             "Deposited %.2f %s pheromone on triple %s",
-            amount, channel, triple_id,
+            amount,
+            channel,
+            triple_id,
         )
 
     def deposit_path_pheromone(
@@ -821,8 +824,7 @@ class TemporalKnowledgeGraph:
         """
         if channel not in PHEROMONE_CHANNELS:
             raise ValueError(
-                f"Invalid pheromone channel '{channel}'. "
-                f"Must be one of {PHEROMONE_CHANNELS}"
+                f"Invalid pheromone channel '{channel}'. " f"Must be one of {PHEROMONE_CHANNELS}"
             )
 
         rho = rate if rate is not None else DEFAULT_DECAY_RATES[channel]
@@ -838,7 +840,9 @@ class TemporalKnowledgeGraph:
         affected = cursor.rowcount
         logger.debug(
             "Decayed %s pheromone (ρ=%.3f) on %d triples",
-            channel, rho, affected,
+            channel,
+            rho,
+            affected,
         )
         return affected
 
@@ -891,14 +895,12 @@ class TemporalKnowledgeGraph:
         stats: Dict[str, Dict[str, float]] = {}
         for ch in PHEROMONE_CHANNELS:
             col = f"pheromone_{ch}"
-            row = self._conn.execute(
-                f"""SELECT
+            row = self._conn.execute(f"""SELECT
                         MIN({col}) as mn,
                         MAX({col}) as mx,
                         AVG({col}) as av,
                         SUM(CASE WHEN {col} > 0 THEN 1 ELSE 0 END) as nz
-                    FROM triples"""
-            ).fetchone()
+                    FROM triples""").fetchone()
             stats[ch] = {
                 "min": float(row["mn"]) if row["mn"] is not None else 0.0,
                 "max": float(row["mx"]) if row["mx"] is not None else 0.0,

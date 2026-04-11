@@ -3,7 +3,7 @@ Spiking Neural Network Components
 
 Implements various spiking neuron models and network architectures:
 - Leaky Integrate-and-Fire neurons
-- Adaptive Exponential IF neurons  
+- Adaptive Exponential IF neurons
 - Izhikevich neurons
 - Hodgkin-Huxley neurons
 - Synaptic connection models
@@ -14,46 +14,46 @@ _names = {}
 
 try:
     from .neuron_models import (
-        LeakyIntegrateFireNeuron,
         AdaptiveExponentialIF,
-        IzhikevichNeuron,
         HodgkinHuxleyNeuron,
-        SpikingNeuron
+        IzhikevichNeuron,
+        LeakyIntegrateFireNeuron,
+        SpikingNeuron,
     )
-    _names.update({k: v for k, v in locals().items() if not k.startswith('_')})
+
+    _names.update({k: v for k, v in locals().items() if not k.startswith("_")})
 except (ImportError, ModuleNotFoundError):
     pass
 
 try:
     from .synapse_models import (
-        ExponentialSynapse,
         AlphaFunctionSynapse,
+        ExponentialSynapse,
         STDPSynapse,
-        SynapticConnection
+        SynapticConnection,
     )
-    _names.update({k: v for k, v in locals().items() if not k.startswith('_')})
+
+    _names.update({k: v for k, v in locals().items() if not k.startswith("_")})
 except (ImportError, ModuleNotFoundError):
     pass
 
 try:
     from .network_builder import (
-        SpikingNetwork,
         NetworkTopology,
         RandomNetwork,
+        ScaleFreeNetwork,
         SmallWorldNetwork,
-        ScaleFreeNetwork
+        SpikingNetwork,
     )
-    _names.update({k: v for k, v in locals().items() if not k.startswith('_')})
+
+    _names.update({k: v for k, v in locals().items() if not k.startswith("_")})
 except (ImportError, ModuleNotFoundError):
     pass
 
 try:
-    from .population import (
-        NeuronPopulation,
-        PopulationConnector,
-        PopulationEncoder
-    )
-    _names.update({k: v for k, v in locals().items() if not k.startswith('_')})
+    from .population import NeuronPopulation, PopulationConnector, PopulationEncoder
+
+    _names.update({k: v for k, v in locals().items() if not k.startswith("_")})
 except (ImportError, ModuleNotFoundError):
     pass
 

@@ -18,12 +18,13 @@ Covers classes not adequately tested in test_consciousness_engine.py:
 Total: ~220 tests
 """
 
-import time
 import math
-import pytest
-import numpy as np
-from unittest.mock import patch, MagicMock
+import time
 from collections import deque
+from unittest.mock import MagicMock, patch
+
+import numpy as np
+import pytest
 
 from asi_build.consciousness.base_consciousness import (
     BaseConsciousness,
@@ -32,10 +33,10 @@ from asi_build.consciousness.base_consciousness import (
     ConsciousnessState,
 )
 
-
 # =========================================================================
 # Helper factories
 # =========================================================================
+
 
 def _evt(etype="test", data=None, priority=5, eid=None):
     """Quick ConsciousnessEvent factory."""
@@ -52,19 +53,21 @@ def _evt(etype="test", data=None, priority=5, eid=None):
 # Section 1 — MetacognitionSystem
 # =========================================================================
 
+
 class TestMetacognitionSystem:
     """Tests for metacognitive monitoring and regulation."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.metacognition import (
-            MetacognitionSystem,
             CognitiveProcess,
             CognitiveState,
+            MetacognitionSystem,
             MetacognitiveJudgment,
             MetacognitiveStrategy,
             MetacognitiveStrategyInstance,
         )
+
         self.MetacognitionSystem = MetacognitionSystem
         self.CognitiveProcess = CognitiveProcess
         self.CognitiveState = CognitiveState
@@ -159,11 +162,14 @@ class TestMetacognitionSystem:
 
     # -- process_event --
     def test_process_event_cognitive_process_start(self):
-        evt = _evt("start_cognitive_process", {
-            "process_type": "reasoning",
-            "duration": 5.0,
-            "difficulty": 0.7,
-        })
+        evt = _evt(
+            "start_cognitive_process",
+            {
+                "process_type": "reasoning",
+                "duration": 5.0,
+                "difficulty": 0.7,
+            },
+        )
         result = self.mc.process_event(evt)
         assert result is not None
         assert result.event_type == "process_started"
@@ -192,8 +198,9 @@ class TestMetacognitionSystem:
         assert cp.get_efficiency() == 0.0
 
     def test_cognitive_process_efficiency_nonzero(self):
-        cp = self.CognitiveProcess("p1", "test", time.time(), 5.0, 0.5, 0.5,
-                                    progress=0.8, resources_used=0.4)
+        cp = self.CognitiveProcess(
+            "p1", "test", time.time(), 5.0, 0.5, 0.5, progress=0.8, resources_used=0.4
+        )
         assert cp.get_efficiency() == pytest.approx(2.0)
 
     def test_cognitive_process_is_overdue(self):
@@ -222,18 +229,20 @@ class TestMetacognitionSystem:
 # Section 2 — AttentionSchemaTheory
 # =========================================================================
 
+
 class TestAttentionSchemaTheory:
     """Tests for attention schema theory implementation."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.attention_schema import (
-            AttentionSchemaTheory,
-            AttentionTarget,
             AttentionProcess,
             AttentionSchema,
+            AttentionSchemaTheory,
+            AttentionTarget,
             AwarenessState,
         )
+
         self.AST = AttentionSchemaTheory
         self.AttentionTarget = AttentionTarget
         self.AttentionProcess = AttentionProcess
@@ -247,8 +256,13 @@ class TestAttentionSchemaTheory:
         assert len(self.ast.attention_schemas) == 5
 
     def test_default_processes(self):
-        expected = {"spatial_attention", "temporal_attention", "feature_attention",
-                    "object_attention", "executive_attention"}
+        expected = {
+            "spatial_attention",
+            "temporal_attention",
+            "feature_attention",
+            "object_attention",
+            "executive_attention",
+        }
         assert expected == set(self.ast.attention_processes.keys())
 
     def test_schemas_mirror_processes(self):
@@ -265,16 +279,18 @@ class TestAttentionSchemaTheory:
     def test_add_many_targets_prunes_old(self):
         """Adding more than 2x max_targets triggers cleanup."""
         for i in range(25):
-            t = self.AttentionTarget(f"t{i}", (i*0.1, 0.0, 0.0), salience=0.1+i*0.01,
-                                     target_type="visual")
+            t = self.AttentionTarget(
+                f"t{i}", (i * 0.1, 0.0, 0.0), salience=0.1 + i * 0.01, target_type="visual"
+            )
             self.ast.add_attention_target(t)
         assert len(self.ast.attention_targets) <= self.ast.max_simultaneous_targets * 2
 
     # -- competition --
     def test_compete_for_attention_returns_dict(self):
         for i in range(3):
-            t = self.AttentionTarget(f"t{i}", (i*0.1, 0.0, 0.0), salience=0.5+i*0.1,
-                                     target_type="visual")
+            t = self.AttentionTarget(
+                f"t{i}", (i * 0.1, 0.0, 0.0), salience=0.5 + i * 0.1, target_type="visual"
+            )
             self.ast.add_attention_target(t)
         result = self.ast.compete_for_attention()
         assert isinstance(result, dict)
@@ -338,15 +354,17 @@ class TestAttentionSchemaTheory:
         assert proc.can_attend_to(t_old) is False
 
     def test_attention_schema_update_accuracy(self):
-        schema = self.AttentionSchema("s1", "p1", confidence=0.5,
-                                       predicted_target="t1", predicted_strength=0.8)
+        schema = self.AttentionSchema(
+            "s1", "p1", confidence=0.5, predicted_target="t1", predicted_strength=0.8
+        )
         schema.update_accuracy("t1", 0.75)  # correct target, small error
         assert len(schema.accuracy_history) == 1
         assert schema.confidence > 0
 
     def test_attention_schema_wrong_target(self):
-        schema = self.AttentionSchema("s1", "p1", confidence=0.5,
-                                       predicted_target="t1", predicted_strength=0.8)
+        schema = self.AttentionSchema(
+            "s1", "p1", confidence=0.5, predicted_target="t1", predicted_strength=0.8
+        )
         schema.update_accuracy("t2", 0.75)  # wrong target
         assert schema.accuracy_history[-1] == 0.0
 
@@ -355,19 +373,21 @@ class TestAttentionSchemaTheory:
 # Section 3 — SelfAwarenessEngine
 # =========================================================================
 
+
 class TestSelfAwarenessEngine:
     """Tests for self-awareness engine."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.self_awareness import (
-            SelfAwarenessEngine,
-            SelfAspect,
-            SelfModel,
-            IntrospectiveObservation,
             CapabilityAssessment,
+            IntrospectiveObservation,
+            SelfAspect,
+            SelfAwarenessEngine,
+            SelfModel,
             SelfReflection,
         )
+
         self.SelfAwarenessEngine = SelfAwarenessEngine
         self.SelfAspect = SelfAspect
         self.SelfModel = SelfModel
@@ -493,20 +513,22 @@ class TestSelfAwarenessEngine:
 # Section 4 — EmotionalConsciousness
 # =========================================================================
 
+
 class TestEmotionalConsciousness:
     """Tests for emotional consciousness."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.emotional_consciousness import (
-            EmotionalConsciousness,
-            EmotionType,
-            MoodType,
-            EmotionalState,
-            MoodState,
-            EmotionalMemory,
             AppraisalPattern,
+            EmotionalConsciousness,
+            EmotionalMemory,
+            EmotionalState,
+            EmotionType,
+            MoodState,
+            MoodType,
         )
+
         self.EmotionalConsciousness = EmotionalConsciousness
         self.EmotionType = EmotionType
         self.MoodType = MoodType
@@ -585,10 +607,13 @@ class TestEmotionalConsciousness:
 
     # -- process_event --
     def test_process_event_emotional_stimulus(self):
-        evt = _evt("emotional_stimulus", {
-            "situation": {"type": "novel_discovery"},
-            "stimulus_type": "novel_stimulus",
-        })
+        evt = _evt(
+            "emotional_stimulus",
+            {
+                "situation": {"type": "novel_discovery"},
+                "stimulus_type": "novel_stimulus",
+            },
+        )
         result = self.ec.process_event(evt)
         assert result is None or isinstance(result, ConsciousnessEvent)
 
@@ -624,7 +649,9 @@ class TestEmotionalConsciousness:
 
     def test_emotional_memory_impact(self):
         es = self.EmotionalState("e1", self.EmotionType.JOY, 0.8, 0.9, 0.7, time.time())
-        em = self.EmotionalMemory("m1", es, {}, significance=0.9, vividness=0.7, timestamp=time.time())
+        em = self.EmotionalMemory(
+            "m1", es, {}, significance=0.9, vividness=0.7, timestamp=time.time()
+        )
         impact = em.calculate_emotional_impact()
         assert impact == pytest.approx(0.8 * 0.9 * 0.7)
 
@@ -633,19 +660,21 @@ class TestEmotionalConsciousness:
 # Section 5 — TheoryOfMind
 # =========================================================================
 
+
 class TestTheoryOfMind:
     """Tests for theory of mind."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.theory_of_mind import (
-            TheoryOfMind,
             Agent,
-            MentalState,
-            MentalStateType,
             BeliefState,
             Intention,
+            MentalState,
+            MentalStateType,
+            TheoryOfMind,
         )
+
         self.TheoryOfMind = TheoryOfMind
         self.Agent = Agent
         self.MentalState = MentalState
@@ -687,9 +716,7 @@ class TestTheoryOfMind:
 
     def test_attribute_mental_state_unknown_agent(self):
         """Attributing to unknown agent still creates the state."""
-        ms = self.tom.attribute_mental_state(
-            "unknown", self.MentalStateType.BELIEF, "test", 0.5
-        )
+        ms = self.tom.attribute_mental_state("unknown", self.MentalStateType.BELIEF, "test", 0.5)
         assert isinstance(ms, self.MentalState)
 
     # -- belief inference --
@@ -743,15 +770,20 @@ class TestTheoryOfMind:
     def test_predict_agent_response(self):
         agent = self.Agent("user1", "human", "Frank")
         self.tom.register_agent(agent)
-        prediction = self.tom.predict_agent_response("user1", "Hello!", context={"setting": "casual"})
+        prediction = self.tom.predict_agent_response(
+            "user1", "Hello!", context={"setting": "casual"}
+        )
         assert isinstance(prediction, dict)
 
     # -- process_event --
     def test_process_event_agent_observation(self):
-        evt = _evt("agent_observation", {
-            "agent_id": "self",
-            "action": "thinking",
-        })
+        evt = _evt(
+            "agent_observation",
+            {
+                "agent_id": "self",
+                "action": "thinking",
+            },
+        )
         result = self.tom.process_event(evt)
         assert result is None or isinstance(result, ConsciousnessEvent)
 
@@ -767,13 +799,21 @@ class TestTheoryOfMind:
 
     # -- dataclass tests --
     def test_mental_state_is_valid(self):
-        ms = self.MentalState("s1", "a1", self.MentalStateType.BELIEF, "test", 0.8,
-                               validity_period=300.0)
+        ms = self.MentalState(
+            "s1", "a1", self.MentalStateType.BELIEF, "test", 0.8, validity_period=300.0
+        )
         assert ms.is_valid() is True
 
     def test_mental_state_expired(self):
-        ms = self.MentalState("s1", "a1", self.MentalStateType.BELIEF, "test", 0.8,
-                               timestamp=time.time() - 600, validity_period=300.0)
+        ms = self.MentalState(
+            "s1",
+            "a1",
+            self.MentalStateType.BELIEF,
+            "test",
+            0.8,
+            timestamp=time.time() - 600,
+            validity_period=300.0,
+        )
         assert ms.is_valid() is False
 
     def test_mental_state_add_evidence(self):
@@ -787,18 +827,20 @@ class TestTheoryOfMind:
 # Section 6 — PredictiveProcessing
 # =========================================================================
 
+
 class TestPredictiveProcessing:
     """Tests for predictive processing hierarchy."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.predictive_processing import (
-            PredictiveProcessing,
+            HierarchicalLevel,
             Prediction,
             PredictionError,
-            HierarchicalLevel,
+            PredictiveProcessing,
             SimpleLinearModel,
         )
+
         self.PredictiveProcessing = PredictiveProcessing
         self.Prediction = Prediction
         self.PredictionError = PredictionError
@@ -814,7 +856,10 @@ class TestPredictiveProcessing:
     def test_hierarchy_level_ordering(self):
         """Levels should go from fast/local to slow/abstract."""
         for i in range(4):
-            assert self.pp.hierarchy_levels[i].temporal_scale < self.pp.hierarchy_levels[i+1].temporal_scale
+            assert (
+                self.pp.hierarchy_levels[i].temporal_scale
+                < self.pp.hierarchy_levels[i + 1].temporal_scale
+            )
 
     # -- sensory input --
     def test_add_sensory_input(self):
@@ -841,10 +886,13 @@ class TestPredictiveProcessing:
 
     # -- process_event --
     def test_process_event_sensory_update(self):
-        evt = _evt("sensory_update", {
-            "modality": "visual",
-            "data": np.random.randn(10).tolist(),
-        })
+        evt = _evt(
+            "sensory_update",
+            {
+                "modality": "visual",
+                "data": np.random.randn(10).tolist(),
+            },
+        )
         result = self.pp.process_event(evt)
         assert result is None or isinstance(result, ConsciousnessEvent)
 
@@ -905,19 +953,21 @@ class TestPredictiveProcessing:
 # Section 7 — RecursiveSelfImprovement
 # =========================================================================
 
+
 class TestRecursiveSelfImprovement:
     """Tests for recursive self-improvement."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.recursive_improvement import (
-            RecursiveSelfImprovement,
-            ImprovementType,
-            SafetyLevel,
-            PerformanceMetric,
-            ImprovementProposal,
             ImprovementImplementation,
+            ImprovementProposal,
+            ImprovementType,
+            PerformanceMetric,
+            RecursiveSelfImprovement,
+            SafetyLevel,
         )
+
         self.RSI = RecursiveSelfImprovement
         self.ImprovementType = ImprovementType
         self.SafetyLevel = SafetyLevel
@@ -1017,10 +1067,13 @@ class TestRecursiveSelfImprovement:
 
     # -- process_event --
     def test_process_event_performance_update(self):
-        evt = _evt("performance_update", {
-            "metric_id": "accuracy",
-            "new_value": 0.88,
-        })
+        evt = _evt(
+            "performance_update",
+            {
+                "metric_id": "accuracy",
+                "new_value": 0.88,
+            },
+        )
         result = self.rsi.process_event(evt)
         assert result is None or isinstance(result, ConsciousnessEvent)
 
@@ -1048,35 +1101,66 @@ class TestRecursiveSelfImprovement:
 
     def test_improvement_proposal_risk_benefit(self):
         p = self.ImprovementProposal(
-            "p1", self.ImprovementType.PARAMETER_TUNING, "test", "comp",
-            {}, {"acc": 0.5, "speed": 0.3}, {"risk1": 0.1}, self.SafetyLevel.SAFE, 0.8, 0.2
+            "p1",
+            self.ImprovementType.PARAMETER_TUNING,
+            "test",
+            "comp",
+            {},
+            {"acc": 0.5, "speed": 0.3},
+            {"risk1": 0.1},
+            self.SafetyLevel.SAFE,
+            0.8,
+            0.2,
         )
         ratio = p.calculate_risk_benefit_ratio()
         assert ratio == pytest.approx(8.0)
 
     def test_improvement_proposal_risk_benefit_zero_risk(self):
         p = self.ImprovementProposal(
-            "p1", self.ImprovementType.PARAMETER_TUNING, "test", "comp",
-            {}, {"acc": 0.5}, {}, self.SafetyLevel.SAFE, 0.8, 0.2
+            "p1",
+            self.ImprovementType.PARAMETER_TUNING,
+            "test",
+            "comp",
+            {},
+            {"acc": 0.5},
+            {},
+            self.SafetyLevel.SAFE,
+            0.8,
+            0.2,
         )
-        assert p.calculate_risk_benefit_ratio() == float('inf')
+        assert p.calculate_risk_benefit_ratio() == float("inf")
 
     def test_improvement_implementation_effectiveness_failure(self):
         proposal = self.ImprovementProposal(
-            "p1", self.ImprovementType.PARAMETER_TUNING, "t", "c",
-            {}, {"acc": 0.5}, {}, self.SafetyLevel.SAFE, 0.8, 0.2
+            "p1",
+            self.ImprovementType.PARAMETER_TUNING,
+            "t",
+            "c",
+            {},
+            {"acc": 0.5},
+            {},
+            self.SafetyLevel.SAFE,
+            0.8,
+            0.2,
         )
         impl = self.ImprovementImplementation("i1", proposal, time.time(), {}, {}, success=False)
         assert impl.calculate_effectiveness() == 0.0
 
     def test_improvement_implementation_effectiveness_success(self):
         proposal = self.ImprovementProposal(
-            "p1", self.ImprovementType.PARAMETER_TUNING, "t", "c",
-            {}, {"acc": 0.5}, {}, self.SafetyLevel.SAFE, 0.8, 0.2
+            "p1",
+            self.ImprovementType.PARAMETER_TUNING,
+            "t",
+            "c",
+            {},
+            {"acc": 0.5},
+            {},
+            self.SafetyLevel.SAFE,
+            0.8,
+            0.2,
         )
         impl = self.ImprovementImplementation(
-            "i1", proposal, time.time(), {}, {},
-            success=True, actual_benefits={"acc": 0.6}
+            "i1", proposal, time.time(), {}, {}, success=True, actual_benefits={"acc": 0.6}
         )
         eff = impl.calculate_effectiveness()
         assert eff == pytest.approx(1.2)
@@ -1086,18 +1170,20 @@ class TestRecursiveSelfImprovement:
 # Section 8 — SensoryIntegration
 # =========================================================================
 
+
 class TestSensoryIntegration:
     """Tests for sensory integration system."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.sensory_integration import (
+            IntegratedPercept,
+            PerceptualBinding,
+            SensoryInput,
             SensoryIntegration,
             SensoryModality,
-            SensoryInput,
-            PerceptualBinding,
-            IntegratedPercept,
         )
+
         self.SensoryIntegration = SensoryIntegration
         self.SensoryModality = SensoryModality
         self.SensoryInput = SensoryInput
@@ -1137,12 +1223,10 @@ class TestSensoryIntegration:
     def test_cross_modal_binding_attempt(self):
         """Two simultaneous inputs may form a binding."""
         self.si.process_sensory_input(
-            self.SensoryModality.VISUAL, {"feature": 0.8}, 0.7,
-            spatial_location=(5.0, 5.0, 0.0)
+            self.SensoryModality.VISUAL, {"feature": 0.8}, 0.7, spatial_location=(5.0, 5.0, 0.0)
         )
         self.si.process_sensory_input(
-            self.SensoryModality.AUDITORY, {"feature": 0.7}, 0.6,
-            spatial_location=(5.1, 5.0, 0.0)
+            self.SensoryModality.AUDITORY, {"feature": 0.7}, 0.6, spatial_location=(5.1, 5.0, 0.0)
         )
         # May or may not have formed binding (depends on thresholds)
         assert isinstance(self.si.perceptual_bindings, dict)
@@ -1154,11 +1238,14 @@ class TestSensoryIntegration:
 
     # -- process_event --
     def test_process_event_sensory_input(self):
-        evt = _evt("sensory_input", {
-            "modality": "visual",
-            "data": {"brightness": 0.5},
-            "intensity": 0.6,
-        })
+        evt = _evt(
+            "sensory_input",
+            {
+                "modality": "visual",
+                "data": {"brightness": 0.5},
+                "intensity": 0.6,
+            },
+        )
         result = self.si.process_event(evt)
         assert result is None or isinstance(result, ConsciousnessEvent)
 
@@ -1175,16 +1262,18 @@ class TestSensoryIntegration:
 
     # -- dataclass tests --
     def test_sensory_input_feature_vector(self):
-        si = self.SensoryInput("i1", self.SensoryModality.VISUAL,
-                                {"a": 0.5, "b": 0.3}, 0.8, time.time())
+        si = self.SensoryInput(
+            "i1", self.SensoryModality.VISUAL, {"a": 0.5, "b": 0.3}, 0.8, time.time()
+        )
         fv = si.get_feature_vector()
         assert len(fv) == 16
         assert fv[0] == 0.5
         assert fv[1] == 0.3
 
     def test_sensory_input_feature_vector_no_numerics(self):
-        si = self.SensoryInput("i1", self.SensoryModality.VISUAL,
-                                {"text": "hello"}, 0.5, time.time())
+        si = self.SensoryInput(
+            "i1", self.SensoryModality.VISUAL, {"text": "hello"}, 0.5, time.time()
+        )
         fv = si.get_feature_vector()
         assert len(fv) == 16
         # Only intensity and confidence should be nonzero
@@ -1196,6 +1285,7 @@ class TestSensoryIntegration:
 # Section 9 — TemporalConsciousness
 # =========================================================================
 
+
 class TestTemporalConsciousness:
     """Tests for temporal consciousness."""
 
@@ -1206,6 +1296,7 @@ class TestTemporalConsciousness:
             TemporalEvent,
             TemporalWindow,
         )
+
         self.TemporalConsciousness = TemporalConsciousness
         self.TemporalEvent = TemporalEvent
         self.TemporalWindow = TemporalWindow
@@ -1261,11 +1352,14 @@ class TestTemporalConsciousness:
 
     # -- process_event --
     def test_process_event_temporal_stimulus(self):
-        evt = _evt("temporal_event", {
-            "content": {"text": "event"},
-            "event_type": "stimulus",
-            "duration": 0.5,
-        })
+        evt = _evt(
+            "temporal_event",
+            {
+                "content": {"text": "event"},
+                "event_type": "stimulus",
+                "duration": 0.5,
+            },
+        )
         result = self.tc.process_event(evt)
         assert result is None or isinstance(result, ConsciousnessEvent)
 
@@ -1294,20 +1388,22 @@ class TestTemporalConsciousness:
 # Section 10 — QualiaProcessor
 # =========================================================================
 
+
 class TestQualiaProcessor:
     """Tests for qualia processor."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.qualia_processor import (
-            QualiaProcessor,
-            QualiaType,
-            QualiaIntensity,
-            QualiaVector,
+            PhenomenalConcept,
             Quale,
             QualiaBinding,
-            PhenomenalConcept,
+            QualiaIntensity,
+            QualiaProcessor,
+            QualiaType,
+            QualiaVector,
         )
+
         self.QualiaProcessor = QualiaProcessor
         self.QualiaType = QualiaType
         self.QualiaIntensity = QualiaIntensity
@@ -1343,11 +1439,14 @@ class TestQualiaProcessor:
 
     # -- process_event --
     def test_process_event_quale_creation(self):
-        evt = _evt("sensory_experience", {
-            "qualia_type": "visual",
-            "stimulus_data": {"brightness": 0.7},
-            "intensity": 0.6,
-        })
+        evt = _evt(
+            "sensory_experience",
+            {
+                "qualia_type": "visual",
+                "stimulus_data": {"brightness": 0.7},
+                "intensity": 0.6,
+            },
+        )
         result = self.qp.process_event(evt)
         assert result is None or isinstance(result, ConsciousnessEvent)
 
@@ -1378,13 +1477,14 @@ class TestQualiaProcessor:
         v1 = self.QualiaVector(np.array([1.0, 0.0]), ["a", "b"], 0.5, 0.8, 0.9)
         v2 = self.QualiaVector(np.array([1.0, 0.0, 0.0]), ["a", "b", "c"], 0.5, 0.8, 0.9)
         assert v1.similarity_to(v2) == 0.0
-        assert v1.distance_from(v2) == float('inf')
+        assert v1.distance_from(v2) == float("inf")
 
     def test_quale_phenomenal_character(self):
         dims = np.array([1.0, 0.0])
         v = self.QualiaVector(dims, ["a", "b"], 0.8, 0.9, 0.7)
-        q = self.Quale("q1", self.QualiaType.VISUAL, v, {}, 1.0, time.time(),
-                        {"vivid": 0.8, "warm": 0.3})
+        q = self.Quale(
+            "q1", self.QualiaType.VISUAL, v, {}, 1.0, time.time(), {"vivid": 0.8, "warm": 0.3}
+        )
         desc = q.get_phenomenal_character()
         assert "visual" in desc
         assert "vivid" in desc
@@ -1408,16 +1508,17 @@ class TestQualiaProcessor:
 # Section 11 — ConsciousnessOrchestrator
 # =========================================================================
 
+
 class TestConsciousnessOrchestrator:
     """Tests for consciousness orchestrator."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.consciousness_orchestrator import (
-            ConsciousnessOrchestrator,
             ComponentStatus,
-            IntegrationPattern,
+            ConsciousnessOrchestrator,
             ConsciousnessSnapshot,
+            IntegrationPattern,
         )
         from asi_build.consciousness.global_workspace import GlobalWorkspaceTheory
         from asi_build.consciousness.memory_integration import MemoryIntegration
@@ -1481,15 +1582,13 @@ class TestConsciousnessOrchestrator:
     # -- dataclass tests --
     def test_component_status_healthy(self):
         cs = self.ComponentStatus(
-            "comp1", ConsciousnessState.ACTIVE, time.time(),
-            ConsciousnessMetrics(), 1.0
+            "comp1", ConsciousnessState.ACTIVE, time.time(), ConsciousnessMetrics(), 1.0
         )
         assert cs.is_healthy() is True
 
     def test_component_status_unhealthy(self):
         cs = self.ComponentStatus(
-            "comp1", ConsciousnessState.ERROR, time.time(),
-            ConsciousnessMetrics(), 0.0
+            "comp1", ConsciousnessState.ERROR, time.time(), ConsciousnessMetrics(), 0.0
         )
         assert cs.is_healthy() is False
 
@@ -1498,12 +1597,14 @@ class TestConsciousnessOrchestrator:
 # Section 12 — BaseConsciousness additional edge cases
 # =========================================================================
 
+
 class TestBaseConsciousnessEdgeCases:
     """Additional edge case tests for base consciousness."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.global_workspace import GlobalWorkspaceTheory
+
         self.gwt = GlobalWorkspaceTheory()
 
     def test_multiple_event_handlers_same_type(self):
@@ -1541,6 +1642,7 @@ class TestBaseConsciousnessEdgeCases:
         self.gwt.save_state(path)
 
         from asi_build.consciousness.global_workspace import GlobalWorkspaceTheory
+
         gwt2 = GlobalWorkspaceTheory()
         gwt2.load_state(path)
         assert gwt2.metrics.awareness_level == pytest.approx(0.99)
@@ -1555,6 +1657,7 @@ class TestBaseConsciousnessEdgeCases:
 # Section 13 — ConsciousnessEvent edge cases
 # =========================================================================
 
+
 class TestConsciousnessEventEdgeCases:
 
     def test_event_default_source_module(self):
@@ -1567,8 +1670,7 @@ class TestConsciousnessEventEdgeCases:
 
     def test_event_to_dict_complete(self):
         evt = ConsciousnessEvent(
-            "e1", 1234.5, "test", {"key": "val"},
-            priority=3, source_module="mod", confidence=0.7
+            "e1", 1234.5, "test", {"key": "val"}, priority=3, source_module="mod", confidence=0.7
         )
         d = evt.to_dict()
         assert d["event_id"] == "e1"
@@ -1584,16 +1686,18 @@ class TestConsciousnessEventEdgeCases:
 # Section 14 — IntegratedInformationTheory additional tests
 # =========================================================================
 
+
 class TestIITAdditional:
     """Additional tests for IIT not covered in the base test file."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.integrated_information import (
+            Connection,
             IntegratedInformationTheory,
             SystemElement,
-            Connection,
         )
+
         self.IIT = IntegratedInformationTheory
         self.SystemElement = SystemElement
         self.Connection = Connection
@@ -1635,10 +1739,13 @@ class TestIITAdditional:
         assert phi >= 0.0
 
     def test_process_event(self):
-        evt = _evt("system_state_update", {
-            "sensory_0": 0.7,
-            "sensory_1": 0.3,
-        })
+        evt = _evt(
+            "system_state_update",
+            {
+                "sensory_0": 0.7,
+                "sensory_1": 0.3,
+            },
+        )
         result = self.iit.process_event(evt)
         assert result is None or isinstance(result, ConsciousnessEvent)
 

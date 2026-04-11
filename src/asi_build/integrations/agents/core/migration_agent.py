@@ -5,19 +5,19 @@ This agent analyzes SQL databases, generates appropriate Cypher queries,
 and migrates data to Memgraph using LangGraph workflow.
 """
 
-import os
 import logging
-from typing import Dict, List, Any, TypedDict
+import os
+from typing import Any, Dict, List, TypedDict
 
-from langgraph.graph import StateGraph, END
-from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
-
-from ..query_generation.cypher_generator import CypherGenerator
-from .graph_modeling import HyGM, GraphModel, ModelingMode, GraphModelingStrategy
+from langchain_openai import ChatOpenAI
+from langgraph.graph import END, StateGraph
 from memgraph_toolbox.api.memgraph import Memgraph
-from ..database.factory import DatabaseAnalyzerFactory
+
 from ..database.data_interface import DatabaseDataInterface
+from ..database.factory import DatabaseAnalyzerFactory
+from ..query_generation.cypher_generator import CypherGenerator
+from .graph_modeling import GraphModel, GraphModelingStrategy, HyGM, ModelingMode
 
 # Load environment variables
 load_dotenv()
@@ -67,9 +67,7 @@ class SQLToMemgraphAgent:
         if not openai_api_key:
             raise ValueError("OPENAI_API_KEY environment variable is required")
 
-        self.llm = ChatOpenAI(
-            model="gpt-4o-mini", temperature=0.1, api_key=openai_api_key
-        )
+        self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.1, api_key=openai_api_key)
         self.database_analyzer = None
         self.cypher_generator = CypherGenerator()
         self.interactive_graph_modeling = interactive_graph_modeling
@@ -103,9 +101,7 @@ class SQLToMemgraphAgent:
 
         # Add nodes
         workflow.add_node("analyze_database", self._analyze_database_schema)
-        workflow.add_node(
-            "interactive_graph_modeling", self._interactive_graph_modeling
-        )
+        workflow.add_node("interactive_graph_modeling", self._interactive_graph_modeling)
         workflow.add_node("create_indexes", self._create_indexes)
         workflow.add_node("generate_cypher_queries", self._generate_cypher_queries)
         workflow.add_node("validate_queries", self._validate_queries)
@@ -269,9 +265,7 @@ class SQLToMemgraphAgent:
                 for warning in validation_result["warnings"]:
                     logger.info(f"- {warning}")
 
-            state[
-                "current_step"
-            ] = f"Graph model validated - {validation_result['summary']}"
+            state["current_step"] = f"Graph model validated - {validation_result['summary']}"
 
         except Exception as e:
             logger.error(f"Error validating graph model: {e}")
@@ -340,9 +334,7 @@ class SQLToMemgraphAgent:
                 schema = table_info["schema"]
 
                 # Generate index queries
-                index_queries = self.cypher_generator.generate_index_queries(
-                    table_name, schema
-                )
+                index_queries = self.cypher_generator.generate_index_queries(table_name, schema)
 
                 # Generate constraint queries
                 constraint_queries = self.cypher_generator.generate_constraint_queries(
@@ -396,9 +388,7 @@ class SQLToMemgraphAgent:
 
             # Check if we have HyGM graph model
             if not state.get("graph_model"):
-                logger.warning(
-                    "No HyGM graph model found, falling back to basic migration"
-                )
+                logger.warning("No HyGM graph model found, falling back to basic migration")
                 return self._generate_cypher_queries_fallback(state)
 
             graph_model = state["graph_model"]
@@ -410,9 +400,7 @@ class SQLToMemgraphAgent:
             db_config_str = self._get_db_config_for_migrate(source_db_config)
 
             # Generate node creation queries based on HyGM recommendations
-            logger.info(
-                f"Creating nodes based on {len(graph_model.nodes)} HyGM node definitions"
-            )
+            logger.info(f"Creating nodes based on {len(graph_model.nodes)} HyGM node definitions")
 
             for node_def in graph_model.nodes:
                 source_table = node_def.source_table
@@ -423,9 +411,7 @@ class SQLToMemgraphAgent:
                 table_info = hygm_data.get("entity_tables", {}).get(source_table, {})
 
                 # Validate properties exist in source table
-                valid_properties = self._validate_node_properties(
-                    properties, table_info
-                )
+                valid_properties = self._validate_node_properties(properties, table_info)
 
                 if valid_properties:
                     properties_str = ", ".join(valid_properties)
@@ -463,9 +449,7 @@ SET n += row;"""
             state["migration_queries"] = queries
             state["current_step"] = "Cypher queries generated using HyGM graph model"
 
-            logger.info(
-                f"Generated {len(queries)} migration queries based on HyGM recommendations"
-            )
+            logger.info(f"Generated {len(queries)} migration queries based on HyGM recommendations")
 
         except Exception as e:
             logger.error(f"Error generating HyGM-based Cypher queries: {e}")
@@ -516,9 +500,7 @@ SET n += row;"""
             to_label = self._find_hygm_node_label(to_node, hygm_data)
 
             if not from_label or not to_label:
-                logger.warning(
-                    f"Could not find node labels for relationship {rel_name}"
-                )
+                logger.warning(f"Could not find node labels for relationship {rel_name}")
                 return ""
 
             if rel_type == "one_to_many":
@@ -623,9 +605,7 @@ CREATE (from_node)-[:{rel_name}]->(to_node);"""
         to_pk = source_info.get("to_column")
 
         if not all([join_table, from_table, to_table, from_fk, to_fk, from_pk, to_pk]):
-            logger.warning(
-                f"Missing many-to-many relationship information for {rel_name}"
-            )
+            logger.warning(f"Missing many-to-many relationship information for {rel_name}")
             return ""
 
         return f"""
@@ -649,9 +629,7 @@ CREATE (from)-[:{rel_name}]->(to);"""
 
         return "id"  # Default assumption
 
-    def _generate_cypher_queries_fallback(
-        self, state: MigrationState
-    ) -> MigrationState:
+    def _generate_cypher_queries_fallback(self, state: MigrationState) -> MigrationState:
         """Fallback method for generating Cypher queries without HyGM model."""
         logger.info("Using fallback migration query generation...")
 
@@ -747,9 +725,7 @@ CREATE (from)-[:{rel_name}]->(to);"""
             state["migration_queries"] = queries
             state["current_step"] = "Cypher queries generated (fallback mode)"
 
-            logger.info(
-                f"Generated {len(queries)} migration queries using fallback method"
-            )
+            logger.info(f"Generated {len(queries)} migration queries using fallback method")
 
         except Exception as e:
             logger.error(f"Error generating fallback Cypher queries: {e}")
@@ -840,9 +816,7 @@ CREATE (from)-[:{rel_name}]->(to);"""
                                     pass
 
                             if table_name:
-                                logger.info(
-                                    f"Successfully migrated data from table: {table_name}"
-                                )
+                                logger.info(f"Successfully migrated data from table: {table_name}")
                                 # Update completed tables list
                                 if table_name not in state["completed_tables"]:
                                     state["completed_tables"].append(table_name)

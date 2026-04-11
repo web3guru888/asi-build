@@ -3,8 +3,8 @@ Cypher query generation utilities for SQL to Memgraph migration.
 Provides label naming, relationship naming, and index generation.
 """
 
-from typing import Dict, List, Any
 import logging
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +15,7 @@ class CypherGenerator:
     def __init__(self):
         """Initialize the Cypher query generator."""
 
-    def generate_index_queries(
-        self, table_name: str, schema: List[Dict[str, Any]]
-    ) -> List[str]:
+    def generate_index_queries(self, table_name: str, schema: List[Dict[str, Any]]) -> List[str]:
         """Generate index creation queries."""
         queries = []
         label = self._table_name_to_label(table_name)

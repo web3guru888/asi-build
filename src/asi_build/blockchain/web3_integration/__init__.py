@@ -11,7 +11,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     Web3Client = None
     Web3Error = None
 try:
-    from .contract_manager import ContractManager, ContractInterface
+    from .contract_manager import ContractInterface, ContractManager
 except (ImportError, ModuleNotFoundError, SyntaxError):
     ContractManager = None
     ContractInterface = None
@@ -21,7 +21,13 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     TransactionManager = None
     TransactionStatus = None
 try:
-    from .network_config import NetworkConfig, ETHEREUM_MAINNET, ETHEREUM_GOERLI, POLYGON_MAINNET, POLYGON_MUMBAI
+    from .network_config import (
+        ETHEREUM_GOERLI,
+        ETHEREUM_MAINNET,
+        POLYGON_MAINNET,
+        POLYGON_MUMBAI,
+        NetworkConfig,
+    )
 except (ImportError, ModuleNotFoundError, SyntaxError):
     NetworkConfig = None
     ETHEREUM_MAINNET = None
@@ -33,24 +39,24 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     GasOptimizer = None
 try:
-    from .event_listener import EventListener, ContractEventFilter
+    from .event_listener import ContractEventFilter, EventListener
 except (ImportError, ModuleNotFoundError, SyntaxError):
     EventListener = None
     ContractEventFilter = None
 
 __all__ = [
-    'Web3Client',
-    'Web3Error',
-    'ContractManager', 
-    'ContractInterface',
-    'TransactionManager',
-    'TransactionStatus',
-    'NetworkConfig',
-    'ETHEREUM_MAINNET',
-    'ETHEREUM_GOERLI', 
-    'POLYGON_MAINNET',
-    'POLYGON_MUMBAI',
-    'GasOptimizer',
-    'EventListener',
-    'ContractEventFilter'
+    "Web3Client",
+    "Web3Error",
+    "ContractManager",
+    "ContractInterface",
+    "TransactionManager",
+    "TransactionStatus",
+    "NetworkConfig",
+    "ETHEREUM_MAINNET",
+    "ETHEREUM_GOERLI",
+    "POLYGON_MAINNET",
+    "POLYGON_MUMBAI",
+    "GasOptimizer",
+    "EventListener",
+    "ContractEventFilter",
 ]

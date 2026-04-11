@@ -28,92 +28,92 @@ Covers (without external services):
 """
 
 import json
-import time
 import threading
+import time
 from collections import OrderedDict
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import networkx as nx
 import numpy as np
 import pytest
 
-# --- Schema / enums (always importable) ---
-from asi_build.graph_intelligence.schema import (
-    NodeType,
-    RelationshipType,
-    KnowledgeGraphSchema,
-    Relationship,
-    UIElementNode,
-    WorkflowNode,
-    CommunityNode,
-    ApplicationNode,
-    ScreenNode,
-    BaseNode,
-    create_ui_element,
-    create_community,
-    create_workflow,
-)
-
 # --- Community detection (pure algorithms, no DB) ---
 from asi_build.graph_intelligence.community_detection import (
-    LouvainCommunityDetection,
-    GirvanNewmanCommunityDetection,
-    LocalCommunitySearch,
     CommunityDetectionEngine,
     CommunityDetectionResult,
     CommunityQualityMetrics,
+    GirvanNewmanCommunityDetection,
+    LocalCommunitySearch,
+    LouvainCommunityDetection,
 )
 
 # --- Community pruning ---
 from asi_build.graph_intelligence.community_pruning import (
-    ModularityPruner,
-    LLMFinePruner,
     CommunityPruningSystem,
-    PruningResult,
     CommunityScore,
+    LLMFinePruner,
+    ModularityPruner,
+    PruningResult,
 )
 
 # --- Community to text ---
 from asi_build.graph_intelligence.community_to_text import (
-    Triple2TextConverter,
-    Graph2TextConverter,
     CommunityTextGenerator,
+    Graph2TextConverter,
     TextConversionResult,
     Triple,
+    Triple2TextConverter,
 )
 
 # --- Data ingestion ---
 from asi_build.graph_intelligence.data_ingestion import (
-    UIElementClassifier,
-    RelationshipDetector,
     DataIngestionPipeline,
-    OCRElement,
     IngestionResult,
-)
-
-# --- Performance optimizer ---
-from asi_build.graph_intelligence.performance_optimizer import (
-    LRUCache,
-    CacheEntry,
-    QueryOptimizer,
-    ParallelProcessor,
-    MemoryOptimizer,
-    PerformanceOptimizer,
-    PerformanceMetrics,
+    OCRElement,
+    RelationshipDetector,
+    UIElementClassifier,
 )
 
 # --- FastToG dataclasses ---
 from asi_build.graph_intelligence.fastog_reasoning import (
-    ReasoningMode,
-    ReasoningRequest,
     CommunityReasoning,
     FastToGResult,
+    ReasoningMode,
+    ReasoningRequest,
 )
 
+# --- Performance optimizer ---
+from asi_build.graph_intelligence.performance_optimizer import (
+    CacheEntry,
+    LRUCache,
+    MemoryOptimizer,
+    ParallelProcessor,
+    PerformanceMetrics,
+    PerformanceOptimizer,
+    QueryOptimizer,
+)
+
+# --- Schema / enums (always importable) ---
+from asi_build.graph_intelligence.schema import (
+    ApplicationNode,
+    BaseNode,
+    CommunityNode,
+    KnowledgeGraphSchema,
+    NodeType,
+    Relationship,
+    RelationshipType,
+    ScreenNode,
+    UIElementNode,
+    WorkflowNode,
+    create_community,
+    create_ui_element,
+    create_workflow,
+)
 
 # =========================================================================
 # Helper: build a mock SchemaManager that never touches Neo4j
 # =========================================================================
+
 
 def _mock_schema_manager():
     """Create a mock SchemaManager with sensible defaults."""
@@ -156,6 +156,7 @@ def _build_two_cliques():
 # =========================================================================
 # 1. Louvain Community Detection
 # =========================================================================
+
 
 class TestLouvainCommunityDetection:
     def test_empty_graph(self):
@@ -239,6 +240,7 @@ class TestLouvainCommunityDetection:
 # 2. Girvan-Newman Community Detection
 # =========================================================================
 
+
 class TestGirvanNewmanCommunityDetection:
     def test_empty_graph(self):
         gn = GirvanNewmanCommunityDetection()
@@ -283,6 +285,7 @@ class TestGirvanNewmanCommunityDetection:
 # =========================================================================
 # 3. Local Community Search
 # =========================================================================
+
 
 class TestLocalCommunitySearch:
     def test_empty_graph_returns_empty(self):
@@ -333,6 +336,7 @@ class TestLocalCommunitySearch:
 # =========================================================================
 # 4. CommunityDetectionEngine (mocked SchemaManager)
 # =========================================================================
+
 
 class TestCommunityDetectionEngine:
     def test_detect_communities_empty_graph(self):
@@ -412,6 +416,7 @@ class TestCommunityDetectionEngine:
 # 5. CommunityDetectionResult & CommunityQualityMetrics dataclasses
 # =========================================================================
 
+
 class TestCommunityDataclasses:
     def test_detection_result_fields(self):
         r = CommunityDetectionResult(
@@ -442,6 +447,7 @@ class TestCommunityDataclasses:
 # =========================================================================
 # 6. ModularityPruner
 # =========================================================================
+
 
 class TestModularityPruner:
     def test_empty_input(self):
@@ -541,6 +547,7 @@ class TestModularityPruner:
 # 7. LLMFinePruner
 # =========================================================================
 
+
 class TestLLMFinePruner:
     def test_under_threshold_skips_pruning(self):
         pruner = LLMFinePruner(max_communities_for_llm=20)
@@ -587,7 +594,9 @@ class TestLLMFinePruner:
         assert pruner._infer_node_type({"text": "Save", "coordinates": [1, 2]}) == "UIElement"
         assert pruner._infer_node_type({"name": "wf", "steps": []}) == "Workflow"
         assert pruner._infer_node_type({"purpose": "ops", "members": []}) == "Community"
-        assert pruner._infer_node_type({"resolution": [1920, 1080], "screenshot_path": ""}) == "Screen"
+        assert (
+            pruner._infer_node_type({"resolution": [1920, 1080], "screenshot_path": ""}) == "Screen"
+        )
         assert pruner._infer_node_type({"pattern_type": "behavioral"}) == "Pattern"
         assert pruner._infer_node_type({"random": "data"}) == "Unknown"
 
@@ -616,6 +625,7 @@ class TestLLMFinePruner:
 # 8. PruningResult
 # =========================================================================
 
+
 class TestPruningResult:
     def test_properties(self):
         r = PruningResult(
@@ -634,6 +644,7 @@ class TestPruningResult:
 # =========================================================================
 # 9. CommunityPruningSystem (mocked)
 # =========================================================================
+
 
 class TestCommunityPruningSystem:
     def test_empty_database(self):
@@ -666,6 +677,7 @@ class TestCommunityPruningSystem:
 # =========================================================================
 # 10. Triple2TextConverter
 # =========================================================================
+
 
 class TestTriple2TextConverter:
     def test_single_triple_contains(self):
@@ -733,8 +745,20 @@ class TestTriple2TextConverter:
     def test_convert_multiple_triples(self):
         converter = Triple2TextConverter()
         triples = [
-            Triple("a", NodeType.UI_ELEMENT.value, RelationshipType.CONTAINS.value, "b", NodeType.UI_ELEMENT.value),
-            Triple("c", NodeType.WORKFLOW.value, RelationshipType.TRIGGERS.value, "d", NodeType.UI_ELEMENT.value),
+            Triple(
+                "a",
+                NodeType.UI_ELEMENT.value,
+                RelationshipType.CONTAINS.value,
+                "b",
+                NodeType.UI_ELEMENT.value,
+            ),
+            Triple(
+                "c",
+                NodeType.WORKFLOW.value,
+                RelationshipType.TRIGGERS.value,
+                "d",
+                NodeType.UI_ELEMENT.value,
+            ),
         ]
         texts = converter.convert_triples_to_text(triples)
         assert len(texts) == 2
@@ -742,8 +766,20 @@ class TestTriple2TextConverter:
     def test_combined_subjects(self):
         converter = Triple2TextConverter()
         triples = [
-            Triple("a", NodeType.UI_ELEMENT.value, RelationshipType.CONTAINS.value, "b", NodeType.UI_ELEMENT.value),
-            Triple("a", NodeType.UI_ELEMENT.value, RelationshipType.CONTAINS.value, "c", NodeType.UI_ELEMENT.value),
+            Triple(
+                "a",
+                NodeType.UI_ELEMENT.value,
+                RelationshipType.CONTAINS.value,
+                "b",
+                NodeType.UI_ELEMENT.value,
+            ),
+            Triple(
+                "a",
+                NodeType.UI_ELEMENT.value,
+                RelationshipType.CONTAINS.value,
+                "c",
+                NodeType.UI_ELEMENT.value,
+            ),
         ]
         texts = converter.convert_triples_to_text(triples)
         assert len(texts) == 1  # Combined into one
@@ -763,6 +799,7 @@ class TestTriple2TextConverter:
 # =========================================================================
 # 11. TextConversionResult & Triple dataclasses
 # =========================================================================
+
 
 class TestTextDataclasses:
     def test_conversion_result_summary_text(self):
@@ -794,6 +831,7 @@ class TestTextDataclasses:
 # =========================================================================
 # 12. Graph2TextConverter (mocked)
 # =========================================================================
+
 
 class TestGraph2TextConverter:
     def test_generate_community_summary_not_found(self):
@@ -865,6 +903,7 @@ class TestGraph2TextConverter:
 # 13. CommunityTextGenerator (mocked)
 # =========================================================================
 
+
 class TestCommunityTextGenerator:
     def test_no_communities(self):
         sm = _mock_schema_manager()
@@ -887,6 +926,7 @@ class TestCommunityTextGenerator:
 # =========================================================================
 # 14. UIElementClassifier
 # =========================================================================
+
 
 class TestUIElementClassifier:
     def test_button_by_keyword(self):
@@ -918,7 +958,9 @@ class TestUIElementClassifier:
 
     def test_label_long_text(self):
         clf = UIElementClassifier()
-        elem = OCRElement(text="This is a very long label text string", bbox=[0, 0, 500, 50], confidence=0.9)
+        elem = OCRElement(
+            text="This is a very long label text string", bbox=[0, 0, 500, 50], confidence=0.9
+        )
         assert clf.classify_element(elem) == "label"
 
     def test_label_with_colon(self):
@@ -958,6 +1000,7 @@ class TestUIElementClassifier:
 # =========================================================================
 # 15. RelationshipDetector
 # =========================================================================
+
 
 class TestRelationshipDetector:
     def test_containment_detected(self):
@@ -1010,7 +1053,7 @@ class TestRelationshipDetector:
 
     def test_containment_is_directional(self):
         """The containment check is one-directional: inner coords >= outer coords - threshold.
-        
+
         This means two points [0,0] and [9000,9000] BOTH satisfy the check
         in one direction (a bug in the source), which we document here.
         """
@@ -1048,6 +1091,7 @@ class TestRelationshipDetector:
 # 16. OCRElement & IngestionResult dataclasses
 # =========================================================================
 
+
 class TestIngestionDataclasses:
     def test_ocr_element(self):
         e = OCRElement(text="Save", bbox=[10, 20, 50, 40], confidence=0.95)
@@ -1070,6 +1114,7 @@ class TestIngestionDataclasses:
 # =========================================================================
 # 17. DataIngestionPipeline (mocked)
 # =========================================================================
+
 
 class TestDataIngestionPipeline:
     def test_ingest_ocr_results(self):
@@ -1145,6 +1190,7 @@ class TestDataIngestionPipeline:
 # =========================================================================
 # 18. LRUCache
 # =========================================================================
+
 
 class TestLRUCache:
     def test_put_and_get(self):
@@ -1256,6 +1302,7 @@ class TestLRUCache:
 # 19. CacheEntry
 # =========================================================================
 
+
 class TestCacheEntry:
     def test_is_expired_false(self):
         entry = CacheEntry(key="k", value="v", created_at=time.time(), ttl_seconds=3600)
@@ -1277,6 +1324,7 @@ class TestCacheEntry:
 # =========================================================================
 # 20. QueryOptimizer (mocked SchemaManager)
 # =========================================================================
+
 
 class TestQueryOptimizer:
     def test_optimize_adds_limit(self):
@@ -1333,6 +1381,7 @@ class TestQueryOptimizer:
 # 21. ParallelProcessor
 # =========================================================================
 
+
 class TestParallelProcessor:
     def test_batch_process_nodes(self):
         processor = ParallelProcessor(max_workers=2)
@@ -1350,6 +1399,7 @@ class TestParallelProcessor:
     def test_batch_process_handles_errors(self):
         processor = ParallelProcessor(max_workers=2)
         try:
+
             def fail_on_b(n):
                 if n == "b":
                     raise ValueError("boom")
@@ -1371,6 +1421,7 @@ class TestParallelProcessor:
 # =========================================================================
 # 22. MemoryOptimizer
 # =========================================================================
+
 
 class TestMemoryOptimizer:
     def test_optimize_for_large_graphs(self):
@@ -1395,6 +1446,7 @@ class TestMemoryOptimizer:
 # =========================================================================
 # 23. PerformanceOptimizer (mocked)
 # =========================================================================
+
 
 class TestPerformanceOptimizer:
     def test_cache_result_and_get(self):
@@ -1456,6 +1508,7 @@ class TestPerformanceOptimizer:
 # 24. FastToG Dataclasses
 # =========================================================================
 
+
 class TestFastToGDataclasses:
     def test_reasoning_mode_enum(self):
         assert ReasoningMode.COMMUNITY_BASED.value == "community_based"
@@ -1507,6 +1560,7 @@ class TestFastToGDataclasses:
 # 25. PerformanceMetrics
 # =========================================================================
 
+
 class TestPerformanceMetrics:
     def test_defaults(self):
         m = PerformanceMetrics(operation_name="test", duration=0.5)
@@ -1519,6 +1573,7 @@ class TestPerformanceMetrics:
 # =========================================================================
 # 26. Integration: Louvain on real-world-like graph
 # =========================================================================
+
 
 class TestLouvainIntegration:
     def test_karate_club_finds_communities(self):
@@ -1543,6 +1598,7 @@ class TestLouvainIntegration:
 # =========================================================================
 # 27. CommunityDetectionEngine._infer_community_purpose (mocked SM)
 # =========================================================================
+
 
 class TestInferCommunityPurpose:
     def test_save_operations(self):
@@ -1598,6 +1654,7 @@ class TestInferCommunityPurpose:
 # 28. Community-to-Text: _generate_graph_description
 # =========================================================================
 
+
 class TestGraphDescription:
     def test_with_triples(self):
         sm = _mock_schema_manager()
@@ -1622,6 +1679,7 @@ class TestGraphDescription:
 # =========================================================================
 # 29. Edge cases for various methods
 # =========================================================================
+
 
 class TestEdgeCases:
     def test_louvain_line_graph(self):
@@ -1684,6 +1742,7 @@ class TestEdgeCases:
 # =========================================================================
 # 30. DataIngestionPipeline._process_ocr_element
 # =========================================================================
+
 
 class TestProcessOCRElement:
     def test_skips_empty_text(self):

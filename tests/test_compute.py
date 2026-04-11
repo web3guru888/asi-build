@@ -13,45 +13,46 @@ management, mock heavy async initialization.
 """
 
 import pytest
+
 pytest.importorskip("psutil")
 import asyncio
-import time
 import json
 import os
-from unittest.mock import patch, MagicMock, AsyncMock
+import time
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from asi_build.compute.core.job_scheduler import (
     Job,
-    JobStatus,
     JobPriority,
     JobQueue,
     JobScheduler,
+    JobStatus,
     SchedulingAlgorithm,
     SchedulingPolicy,
-)
-from asi_build.compute.core.resource_allocator import (
-    ResourceAllocator,
-    ResourceRequest,
-    ResourceAllocation,
-    ResourceType,
-    AllocationStatus,
-    LocalProvider,
-    ResourceProvider,
-)
-from asi_build.compute.monitoring.metrics_collector import (
-    MetricsCollector,
-    MetricType,
-    MetricPoint,
-    MetricSeries,
 )
 from asi_build.compute.core.pool_manager import (
     ComputePoolManager,
     PoolConfig,
     PoolStatus,
 )
-
+from asi_build.compute.core.resource_allocator import (
+    AllocationStatus,
+    LocalProvider,
+    ResourceAllocation,
+    ResourceAllocator,
+    ResourceProvider,
+    ResourceRequest,
+    ResourceType,
+)
+from asi_build.compute.monitoring.metrics_collector import (
+    MetricPoint,
+    MetricsCollector,
+    MetricSeries,
+    MetricType,
+)
 
 # ===== helpers =====
+
 
 def _run(coro):
     """Run async coroutine synchronously."""
@@ -65,6 +66,7 @@ def _run(coro):
 # ===================================================================
 # Job dataclass
 # ===================================================================
+
 
 class TestJob:
 
@@ -104,6 +106,7 @@ class TestJob:
 # JobStatus / JobPriority enums
 # ===================================================================
 
+
 class TestEnums:
 
     def test_job_statuses(self):
@@ -128,6 +131,7 @@ class TestEnums:
 # SchedulingPolicy
 # ===================================================================
 
+
 class TestSchedulingPolicy:
 
     def test_defaults(self):
@@ -147,6 +151,7 @@ class TestSchedulingPolicy:
 # ===================================================================
 # JobQueue
 # ===================================================================
+
 
 class TestJobQueue:
 
@@ -288,6 +293,7 @@ class TestJobQueue:
 # JobScheduler
 # ===================================================================
 
+
 class TestJobScheduler:
 
     def test_init(self):
@@ -302,7 +308,9 @@ class TestJobScheduler:
     def test_create_queue(self):
         s = JobScheduler()
         _run(s.initialize())
-        created = _run(s.create_queue("gpu", SchedulingPolicy(algorithm=SchedulingAlgorithm.PRIORITY)))
+        created = _run(
+            s.create_queue("gpu", SchedulingPolicy(algorithm=SchedulingAlgorithm.PRIORITY))
+        )
         assert created is True
         assert "gpu" in s.queues
 
@@ -367,6 +375,7 @@ class TestJobScheduler:
 # ResourceRequest & ResourceAllocation
 # ===================================================================
 
+
 class TestResourceRequest:
 
     def test_defaults(self):
@@ -407,6 +416,7 @@ class TestResourceAllocation:
 # ===================================================================
 # LocalProvider
 # ===================================================================
+
 
 class TestLocalProvider:
 
@@ -470,6 +480,7 @@ class TestLocalProvider:
 # ===================================================================
 # ResourceAllocator
 # ===================================================================
+
 
 class TestResourceAllocator:
 
@@ -580,19 +591,22 @@ class TestResourceAllocator:
 # MetricPoint
 # ===================================================================
 
+
 class TestMetricPoint:
 
     def test_creation(self):
         p = MetricPoint(
-            metric_id="m1", name="cpu_usage", value=75.0,
-            timestamp=time.time(), metric_type=MetricType.GAUGE
+            metric_id="m1",
+            name="cpu_usage",
+            value=75.0,
+            timestamp=time.time(),
+            metric_type=MetricType.GAUGE,
         )
         assert p.value == 75.0
 
     def test_to_dict(self):
         p = MetricPoint(
-            metric_id="m1", name="cpu_usage", value=50.0,
-            timestamp=1000.0, labels={"host": "node1"}
+            metric_id="m1", name="cpu_usage", value=50.0, timestamp=1000.0, labels={"host": "node1"}
         )
         d = p.to_dict()
         assert d["name"] == "cpu_usage"
@@ -602,6 +616,7 @@ class TestMetricPoint:
 # ===================================================================
 # MetricSeries
 # ===================================================================
+
 
 class TestMetricSeries:
 
@@ -650,6 +665,7 @@ class TestMetricSeries:
 # ===================================================================
 # MetricsCollector
 # ===================================================================
+
 
 class TestMetricsCollector:
 
@@ -795,6 +811,7 @@ class TestMetricsCollector:
 # PoolConfig
 # ===================================================================
 
+
 class TestPoolConfig:
 
     def test_defaults(self):
@@ -813,6 +830,7 @@ class TestPoolConfig:
 # PoolStatus enum
 # ===================================================================
 
+
 class TestPoolStatus:
 
     def test_values(self):
@@ -829,6 +847,7 @@ class TestPoolStatus:
 # the pool manager's own logic.
 # ===================================================================
 
+
 class TestComputePoolManager:
 
     @pytest.fixture(autouse=True)
@@ -837,9 +856,15 @@ class TestComputePoolManager:
         from asi_build.compute.core import pool_manager as pm_mod
 
         for cls_name in [
-            "GPUPoolManager", "CPUPoolManager", "MemoryPoolManager",
-            "StoragePoolManager", "NetworkManager", "MetricsCollector",
-            "CheckpointManager", "RecoveryManager", "FairShareManager",
+            "GPUPoolManager",
+            "CPUPoolManager",
+            "MemoryPoolManager",
+            "StoragePoolManager",
+            "NetworkManager",
+            "MetricsCollector",
+            "CheckpointManager",
+            "RecoveryManager",
+            "FairShareManager",
             "PreemptionManager",
         ]:
             monkeypatch.setattr(pm_mod, cls_name, lambda *a, **kw: MagicMock())

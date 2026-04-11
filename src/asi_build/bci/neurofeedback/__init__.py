@@ -22,9 +22,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     SessionManager = None
 
-__all__ = [
-    'NeurofeedbackTrainer',
-    'NeurofeedbackProtocols',
-    'FeedbackController',
-    'SessionManager'
-]
+__all__ = ["NeurofeedbackTrainer", "NeurofeedbackProtocols", "FeedbackController", "SessionManager"]

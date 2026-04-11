@@ -19,4 +19,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     PatternReasoningSynergy = None
 
-__all__ = ['PatternMiningEngine', 'ReasoningEngine', 'PatternReasoningSynergy']
+__all__ = ["PatternMiningEngine", "ReasoningEngine", "PatternReasoningSynergy"]

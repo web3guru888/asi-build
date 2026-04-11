@@ -7,16 +7,24 @@ the core pure-Python modules directly via importlib.util:
   - context_manager.py (591 LOC)  – Session/context management
 """
 
-import pytest
 import asyncio
 import importlib.util
-import time
 import re
+import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 # ── Direct imports bypassing spacy-dependent __init__.py ────────────────
-_BASE = Path(__file__).resolve().parent.parent / "src" / "asi_build" / "pln_accelerator" / "nl_logic_bridge" / "core"
+_BASE = (
+    Path(__file__).resolve().parent.parent
+    / "src"
+    / "asi_build"
+    / "pln_accelerator"
+    / "nl_logic_bridge"
+    / "core"
+)
 
 _ls_spec = importlib.util.spec_from_file_location("logic_systems", str(_BASE / "logic_systems.py"))
 _ls_mod = importlib.util.module_from_spec(_ls_spec)
@@ -31,7 +39,9 @@ ModalLogicConverter = _ls_mod.ModalLogicConverter
 LogicConverter = _ls_mod.LogicConverter
 LogicalExpression = _ls_mod.LogicalExpression
 
-_cm_spec = importlib.util.spec_from_file_location("context_manager", str(_BASE / "context_manager.py"))
+_cm_spec = importlib.util.spec_from_file_location(
+    "context_manager", str(_BASE / "context_manager.py")
+)
 _cm_mod = importlib.util.module_from_spec(_cm_spec)
 _cm_spec.loader.exec_module(_cm_mod)
 
@@ -45,12 +55,18 @@ SessionContext = _cm_mod.SessionContext
 # Logic Systems Tests
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestLogicFormalism:
     def test_all_formalisms_present(self):
         expected = {
-            "first_order_logic", "probabilistic_logic_networks",
-            "temporal_logic", "modal_logic", "description_logic",
-            "fuzzy_logic", "predicate_logic", "propositional_logic",
+            "first_order_logic",
+            "probabilistic_logic_networks",
+            "temporal_logic",
+            "modal_logic",
+            "description_logic",
+            "fuzzy_logic",
+            "predicate_logic",
+            "propositional_logic",
         }
         actual = {f.value for f in LogicFormalism}
         assert actual == expected
@@ -73,6 +89,7 @@ class TestLogicalExpression:
 
 # ── FOLConverter ────────────────────────────────────────────────────────
 
+
 class TestFOLConverter:
     @pytest.fixture
     def converter(self):
@@ -86,10 +103,12 @@ class TestFOLConverter:
     @pytest.mark.asyncio
     async def test_convert_agent_patient(self, converter):
         parse = {
-            "frames": [{
-                "predicate": "chase",
-                "arguments": {"agent": ["Cat"], "patient": ["Mouse"]},
-            }]
+            "frames": [
+                {
+                    "predicate": "chase",
+                    "arguments": {"agent": ["Cat"], "patient": ["Mouse"]},
+                }
+            ]
         }
         result = await converter.convert_from_semantic_parse(parse, {})
         assert result == "chase(cat, mouse)"
@@ -97,10 +116,12 @@ class TestFOLConverter:
     @pytest.mark.asyncio
     async def test_convert_agent_only(self, converter):
         parse = {
-            "frames": [{
-                "predicate": "sleep",
-                "arguments": {"agent": ["Dog"]},
-            }]
+            "frames": [
+                {
+                    "predicate": "sleep",
+                    "arguments": {"agent": ["Dog"]},
+                }
+            ]
         }
         result = await converter.convert_from_semantic_parse(parse, {})
         assert result == "sleep(dog)"
@@ -151,6 +172,7 @@ class TestFOLConverter:
 
 # ── PLNConverter ────────────────────────────────────────────────────────
 
+
 class TestPLNConverter:
     @pytest.fixture
     def converter(self):
@@ -164,12 +186,14 @@ class TestPLNConverter:
     @pytest.mark.asyncio
     async def test_convert_inheritance(self, converter):
         parse = {
-            "frames": [{
-                "predicate": "is_a",
-                "arguments": {"agent": ["Cat"], "patient": ["Animal"]},
-                "frame_type": "inheritance",
-                "confidence": 0.9,
-            }]
+            "frames": [
+                {
+                    "predicate": "is_a",
+                    "arguments": {"agent": ["Cat"], "patient": ["Animal"]},
+                    "frame_type": "inheritance",
+                    "confidence": 0.9,
+                }
+            ]
         }
         result = await converter.convert_from_semantic_parse(parse, {})
         assert "InheritanceLink" in result
@@ -178,12 +202,14 @@ class TestPLNConverter:
     @pytest.mark.asyncio
     async def test_convert_causal(self, converter):
         parse = {
-            "frames": [{
-                "predicate": "cause",
-                "arguments": {"agent": ["Fire"], "patient": ["Smoke"]},
-                "frame_type": "causation",
-                "confidence": 0.8,
-            }]
+            "frames": [
+                {
+                    "predicate": "cause",
+                    "arguments": {"agent": ["Fire"], "patient": ["Smoke"]},
+                    "frame_type": "causation",
+                    "confidence": 0.8,
+                }
+            ]
         }
         result = await converter.convert_from_semantic_parse(parse, {})
         assert "CausalLink" in result
@@ -212,6 +238,7 @@ class TestPLNConverter:
 
 # ── TemporalLogicConverter ──────────────────────────────────────────────
 
+
 class TestTemporalLogicConverter:
     @pytest.fixture
     def converter(self):
@@ -220,10 +247,12 @@ class TestTemporalLogicConverter:
     @pytest.mark.asyncio
     async def test_future_tense(self, converter):
         parse = {
-            "frames": [{
-                "predicate": "rain",
-                "temporal_info": {"tense": "future"},
-            }]
+            "frames": [
+                {
+                    "predicate": "rain",
+                    "temporal_info": {"tense": "future"},
+                }
+            ]
         }
         result = await converter.convert_from_semantic_parse(parse, {})
         assert "◊F" in result
@@ -231,10 +260,12 @@ class TestTemporalLogicConverter:
     @pytest.mark.asyncio
     async def test_past_tense(self, converter):
         parse = {
-            "frames": [{
-                "predicate": "rain",
-                "temporal_info": {"tense": "past"},
-            }]
+            "frames": [
+                {
+                    "predicate": "rain",
+                    "temporal_info": {"tense": "past"},
+                }
+            ]
         }
         result = await converter.convert_from_semantic_parse(parse, {})
         assert "◊P" in result
@@ -242,10 +273,12 @@ class TestTemporalLogicConverter:
     @pytest.mark.asyncio
     async def test_always_marker(self, converter):
         parse = {
-            "frames": [{
-                "predicate": "shine",
-                "temporal_info": {"tense": "present", "temporal_marker": "always"},
-            }]
+            "frames": [
+                {
+                    "predicate": "shine",
+                    "temporal_info": {"tense": "present", "temporal_marker": "always"},
+                }
+            ]
         }
         result = await converter.convert_from_semantic_parse(parse, {})
         assert "□" in result
@@ -270,6 +303,7 @@ class TestTemporalLogicConverter:
 
 # ── ModalLogicConverter ─────────────────────────────────────────────────
 
+
 class TestModalLogicConverter:
     @pytest.fixture
     def converter(self):
@@ -278,10 +312,12 @@ class TestModalLogicConverter:
     @pytest.mark.asyncio
     async def test_necessary(self, converter):
         parse = {
-            "frames": [{
-                "predicate": "exist",
-                "modal_info": {"type": "alethic", "strength": "necessary"},
-            }]
+            "frames": [
+                {
+                    "predicate": "exist",
+                    "modal_info": {"type": "alethic", "strength": "necessary"},
+                }
+            ]
         }
         result = await converter.convert_from_semantic_parse(parse, {})
         assert "□" in result
@@ -289,10 +325,12 @@ class TestModalLogicConverter:
     @pytest.mark.asyncio
     async def test_possible(self, converter):
         parse = {
-            "frames": [{
-                "predicate": "fly",
-                "modal_info": {"type": "ability", "strength": "possible"},
-            }]
+            "frames": [
+                {
+                    "predicate": "fly",
+                    "modal_info": {"type": "ability", "strength": "possible"},
+                }
+            ]
         }
         result = await converter.convert_from_semantic_parse(parse, {})
         assert "◊" in result
@@ -308,6 +346,7 @@ class TestModalLogicConverter:
 
 
 # ── LogicSystems manager ────────────────────────────────────────────────
+
 
 class TestLogicSystems:
     @pytest.fixture
@@ -341,10 +380,12 @@ class TestLogicSystems:
     @pytest.mark.asyncio
     async def test_convert_to_fol(self, systems):
         parse = {
-            "frames": [{
-                "predicate": "chase",
-                "arguments": {"agent": ["Cat"], "patient": ["Mouse"]},
-            }]
+            "frames": [
+                {
+                    "predicate": "chase",
+                    "arguments": {"agent": ["Cat"], "patient": ["Mouse"]},
+                }
+            ]
         }
         result = await systems.convert_to_formalism(parse, LogicFormalism.FOL)
         assert "chase" in result
@@ -353,12 +394,14 @@ class TestLogicSystems:
     @pytest.mark.asyncio
     async def test_convert_to_pln(self, systems):
         parse = {
-            "frames": [{
-                "predicate": "cause",
-                "arguments": {"agent": ["Heat"], "patient": ["Expansion"]},
-                "frame_type": "causation",
-                "confidence": 0.85,
-            }]
+            "frames": [
+                {
+                    "predicate": "cause",
+                    "arguments": {"agent": ["Heat"], "patient": ["Expansion"]},
+                    "frame_type": "causation",
+                    "confidence": 0.85,
+                }
+            ]
         }
         result = await systems.convert_to_formalism(parse, LogicFormalism.PLN)
         assert "Link" in result
@@ -387,8 +430,13 @@ class TestLogicSystems:
     @pytest.mark.asyncio
     async def test_convert_pln_rules(self, systems):
         rules = [
-            {"rule_type": "ImplicationLink", "premise": ["Rain"], "conclusion": "Wet",
-             "strength": 0.9, "confidence": 0.8}
+            {
+                "rule_type": "ImplicationLink",
+                "premise": ["Rain"],
+                "conclusion": "Wet",
+                "strength": 0.9,
+                "confidence": 0.8,
+            }
         ]
         result = await systems.convert_to_formalism(
             {"frames": []}, LogicFormalism.PLN, pln_rules=rules
@@ -413,17 +461,13 @@ class TestLogicSystems:
 
     @pytest.mark.asyncio
     async def test_convert_to_temporal_from_parsed(self, systems):
-        result = await systems._convert_to_temporal_from_parsed(
-            {"predicates": ["Rain"]}
-        )
+        result = await systems._convert_to_temporal_from_parsed({"predicates": ["Rain"]})
         assert "◊" in result
         assert "Rain" in result
 
     @pytest.mark.asyncio
     async def test_convert_to_modal_from_parsed(self, systems):
-        result = await systems._convert_to_modal_from_parsed(
-            {"predicates": ["Fly"]}
-        )
+        result = await systems._convert_to_modal_from_parsed({"predicates": ["Fly"]})
         assert "◊" in result
 
     @pytest.mark.asyncio
@@ -439,11 +483,17 @@ class TestLogicSystems:
 # Context Manager Tests
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestContextType:
     def test_all_types(self):
         expected = {
-            "conversational", "domain", "temporal", "spatial",
-            "user_profile", "session", "discourse",
+            "conversational",
+            "domain",
+            "temporal",
+            "spatial",
+            "user_profile",
+            "session",
+            "discourse",
         }
         actual = {ct.value for ct in ContextType}
         assert actual == expected
@@ -452,30 +502,46 @@ class TestContextType:
 class TestContextItem:
     def test_creation(self):
         item = ContextItem(
-            key="test", value="val", context_type=ContextType.DOMAIN,
-            timestamp=time.time(), confidence=0.9, source="user",
+            key="test",
+            value="val",
+            context_type=ContextType.DOMAIN,
+            timestamp=time.time(),
+            confidence=0.9,
+            source="user",
         )
         assert item.decay_rate == 0.1
         assert item.importance == 0.5
 
     def test_not_expired(self):
         item = ContextItem(
-            key="t", value="v", context_type=ContextType.SESSION,
-            timestamp=time.time(), confidence=0.8, source="sys",
+            key="t",
+            value="v",
+            context_type=ContextType.SESSION,
+            timestamp=time.time(),
+            confidence=0.8,
+            source="sys",
         )
         assert item.is_expired() is False
 
     def test_expired(self):
         item = ContextItem(
-            key="t", value="v", context_type=ContextType.SESSION,
-            timestamp=time.time() - 7200, confidence=0.8, source="sys",
+            key="t",
+            value="v",
+            context_type=ContextType.SESSION,
+            timestamp=time.time() - 7200,
+            confidence=0.8,
+            source="sys",
         )
         assert item.is_expired(max_age=3600) is True
 
     def test_decayed_confidence(self):
         item = ContextItem(
-            key="t", value="v", context_type=ContextType.SESSION,
-            timestamp=time.time(), confidence=0.8, source="sys",
+            key="t",
+            value="v",
+            context_type=ContextType.SESSION,
+            timestamp=time.time(),
+            confidence=0.8,
+            source="sys",
             decay_rate=0.1,
         )
         # Just created → confidence ≈ original
@@ -484,8 +550,12 @@ class TestContextItem:
 
     def test_decayed_confidence_old(self):
         item = ContextItem(
-            key="t", value="v", context_type=ContextType.SESSION,
-            timestamp=time.time() - 36000, confidence=1.0, source="sys",
+            key="t",
+            value="v",
+            context_type=ContextType.SESSION,
+            timestamp=time.time() - 36000,
+            confidence=1.0,
+            source="sys",
             decay_rate=0.5,
         )
         conf = item.get_current_confidence()
@@ -569,30 +639,21 @@ class TestContextManager:
         cm.update_session_context("s1", "I need this done by tomorrow morning")
         ctx = cm.get_session_context("s1")
         # Should extract "tomorrow" and "morning"
-        temporal_items = [
-            k for k in ctx.get("current_context", {})
-            if k.startswith("temporal_")
-        ]
+        temporal_items = [k for k in ctx.get("current_context", {}) if k.startswith("temporal_")]
         assert len(temporal_items) >= 1
 
     def test_domain_context_extraction(self, cm):
         cm.create_session("s1")
         cm.update_session_context("s1", "The patient needs medical treatment")
         ctx = cm.get_session_context("s1")
-        domain_items = [
-            k for k in ctx.get("current_context", {})
-            if k.startswith("domain_")
-        ]
+        domain_items = [k for k in ctx.get("current_context", {}) if k.startswith("domain_")]
         assert len(domain_items) >= 1
 
     def test_spatial_context_extraction(self, cm):
         cm.create_session("s1")
         cm.update_session_context("s1", "It is nearby the building")
         ctx = cm.get_session_context("s1")
-        spatial_items = [
-            k for k in ctx.get("current_context", {})
-            if k.startswith("spatial_")
-        ]
+        spatial_items = [k for k in ctx.get("current_context", {}) if k.startswith("spatial_")]
         assert len(spatial_items) >= 1
 
     def test_active_topics(self, cm):
@@ -637,10 +698,12 @@ class TestContextManager:
         cm.create_session("s1")
         # Add an expired item directly
         item = ContextItem(
-            key="old_item", value="old",
+            key="old_item",
+            value="old",
             context_type=ContextType.SESSION,
             timestamp=time.time() - 7200,  # 2 hours ago
-            confidence=0.5, source="test",
+            confidence=0.5,
+            source="test",
         )
         cm.sessions["s1"].context_items["old_item"] = item
         cm.cleanup_expired_context()

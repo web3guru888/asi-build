@@ -17,9 +17,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     VectorUtils = None
 
-__all__ = [
-    "VectorDBConfig",
-    "EmbeddingPipeline",
-    "SemanticSearchEngine", 
-    "VectorUtils"
-]
+__all__ = ["VectorDBConfig", "EmbeddingPipeline", "SemanticSearchEngine", "VectorUtils"]

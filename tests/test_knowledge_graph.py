@@ -17,11 +17,11 @@ import time
 
 import pytest
 
-from asi_build.knowledge_graph.temporal_kg import TemporalKnowledgeGraph
 from asi_build.knowledge_graph.pathfinder import KGPathfinder
-
+from asi_build.knowledge_graph.temporal_kg import TemporalKnowledgeGraph
 
 # ── Fixtures ───────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def kg():
@@ -39,18 +39,43 @@ def populated_kg(kg):
         co2 --correlated_with--> temperature (conf 0.8)
         sea_level_rise --affects--> coastal_cities (conf 0.75)
     """
-    kg.add_triple("temperature", "causes", "ice_melting",
-                   source="climate_study", confidence=0.9, agent="researcher_1")
-    kg.add_triple("ice_melting", "causes", "sea_level_rise",
-                   source="climate_study", confidence=0.85, agent="researcher_1")
-    kg.add_triple("co2", "correlated_with", "temperature",
-                   source="ipcc_ar6", confidence=0.8, agent="researcher_2")
-    kg.add_triple("sea_level_rise", "affects", "coastal_cities",
-                   source="impact_analysis", confidence=0.75, agent="researcher_2")
+    kg.add_triple(
+        "temperature",
+        "causes",
+        "ice_melting",
+        source="climate_study",
+        confidence=0.9,
+        agent="researcher_1",
+    )
+    kg.add_triple(
+        "ice_melting",
+        "causes",
+        "sea_level_rise",
+        source="climate_study",
+        confidence=0.85,
+        agent="researcher_1",
+    )
+    kg.add_triple(
+        "co2",
+        "correlated_with",
+        "temperature",
+        source="ipcc_ar6",
+        confidence=0.8,
+        agent="researcher_2",
+    )
+    kg.add_triple(
+        "sea_level_rise",
+        "affects",
+        "coastal_cities",
+        source="impact_analysis",
+        confidence=0.75,
+        agent="researcher_2",
+    )
     return kg
 
 
 # ── Triple CRUD ────────────────────────────────────────────────────────
+
 
 class TestTripleCRUD:
     def test_add_and_get_triple(self, kg):
@@ -103,11 +128,15 @@ class TestTripleCRUD:
 
 # ── Contradiction Detection ────────────────────────────────────────────
 
+
 class TestContradictions:
     def test_detect_contradiction(self, kg):
         kg.add_triple("earth", "orbits", "sun", confidence=0.99)
         conflicts = kg.detect_contradictions(
-            "earth", "orbits", "mars", 0.5,
+            "earth",
+            "orbits",
+            "mars",
+            0.5,
         )
         assert len(conflicts) == 1
         assert conflicts[0]["object"] == "sun"
@@ -117,7 +146,10 @@ class TestContradictions:
         kg.add_triple("earth", "orbits", "sun", confidence=0.99)
         # Same object — not a contradiction
         conflicts = kg.detect_contradictions(
-            "earth", "orbits", "sun", 0.8,
+            "earth",
+            "orbits",
+            "sun",
+            0.8,
         )
         assert len(conflicts) == 0
 
@@ -162,13 +194,16 @@ class TestContradictions:
 
 # ── Temporal Queries ───────────────────────────────────────────────────
 
+
 class TestTemporalQueries:
     def test_temporal_history(self, kg):
         # Two versions of the same relationship
-        kg.add_triple("earth", "temperature", "15C", confidence=0.8,
-                       valid_at="2020-01-01T00:00:00Z")
-        kg.add_triple("earth", "temperature", "15.5C", confidence=0.9,
-                       valid_at="2025-01-01T00:00:00Z")
+        kg.add_triple(
+            "earth", "temperature", "15C", confidence=0.8, valid_at="2020-01-01T00:00:00Z"
+        )
+        kg.add_triple(
+            "earth", "temperature", "15.5C", confidence=0.9, valid_at="2025-01-01T00:00:00Z"
+        )
 
         history = kg.get_temporal_history("earth", "temperature")
         assert len(history) == 2
@@ -177,13 +212,11 @@ class TestTemporalQueries:
         assert history[1]["valid_at"] == "2025-01-01T00:00:00Z"
 
     def test_get_valid_at_point_in_time(self, kg):
-        tid1 = kg.add_triple("earth", "status", "warming",
-                              valid_at="2000-01-01T00:00:00Z")
+        tid1 = kg.add_triple("earth", "status", "warming", valid_at="2000-01-01T00:00:00Z")
         # Invalidate after a while
         kg.invalidate_triple(tid1)
 
-        kg.add_triple("earth", "status", "critical_warming",
-                       valid_at="2025-01-01T00:00:00Z")
+        kg.add_triple("earth", "status", "critical_warming", valid_at="2025-01-01T00:00:00Z")
 
         # At 2010, only the first should be valid (it wasn't invalidated yet
         # by that time — but since invalidation happened instantly in test,
@@ -194,14 +227,14 @@ class TestTemporalQueries:
         assert "critical_warming" in objects
 
     def test_get_valid_at_excludes_not_yet_valid(self, kg):
-        kg.add_triple("future_event", "happens_at", "2030",
-                       valid_at="2030-01-01T00:00:00Z")
+        kg.add_triple("future_event", "happens_at", "2030", valid_at="2030-01-01T00:00:00Z")
         valid_now = kg.get_valid_at("2025-01-01T00:00:00Z")
         future_ids = [t for t in valid_now if t["subject"] == "future_event"]
         assert len(future_ids) == 0
 
 
 # ── Entity Relations ───────────────────────────────────────────────────
+
 
 class TestEntityRelations:
     def test_get_entity_relations(self, populated_kg):
@@ -220,6 +253,7 @@ class TestEntityRelations:
 
 
 # ── Statistics ─────────────────────────────────────────────────────────
+
 
 class TestStatistics:
     def test_empty_kg_stats(self, kg):
@@ -249,6 +283,7 @@ class TestStatistics:
 
 
 # ── Pheromones ─────────────────────────────────────────────────────────
+
 
 class TestPheromones:
     def test_deposit_and_read(self, kg):
@@ -322,6 +357,7 @@ class TestPheromones:
 
 # ── Provenance ─────────────────────────────────────────────────────────
 
+
 class TestProvenance:
     def test_provenance_recorded_on_add(self, kg):
         tid = kg.add_triple("A", "causes", "B", agent="agent_1", source="study_x")
@@ -351,6 +387,7 @@ class TestProvenance:
 
 # ── Text Search ────────────────────────────────────────────────────────
 
+
 class TestSearch:
     def test_search_by_subject(self, populated_kg):
         results = populated_kg.search_triples("temperature")
@@ -366,6 +403,7 @@ class TestSearch:
 
 
 # ── Pathfinder ─────────────────────────────────────────────────────────
+
 
 class TestPathfinder:
     def test_basic_path(self, populated_kg):
@@ -412,15 +450,18 @@ class TestPathfinder:
 
     def test_path_with_embedding_fn(self, populated_kg):
         """A* with a simple mock embedding function."""
+
         # Simple embeddings: hash-based deterministic vectors
         def mock_embedding(entity: str):
             import hashlib
+
             h = hashlib.md5(entity.encode()).hexdigest()
             return [int(c, 16) / 15.0 for c in h]
 
         pf = KGPathfinder(populated_kg)
         result = pf.find_path(
-            "co2", "coastal_cities",
+            "co2",
+            "coastal_cities",
             max_hops=10,
             embedding_fn=mock_embedding,
         )

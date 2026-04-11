@@ -22,9 +22,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     CommandTranslator = None
 
-__all__ = [
-    'NeuralController',
-    'CursorController',
-    'DeviceControlInterface',
-    'CommandTranslator'
-]
+__all__ = ["NeuralController", "CursorController", "DeviceControlInterface", "CommandTranslator"]

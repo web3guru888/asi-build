@@ -5,7 +5,7 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     BasicHomomorphicOperations = None
 try:
-    from .ml_examples import EncryptedMLExamples  
+    from .ml_examples import EncryptedMLExamples
 except (ImportError, ModuleNotFoundError, SyntaxError):
     EncryptedMLExamples = None
 try:
@@ -17,4 +17,9 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     EncryptedDatabaseExamples = None
 
-__all__ = ["BasicHomomorphicOperations", "EncryptedMLExamples", "MPCExamples", "EncryptedDatabaseExamples"]
+__all__ = [
+    "BasicHomomorphicOperations",
+    "EncryptedMLExamples",
+    "MPCExamples",
+    "EncryptedDatabaseExamples",
+]

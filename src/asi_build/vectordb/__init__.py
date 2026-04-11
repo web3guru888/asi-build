@@ -55,28 +55,31 @@ __author__ = "Kenny AGI System"
 
 __all__ = [
     "VectorDBConfig",
-    "EmbeddingPipeline", 
+    "EmbeddingPipeline",
     "SemanticSearchEngine",
     "PineconeClient",
-    "WeaviateClient", 
+    "WeaviateClient",
     "QdrantClient",
     "UnifiedVectorDB",
     "IndexingAPI",
-    "RetrievalAPI"
+    "RetrievalAPI",
 ]
+
 
 def get_version():
     """Return the version of the Kenny Vector Database system."""
     return __version__
 
+
 def list_available_databases():
     """Return a list of supported vector databases."""
     return ["pinecone", "weaviate", "qdrant"]
 
+
 def create_client(database_type: str, **config):
     """Factory method to create vector database clients."""
     database_type = database_type.lower()
-    
+
     if database_type == "pinecone":
         return PineconeClient(**config)
     elif database_type == "weaviate":

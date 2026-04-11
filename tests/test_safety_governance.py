@@ -10,93 +10,96 @@ Covers:
   6. Consensus (QuadraticVotingSystem, LiquidDemocracy, MultiStakeholderConsensus)
 """
 
-import sys
-import os
-import math
 import hashlib
+import math
+import os
+import sys
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
 
 # Add src/ to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 # --- Formal Verification imports ---
 from asi_build.safety.formal_verification import (
-    TheoremProver,
-    EthicalVerificationEngine,
     EthicalAxiom,
     EthicalConstraint,
-    LogicalPredicate,
     EthicalPrinciple,
+    EthicalVerificationEngine,
     FormalProof,
-)
-
-# --- Governance Engine imports ---
-from asi_build.safety.governance.engine import (
-    GovernanceEngine,
-    Proposal,
-    Stakeholder,
-    StakeholderType,
-    ProposalStatus,
-    VoteType,
-    GovernanceDecision,
-    EthicalFramework,
-    UtilitarianFramework,
-    DeontologicalFramework,
-    VirtueEthicsFramework,
-)
-
-# --- DAO imports ---
-from asi_build.safety.governance.dao import (
-    QuadraticVoting,
-    DAOTreasury,
-    ReputationSystem,
-    TokenType,
-)
-
-# --- Ledger imports ---
-from asi_build.safety.governance.ledger import (
-    MerkleTree,
-    PublicLedger,
-    AuditRecord,
-    AuditEventType,
-    AuditLevel,
-    VerificationStatus,
-    Block,
-)
-
-# --- Contracts imports ---
-from asi_build.safety.governance.contracts import (
-    GovernanceTokenContract,
-    ProposalContract,
-    EthicsEnforcementContract,
-    ContractRegistry,
-    ContractState,
-    deploy_governance_contracts,
+    LogicalPredicate,
+    TheoremProver,
 )
 
 # --- Consensus imports ---
 from asi_build.safety.governance.consensus import (
-    QuadraticVotingSystem,
+    ConsensusStatus,
     LiquidDemocracy,
     MultiStakeholderConsensus,
-    StakeholderProfile,
+    QuadraticVotingSystem,
     StakeholderCategory,
+    StakeholderProfile,
     VotingMethod,
-    ConsensusStatus,
 )
 
+# --- Contracts imports ---
+from asi_build.safety.governance.contracts import (
+    ContractRegistry,
+    ContractState,
+    EthicsEnforcementContract,
+    GovernanceTokenContract,
+    ProposalContract,
+    deploy_governance_contracts,
+)
+
+# --- DAO imports ---
+from asi_build.safety.governance.dao import (
+    DAOTreasury,
+    QuadraticVoting,
+    ReputationSystem,
+    TokenType,
+)
+
+# --- Governance Engine imports ---
+from asi_build.safety.governance.engine import (
+    DeontologicalFramework,
+    EthicalFramework,
+    GovernanceDecision,
+    GovernanceEngine,
+    Proposal,
+    ProposalStatus,
+    Stakeholder,
+    StakeholderType,
+    UtilitarianFramework,
+    VirtueEthicsFramework,
+    VoteType,
+)
+
+# --- Ledger imports ---
+from asi_build.safety.governance.ledger import (
+    AuditEventType,
+    AuditLevel,
+    AuditRecord,
+    Block,
+    MerkleTree,
+    PublicLedger,
+    VerificationStatus,
+)
 
 # ============================================================
 # Helpers / Fixtures
 # ============================================================
 
-def _make_stakeholder(sid: str = "s1", name: str = "Alice",
-                      stype: StakeholderType = StakeholderType.HUMAN_INDIVIDUAL,
-                      voting_power: float = 1.0,
-                      verified: bool = True) -> Stakeholder:
+
+def _make_stakeholder(
+    sid: str = "s1",
+    name: str = "Alice",
+    stype: StakeholderType = StakeholderType.HUMAN_INDIVIDUAL,
+    voting_power: float = 1.0,
+    verified: bool = True,
+) -> Stakeholder:
     return Stakeholder(
         id=sid,
         name=name,
@@ -109,10 +112,13 @@ def _make_stakeholder(sid: str = "s1", name: str = "Alice",
     )
 
 
-def _make_proposal(pid: str = "p1", proposer: str = "s1",
-                    title: str = "Test Proposal",
-                    deadline: datetime = None,
-                    impact: dict = None) -> Proposal:
+def _make_proposal(
+    pid: str = "p1",
+    proposer: str = "s1",
+    title: str = "Test Proposal",
+    deadline: datetime = None,
+    impact: dict = None,
+) -> Proposal:
     if deadline is None:
         deadline = datetime.utcnow() + timedelta(days=7)
     return Proposal(
@@ -133,8 +139,7 @@ def _make_proposal(pid: str = "p1", proposer: str = "s1",
     )
 
 
-def _make_audit_record(rid: str = "r1",
-                       tx_hash: str = "abc123") -> AuditRecord:
+def _make_audit_record(rid: str = "r1", tx_hash: str = "abc123") -> AuditRecord:
     return AuditRecord(
         id=rid,
         event_type=AuditEventType.DECISION_MADE,
@@ -162,6 +167,7 @@ def _txctx(caller: str = "deployer", **kw) -> dict:
 # ============================================================
 # Section 1: Formal Verification (5 tests)
 # ============================================================
+
 
 class TestFormalVerification:
     """Tests for TheoremProver and EthicalVerificationEngine."""
@@ -218,12 +224,14 @@ class TestFormalVerification:
         engine.add_constraint(constraint)
         assert "c1" in engine.constraints
 
-        result = engine.verify_proposal_ethics({
-            "has_human_oversight": True,
-            "causes_harm": False,
-            "is_beneficial": True,
-            "impact_assessment": {"harm_level": 0, "benefit_level": 0.9},
-        })
+        result = engine.verify_proposal_ethics(
+            {
+                "has_human_oversight": True,
+                "causes_harm": False,
+                "is_beneficial": True,
+                "impact_assessment": {"harm_level": 0, "benefit_level": 0.9},
+            }
+        )
         assert "overall_valid" in result
         assert isinstance(result["constraint_results"], dict)
         assert "c1" in result["constraint_results"]
@@ -241,6 +249,7 @@ class TestFormalVerification:
 # ============================================================
 # Section 2: Governance Engine (5 tests)
 # ============================================================
+
 
 class TestGovernanceEngine:
     """Tests for GovernanceEngine lifecycle, voting, ethical frameworks."""
@@ -358,9 +367,9 @@ class TestGovernanceEngine:
 
         proposal = _make_proposal("p1", "s1")
         engine.submit_proposal(proposal)
-        engine.cast_vote("p1", "s1", VoteType.FOR)       # 10
-        engine.cast_vote("p1", "s2", VoteType.AGAINST)    # 5
-        engine.cast_vote("p1", "s3", VoteType.FOR)        # 5
+        engine.cast_vote("p1", "s1", VoteType.FOR)  # 10
+        engine.cast_vote("p1", "s2", VoteType.AGAINST)  # 5
+        engine.cast_vote("p1", "s3", VoteType.FOR)  # 5
 
         # Move deadline to past for finalization
         engine.proposals["p1"].voting_deadline = datetime.utcnow() - timedelta(seconds=1)
@@ -373,6 +382,7 @@ class TestGovernanceEngine:
 # ============================================================
 # Section 3: DAO (5 tests)
 # ============================================================
+
 
 class TestDAO:
     """Tests for QuadraticVoting, DAOTreasury, ReputationSystem."""
@@ -423,12 +433,13 @@ class TestDAO:
         rep.decay_reputation(days_passed=10)
         # decay_factor = 0.99^10 ≈ 0.904382
         # But bob's score was set *after* previous decay, and alice's was decayed twice
-        assert rep.reputation_scores["bob"] == pytest.approx(100.0 * 0.99 ** 10, rel=1e-4)
+        assert rep.reputation_scores["bob"] == pytest.approx(100.0 * 0.99**10, rel=1e-4)
 
 
 # ============================================================
 # Section 4: Merkle Tree & Ledger (5 tests)
 # ============================================================
+
 
 class TestMerkleTreeAndLedger:
     """Tests for MerkleTree and PublicLedger."""
@@ -491,6 +502,7 @@ class TestMerkleTreeAndLedger:
 # ============================================================
 # Section 5: Smart Contracts (5 tests)
 # ============================================================
+
 
 class TestSmartContracts:
     """Tests for GovernanceTokenContract, ProposalContract, EthicsEnforcementContract."""
@@ -565,6 +577,7 @@ class TestSmartContracts:
 # Section 6: Consensus (5 tests)
 # ============================================================
 
+
 class TestConsensus:
     """Tests for QuadraticVotingSystem, LiquidDemocracy, MultiStakeholderConsensus."""
 
@@ -616,7 +629,8 @@ class TestConsensus:
 
         # Register stakeholders
         sp1 = StakeholderProfile(
-            id="s1", name="Alice",
+            id="s1",
+            name="Alice",
             category=StakeholderCategory.TECHNICAL_EXPERTS,
             expertise_domains=["ai"],
             credibility_score=0.9,
@@ -628,7 +642,8 @@ class TestConsensus:
             created_at=datetime.utcnow(),
         )
         sp2 = StakeholderProfile(
-            id="s2", name="Bob",
+            id="s2",
+            name="Bob",
             category=StakeholderCategory.GENERAL_PUBLIC,
             expertise_domains=[],
             credibility_score=0.8,
@@ -657,10 +672,12 @@ class TestConsensus:
 
         # Cast votes
         ok1, msg1 = msc.cast_consensus_vote(
-            process_id, "s1", {"direction": "for", "reasoning": "good"})
+            process_id, "s1", {"direction": "for", "reasoning": "good"}
+        )
         assert ok1 is True
         ok2, msg2 = msc.cast_consensus_vote(
-            process_id, "s2", {"direction": "for", "reasoning": "agree"})
+            process_id, "s2", {"direction": "for", "reasoning": "agree"}
+        )
         assert ok2 is True
         assert len(process.votes) == 2
 
@@ -668,6 +685,7 @@ class TestConsensus:
 # ============================================================
 # Extra tests for edge cases and deploy_governance_contracts
 # ============================================================
+
 
 class TestEdgeCases:
     """Additional edge case tests."""
@@ -699,7 +717,9 @@ class TestEdgeCases:
     def test_reputation_system_update_and_get_power(self):
         """ReputationSystem updates and calculates voting power."""
         rep = ReputationSystem()
-        rep.update_reputation("alice", "good_proposal", 1.0, {"quality_score": 1.0, "consensus_level": 1.0})
+        rep.update_reputation(
+            "alice", "good_proposal", 1.0, {"quality_score": 1.0, "consensus_level": 1.0}
+        )
         assert rep.reputation_scores["alice"] > 0
         power = rep.get_voting_power("alice", base_tokens=100.0)
         # multiplier = 1 + (score / 100)
@@ -717,7 +737,9 @@ class TestEdgeCases:
     def test_virtue_ethics_framework_rejects_no_virtues(self):
         """VirtueEthicsFramework rejects proposal with no virtues."""
         framework = VirtueEthicsFramework()
-        proposal = _make_proposal("p1", "s1", impact={"virtues_promoted": [], "vices_encouraged": []})
+        proposal = _make_proposal(
+            "p1", "s1", impact={"virtues_promoted": [], "vices_encouraged": []}
+        )
         passed, reason = framework.verify_proposal(proposal)
         assert passed is False
         assert "does not promote" in reason.lower()

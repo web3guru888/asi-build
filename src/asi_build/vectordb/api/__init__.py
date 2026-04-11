@@ -13,8 +13,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     RetrievalAPI = None
 
-__all__ = [
-    "UnifiedVectorDB",
-    "IndexingAPI", 
-    "RetrievalAPI"
-]
+__all__ = ["UnifiedVectorDB", "IndexingAPI", "RetrievalAPI"]

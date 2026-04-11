@@ -116,13 +116,11 @@ def test_show_triggers_tool():
     password = ""
     memgraph_client = Memgraph(url=url, username=user, password=password)
 
-    memgraph_client.query(
-        """
+    memgraph_client.query("""
         CREATE TRIGGER my_trigger ON () CREATE AFTER COMMIT EXECUTE
         UNWIND createdVertices AS newNodes
         SET newNodes.created = timestamp();
-        """
-    )
+        """)
 
     trigger_tool = ShowTriggersTool(db=memgraph_client)
     result = trigger_tool.call({})
@@ -142,11 +140,9 @@ def test_page_rank():
     memgraph_client = Memgraph(url=url, username=user, password=password)
 
     # Create a sample graph for testing
-    memgraph_client.query(
-        """UNWIND range(1, 10) AS i
+    memgraph_client.query("""UNWIND range(1, 10) AS i
            CREATE (:Test {id: i})-[:LINK]->(:Test {id: i + 1}); 
-        """
-    )
+        """)
 
     # Run the PageRank tool
     page_rank_tool = PageRankTool(db=memgraph_client)
@@ -229,12 +225,10 @@ def test_betweenness_centrality_tool():
     password = ""
     memgraph_client = Memgraph(url=url, username=user, password=password)
 
-    memgraph_client.query(
-        """
+    memgraph_client.query("""
         UNWIND range(1, 5) AS i
         CREATE (a:Node {id: i})-[:RELATES]->(b:Node {id: i + 1});
-        """
-    )
+        """)
 
     betweenness_tool = BetweennessCentralityTool(db=memgraph_client)
     result = betweenness_tool.call({"isDirectionIgnored": True, "limit": 5})

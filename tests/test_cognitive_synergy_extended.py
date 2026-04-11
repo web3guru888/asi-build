@@ -14,88 +14,88 @@ Covers ALL submodules not tested in test_cognitive_synergy.py:
 All tests run standalone without optional deps (torch) — only numpy, scipy, networkx, sklearn.
 """
 
-import time
 import threading
+import time
 from collections import defaultdict, deque
 from unittest.mock import MagicMock, patch
 
-import numpy as np
 import networkx as nx
+import numpy as np
 import pytest
 
+from asi_build.cognitive_synergy.core.cognitive_synergy_engine import (
+    CognitiveDynamic,
+    CognitiveSynergyEngine,
+    SynergyPair,
+)
+from asi_build.cognitive_synergy.core.emergent_properties import (
+    BehavioralEmergenceDetector,
+    EmergenceSignature,
+    EmergentProperty,
+    EmergentPropertyDetector,
+    FunctionalEmergenceDetector,
+    StructuralEmergenceDetector,
+)
+from asi_build.cognitive_synergy.core.primus_foundation import (
+    CognitivePrimitive,
+    PRIMUSFoundation,
+    PRIMUSState,
+)
+from asi_build.cognitive_synergy.core.self_organization import (
+    AdaptiveRestructurer,
+    CoherenceMaintainer,
+    HomeostaticController,
+    OrganizationRule,
+    OrganizationState,
+    ResourceOptimizer,
+    SelfOrganizationMechanism,
+)
+from asi_build.cognitive_synergy.pattern_reasoning.pattern_mining_engine import (
+    Pattern,
+    PatternHierarchy,
+    PatternMiningEngine,
+)
+from asi_build.cognitive_synergy.pattern_reasoning.pattern_reasoning_synergy import (
+    AbstractionEngine,
+    AttentionCoordinator,
+    CrossValidationEngine,
+    PatternReasoningSynergy,
+    SynergyEvent,
+)
+from asi_build.cognitive_synergy.pattern_reasoning.reasoning_engine import (
+    AbductiveRule,
+    DeductiveRule,
+    Hypothesis,
+    InductiveRule,
+    Inference,
+    KnowledgeItem,
+    ReasoningEngine,
+    ReasoningType,
+)
+from asi_build.cognitive_synergy.perception_action.action_engine import (
+    ActionEngine,
+)
+from asi_build.cognitive_synergy.perception_action.perception_engine import (
+    PerceptionEngine,
+)
+from asi_build.cognitive_synergy.perception_action.sensorimotor_synergy import (
+    ActionState,
+    ForwardModel,
+    InverseModel,
+    PerceptionState,
+    SensorimotorLoop,
+    SensorimotorSynergy,
+)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Module imports
 # ═══════════════════════════════════════════════════════════════════════════
 
-from asi_build.cognitive_synergy.core.primus_foundation import (
-    PRIMUSFoundation,
-    PRIMUSState,
-    CognitivePrimitive,
-)
-from asi_build.cognitive_synergy.core.cognitive_synergy_engine import (
-    CognitiveSynergyEngine,
-    SynergyPair,
-    CognitiveDynamic,
-)
-from asi_build.cognitive_synergy.core.emergent_properties import (
-    EmergentPropertyDetector,
-    EmergentProperty,
-    EmergenceSignature,
-    BehavioralEmergenceDetector,
-    StructuralEmergenceDetector,
-    FunctionalEmergenceDetector,
-)
-from asi_build.cognitive_synergy.core.self_organization import (
-    SelfOrganizationMechanism,
-    HomeostaticController,
-    AdaptiveRestructurer,
-    ResourceOptimizer,
-    CoherenceMaintainer,
-    OrganizationRule,
-    OrganizationState,
-)
-from asi_build.cognitive_synergy.pattern_reasoning.reasoning_engine import (
-    ReasoningEngine,
-    ReasoningType,
-    Hypothesis,
-    Inference,
-    KnowledgeItem,
-    DeductiveRule,
-    InductiveRule,
-    AbductiveRule,
-)
-from asi_build.cognitive_synergy.pattern_reasoning.pattern_mining_engine import (
-    PatternMiningEngine,
-    Pattern,
-    PatternHierarchy,
-)
-from asi_build.cognitive_synergy.pattern_reasoning.pattern_reasoning_synergy import (
-    PatternReasoningSynergy,
-    AbstractionEngine,
-    AttentionCoordinator,
-    CrossValidationEngine,
-    SynergyEvent,
-)
-from asi_build.cognitive_synergy.perception_action.perception_engine import (
-    PerceptionEngine,
-)
-from asi_build.cognitive_synergy.perception_action.action_engine import (
-    ActionEngine,
-)
-from asi_build.cognitive_synergy.perception_action.sensorimotor_synergy import (
-    SensorimotorSynergy,
-    SensorimotorLoop,
-    PerceptionState,
-    ActionState,
-    ForwardModel,
-    InverseModel,
-)
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 1. PRIMUS Foundation
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestPRIMUSDataclasses:
     """PRIMUSState and CognitivePrimitive dataclasses."""
@@ -146,7 +146,9 @@ class TestPRIMUSFoundation:
     def test_add_primitive_connections(self):
         p = self._make_primus()
         p.add_primitive(CognitivePrimitive(name="a", type="concept", content="a"))
-        p.add_primitive(CognitivePrimitive(name="b", type="concept", content="b", connections=["a"]))
+        p.add_primitive(
+            CognitivePrimitive(name="b", type="concept", content="b", connections=["a"])
+        )
         assert p.understanding_graph.has_edge("b", "a")
 
     def test_compute_synergy_missing_primitive(self):
@@ -158,12 +160,24 @@ class TestPRIMUSFoundation:
         1-D list returns a scalar, not a 2×2 matrix, so [0,1] indexing raises
         IndexError.  We document the bug and verify the other components work."""
         p = self._make_primus()
-        p.add_primitive(CognitivePrimitive(
-            name="p1", type="pattern", content="hello world", activation=0.8, connections=["p2"],
-        ))
-        p.add_primitive(CognitivePrimitive(
-            name="p2", type="concept", content="hello there", activation=0.7, connections=["p1"],
-        ))
+        p.add_primitive(
+            CognitivePrimitive(
+                name="p1",
+                type="pattern",
+                content="hello world",
+                activation=0.8,
+                connections=["p2"],
+            )
+        )
+        p.add_primitive(
+            CognitivePrimitive(
+                name="p2",
+                type="concept",
+                content="hello there",
+                activation=0.7,
+                connections=["p1"],
+            )
+        )
         # BUG: np.corrcoef([scalar, scalar]) → scalar, not 2x2 matrix
         with pytest.raises(IndexError):
             p.compute_synergy("p1", "p2")
@@ -255,7 +269,11 @@ class TestPRIMUSFoundation:
 
     def test_synthesize_understanding_with_patterns(self):
         p = self._make_primus()
-        p.pattern_space["sp1"] = {"synergy": 0.8, "timestamp": time.time(), "components": ["a", "b"]}
+        p.pattern_space["sp1"] = {
+            "synergy": 0.8,
+            "timestamp": time.time(),
+            "components": ["a", "b"],
+        }
         p._synthesize_understanding()
         assert p.current_state.understanding_level == pytest.approx(0.8, abs=0.01)
 
@@ -292,6 +310,7 @@ class TestPRIMUSFoundation:
 # ═══════════════════════════════════════════════════════════════════════════
 # 2. Cognitive Synergy Engine
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestSynergyPairDataclass:
     def test_defaults(self):
@@ -330,8 +349,10 @@ class TestCognitiveSynergyEngine:
 
     def test_register_module_without_initialize(self):
         e = self._make_engine()
+
         class SimpleModule:
             pass
+
         e.register_module("simple", SimpleModule())
         assert "simple" in e.modules
 
@@ -344,8 +365,10 @@ class TestCognitiveSynergyEngine:
 
     def test_get_module_state_with_state_attr(self):
         e = self._make_engine()
+
         class Mod:
             state = {"x": 1}
+
         state = e._get_module_state(Mod())
         assert state == {"x": 1}
 
@@ -547,12 +570,19 @@ class TestCognitiveSynergyEngine:
 # 3. Emergent Properties
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestEmergentPropertyDataclass:
     def test_basic_creation(self):
         ep = EmergentProperty(
-            id="ep1", name="test", description="desc",
-            emergence_type="behavioral", strength=0.8, novelty=0.9,
-            stability=0.7, complexity=0.6, contributing_processes=["a"]
+            id="ep1",
+            name="test",
+            description="desc",
+            emergence_type="behavioral",
+            strength=0.8,
+            novelty=0.9,
+            stability=0.7,
+            complexity=0.6,
+            contributing_processes=["a"],
         )
         assert ep.observation_count == 1
         assert ep.evidence == []
@@ -566,22 +596,14 @@ class TestBehavioralEmergenceDetector:
 
     def test_detect_high_synergy_behavior(self):
         d = BehavioralEmergenceDetector(novelty_threshold=0.5)
-        state = {
-            "synergy_pairs": {
-                "pattern_reasoning": {"synergy_strength": 0.9}
-            }
-        }
+        state = {"synergy_pairs": {"pattern_reasoning": {"synergy_strength": 0.9}}}
         results = d.detect(state)
         assert len(results) >= 1
         assert results[0].emergence_type == "behavioral"
 
     def test_known_behavior_not_novel(self):
         d = BehavioralEmergenceDetector(novelty_threshold=0.5)
-        state = {
-            "synergy_pairs": {
-                "p_r": {"synergy_strength": 0.9}
-            }
-        }
+        state = {"synergy_pairs": {"p_r": {"synergy_strength": 0.9}}}
         # First detection → novel
         r1 = d.detect(state)
         assert len(r1) >= 1
@@ -611,8 +633,9 @@ class TestBehavioralEmergenceDetector:
 
     def test_signature_similarity(self):
         d = BehavioralEmergenceDetector()
-        sim = d._compute_signature_similarity("coord_pattern_reasoning_0.90",
-                                               "coord_pattern_reasoning_0.85")
+        sim = d._compute_signature_similarity(
+            "coord_pattern_reasoning_0.90", "coord_pattern_reasoning_0.85"
+        )
         assert sim > 0.5  # High overlap in words
 
     def test_get_detector_type(self):
@@ -671,21 +694,13 @@ class TestFunctionalEmergenceDetector:
 
     def test_problem_solving_function(self):
         d = FunctionalEmergenceDetector(capability_threshold=0.5)
-        state = {
-            "synergy_pairs": {
-                "pattern_reasoning": {"synergy_strength": 0.9}
-            }
-        }
+        state = {"synergy_pairs": {"pattern_reasoning": {"synergy_strength": 0.9}}}
         results = d.detect(state)
         assert any(r.name == "enhanced_problem_solving" for r in results)
 
     def test_learning_function(self):
         d = FunctionalEmergenceDetector(capability_threshold=0.5)
-        state = {
-            "synergy_pairs": {
-                "memory_learning": {"synergy_strength": 0.9}
-            }
-        }
+        state = {"synergy_pairs": {"memory_learning": {"synergy_strength": 0.9}}}
         results = d.detect(state)
         assert any(r.name == "accelerated_learning" for r in results)
 
@@ -751,9 +766,15 @@ class TestEmergentPropertyDetector:
     def test_get_stable_properties(self):
         epd = EmergentPropertyDetector()
         ep = EmergentProperty(
-            id="test1", name="t", description="d", emergence_type="cognitive",
-            strength=0.9, novelty=0.9, stability=0.9, complexity=0.9,
-            contributing_processes=["x"]
+            id="test1",
+            name="t",
+            description="d",
+            emergence_type="cognitive",
+            strength=0.9,
+            novelty=0.9,
+            stability=0.9,
+            complexity=0.9,
+            contributing_processes=["x"],
         )
         epd.detected_properties["test1"] = ep
         stable = epd.get_stable_properties(0.8)
@@ -762,9 +783,15 @@ class TestEmergentPropertyDetector:
     def test_get_novel_properties(self):
         epd = EmergentPropertyDetector()
         ep = EmergentProperty(
-            id="n1", name="n", description="d", emergence_type="behavioral",
-            strength=0.9, novelty=0.95, stability=0.5, complexity=0.5,
-            contributing_processes=[]
+            id="n1",
+            name="n",
+            description="d",
+            emergence_type="behavioral",
+            strength=0.9,
+            novelty=0.95,
+            stability=0.5,
+            complexity=0.5,
+            contributing_processes=[],
         )
         epd.detected_properties["n1"] = ep
         assert len(epd.get_novel_properties(0.9)) == 1
@@ -772,9 +799,15 @@ class TestEmergentPropertyDetector:
     def test_get_complex_properties(self):
         epd = EmergentPropertyDetector()
         ep = EmergentProperty(
-            id="c1", name="c", description="d", emergence_type="structural",
-            strength=0.5, novelty=0.5, stability=0.5, complexity=0.95,
-            contributing_processes=[]
+            id="c1",
+            name="c",
+            description="d",
+            emergence_type="structural",
+            strength=0.5,
+            novelty=0.5,
+            stability=0.5,
+            complexity=0.95,
+            contributing_processes=[],
         )
         epd.detected_properties["c1"] = ep
         assert len(epd.get_complex_properties(0.9)) == 1
@@ -789,9 +822,15 @@ class TestEmergentPropertyDetector:
     def test_property_tracking_update_existing(self):
         epd = EmergentPropertyDetector()
         ep = EmergentProperty(
-            id="x1", name="x", description="d", emergence_type="behavioral",
-            strength=0.8, novelty=0.8, stability=0.8, complexity=0.8,
-            contributing_processes=[]
+            id="x1",
+            name="x",
+            description="d",
+            emergence_type="behavioral",
+            strength=0.8,
+            novelty=0.8,
+            stability=0.8,
+            complexity=0.8,
+            contributing_processes=[],
         )
         epd.detected_properties["x1"] = ep
         epd._update_property_tracking([ep])
@@ -801,6 +840,7 @@ class TestEmergentPropertyDetector:
 # ═══════════════════════════════════════════════════════════════════════════
 # 4. Self-Organization
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestOrganizationState:
     def test_defaults(self):
@@ -820,14 +860,12 @@ class TestSelfOrganizationMechanism:
 
     def test_apply_basic(self):
         som = self._make_som()
-        synergy_pairs = {
-            "pair1": {"synergy_strength": 0.5, "integration_level": 0.5}
-        }
+        synergy_pairs = {"pair1": {"synergy_strength": 0.5, "integration_level": 0.5}}
         result = som.apply(
             synergy_pairs=synergy_pairs,
             global_coherence=0.5,
             integration_matrix=np.eye(3),
-            performance_history={"metric": [0.5, 0.6]}
+            performance_history={"metric": [0.5, 0.6]},
         )
         assert "organization_rules" in result
         assert "homeostatic" in result
@@ -875,27 +913,33 @@ class TestSelfOrganizationMechanism:
 
     def test_detect_load_imbalance(self):
         som = self._make_som()
-        state = {"synergy_pairs": {
-            "a": {"synergy_strength": 0.1},
-            "b": {"synergy_strength": 0.9},
-        }}
+        state = {
+            "synergy_pairs": {
+                "a": {"synergy_strength": 0.1},
+                "b": {"synergy_strength": 0.9},
+            }
+        }
         assert som._detect_load_imbalance(state) == True  # np.bool_ compatible
 
     def test_detect_load_imbalance_balanced(self):
         som = self._make_som()
-        state = {"synergy_pairs": {
-            "a": {"synergy_strength": 0.5},
-            "b": {"synergy_strength": 0.5},
-        }}
+        state = {
+            "synergy_pairs": {
+                "a": {"synergy_strength": 0.5},
+                "b": {"synergy_strength": 0.5},
+            }
+        }
         assert som._detect_load_imbalance(state) == False  # np.bool_ compatible
 
     def test_detect_weak_connections(self):
         som = self._make_som()
-        state = {"synergy_pairs": {
-            "a": {"synergy_strength": 0.1},
-            "b": {"synergy_strength": 0.1},
-            "c": {"synergy_strength": 0.9},
-        }}
+        state = {
+            "synergy_pairs": {
+                "a": {"synergy_strength": 0.1},
+                "b": {"synergy_strength": 0.1},
+                "c": {"synergy_strength": 0.9},
+            }
+        }
         assert som._detect_weak_connections(state) is True
 
     def test_detect_strong_synergy(self):
@@ -911,9 +955,7 @@ class TestSelfOrganizationMechanism:
 
     def test_detect_specialization_opportunity(self):
         som = self._make_som()
-        state = {"synergy_pairs": {
-            "a": {"synergy_strength": 0.8, "integration_level": 0.8}
-        }}
+        state = {"synergy_pairs": {"a": {"synergy_strength": 0.8, "integration_level": 0.8}}}
         assert som._detect_specialization_opportunity(state) is True
 
     def test_regulate_coherence_low(self):
@@ -933,10 +975,12 @@ class TestSelfOrganizationMechanism:
 
     def test_prune_weak_connections(self):
         som = self._make_som()
-        state = {"synergy_pairs": {
-            "a": {"synergy_strength": 0.1},
-            "b": {"synergy_strength": 0.9},
-        }}
+        state = {
+            "synergy_pairs": {
+                "a": {"synergy_strength": 0.1},
+                "b": {"synergy_strength": 0.9},
+            }
+        }
         result = som._prune_weak_connections(state)
         assert "a" in result["pairs_to_prune"]
 
@@ -1008,24 +1052,33 @@ class TestResourceOptimizer:
 class TestCoherenceMaintainer:
     def test_high_variance(self):
         cm = CoherenceMaintainer()
-        result = cm.apply({"synergy_pairs": {
-            "a": {"synergy_strength": 0.1},
-            "b": {"synergy_strength": 0.9},
-        }})
+        result = cm.apply(
+            {
+                "synergy_pairs": {
+                    "a": {"synergy_strength": 0.1},
+                    "b": {"synergy_strength": 0.9},
+                }
+            }
+        )
         assert "coherence_restoration" in result
 
     def test_low_variance(self):
         cm = CoherenceMaintainer()
-        result = cm.apply({"synergy_pairs": {
-            "a": {"synergy_strength": 0.5},
-            "b": {"synergy_strength": 0.5},
-        }})
+        result = cm.apply(
+            {
+                "synergy_pairs": {
+                    "a": {"synergy_strength": 0.5},
+                    "b": {"synergy_strength": 0.5},
+                }
+            }
+        )
         assert result == {}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 5. Reasoning Engine
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestReasoningType:
     def test_enum_values(self):
@@ -1037,8 +1090,9 @@ class TestReasoningType:
 
 class TestKnowledgeItem:
     def test_creation(self):
-        ki = KnowledgeItem(id="k1", content="test", knowledge_type="fact",
-                          confidence=0.9, source="input")
+        ki = KnowledgeItem(
+            id="k1", content="test", knowledge_type="fact", confidence=0.9, source="input"
+        )
         assert ki.id == "k1"
         assert ki.connections == set()
 
@@ -1047,28 +1101,45 @@ class TestDeductiveRule:
     def test_can_apply_true(self):
         rule = DeductiveRule("mp", "A->B, A |- B")
         premises = [
-            KnowledgeItem(id="i1", content="rain implies wet", knowledge_type="rule",
-                         confidence=0.9, source="input"),
-            KnowledgeItem(id="f1", content="rain", knowledge_type="fact",
-                         confidence=0.9, source="input"),
+            KnowledgeItem(
+                id="i1",
+                content="rain implies wet",
+                knowledge_type="rule",
+                confidence=0.9,
+                source="input",
+            ),
+            KnowledgeItem(
+                id="f1", content="rain", knowledge_type="fact", confidence=0.9, source="input"
+            ),
         ]
         assert rule.can_apply(premises) is True
 
     def test_can_apply_false_no_implication(self):
         rule = DeductiveRule("mp", "A->B, A |- B")
         premises = [
-            KnowledgeItem(id="f1", content="sun", knowledge_type="fact",
-                         confidence=0.9, source="input"),
+            KnowledgeItem(
+                id="f1", content="sun", knowledge_type="fact", confidence=0.9, source="input"
+            ),
         ]
         assert rule.can_apply(premises) is False
 
     def test_apply_modus_ponens(self):
         rule = DeductiveRule("mp", "A->B, A |- B")
         premises = [
-            KnowledgeItem(id="i1", content="rain implies wet ground",
-                         knowledge_type="rule", confidence=0.9, source="input"),
-            KnowledgeItem(id="f1", content="rain is falling",
-                         knowledge_type="fact", confidence=0.8, source="input"),
+            KnowledgeItem(
+                id="i1",
+                content="rain implies wet ground",
+                knowledge_type="rule",
+                confidence=0.9,
+                source="input",
+            ),
+            KnowledgeItem(
+                id="f1",
+                content="rain is falling",
+                knowledge_type="fact",
+                confidence=0.8,
+                source="input",
+            ),
         ]
         inferences = rule.apply(premises)
         assert len(inferences) >= 1
@@ -1077,8 +1148,9 @@ class TestDeductiveRule:
 
     def test_extract_consequent(self):
         rule = DeductiveRule("mp", "test")
-        ki = KnowledgeItem(id="i", content="A implies B", knowledge_type="rule",
-                          confidence=0.9, source="input")
+        ki = KnowledgeItem(
+            id="i", content="A implies B", knowledge_type="rule", confidence=0.9, source="input"
+        )
         result = rule._extract_consequent(ki)
         assert result == "B"
 
@@ -1087,8 +1159,13 @@ class TestInductiveRule:
     def test_can_apply_enough_facts(self):
         rule = InductiveRule()
         facts = [
-            KnowledgeItem(id=f"f{i}", content="birds can fly",
-                         knowledge_type="fact", confidence=0.9, source="input")
+            KnowledgeItem(
+                id=f"f{i}",
+                content="birds can fly",
+                knowledge_type="fact",
+                confidence=0.9,
+                source="input",
+            )
             for i in range(3)
         ]
         assert rule.can_apply(facts) is True
@@ -1096,16 +1173,22 @@ class TestInductiveRule:
     def test_can_apply_not_enough(self):
         rule = InductiveRule()
         facts = [
-            KnowledgeItem(id="f1", content="bird", knowledge_type="fact",
-                         confidence=0.9, source="input"),
+            KnowledgeItem(
+                id="f1", content="bird", knowledge_type="fact", confidence=0.9, source="input"
+            ),
         ]
         assert rule.can_apply(facts) is False
 
     def test_apply_generalization(self):
         rule = InductiveRule()
         facts = [
-            KnowledgeItem(id=f"f{i}", content=f"birds can fly in area {i}",
-                         knowledge_type="fact", confidence=0.9, source="input")
+            KnowledgeItem(
+                id=f"f{i}",
+                content=f"birds can fly in area {i}",
+                knowledge_type="fact",
+                confidence=0.9,
+                source="input",
+            )
             for i in range(5)
         ]
         inferences = rule.apply(facts)
@@ -1114,18 +1197,34 @@ class TestInductiveRule:
 
     def test_facts_similar(self):
         rule = InductiveRule()
-        f1 = KnowledgeItem(id="a", content="birds can fly high", knowledge_type="fact",
-                          confidence=1.0, source="input")
-        f2 = KnowledgeItem(id="b", content="birds can fly far", knowledge_type="fact",
-                          confidence=1.0, source="input")
+        f1 = KnowledgeItem(
+            id="a",
+            content="birds can fly high",
+            knowledge_type="fact",
+            confidence=1.0,
+            source="input",
+        )
+        f2 = KnowledgeItem(
+            id="b",
+            content="birds can fly far",
+            knowledge_type="fact",
+            confidence=1.0,
+            source="input",
+        )
         assert rule._facts_similar(f1, f2) is True
 
     def test_facts_not_similar(self):
         rule = InductiveRule()
-        f1 = KnowledgeItem(id="a", content="birds fly", knowledge_type="fact",
-                          confidence=1.0, source="input")
-        f2 = KnowledgeItem(id="b", content="fish swim underwater deep",
-                          knowledge_type="fact", confidence=1.0, source="input")
+        f1 = KnowledgeItem(
+            id="a", content="birds fly", knowledge_type="fact", confidence=1.0, source="input"
+        )
+        f2 = KnowledgeItem(
+            id="b",
+            content="fish swim underwater deep",
+            knowledge_type="fact",
+            confidence=1.0,
+            source="input",
+        )
         assert rule._facts_similar(f1, f2) is False
 
 
@@ -1133,26 +1232,42 @@ class TestAbductiveRule:
     def test_can_apply(self):
         rule = AbductiveRule()
         premises = [
-            KnowledgeItem(id="o1", content="observed wet ground",
-                         knowledge_type="fact", confidence=0.9, source="input"),
+            KnowledgeItem(
+                id="o1",
+                content="observed wet ground",
+                knowledge_type="fact",
+                confidence=0.9,
+                source="input",
+            ),
         ]
         assert rule.can_apply(premises) is True
 
     def test_can_apply_no_observations(self):
         rule = AbductiveRule()
         premises = [
-            KnowledgeItem(id="f1", content="clear sky",
-                         knowledge_type="fact", confidence=0.9, source="input"),
+            KnowledgeItem(
+                id="f1", content="clear sky", knowledge_type="fact", confidence=0.9, source="input"
+            ),
         ]
         assert rule.can_apply(premises) is False
 
     def test_apply(self):
         rule = AbductiveRule()
         premises = [
-            KnowledgeItem(id="o1", content="observed wet ground",
-                         knowledge_type="fact", confidence=0.9, source="input"),
-            KnowledgeItem(id="r1", content="rain causes wet ground",
-                         knowledge_type="rule", confidence=0.8, source="input"),
+            KnowledgeItem(
+                id="o1",
+                content="observed wet ground",
+                knowledge_type="fact",
+                confidence=0.9,
+                source="input",
+            ),
+            KnowledgeItem(
+                id="r1",
+                content="rain causes wet ground",
+                knowledge_type="rule",
+                confidence=0.8,
+                source="input",
+            ),
         ]
         inferences = rule.apply(premises)
         assert len(inferences) >= 1
@@ -1224,18 +1339,23 @@ class TestReasoningEngine:
 
     def test_compute_analogy_strength(self):
         re = self._make_engine()
-        k1 = KnowledgeItem(id="a", content="birds can fly", knowledge_type="fact",
-                          confidence=0.9, source="input")
-        k2 = KnowledgeItem(id="b", content="birds can swim", knowledge_type="fact",
-                          confidence=0.9, source="input")
+        k1 = KnowledgeItem(
+            id="a", content="birds can fly", knowledge_type="fact", confidence=0.9, source="input"
+        )
+        k2 = KnowledgeItem(
+            id="b", content="birds can swim", knowledge_type="fact", confidence=0.9, source="input"
+        )
         strength = re._compute_analogy_strength(k1, k2)
         assert 0.0 < strength < 1.0
 
     def test_validate_inferences_filters_low_confidence(self):
         re = self._make_engine()
         inf = Inference(
-            id="test", premises=["p1"], conclusion="low conf result",
-            inference_type=ReasoningType.DEDUCTIVE, confidence=0.1
+            id="test",
+            premises=["p1"],
+            conclusion="low conf result",
+            inference_type=ReasoningType.DEDUCTIVE,
+            confidence=0.1,
         )
         valid = re._validate_inferences([inf])
         assert len(valid) == 0
@@ -1243,12 +1363,18 @@ class TestReasoningEngine:
     def test_validate_inferences_filters_duplicates(self):
         re = self._make_engine()
         inf1 = Inference(
-            id="dup1", premises=["p1"], conclusion="same conclusion here",
-            inference_type=ReasoningType.DEDUCTIVE, confidence=0.9
+            id="dup1",
+            premises=["p1"],
+            conclusion="same conclusion here",
+            inference_type=ReasoningType.DEDUCTIVE,
+            confidence=0.9,
         )
         re.inferences["existing"] = Inference(
-            id="existing", premises=["p2"], conclusion="same conclusion here exactly",
-            inference_type=ReasoningType.DEDUCTIVE, confidence=0.9
+            id="existing",
+            premises=["p2"],
+            conclusion="same conclusion here exactly",
+            inference_type=ReasoningType.DEDUCTIVE,
+            confidence=0.9,
         )
         valid = re._validate_inferences([inf1])
         # "same conclusion here" vs "same conclusion here exactly" — high Jaccard overlap
@@ -1308,10 +1434,18 @@ class TestReasoningEngine:
 # 6. Pattern Mining Engine
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestPatternDataclass:
     def test_creation(self):
-        p = Pattern(id="p1", type="sequence", content=[1, 2], confidence=0.9,
-                   support=5, frequency=0.3, complexity=0.1)
+        p = Pattern(
+            id="p1",
+            type="sequence",
+            content=[1, 2],
+            confidence=0.9,
+            support=5,
+            frequency=0.3,
+            complexity=0.1,
+        )
         assert p.metadata == {}
 
 
@@ -1418,24 +1552,52 @@ class TestPatternMiningEngine:
 
     def test_validate_patterns(self):
         pe = self._make_engine()
-        p = Pattern(id="v1", type="sequence", content=[1], confidence=0.9,
-                   support=5, frequency=0.5, complexity=0.1)
+        p = Pattern(
+            id="v1",
+            type="sequence",
+            content=[1],
+            confidence=0.9,
+            support=5,
+            frequency=0.5,
+            complexity=0.1,
+        )
         valid = pe._validate_patterns([p])
         assert len(valid) == 1
 
     def test_validate_patterns_low_support(self):
         pe = self._make_engine(min_support=10)
-        p = Pattern(id="v1", type="sequence", content=[1], confidence=0.9,
-                   support=2, frequency=0.5, complexity=0.1)
+        p = Pattern(
+            id="v1",
+            type="sequence",
+            content=[1],
+            confidence=0.9,
+            support=2,
+            frequency=0.5,
+            complexity=0.1,
+        )
         valid = pe._validate_patterns([p])
         assert len(valid) == 0
 
     def test_patterns_similar_different_types(self):
         pe = self._make_engine()
-        p1 = Pattern(id="a", type="sequence", content=[1], confidence=0.9,
-                    support=5, frequency=0.5, complexity=0.1)
-        p2 = Pattern(id="b", type="temporal", content=[1], confidence=0.9,
-                    support=5, frequency=0.5, complexity=0.1)
+        p1 = Pattern(
+            id="a",
+            type="sequence",
+            content=[1],
+            confidence=0.9,
+            support=5,
+            frequency=0.5,
+            complexity=0.1,
+        )
+        p2 = Pattern(
+            id="b",
+            type="temporal",
+            content=[1],
+            confidence=0.9,
+            support=5,
+            frequency=0.5,
+            complexity=0.1,
+        )
         assert pe._patterns_similar(p1, p2) is False
 
     def test_sequence_similarity(self):
@@ -1459,8 +1621,13 @@ class TestPatternMiningEngine:
         pe = self._make_engine(max_patterns=2)
         for i in range(5):
             pe.patterns[f"p{i}"] = Pattern(
-                id=f"p{i}", type="sequence", content=[i], confidence=0.5,
-                support=1, frequency=0.1, complexity=0.1
+                id=f"p{i}",
+                type="sequence",
+                content=[i],
+                confidence=0.5,
+                support=1,
+                frequency=0.1,
+                complexity=0.1,
             )
         pe._prune_patterns()
         assert len(pe.patterns) == 2
@@ -1474,27 +1641,62 @@ class TestPatternMiningEngine:
 
     def test_get_patterns_by_type(self):
         pe = self._make_engine()
-        pe.patterns["s1"] = Pattern(id="s1", type="sequence", content=[1],
-                                   confidence=0.9, support=3, frequency=0.5, complexity=0.1)
-        pe.patterns["t1"] = Pattern(id="t1", type="temporal", content=[2],
-                                   confidence=0.9, support=3, frequency=0.5, complexity=0.1)
+        pe.patterns["s1"] = Pattern(
+            id="s1",
+            type="sequence",
+            content=[1],
+            confidence=0.9,
+            support=3,
+            frequency=0.5,
+            complexity=0.1,
+        )
+        pe.patterns["t1"] = Pattern(
+            id="t1",
+            type="temporal",
+            content=[2],
+            confidence=0.9,
+            support=3,
+            frequency=0.5,
+            complexity=0.1,
+        )
         assert len(pe.get_patterns_by_type("sequence")) == 1
         assert len(pe.get_patterns_by_type("temporal")) == 1
 
     def test_get_top_patterns(self):
         pe = self._make_engine()
-        pe.patterns["a"] = Pattern(id="a", type="sequence", content=[], confidence=0.9,
-                                  support=10, frequency=0.5, complexity=0.1)
-        pe.patterns["b"] = Pattern(id="b", type="sequence", content=[], confidence=0.5,
-                                  support=1, frequency=0.1, complexity=0.5)
+        pe.patterns["a"] = Pattern(
+            id="a",
+            type="sequence",
+            content=[],
+            confidence=0.9,
+            support=10,
+            frequency=0.5,
+            complexity=0.1,
+        )
+        pe.patterns["b"] = Pattern(
+            id="b",
+            type="sequence",
+            content=[],
+            confidence=0.5,
+            support=1,
+            frequency=0.1,
+            complexity=0.5,
+        )
         top = pe.get_top_patterns(1)
         assert len(top) == 1
         assert top[0].id == "a"
 
     def test_receive_reasoning_feedback(self):
         pe = self._make_engine()
-        pe.patterns["x"] = Pattern(id="x", type="causal", content={}, confidence=0.7,
-                                  support=3, frequency=0.5, complexity=0.1)
+        pe.patterns["x"] = Pattern(
+            id="x",
+            type="causal",
+            content={},
+            confidence=0.7,
+            support=3,
+            frequency=0.5,
+            complexity=0.1,
+        )
         pe.receive_reasoning_feedback({"boost_types": ["causal"]})
         assert pe.patterns["x"].confidence > 0.7
 
@@ -1507,10 +1709,24 @@ class TestPatternMiningEngine:
 
     def test_build_pattern_hierarchy(self):
         pe = self._make_engine()
-        pe.patterns["p1"] = Pattern(id="p1", type="sequence", content=[1],
-                                   confidence=0.9, support=5, frequency=0.5, complexity=0.1)
-        pe.patterns["p2"] = Pattern(id="p2", type="sequence", content=[1, 2],
-                                   confidence=0.9, support=10, frequency=0.5, complexity=0.2)
+        pe.patterns["p1"] = Pattern(
+            id="p1",
+            type="sequence",
+            content=[1],
+            confidence=0.9,
+            support=5,
+            frequency=0.5,
+            complexity=0.1,
+        )
+        pe.patterns["p2"] = Pattern(
+            id="p2",
+            type="sequence",
+            content=[1, 2],
+            confidence=0.9,
+            support=10,
+            frequency=0.5,
+            complexity=0.2,
+        )
         pe._build_pattern_hierarchy()
         # At least nodes should be added
         assert pe.pattern_hierarchy.relationships.number_of_nodes() >= 2
@@ -1519,6 +1735,7 @@ class TestPatternMiningEngine:
 # ═══════════════════════════════════════════════════════════════════════════
 # 7. Pattern-Reasoning Synergy
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestSynergyEvent:
     def test_creation(self):
@@ -1538,54 +1755,75 @@ class TestAbstractionEngine:
         Need overlap large enough to exceed 0.7 threshold."""
         ae = AbstractionEngine()
         # Use identical content for maximum convergence: Jaccard=1.0, conf=1.0×1.0=1.0
-        p = Pattern(id="p1", type="causal", content="rain wet ground",
-                   confidence=1.0, support=5, frequency=0.5, complexity=0.1)
-        k = KnowledgeItem(id="k1", content="rain wet ground",
-                         knowledge_type="fact", confidence=1.0, source="input")
+        p = Pattern(
+            id="p1",
+            type="causal",
+            content="rain wet ground",
+            confidence=1.0,
+            support=5,
+            frequency=0.5,
+            complexity=0.1,
+        )
+        k = KnowledgeItem(
+            id="k1",
+            content="rain wet ground",
+            knowledge_type="fact",
+            confidence=1.0,
+            source="input",
+        )
         result = ae.detect_abstractions({"p1": p}, {"k1": k}, [])
         assert len(result) >= 1
         assert result[0]["emergence_level"] > 0.7
 
     def test_compute_convergence_disjoint(self):
         ae = AbstractionEngine()
-        p = Pattern(id="p1", type="seq", content="apple banana cherry",
-                   confidence=0.9, support=5, frequency=0.5, complexity=0.1)
-        k = KnowledgeItem(id="k1", content="xyz uvw rst",
-                         knowledge_type="fact", confidence=0.9, source="input")
+        p = Pattern(
+            id="p1",
+            type="seq",
+            content="apple banana cherry",
+            confidence=0.9,
+            support=5,
+            frequency=0.5,
+            complexity=0.1,
+        )
+        k = KnowledgeItem(
+            id="k1", content="xyz uvw rst", knowledge_type="fact", confidence=0.9, source="input"
+        )
         assert ae._compute_convergence(p, k) == 0.0
 
 
 class TestAttentionCoordinator:
     def test_balanced(self):
         ac = AttentionCoordinator()
-        from asi_build.cognitive_synergy.pattern_reasoning.pattern_reasoning_synergy import SynergyMetrics as PRSynergyMetrics
+        from asi_build.cognitive_synergy.pattern_reasoning.pattern_reasoning_synergy import (
+            SynergyMetrics as PRSynergyMetrics,
+        )
+
         result = ac.coordinate(
-            {"activation_level": 0.5},
-            {"activation_level": 0.5},
-            PRSynergyMetrics()
+            {"activation_level": 0.5}, {"activation_level": 0.5}, PRSynergyMetrics()
         )
         assert not result["focus_on_patterns"]
         assert not result["focus_on_reasoning"]
 
     def test_pattern_dominant(self):
         ac = AttentionCoordinator()
-        from asi_build.cognitive_synergy.pattern_reasoning.pattern_reasoning_synergy import SynergyMetrics as PRSynergyMetrics
+        from asi_build.cognitive_synergy.pattern_reasoning.pattern_reasoning_synergy import (
+            SynergyMetrics as PRSynergyMetrics,
+        )
+
         result = ac.coordinate(
-            {"activation_level": 0.9},
-            {"activation_level": 0.3},
-            PRSynergyMetrics()
+            {"activation_level": 0.9}, {"activation_level": 0.3}, PRSynergyMetrics()
         )
         assert result["focus_on_reasoning"] is True
 
     def test_high_synergy_both_focus(self):
         ac = AttentionCoordinator()
-        from asi_build.cognitive_synergy.pattern_reasoning.pattern_reasoning_synergy import SynergyMetrics as PRSynergyMetrics
-        metrics = PRSynergyMetrics(synergy_strength=0.9)
-        result = ac.coordinate(
-            {"activation_level": 0.5},
-            {"activation_level": 0.5},
-            metrics
+        from asi_build.cognitive_synergy.pattern_reasoning.pattern_reasoning_synergy import (
+            SynergyMetrics as PRSynergyMetrics,
         )
+
+        metrics = PRSynergyMetrics(synergy_strength=0.9)
+        result = ac.coordinate({"activation_level": 0.5}, {"activation_level": 0.5}, metrics)
         assert result["focus_on_patterns"] is True
         assert result["focus_on_reasoning"] is True
 
@@ -1597,19 +1835,42 @@ class TestCrossValidationEngine:
 
     def test_validate_pattern_inference(self):
         cve = CrossValidationEngine()
-        p = Pattern(id="p1", type="causal", content="rain causes wet ground",
-                   confidence=0.9, support=5, frequency=0.5, complexity=0.1)
-        inf = Inference(id="i1", premises=["p1"], conclusion="wet ground after rain",
-                       inference_type=ReasoningType.ABDUCTIVE, confidence=0.9)
+        p = Pattern(
+            id="p1",
+            type="causal",
+            content="rain causes wet ground",
+            confidence=0.9,
+            support=5,
+            frequency=0.5,
+            complexity=0.1,
+        )
+        inf = Inference(
+            id="i1",
+            premises=["p1"],
+            conclusion="wet ground after rain",
+            inference_type=ReasoningType.ABDUCTIVE,
+            confidence=0.9,
+        )
         strength = cve._validate_pattern_inference(p, inf)
         assert strength > 0.0
 
     def test_validate_pattern_hypothesis(self):
         cve = CrossValidationEngine()
-        p = Pattern(id="p1", type="causal", content="rain causes wet ground",
-                   confidence=0.9, support=5, frequency=0.5, complexity=0.1)
-        h = Hypothesis(id="h1", content="rain causes wet ground",
-                      reasoning_type=ReasoningType.ABDUCTIVE, confidence=0.9)
+        p = Pattern(
+            id="p1",
+            type="causal",
+            content="rain causes wet ground",
+            confidence=0.9,
+            support=5,
+            frequency=0.5,
+            complexity=0.1,
+        )
+        h = Hypothesis(
+            id="h1",
+            content="rain causes wet ground",
+            reasoning_type=ReasoningType.ABDUCTIVE,
+            confidence=0.9,
+        )
         strength = cve._validate_pattern_hypothesis(p, h)
         assert strength > 0.5
 
@@ -1626,11 +1887,7 @@ class TestPatternReasoningSynergy:
 
     def test_process_external_input(self):
         prs = self._make_synergy()
-        prs.process_external_input({
-            "type": "sequence",
-            "data": "test data",
-            "confidence": 0.8
-        })
+        prs.process_external_input({"type": "sequence", "data": "test data", "confidence": 0.8})
         # Should create synergy event
         assert len(prs.synergy_events) == 1
 
@@ -1644,18 +1901,36 @@ class TestPatternReasoningSynergy:
 
     def test_pattern_to_knowledge_content(self):
         prs = self._make_synergy()
-        p = Pattern(id="p1", type="causal", content={"cause": "rain", "effect": "wet"},
-                   confidence=0.9, support=5, frequency=0.5, complexity=0.1)
+        p = Pattern(
+            id="p1",
+            type="causal",
+            content={"cause": "rain", "effect": "wet"},
+            confidence=0.9,
+            support=5,
+            frequency=0.5,
+            complexity=0.1,
+        )
         content = prs._pattern_to_knowledge_content(p)
         assert "Causal" in content
 
     def test_pattern_to_knowledge_content_types(self):
         prs = self._make_synergy()
-        for ptype, expected in [("sequence", "Sequential"), ("temporal", "Temporal"),
-                                ("spatial", "Spatial"), ("structural", "Structural"),
-                                ("other", "other")]:
-            p = Pattern(id="p", type=ptype, content="x", confidence=0.9,
-                       support=5, frequency=0.5, complexity=0.1)
+        for ptype, expected in [
+            ("sequence", "Sequential"),
+            ("temporal", "Temporal"),
+            ("spatial", "Spatial"),
+            ("structural", "Structural"),
+            ("other", "other"),
+        ]:
+            p = Pattern(
+                id="p",
+                type=ptype,
+                content="x",
+                confidence=0.9,
+                support=5,
+                frequency=0.5,
+                complexity=0.1,
+            )
             content = prs._pattern_to_knowledge_content(p)
             assert expected in content
 
@@ -1677,6 +1952,7 @@ class TestPatternReasoningSynergy:
 # ═══════════════════════════════════════════════════════════════════════════
 # 8. Perception & Action Engines
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestPerceptionEngine:
     def test_constructor(self):
@@ -1726,6 +2002,7 @@ class TestActionEngine:
 # ═══════════════════════════════════════════════════════════════════════════
 # 9. Sensorimotor Synergy
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestForwardModel:
     def test_predict(self):
@@ -1870,22 +2147,26 @@ class TestSensorimotorSynergy:
 # 10. Module-level __init__ imports
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestModuleExports:
     """Verify __all__ exports are importable."""
 
     def test_all_exports(self):
         from asi_build import cognitive_synergy
+
         for name in cognitive_synergy.__all__:
             assert hasattr(cognitive_synergy, name), f"Missing export: {name}"
 
     def test_version(self):
         from asi_build.cognitive_synergy import __version__
+
         assert __version__ == "2.0.0"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 11. Integration / Smoke Tests
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestIntegrationSmoke:
     """End-to-end sanity without background threads."""
@@ -1894,8 +2175,12 @@ class TestIntegrationSmoke:
         """Full flow: add primitives → get state. compute_synergy skipped
         due to pre-existing np.corrcoef scalar bug."""
         p = PRIMUSFoundation()
-        p.add_primitive(CognitivePrimitive(name="a", type="pattern", content="hello world", activation=0.9))
-        p.add_primitive(CognitivePrimitive(name="b", type="concept", content="hello there", activation=0.8))
+        p.add_primitive(
+            CognitivePrimitive(name="a", type="pattern", content="hello world", activation=0.9)
+        )
+        p.add_primitive(
+            CognitivePrimitive(name="b", type="concept", content="hello there", activation=0.8)
+        )
         state = p.get_system_state()
         assert isinstance(state, PRIMUSState)
         assert state.self_organization_metrics["primitives_count"] == 2
@@ -1903,8 +2188,9 @@ class TestIntegrationSmoke:
     def test_reasoning_add_reason_query(self):
         re = ReasoningEngine()
         re.add_knowledge("birds can fly", knowledge_type="fact", confidence=0.9)
-        re.add_knowledge("birds have wings implies birds can fly",
-                        knowledge_type="rule", confidence=0.9)
+        re.add_knowledge(
+            "birds have wings implies birds can fly", knowledge_type="rule", confidence=0.9
+        )
         re.reason()
         results = re.query_knowledge("birds fly")
         assert len(results) >= 1

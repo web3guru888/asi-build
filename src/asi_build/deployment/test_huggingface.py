@@ -2,7 +2,6 @@ import importlib
 import os
 
 import pytest
-
 from embedchain.config import BaseLlmConfig
 from embedchain.llm.huggingface import HuggingFaceLlm
 
@@ -18,7 +17,9 @@ def huggingface_llm_config():
 @pytest.fixture
 def huggingface_endpoint_config():
     os.environ["HUGGINGFACE_ACCESS_TOKEN"] = "test_access_token"
-    config = BaseLlmConfig(endpoint="https://api-inference.huggingface.co/models/gpt2", model_kwargs={"device": "cpu"})
+    config = BaseLlmConfig(
+        endpoint="https://api-inference.huggingface.co/models/gpt2", model_kwargs={"device": "cpu"}
+    )
     yield config
     os.environ.pop("HUGGINGFACE_ACCESS_TOKEN")
 
@@ -52,7 +53,9 @@ def test_dependency_is_imported():
 
 
 def test_get_llm_model_answer(huggingface_llm_config, mocker):
-    mocker.patch("embedchain.llm.huggingface.HuggingFaceLlm._get_answer", return_value="Test answer")
+    mocker.patch(
+        "embedchain.llm.huggingface.HuggingFaceLlm._get_answer", return_value="Test answer"
+    )
 
     llm = HuggingFaceLlm(huggingface_llm_config)
     answer = llm.get_llm_model_answer("Test query")

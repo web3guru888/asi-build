@@ -10,7 +10,12 @@ Version: 1.0.0
 """
 
 try:
-    from .base_consciousness import BaseConsciousness, ConsciousnessEvent, ConsciousnessState, ConsciousnessMetrics
+    from .base_consciousness import (
+        BaseConsciousness,
+        ConsciousnessEvent,
+        ConsciousnessMetrics,
+        ConsciousnessState,
+    )
 except (ImportError, ModuleNotFoundError, SyntaxError):
     BaseConsciousness = None
     ConsciousnessEvent = None
@@ -75,34 +80,29 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 
 __all__ = [
     # Core infrastructure
-    'BaseConsciousness',
-    'ConsciousnessEvent',
-    'ConsciousnessState',
-    'ConsciousnessMetrics',
-    
+    "BaseConsciousness",
+    "ConsciousnessEvent",
+    "ConsciousnessState",
+    "ConsciousnessMetrics",
     # Consciousness theories
-    'GlobalWorkspaceTheory',
-    'IntegratedInformationTheory', 
-    'AttentionSchemaTheory',
-    'PredictiveProcessing',
-    
+    "GlobalWorkspaceTheory",
+    "IntegratedInformationTheory",
+    "AttentionSchemaTheory",
+    "PredictiveProcessing",
     # Cognitive capabilities
-    'MetacognitionSystem',
-    'SelfAwarenessEngine',
-    'TheoryOfMind',
-    
+    "MetacognitionSystem",
+    "SelfAwarenessEngine",
+    "TheoryOfMind",
     # Experience and perception
-    'QualiaProcessor',
-    'EmotionalConsciousness',
-    'SensoryIntegration',
-    'TemporalConsciousness',
-    
+    "QualiaProcessor",
+    "EmotionalConsciousness",
+    "SensoryIntegration",
+    "TemporalConsciousness",
     # Memory and learning
-    'MemoryIntegration',
-    'RecursiveSelfImprovement',
-    
+    "MemoryIntegration",
+    "RecursiveSelfImprovement",
     # Coordination
-    'ConsciousnessOrchestrator'
+    "ConsciousnessOrchestrator",
 ]
 
 __version__ = "1.0.0"

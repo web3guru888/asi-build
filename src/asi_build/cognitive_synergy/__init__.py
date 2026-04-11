@@ -13,38 +13,38 @@ Key classes:
 - ReasoningEngine: Deductive, inductive, abductive reasoning
 """
 
-from asi_build.cognitive_synergy.core.synergy_metrics import (
-    SynergyMetrics,
-    SynergyMeasurement,
-    SynergyProfile,
-)
 from asi_build.cognitive_synergy.core.cognitive_synergy_engine import (
+    CognitiveDynamic,
     CognitiveSynergyEngine,
     SynergyPair,
-    CognitiveDynamic,
 )
 from asi_build.cognitive_synergy.core.emergent_properties import (
-    EmergentPropertyDetector,
-    EmergentProperty,
     EmergenceSignature,
+    EmergentProperty,
+    EmergentPropertyDetector,
 )
 from asi_build.cognitive_synergy.core.primus_foundation import (
+    CognitivePrimitive,
     PRIMUSFoundation,
     PRIMUSState,
-    CognitivePrimitive,
 )
 from asi_build.cognitive_synergy.core.self_organization import (
-    SelfOrganizationMechanism,
-    HomeostaticController,
     AdaptiveRestructurer,
+    HomeostaticController,
+    SelfOrganizationMechanism,
+)
+from asi_build.cognitive_synergy.core.synergy_metrics import (
+    SynergyMeasurement,
+    SynergyMetrics,
+    SynergyProfile,
+)
+from asi_build.cognitive_synergy.pattern_reasoning.pattern_mining_engine import (
+    Pattern,
+    PatternMiningEngine,
 )
 from asi_build.cognitive_synergy.pattern_reasoning.reasoning_engine import (
     ReasoningEngine,
     ReasoningType,
-)
-from asi_build.cognitive_synergy.pattern_reasoning.pattern_mining_engine import (
-    PatternMiningEngine,
-    Pattern,
 )
 
 __all__ = [

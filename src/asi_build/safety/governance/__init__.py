@@ -29,6 +29,7 @@ class GovernanceFramework:
 # Lazy public imports – heavy deps stay out of module-load time.
 # ---------------------------------------------------------------------------
 
+
 def __getattr__(name: str):
     """Lazy-import main classes on first access."""
     _lazy = {
@@ -78,6 +79,7 @@ def __getattr__(name: str):
     }
     if name in _lazy:
         import importlib
+
         mod = importlib.import_module(_lazy[name], __name__)
         val = getattr(mod, name)
         # Cache on the module so future accesses skip __getattr__

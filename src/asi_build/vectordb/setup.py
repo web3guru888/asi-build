@@ -1,6 +1,6 @@
 """Setup script for Kenny Vector Database System."""
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open("requirements.txt", "r", encoding="utf-8") as f:
     requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]

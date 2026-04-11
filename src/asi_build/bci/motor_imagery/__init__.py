@@ -23,8 +23,8 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     MotorImageryTrainer = None
 
 __all__ = [
-    'MotorImageryClassifier',
-    'CSPProcessor',
-    'MotorImageryFeatureExtractor', 
-    'MotorImageryTrainer'
+    "MotorImageryClassifier",
+    "CSPProcessor",
+    "MotorImageryFeatureExtractor",
+    "MotorImageryTrainer",
 ]

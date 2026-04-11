@@ -68,7 +68,7 @@ __description__ = "Natural Language ↔ Logic Bridge for Symbolic-Neural AGI"
 
 __all__ = [
     "NLLogicBridge",
-    "BridgeArchitecture", 
+    "BridgeArchitecture",
     "SemanticParser",
     "PLNExtractor",
     "ExplanationGenerator",
@@ -76,5 +76,5 @@ __all__ = [
     "CommonsenseReasoner",
     "KnowledgeGraphBuilder",
     "QueryInterface",
-    "TransformerModels"
+    "TransformerModels",
 ]

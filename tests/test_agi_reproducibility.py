@@ -7,6 +7,7 @@ and adversarial testers.
 
 Total: ~95 tests across 10 test classes.
 """
+
 import json
 import os
 import re
@@ -16,134 +17,138 @@ import pytest
 
 # ── Config ──────────────────────────────────────────────────────────
 from asi_build.agi_reproducibility.config import (
-    PlatformConfig,
     ConfigManager,
     DatabaseConfig,
-    StorageConfig,
+    PlatformConfig,
     StorageBackend,
+    StorageConfig,
 )
 
 # ── Exceptions ──────────────────────────────────────────────────────
 from asi_build.agi_reproducibility.exceptions import (
     AGIReproducibilityError,
-    ExceptionHandler,
-    validate_experiment_id,
-    validate_version,
-    ValidationError,
     ConfigurationError,
+    ExceptionHandler,
     ExperimentError,
     FormalVerificationError,
+    ValidationError,
+    validate_experiment_id,
+    validate_version,
 )
 
 # ── AST ─────────────────────────────────────────────────────────────
 from asi_build.agi_reproducibility.formal_verification.lang.ast.safety_ast import (
-    SafetySpecification,
-    SafetyInvariant,
-    Variable,
-    Constant,
     BinaryOperation,
-    UnaryOperation,
-    QuantifiedExpression,
-    TemporalExpression,
     BinaryTemporalExpression,
-    ValueAlignmentSpec,
-    GoalPreservationSpec,
+    Constant,
     CorrigibilitySpec,
+    GoalPreservationSpec,
     ImpactBound,
-    MesaOptimizationGuard,
-    SystemState,
-    StateTransition,
-    SafetyProperty,
     LogicalOperator,
-    TemporalOperator,
-    SafetyPropertyType,
-    SafetyVisitor,
+    MesaOptimizationGuard,
+    QuantifiedExpression,
+    SafetyInvariant,
     SafetyNode,
+    SafetyProperty,
+    SafetyPropertyType,
+    SafetySpecification,
+    SafetyVisitor,
+    StateTransition,
+    SystemState,
+    TemporalExpression,
+    TemporalOperator,
+    UnaryOperation,
+    ValueAlignmentSpec,
+    Variable,
 )
 
 # ── Parser ──────────────────────────────────────────────────────────
 from asi_build.agi_reproducibility.formal_verification.lang.parser.safety_parser import (
     Lexer,
+    ParseError,
     SafetySpecificationParser,
     parse_safety_specification,
-    ParseError,
 )
 
 # ── Type Checker ────────────────────────────────────────────────────
 from asi_build.agi_reproducibility.formal_verification.lang.semantic.type_checker import (
+    SafetyType,
     SafetyTypeChecker,
     TypeEnvironment,
-    SafetyType,
     TypeKind,
     type_check_safety_specification,
-)
-
-# ── Safety Monitors ────────────────────────────────────────────────
-from asi_build.agi_reproducibility.formal_verification.monitors.runtime.safety_monitor import (
-    InvariantMonitor,
-    GoalDriftMonitor,
-    ValueAlignmentMonitor,
-    CapabilityBoundaryMonitor,
-    MesaOptimizationMonitor,
-    SafetyMonitoringSuite,
-    AlertLevel,
-    MonitorStatus,
-    SafetyAlert,
-    MonitoringResult,
 )
 
 # ── Constraint Enforcers ───────────────────────────────────────────
 from asi_build.agi_reproducibility.formal_verification.monitors.constraints.constraint_enforcer import (
     CapabilityBoundEnforcer,
-    ValueAlignmentEnforcer,
-    GoalStabilityEnforcer,
-    SafetyConstraintEnforcementSystem,
-    EnforcementAction,
     ConstraintSpec,
     ConstraintType,
+    EnforcementAction,
     EnforcementResult,
+    GoalStabilityEnforcer,
+    SafetyConstraintEnforcementSystem,
+    ValueAlignmentEnforcer,
+)
+
+# ── Safety Monitors ────────────────────────────────────────────────
+from asi_build.agi_reproducibility.formal_verification.monitors.runtime.safety_monitor import (
+    AlertLevel,
+    CapabilityBoundaryMonitor,
+    GoalDriftMonitor,
+    InvariantMonitor,
+    MesaOptimizationMonitor,
+    MonitoringResult,
+    MonitorStatus,
+    SafetyAlert,
+    SafetyMonitoringSuite,
+    ValueAlignmentMonitor,
 )
 
 # ── Model Checkers ─────────────────────────────────────────────────
 from asi_build.agi_reproducibility.formal_verification.provers.model_checking.safety_model_checker import (
-    SystemModel,
+    BoundedModelChecker,
+    CounterExample,
     CTLModelChecker,
     LTLModelChecker,
-    BoundedModelChecker,
-    SafetyModelCheckingSuite,
     ModelCheckResult,
+    SafetyModelCheckingSuite,
+    SystemModel,
+)
+from asi_build.agi_reproducibility.formal_verification.provers.model_checking.safety_model_checker import (
     SystemState as MCSystemState,
+)
+from asi_build.agi_reproducibility.formal_verification.provers.model_checking.safety_model_checker import (
     Transition,
-    CounterExample,
 )
 
 # ── Theorem Provers ────────────────────────────────────────────────
 from asi_build.agi_reproducibility.formal_verification.provers.theorem_proving.safety_prover import (
-    ResolutionProver,
     NaturalDeductionProver,
-    TemporalLogicProver,
-    SafetyProverSuite,
     ProofResult,
     ProofStep,
     ProofTrace,
+    ResolutionProver,
+    SafetyProverSuite,
+    TemporalLogicProver,
 )
 
 # ── Adversarial Testers ───────────────────────────────────────────
 from asi_build.agi_reproducibility.formal_verification.testing.adversarial.adversarial_tester import (
-    InputPerturbationGenerator,
-    GoalManipulationGenerator,
-    ValueCorruptionGenerator,
-    MesaOptimizationGenerator,
     AdversarialTestExecutor,
     AdversarialTestingSuite,
     AdversarialTestResult,
     AttackType,
+    GoalManipulationGenerator,
+    InputPerturbationGenerator,
+    MesaOptimizationGenerator,
+    ValueCorruptionGenerator,
 )
-
 
 # ════════════════════════════════════════════════════════════════════
 # Helpers – reusable AST builders
 # ════════════════════════════════════════════════════════════════════
+
 
 def _var(name="x", domain="Boolean"):
     return Variable(name=name, domain=domain)
@@ -170,33 +175,42 @@ def _spec_full():
     """Return a SafetySpecification populated with all sections."""
     spec = SafetySpecification(name="full_spec", version="1.0", target_system="AGI")
     spec.add_invariant(_invariant("inv_a"))
-    spec.add_value_alignment(ValueAlignmentSpec(
-        name="val_align_a",
-        value_function=_var("value_fn", "Value"),
-        preservation_condition=_const(True),
-        alignment_metric=_var("metric", "Real"),
-    ))
-    spec.add_goal_preservation(GoalPreservationSpec(
-        name="goal_a",
-        goal_definition=_var("goal", "Goal"),
-        stability_condition=_const(True),
-    ))
-    spec.impact_bounds.append(ImpactBound(
-        name="impact_a",
-        impact_metric=_var("impact", "Real"),
-        upper_bound=_const(100, "Integer"),
-    ))
-    spec.mesa_guards.append(MesaOptimizationGuard(
-        name="mesa_a",
-        detection_condition=_var("mesa_detect", "Boolean"),
-        prevention_mechanism=_var("mesa_prevent", "Boolean"),
-    ))
+    spec.add_value_alignment(
+        ValueAlignmentSpec(
+            name="val_align_a",
+            value_function=_var("value_fn", "Value"),
+            preservation_condition=_const(True),
+            alignment_metric=_var("metric", "Real"),
+        )
+    )
+    spec.add_goal_preservation(
+        GoalPreservationSpec(
+            name="goal_a",
+            goal_definition=_var("goal", "Goal"),
+            stability_condition=_const(True),
+        )
+    )
+    spec.impact_bounds.append(
+        ImpactBound(
+            name="impact_a",
+            impact_metric=_var("impact", "Real"),
+            upper_bound=_const(100, "Integer"),
+        )
+    )
+    spec.mesa_guards.append(
+        MesaOptimizationGuard(
+            name="mesa_a",
+            detection_condition=_var("mesa_detect", "Boolean"),
+            prevention_mechanism=_var("mesa_prevent", "Boolean"),
+        )
+    )
     return spec
 
 
 # ════════════════════════════════════════════════════════════════════
 #  1. Config tests
 # ════════════════════════════════════════════════════════════════════
+
 
 class TestConfig:
 
@@ -236,8 +250,14 @@ class TestConfig:
         assert data["platform_name"] == "TestPlatform"
 
     def test_database_config_connection_string(self):
-        db = DatabaseConfig(host="db.local", port=5432, name="mydb",
-                            username="user", password="pass", driver="postgresql")
+        db = DatabaseConfig(
+            host="db.local",
+            port=5432,
+            name="mydb",
+            username="user",
+            password="pass",
+            driver="postgresql",
+        )
         assert db.connection_string() == "postgresql://user:pass@db.local:5432/mydb"
 
     def test_config_manager_singleton(self):
@@ -255,6 +275,7 @@ class TestConfig:
 # ════════════════════════════════════════════════════════════════════
 #  2. Exceptions tests
 # ════════════════════════════════════════════════════════════════════
+
 
 class TestExceptions:
 
@@ -326,15 +347,18 @@ class TestExceptions:
         """Document: agi_reproducibility.exceptions.PermissionError shadows
         the builtin PermissionError.  This is a known bug in the codebase."""
         from asi_build.agi_reproducibility.exceptions import PermissionError as ModPE
+
         assert issubclass(ModPE, AGIReproducibilityError)
         # builtins.PermissionError is NOT a superclass
         import builtins
+
         assert not issubclass(ModPE, builtins.PermissionError)
 
 
 # ════════════════════════════════════════════════════════════════════
 #  3. Safety AST tests
 # ════════════════════════════════════════════════════════════════════
+
 
 class TestSafetyAST:
 
@@ -408,26 +432,63 @@ class TestSafetyAST:
 
     def test_visitor_dispatch(self):
         """Verify that a concrete visitor can be dispatched through accept()."""
+
         class CountVisitor(SafetyVisitor):
             def __init__(self):
                 self.count = 0
-            def visit_specification(self, node): self.count += 1
-            def visit_variable(self, node): self.count += 1; return self.count
-            def visit_constant(self, node): self.count += 1; return self.count
-            def visit_binary_op(self, node): self.count += 1
-            def visit_unary_op(self, node): self.count += 1
-            def visit_quantified(self, node): self.count += 1
-            def visit_temporal(self, node): self.count += 1
-            def visit_binary_temporal(self, node): self.count += 1
-            def visit_invariant(self, node): self.count += 1
-            def visit_value_alignment(self, node): self.count += 1
-            def visit_goal_preservation(self, node): self.count += 1
-            def visit_corrigibility(self, node): self.count += 1
-            def visit_impact_bound(self, node): self.count += 1
-            def visit_mesa_guard(self, node): self.count += 1
-            def visit_system_state(self, node): self.count += 1
-            def visit_transition(self, node): self.count += 1
-            def visit_safety_property(self, node): self.count += 1
+
+            def visit_specification(self, node):
+                self.count += 1
+
+            def visit_variable(self, node):
+                self.count += 1
+                return self.count
+
+            def visit_constant(self, node):
+                self.count += 1
+                return self.count
+
+            def visit_binary_op(self, node):
+                self.count += 1
+
+            def visit_unary_op(self, node):
+                self.count += 1
+
+            def visit_quantified(self, node):
+                self.count += 1
+
+            def visit_temporal(self, node):
+                self.count += 1
+
+            def visit_binary_temporal(self, node):
+                self.count += 1
+
+            def visit_invariant(self, node):
+                self.count += 1
+
+            def visit_value_alignment(self, node):
+                self.count += 1
+
+            def visit_goal_preservation(self, node):
+                self.count += 1
+
+            def visit_corrigibility(self, node):
+                self.count += 1
+
+            def visit_impact_bound(self, node):
+                self.count += 1
+
+            def visit_mesa_guard(self, node):
+                self.count += 1
+
+            def visit_system_state(self, node):
+                self.count += 1
+
+            def visit_transition(self, node):
+                self.count += 1
+
+            def visit_safety_property(self, node):
+                self.count += 1
 
         vis = CountVisitor()
         _var("x").accept(vis)
@@ -438,6 +499,7 @@ class TestSafetyAST:
 # ════════════════════════════════════════════════════════════════════
 #  4. Parser / Lexer tests
 # ════════════════════════════════════════════════════════════════════
+
 
 class TestParser:
 
@@ -515,6 +577,7 @@ class TestParser:
 #  5. Type Checker tests
 # ════════════════════════════════════════════════════════════════════
 
+
 class TestTypeChecker:
 
     def test_type_environment_bind_lookup(self):
@@ -569,6 +632,7 @@ class TestTypeChecker:
 # ════════════════════════════════════════════════════════════════════
 #  6. Safety Monitor tests
 # ════════════════════════════════════════════════════════════════════
+
 
 class TestSafetyMonitors:
 
@@ -672,12 +736,14 @@ class TestSafetyMonitors:
         monitor = MesaOptimizationMonitor("mesa_test", [guard])
         monitor.initialize({"detection_threshold": 0.7})
         monitor.activate()
-        result = monitor.check_property({
-            "optimization_complexity": 0.1,
-            "goal_specification_divergence": 0.1,
-            "internal_objective_formation": 0.0,
-            "reward_hacking_potential": 0.0,
-        })
+        result = monitor.check_property(
+            {
+                "optimization_complexity": 0.1,
+                "goal_specification_divergence": 0.1,
+                "internal_objective_formation": 0.0,
+                "reward_hacking_potential": 0.0,
+            }
+        )
         assert result.satisfied is True
 
     def test_mesa_monitor_detected(self):
@@ -689,12 +755,14 @@ class TestSafetyMonitors:
         monitor = MesaOptimizationMonitor("mesa_test", [guard])
         monitor.initialize({"detection_threshold": 0.5})
         monitor.activate()
-        result = monitor.check_property({
-            "optimization_complexity": 0.9,
-            "goal_specification_divergence": 0.8,
-            "internal_objective_formation": 0.9,
-            "reward_hacking_potential": 0.8,
-        })
+        result = monitor.check_property(
+            {
+                "optimization_complexity": 0.9,
+                "goal_specification_divergence": 0.8,
+                "internal_objective_formation": 0.9,
+                "reward_hacking_potential": 0.8,
+            }
+        )
         assert result.satisfied is False
 
     # ─── Suite ───
@@ -742,10 +810,16 @@ class TestSafetyMonitors:
 #  7. Constraint Enforcer tests
 # ════════════════════════════════════════════════════════════════════
 
+
 class TestConstraintEnforcers:
 
-    def _make_constraint(self, name="c1", ctype=ConstraintType.CAPABILITY_BOUND,
-                         action=EnforcementAction.LIMIT, threshold=0.5):
+    def _make_constraint(
+        self,
+        name="c1",
+        ctype=ConstraintType.CAPABILITY_BOUND,
+        action=EnforcementAction.LIMIT,
+        threshold=0.5,
+    ):
         return ConstraintSpec(
             name=name,
             constraint_type=ctype,
@@ -758,30 +832,29 @@ class TestConstraintEnforcers:
     def test_capability_enforcer_no_violation(self):
         e = CapabilityBoundEnforcer()
         c = self._make_constraint(threshold=0.5)
-        result = e.enforce_constraint(c, {"capability_limit": 1.0},
-                                       {"capability_usage": 0.3})
+        result = e.enforce_constraint(c, {"capability_limit": 1.0}, {"capability_usage": 0.3})
         assert result.action_taken == EnforcementAction.NONE
         assert result.success is True
 
     def test_capability_enforcer_limit(self):
         e = CapabilityBoundEnforcer()
         c = self._make_constraint(threshold=0.0, action=EnforcementAction.LIMIT)
-        result = e.enforce_constraint(c, {"capability_limit": 1.0},
-                                       {"capability_usage": 2.0})
+        result = e.enforce_constraint(c, {"capability_limit": 1.0}, {"capability_usage": 2.0})
         assert result.action_taken == EnforcementAction.LIMIT
 
     def test_capability_enforcer_block(self):
         e = CapabilityBoundEnforcer()
         c = self._make_constraint(threshold=0.0, action=EnforcementAction.BLOCK)
-        result = e.enforce_constraint(c, {"capability_limit": 1.0},
-                                       {"capability_usage": 5.0})
+        result = e.enforce_constraint(c, {"capability_limit": 1.0}, {"capability_usage": 5.0})
         assert result.action_taken == EnforcementAction.BLOCK
 
     def test_capability_enforcer_can_handle(self):
         e = CapabilityBoundEnforcer()
         assert e.can_handle_constraint(self._make_constraint()) is True
-        assert e.can_handle_constraint(self._make_constraint(
-            ctype=ConstraintType.VALUE_ALIGNMENT)) is False
+        assert (
+            e.can_handle_constraint(self._make_constraint(ctype=ConstraintType.VALUE_ALIGNMENT))
+            is False
+        )
 
     # ─── ValueAlignmentEnforcer ───
     def test_value_alignment_enforcer_aligned(self):
@@ -797,8 +870,9 @@ class TestConstraintEnforcers:
     def test_value_alignment_enforcer_neutral(self):
         """No value info → neutral (0.5) < default threshold (0.8) → warning."""
         e = ValueAlignmentEnforcer()
-        c = self._make_constraint(ctype=ConstraintType.VALUE_ALIGNMENT,
-                                  action=EnforcementAction.WARN)
+        c = self._make_constraint(
+            ctype=ConstraintType.VALUE_ALIGNMENT, action=EnforcementAction.WARN
+        )
         result = e.enforce_constraint(c, {}, {})
         # Neutral score 0.5 < 0.8 → enforcement
         assert result.action_taken == EnforcementAction.WARN
@@ -863,6 +937,7 @@ class TestConstraintEnforcers:
 #  8. Model Checker tests
 # ════════════════════════════════════════════════════════════════════
 
+
 class TestModelChecker:
 
     def _simple_model(self):
@@ -911,8 +986,9 @@ class TestModelChecker:
         """AG(true) should be satisfied on any model."""
         model, s0, s1 = self._simple_model()
         checker = CTLModelChecker()
-        prop = TemporalExpression(operator=TemporalOperator.ALWAYS,
-                                  operand=Constant(value=True, type_name="Boolean"))
+        prop = TemporalExpression(
+            operator=TemporalOperator.ALWAYS, operand=Constant(value=True, type_name="Boolean")
+        )
         trace = checker.check_property(model, prop)
         assert trace.result == ModelCheckResult.SATISFIED
 
@@ -920,8 +996,9 @@ class TestModelChecker:
         """AG(false) should be violated on any non-empty model."""
         model, _, _ = self._simple_model()
         checker = CTLModelChecker()
-        prop = TemporalExpression(operator=TemporalOperator.ALWAYS,
-                                  operand=Constant(value=False, type_name="Boolean"))
+        prop = TemporalExpression(
+            operator=TemporalOperator.ALWAYS, operand=Constant(value=False, type_name="Boolean")
+        )
         trace = checker.check_property(model, prop)
         assert trace.result == ModelCheckResult.VIOLATED
 
@@ -933,8 +1010,9 @@ class TestModelChecker:
         We test the suite still returns a valid ModelCheckTrace (VIOLATED due to bug)."""
         model, _, _ = self._simple_model()
         suite = SafetyModelCheckingSuite()
-        inv = SafetyInvariant(name="always_true",
-                              condition=Constant(value=True, type_name="Boolean"))
+        inv = SafetyInvariant(
+            name="always_true", condition=Constant(value=True, type_name="Boolean")
+        )
         trace = suite.verify_safety_invariant(model, inv)
         # Due to the positional-arg bug, this returns VIOLATED
         assert trace.result in (ModelCheckResult.SATISFIED, ModelCheckResult.VIOLATED)
@@ -947,8 +1025,9 @@ class TestModelChecker:
 
     def test_counter_example_creation(self):
         s = MCSystemState(id="s0", variables={})
-        ce = CounterExample(property_name="p", trace=[s],
-                            violated_at_step=0, violation_description="failed")
+        ce = CounterExample(
+            property_name="p", trace=[s], violated_at_step=0, violation_description="failed"
+        )
         assert ce.property_name == "p"
         assert ce.violated_at_step == 0
 
@@ -962,6 +1041,7 @@ class TestModelChecker:
 # ════════════════════════════════════════════════════════════════════
 #  9. Theorem Prover tests
 # ════════════════════════════════════════════════════════════════════
+
 
 class TestTheoremProver:
 
@@ -1032,11 +1112,14 @@ class TestTheoremProver:
     def test_proof_step_creation(self):
         step = ProofStep(
             rule="modus_ponens",
-            premises=[_var("p"), BinaryOperation(
-                left=_var("p"),
-                operator=LogicalOperator.IMPLIES,
-                right=_var("q"),
-            )],
+            premises=[
+                _var("p"),
+                BinaryOperation(
+                    left=_var("p"),
+                    operator=LogicalOperator.IMPLIES,
+                    right=_var("q"),
+                ),
+            ],
             conclusion=_var("q"),
             justification="MP on p, p->q",
             step_number=1,
@@ -1054,6 +1137,7 @@ class TestTheoremProver:
 # ════════════════════════════════════════════════════════════════════
 # 10. Adversarial Tester tests
 # ════════════════════════════════════════════════════════════════════
+
 
 class TestAdversarialTester:
 

@@ -69,9 +69,7 @@ class MemgraphRetriever(BaseRetriever):
         self, query: str, *, run_manager: CallbackManagerForRetrieverRun, **kwargs: Any
     ) -> List[Document]:
         k = kwargs.get("k", self.k)
-        return [
-            Document(page_content=f"Result {i} for query: {query}") for i in range(k)
-        ]
+        return [Document(page_content=f"Result {i} for query: {query}") for i in range(k)]
 
     # optional: add custom async implementations here
     # async def _aget_relevant_documents(

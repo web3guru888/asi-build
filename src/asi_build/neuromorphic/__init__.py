@@ -26,6 +26,7 @@ def _try_import(module_path, names):
     result = {}
     try:
         import importlib
+
         mod = importlib.import_module(module_path, package=__name__)
         for name in names:
             val = getattr(mod, name, None)
@@ -39,49 +40,68 @@ def _try_import(module_path, names):
 _all_imports = {}
 
 # Core imports
-_all_imports.update(_try_import('.core', [
-    'NeuromorphicConfig', 'NeuromorphicManager', 'EventProcessor', 'TemporalDynamics'
-]))
+_all_imports.update(
+    _try_import(
+        ".core", ["NeuromorphicConfig", "NeuromorphicManager", "EventProcessor", "TemporalDynamics"]
+    )
+)
 
 # Spiking neural network components
-_all_imports.update(_try_import('.spiking', [
-    'SpikingNeuron', 'SpikingNetwork', 'SynapticConnection', 'NeuronModels'
-]))
+_all_imports.update(
+    _try_import(
+        ".spiking", ["SpikingNeuron", "SpikingNetwork", "SynapticConnection", "NeuronModels"]
+    )
+)
 
 # Hardware simulation
-_all_imports.update(_try_import('.hardware', [
-    'NeuromorphicChip', 'MemristiveDevice', 'SynapticArray', 'HardwareSimulator'
-]))
+_all_imports.update(
+    _try_import(
+        ".hardware", ["NeuromorphicChip", "MemristiveDevice", "SynapticArray", "HardwareSimulator"]
+    )
+)
 
 # Learning algorithms
-_all_imports.update(_try_import('.learning', [
-    'STDPLearning', 'HomeostasticPlasticity', 'MetaplasticityLearning', 'TemporalLearning'
-]))
+_all_imports.update(
+    _try_import(
+        ".learning",
+        ["STDPLearning", "HomeostasticPlasticity", "MetaplasticityLearning", "TemporalLearning"],
+    )
+)
 
 # Reservoir computing
-_all_imports.update(_try_import('.reservoir', [
-    'LiquidStateMachine', 'EchoStateNetwork', 'ReservoirComputer', 'DynamicReservoir'
-]))
+_all_imports.update(
+    _try_import(
+        ".reservoir",
+        ["LiquidStateMachine", "EchoStateNetwork", "ReservoirComputer", "DynamicReservoir"],
+    )
+)
 
 # Vision processing
-_all_imports.update(_try_import('.vision', [
-    'DVSProcessor', 'SpikeBasedVision', 'TemporalContrast', 'EventBasedTracking'
-]))
+_all_imports.update(
+    _try_import(
+        ".vision", ["DVSProcessor", "SpikeBasedVision", "TemporalContrast", "EventBasedTracking"]
+    )
+)
 
 # Brain-computer interfaces
-_all_imports.update(_try_import('.bci', [
-    'SpikeDecoder', 'MotorIntention', 'BrainSignalProcessor', 'NeuroprostheticControl'
-]))
+_all_imports.update(
+    _try_import(
+        ".bci", ["SpikeDecoder", "MotorIntention", "BrainSignalProcessor", "NeuroprostheticControl"]
+    )
+)
 
 # Neural coding
-_all_imports.update(_try_import('.coding', [
-    'RateCodec', 'TemporalCodec', 'PopulationCodec', 'SparseCodec'
-]))
+_all_imports.update(
+    _try_import(".coding", ["RateCodec", "TemporalCodec", "PopulationCodec", "SparseCodec"])
+)
 
 # Robotics control
-_all_imports.update(_try_import('.robotics', [
-    'NeuromorphicController', 'SensoriMotorMapper', 'AdaptiveBehavior', 'EmbodiedLearning'
-]))
+_all_imports.update(
+    _try_import(
+        ".robotics",
+        ["NeuromorphicController", "SensoriMotorMapper", "AdaptiveBehavior", "EmbodiedLearning"],
+    )
+)
 
 globals().update(_all_imports)
 __all__ = list(_all_imports.keys())

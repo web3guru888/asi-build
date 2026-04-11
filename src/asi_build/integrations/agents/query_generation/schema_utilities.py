@@ -36,9 +36,7 @@ class SchemaUtilities:
         return column_name
 
     @staticmethod
-    def generate_relationship_name(
-        from_table: str, to_table: str, join_table: str = None
-    ) -> str:
+    def generate_relationship_name(from_table: str, to_table: str, join_table: str = None) -> str:
         """Generate semantic relationship name.
 
         Args:

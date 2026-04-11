@@ -6,11 +6,12 @@ and graph modeling systems, enabling HyGM to work with any SQL database
 system through standardized data structures.
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
+
 from .interface import (
+    ColumnInfo,
     DatabaseStructure,
     TableInfo,
-    ColumnInfo,
 )
 
 
@@ -91,8 +92,7 @@ class DatabaseDataInterface:
         if connect_and_analyze:
             if not database_analyzer.connect():
                 raise ConnectionError(
-                    f"Failed to connect to {database_analyzer.database_type} "
-                    f"database"
+                    f"Failed to connect to {database_analyzer.database_type} " f"database"
                 )
 
         # Get standardized structure
@@ -234,8 +234,6 @@ class DatabaseDataInterface:
             Tuple of (hygm_compatible_structure, migration_compatible_config)
         """
         hygm_structure = DatabaseDataInterface.get_hygm_data_structure(db_structure)
-        migration_config = DatabaseDataInterface.create_connection_config_for_migration(
-            analyzer
-        )
+        migration_config = DatabaseDataInterface.create_connection_config_for_migration(analyzer)
 
         return hygm_structure, migration_config

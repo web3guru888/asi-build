@@ -5,7 +5,7 @@ Helper functions, model compression, metrics, and other utilities.
 """
 
 try:
-    from .model_compression import ModelCompressor, QuantizationCompressor, PruningCompressor
+    from .model_compression import ModelCompressor, PruningCompressor, QuantizationCompressor
 except (ImportError, ModuleNotFoundError, SyntaxError):
     ModelCompressor = None
     QuantizationCompressor = None
@@ -28,12 +28,12 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 
 __all__ = [
     "ModelCompressor",
-    "QuantizationCompressor", 
+    "QuantizationCompressor",
     "PruningCompressor",
     "FederatedMetrics",
     "PerformanceTracker",
     "DataPartitioner",
     "IIDPartitioner",
     "NonIIDPartitioner",
-    "FederatedVisualizer"
+    "FederatedVisualizer",
 ]

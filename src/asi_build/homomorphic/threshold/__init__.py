@@ -1,7 +1,7 @@
 """Threshold cryptography schemes."""
 
 try:
-    from .threshold_schemes import ThresholdScheme, ThresholdRSA, ThresholdECDSA
+    from .threshold_schemes import ThresholdECDSA, ThresholdRSA, ThresholdScheme
 except (ImportError, ModuleNotFoundError, SyntaxError):
     ThresholdScheme = None
     ThresholdRSA = None
@@ -15,4 +15,10 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     ThresholdEncryption = None
 
-__all__ = ["ThresholdScheme", "ThresholdRSA", "ThresholdECDSA", "DistributedKeyGeneration", "ThresholdEncryption"]
+__all__ = [
+    "ThresholdScheme",
+    "ThresholdRSA",
+    "ThresholdECDSA",
+    "DistributedKeyGeneration",
+    "ThresholdEncryption",
+]

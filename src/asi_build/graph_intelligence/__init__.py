@@ -1,7 +1,7 @@
 """
 Kenny Graph Intelligence System
 
-A comprehensive graph-based intelligence system that enables Kenny to think 
+A comprehensive graph-based intelligence system that enables Kenny to think
 "community by community" for faster and more accurate automation decisions.
 
 This package implements:
@@ -14,10 +14,20 @@ This package implements:
 
 try:
     from .schema import (
-    NodeType, RelationshipType, KnowledgeGraphSchema,
-    UIElementNode, WorkflowNode, CommunityNode, ApplicationNode,
-    ScreenNode, PatternNode, ErrorNode, Relationship,
-    create_ui_element, create_community, create_workflow
+        ApplicationNode,
+        CommunityNode,
+        ErrorNode,
+        KnowledgeGraphSchema,
+        NodeType,
+        PatternNode,
+        Relationship,
+        RelationshipType,
+        ScreenNode,
+        UIElementNode,
+        WorkflowNode,
+        create_community,
+        create_ui_element,
+        create_workflow,
     )
 except (ImportError, ModuleNotFoundError, SyntaxError):
     NodeType = None
@@ -49,18 +59,25 @@ __author__ = "Kenny AI Team"
 
 __all__ = [
     # Core schema
-    'NodeType', 'RelationshipType', 'KnowledgeGraphSchema',
-    
+    "NodeType",
+    "RelationshipType",
+    "KnowledgeGraphSchema",
     # Node types
-    'UIElementNode', 'WorkflowNode', 'CommunityNode', 'ApplicationNode',
-    'ScreenNode', 'PatternNode', 'ErrorNode', 'Relationship',
-    
+    "UIElementNode",
+    "WorkflowNode",
+    "CommunityNode",
+    "ApplicationNode",
+    "ScreenNode",
+    "PatternNode",
+    "ErrorNode",
+    "Relationship",
     # Factory functions
-    'create_ui_element', 'create_community', 'create_workflow',
-    
+    "create_ui_element",
+    "create_community",
+    "create_workflow",
     # Database connections
-    'MemgraphConnection', 'create_memgraph_connection',
-    
+    "MemgraphConnection",
+    "create_memgraph_connection",
     # Management
-    'SchemaManager'
+    "SchemaManager",
 ]

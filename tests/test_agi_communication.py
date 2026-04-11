@@ -26,21 +26,21 @@ Pre-existing bugs found during testing (flagged, not fixed):
 """
 
 import asyncio
+import hashlib
 import json
 import math
 import uuid
-import hashlib
+from dataclasses import asdict
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import numpy as np
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, AsyncMock, patch
-from dataclasses import asdict
-
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _run(coro):
     """Run an async coroutine synchronously."""
@@ -53,6 +53,7 @@ def _run(coro):
 
 def _make_identity(agi_id="agi_1", name="TestAGI", capabilities=None):
     from src.asi_build.agi_communication.core import AGIIdentity
+
     return AGIIdentity(
         id=agi_id,
         name=name,
@@ -75,6 +76,7 @@ def _make_mock_protocol(agi_id="agi_1", name="TestAGI"):
 
 def _make_message(sender="a", receiver="b", mtype=None, payload=None, sig=None, session_id=None):
     from src.asi_build.agi_communication.core import CommunicationMessage, MessageType
+
     return CommunicationMessage(
         id=str(uuid.uuid4()),
         sender_id=sender,
@@ -95,18 +97,21 @@ def _make_message(sender="a", receiver="b", mtype=None, payload=None, sig=None, 
 class TestMessageType:
     def test_all_values(self):
         from src.asi_build.agi_communication.core import MessageType
+
         assert len(MessageType) == 16
         assert MessageType.HANDSHAKE.value == "handshake"
         assert MessageType.BYZANTINE_CONSENSUS.value == "byzantine_consensus"
 
     def test_from_string(self):
         from src.asi_build.agi_communication.core import MessageType
+
         assert MessageType("knowledge_share") == MessageType.KNOWLEDGE_SHARE
 
 
 class TestCommunicationStatus:
     def test_all_values(self):
         from src.asi_build.agi_communication.core import CommunicationStatus
+
         assert len(CommunicationStatus) == 7
         assert CommunicationStatus.SYNCHRONIZED.value == "synchronized"
 
@@ -120,20 +125,30 @@ class TestAGIIdentity:
 
     def test_post_init_reputation(self):
         from src.asi_build.agi_communication.core import AGIIdentity
-        ident = AGIIdentity(id="x", name="X", architecture="a", version="1",
-                            capabilities=[], reputation=None)
+
+        ident = AGIIdentity(
+            id="x", name="X", architecture="a", version="1", capabilities=[], reputation=None
+        )
         assert ident.reputation == {}
 
     def test_with_explicit_reputation(self):
         from src.asi_build.agi_communication.core import AGIIdentity
-        ident = AGIIdentity(id="x", name="X", architecture="a", version="1",
-                            capabilities=[], reputation={"score": 10})
+
+        ident = AGIIdentity(
+            id="x",
+            name="X",
+            architecture="a",
+            version="1",
+            capabilities=[],
+            reputation={"score": 10},
+        )
         assert ident.reputation == {"score": 10}
 
 
 class TestCommunicationMessage:
     def test_to_dict_roundtrip(self):
         from src.asi_build.agi_communication.core import CommunicationMessage, MessageType
+
         msg = _make_message(payload={"key": "value"})
         d = msg.to_dict()
         assert d["message_type"] == msg.message_type.value
@@ -145,6 +160,7 @@ class TestCommunicationMessage:
 
     def test_from_dict_preserves_fields(self):
         from src.asi_build.agi_communication.core import CommunicationMessage, MessageType
+
         d = {
             "id": "m1",
             "sender_id": "s",
@@ -166,22 +182,27 @@ class TestCommunicationMessage:
 class TestCommunicationSession:
     def test_add_message_updates_activity(self):
         from src.asi_build.agi_communication.core import CommunicationSession
+
         ident = _make_identity()
         sess = CommunicationSession("s1", [ident])
         before = sess.last_activity
-        import time; time.sleep(0.01)
+        import time
+
+        time.sleep(0.01)
         sess.add_message(_make_message())
         assert sess.last_activity >= before
         assert len(sess.message_history) == 1
 
     def test_update_status(self):
         from src.asi_build.agi_communication.core import CommunicationSession, CommunicationStatus
+
         sess = CommunicationSession("s1", [_make_identity()])
         sess.update_status(CommunicationStatus.COLLABORATING)
         assert sess.status == CommunicationStatus.COLLABORATING
 
     def test_is_expired(self):
         from src.asi_build.agi_communication.core import CommunicationSession
+
         sess = CommunicationSession("s1", [_make_identity()])
         assert not sess.is_expired(timeout_minutes=30)
         sess.last_activity = datetime.now() - timedelta(minutes=60)
@@ -189,6 +210,7 @@ class TestCommunicationSession:
 
     def test_shared_context_and_goals(self):
         from src.asi_build.agi_communication.core import CommunicationSession
+
         sess = CommunicationSession("s1", [_make_identity()])
         assert sess.shared_context == {}
         assert sess.goals == []
@@ -200,6 +222,7 @@ class TestProtocolHelpers:
     def test_get_session_status_missing(self):
         """get_session_status returns None for unknown session."""
         from src.asi_build.agi_communication.core import AGICommunicationProtocol
+
         # We can't instantiate the class, so test via mock
         proto = _make_mock_protocol()
         proto.sessions = {}
@@ -210,6 +233,7 @@ class TestProtocolHelpers:
     def test_get_communication_stats_shape(self):
         """Stats dict has the right keys."""
         from src.asi_build.agi_communication.core import CommunicationSession
+
         # Simulate stats calculation manually
         sessions = {"s1": CommunicationSession("s1", [_make_identity()])}
         total_messages = sum(len(s.message_history) for s in sessions.values())
@@ -231,6 +255,7 @@ class TestProtocolHelpers:
 class TestTrustLevel:
     def test_values(self):
         from src.asi_build.agi_communication.auth import TrustLevel
+
         assert TrustLevel.UNTRUSTED.value == "untrusted"
         assert TrustLevel.VERIFIED.value == "verified"
 
@@ -238,16 +263,22 @@ class TestTrustLevel:
 class TestAuthenticationMethod:
     def test_values(self):
         from src.asi_build.agi_communication.auth import AuthenticationMethod
+
         assert len(AuthenticationMethod) == 6
 
 
 class TestTrustRecord:
     def test_update_trust_success(self):
-        from src.asi_build.agi_communication.auth import TrustRecord, TrustLevel
+        from src.asi_build.agi_communication.auth import TrustLevel, TrustRecord
+
         rec = TrustRecord(
-            agi_id="a", trust_score=0.5, reputation_points=0,
-            successful_interactions=0, failed_interactions=0,
-            last_interaction=datetime.now(), trust_level=TrustLevel.MEDIUM,
+            agi_id="a",
+            trust_score=0.5,
+            reputation_points=0,
+            successful_interactions=0,
+            failed_interactions=0,
+            last_interaction=datetime.now(),
+            trust_level=TrustLevel.MEDIUM,
         )
         rec.update_trust(success=True, impact=1.0)
         assert rec.successful_interactions == 1
@@ -255,22 +286,32 @@ class TestTrustRecord:
         assert rec.trust_score == pytest.approx(0.51, abs=0.001)
 
     def test_update_trust_failure(self):
-        from src.asi_build.agi_communication.auth import TrustRecord, TrustLevel
+        from src.asi_build.agi_communication.auth import TrustLevel, TrustRecord
+
         rec = TrustRecord(
-            agi_id="a", trust_score=0.5, reputation_points=0,
-            successful_interactions=0, failed_interactions=0,
-            last_interaction=datetime.now(), trust_level=TrustLevel.MEDIUM,
+            agi_id="a",
+            trust_score=0.5,
+            reputation_points=0,
+            successful_interactions=0,
+            failed_interactions=0,
+            last_interaction=datetime.now(),
+            trust_level=TrustLevel.MEDIUM,
         )
         rec.update_trust(success=False, impact=1.0)
         assert rec.failed_interactions == 1
         assert rec.trust_score == pytest.approx(0.45, abs=0.001)
 
     def test_trust_level_thresholds(self):
-        from src.asi_build.agi_communication.auth import TrustRecord, TrustLevel
+        from src.asi_build.agi_communication.auth import TrustLevel, TrustRecord
+
         rec = TrustRecord(
-            agi_id="a", trust_score=0.95, reputation_points=0,
-            successful_interactions=0, failed_interactions=0,
-            last_interaction=datetime.now(), trust_level=TrustLevel.MEDIUM,
+            agi_id="a",
+            trust_score=0.95,
+            reputation_points=0,
+            successful_interactions=0,
+            failed_interactions=0,
+            last_interaction=datetime.now(),
+            trust_level=TrustLevel.MEDIUM,
         )
         rec._update_trust_level()
         assert rec.trust_level == TrustLevel.VERIFIED
@@ -292,11 +333,16 @@ class TestTrustRecord:
         assert rec.trust_level == TrustLevel.UNTRUSTED
 
     def test_trust_clamped(self):
-        from src.asi_build.agi_communication.auth import TrustRecord, TrustLevel
+        from src.asi_build.agi_communication.auth import TrustLevel, TrustRecord
+
         rec = TrustRecord(
-            agi_id="a", trust_score=0.99, reputation_points=0,
-            successful_interactions=0, failed_interactions=0,
-            last_interaction=datetime.now(), trust_level=TrustLevel.VERIFIED,
+            agi_id="a",
+            trust_score=0.99,
+            reputation_points=0,
+            successful_interactions=0,
+            failed_interactions=0,
+            last_interaction=datetime.now(),
+            trust_level=TrustLevel.VERIFIED,
         )
         # Many successes → clamp at 1.0
         for _ in range(50):
@@ -313,6 +359,7 @@ class TestTrustRecord:
 class TestCryptographicManager:
     def test_generate_key_pair(self):
         from src.asi_build.agi_communication.auth import CryptographicManager
+
         mgr = CryptographicManager()
         priv, pub = mgr.generate_key_pair("agi_1")
         assert b"PRIVATE KEY" in priv
@@ -321,6 +368,7 @@ class TestCryptographicManager:
 
     def test_sign_and_verify(self):
         from src.asi_build.agi_communication.auth import CryptographicManager
+
         mgr = CryptographicManager()
         priv, pub = mgr.generate_key_pair("agi_1")
         sig = mgr.sign_message("hello world", priv)
@@ -329,6 +377,7 @@ class TestCryptographicManager:
 
     def test_verify_bad_signature(self):
         from src.asi_build.agi_communication.auth import CryptographicManager
+
         mgr = CryptographicManager()
         priv, pub = mgr.generate_key_pair("agi_1")
         sig = mgr.sign_message("hello", priv)
@@ -337,6 +386,7 @@ class TestCryptographicManager:
 
     def test_encrypt_decrypt_roundtrip(self):
         from src.asi_build.agi_communication.auth import CryptographicManager
+
         mgr = CryptographicManager()
         priv, pub = mgr.generate_key_pair("agi_1")
         encrypted = mgr.encrypt_message("secret payload", pub)
@@ -345,6 +395,7 @@ class TestCryptographicManager:
 
     def test_encrypt_decrypt_long_message(self):
         from src.asi_build.agi_communication.auth import CryptographicManager
+
         mgr = CryptographicManager()
         priv, pub = mgr.generate_key_pair("agi_1")
         long_msg = "A" * 5000
@@ -354,6 +405,7 @@ class TestCryptographicManager:
 
     def test_generate_session_key(self):
         from src.asi_build.agi_communication.auth import CryptographicManager
+
         mgr = CryptographicManager()
         key = mgr.generate_session_key("sess_1")
         assert len(key) == 32
@@ -363,6 +415,7 @@ class TestCryptographicManager:
 class TestInterAGIAuthenticator:
     def _make_authenticator(self):
         from src.asi_build.agi_communication.auth import InterAGIAuthenticator
+
         proto = _make_mock_protocol()
         auth = InterAGIAuthenticator(proto)
         return auth, proto
@@ -387,6 +440,7 @@ class TestInterAGIAuthenticator:
 
     def test_get_trust_level_unknown(self):
         from src.asi_build.agi_communication.auth import TrustLevel
+
         auth, _ = self._make_authenticator()
         assert auth.get_trust_level("unknown") == TrustLevel.UNTRUSTED
 
@@ -397,11 +451,13 @@ class TestInterAGIAuthenticator:
 
     def test_revoke_credentials(self):
         from src.asi_build.agi_communication.auth import TrustLevel
+
         auth, _ = self._make_authenticator()
         auth.establish_trust("agi_2", 0.8)
         # Create credentials for agi_2
         auth.crypto_manager.generate_key_pair("agi_2")
         from src.asi_build.agi_communication.auth import AuthenticationCredentials
+
         auth.credentials["agi_2"] = AuthenticationCredentials(
             agi_id="agi_2",
             public_key=auth.crypto_manager.key_pairs["agi_2"][1],
@@ -448,36 +504,51 @@ class TestInterAGIAuthenticator:
 
     def test_authenticate_pki(self):
         auth, proto = self._make_authenticator()
-        result = _run(auth.authenticate_agi(proto.identity.id,
-                       auth.__class__.__mro__[0].__module__.replace("src.asi_build.agi_communication.auth", "") or None
-                       # just use the enum:
-                       ))
+        result = _run(
+            auth.authenticate_agi(
+                proto.identity.id,
+                auth.__class__.__mro__[0].__module__.replace(
+                    "src.asi_build.agi_communication.auth", ""
+                )
+                or None,
+                # just use the enum:
+            )
+        )
         # Simpler: direct call
         from src.asi_build.agi_communication.auth import AuthenticationMethod
-        result = _run(auth.authenticate_agi(proto.identity.id, AuthenticationMethod.PKI_CERTIFICATE))
+
+        result = _run(
+            auth.authenticate_agi(proto.identity.id, AuthenticationMethod.PKI_CERTIFICATE)
+        )
         assert result is True
 
     def test_authenticate_pki_unknown(self):
         from src.asi_build.agi_communication.auth import AuthenticationMethod
+
         auth, _ = self._make_authenticator()
         result = _run(auth.authenticate_agi("unknown", AuthenticationMethod.PKI_CERTIFICATE))
         assert result is False
 
     def test_authenticate_jwt(self):
         from src.asi_build.agi_communication.auth import AuthenticationMethod
+
         auth, proto = self._make_authenticator()
         result = _run(auth.authenticate_agi(proto.identity.id, AuthenticationMethod.JWT_TOKEN))
         assert result is True
 
     def test_authenticate_challenge_response(self):
         from src.asi_build.agi_communication.auth import AuthenticationMethod
+
         auth, proto = self._make_authenticator()
-        result = _run(auth.authenticate_agi(proto.identity.id, AuthenticationMethod.CHALLENGE_RESPONSE))
+        result = _run(
+            auth.authenticate_agi(proto.identity.id, AuthenticationMethod.CHALLENGE_RESPONSE)
+        )
         assert result is True
         assert len(auth.active_challenges) == 1
 
     def test_authenticate_multi_factor(self):
         from src.asi_build.agi_communication.auth import AuthenticationMethod
+
         auth, proto = self._make_authenticator()
         result = _run(auth.authenticate_agi(proto.identity.id, AuthenticationMethod.MULTI_FACTOR))
         assert result is True
@@ -498,6 +569,7 @@ class TestInterAGIAuthenticator:
 
     def test_handle_challenge_response_success(self):
         from src.asi_build.agi_communication.auth import ChallengeResponse
+
         auth, proto = self._make_authenticator()
         cr = ChallengeResponse(
             challenge_id="c1",
@@ -512,12 +584,14 @@ class TestInterAGIAuthenticator:
             payload={"action": "challenge_response", "challenge_id": "c1", "response": "resp"},
         )
         from src.asi_build.agi_communication.core import MessageType
+
         msg.message_type = MessageType.TRUST_VERIFICATION
         _run(auth.handle_trust_verification(msg))
         assert "c1" not in auth.active_challenges  # removed on success
 
     def test_handle_challenge_response_failure(self):
         from src.asi_build.agi_communication.auth import ChallengeResponse
+
         auth, proto = self._make_authenticator()
         cr = ChallengeResponse(
             challenge_id="c1",
@@ -536,17 +610,22 @@ class TestInterAGIAuthenticator:
 
     def test_handle_challenge_max_attempts(self):
         from src.asi_build.agi_communication.auth import ChallengeResponse
+
         auth, _ = self._make_authenticator()
         cr = ChallengeResponse(
-            challenge_id="c1", challenge_data="d", expected_response="r",
+            challenge_id="c1",
+            challenge_data="d",
+            expected_response="r",
             created_at=datetime.now(),
             expires_at=datetime.now() + timedelta(minutes=5),
-            attempts=2, max_attempts=3,
+            attempts=2,
+            max_attempts=3,
         )
         auth.active_challenges["c1"] = cr
-        msg = _make_message(sender="x", payload={
-            "action": "challenge_response", "challenge_id": "c1", "response": "wrong"
-        })
+        msg = _make_message(
+            sender="x",
+            payload={"action": "challenge_response", "challenge_id": "c1", "response": "wrong"},
+        )
         _run(auth.handle_trust_verification(msg))
         assert "c1" not in auth.active_challenges  # removed after 3 attempts
 
@@ -559,21 +638,26 @@ class TestInterAGIAuthenticator:
 class TestProblemType:
     def test_all_types(self):
         from src.asi_build.agi_communication.collaboration import ProblemType
+
         assert len(ProblemType) == 10
 
 
 class TestCollaborationStrategy:
     def test_all_strategies(self):
         from src.asi_build.agi_communication.collaboration import CollaborationStrategy
+
         assert len(CollaborationStrategy) == 8
 
 
 class TestProblem:
     def _make_problem(self, **kwargs):
         from src.asi_build.agi_communication.collaboration import Problem, ProblemType
+
         defaults = dict(
-            id="p1", description="Test problem",
-            problem_type=ProblemType.OPTIMIZATION, complexity=0.5,
+            id="p1",
+            description="Test problem",
+            problem_type=ProblemType.OPTIMIZATION,
+            complexity=0.5,
         )
         defaults.update(kwargs)
         return Problem(**defaults)
@@ -594,9 +678,9 @@ class TestProblem:
         assert c >= 0.5
 
     def test_estimate_complexity_clamped(self):
-        p = self._make_problem(complexity=0.95,
-                               constraints={str(i): i for i in range(10)},
-                               input_data="x" * 50000)
+        p = self._make_problem(
+            complexity=0.95, constraints={str(i): i for i in range(10)}, input_data="x" * 50000
+        )
         c = p.estimate_complexity()
         assert c <= 1.0
 
@@ -604,12 +688,14 @@ class TestProblem:
 class TestTask:
     def _make_task(self, **kwargs):
         from src.asi_build.agi_communication.collaboration import Task
+
         defaults = dict(id="t1", problem_id="p1", description="task")
         defaults.update(kwargs)
         return Task(**defaults)
 
     def test_mark_started(self):
         from src.asi_build.agi_communication.collaboration import TaskStatus
+
         t = self._make_task()
         t.mark_started()
         assert t.status == TaskStatus.IN_PROGRESS
@@ -617,6 +703,7 @@ class TestTask:
 
     def test_mark_completed(self):
         from src.asi_build.agi_communication.collaboration import TaskStatus
+
         t = self._make_task()
         t.mark_started()
         t.mark_completed(result=42)
@@ -627,6 +714,7 @@ class TestTask:
 
     def test_mark_failed(self):
         from src.asi_build.agi_communication.collaboration import TaskStatus
+
         t = self._make_task()
         t.mark_started()
         t.mark_failed("oops")
@@ -637,8 +725,8 @@ class TestTask:
 class TestSolution:
     def test_creation(self):
         from src.asi_build.agi_communication.collaboration import Solution
-        sol = Solution(id="sol1", problem_id="p1",
-                       solution_data={"x": 1}, confidence=0.9)
+
+        sol = Solution(id="sol1", problem_id="p1", solution_data={"x": 1}, confidence=0.9)
         assert sol.quality_score == 0.0
         assert sol.contributors == []
 
@@ -646,16 +734,24 @@ class TestSolution:
 class TestCollaborationSession:
     def _make_session(self):
         from src.asi_build.agi_communication.collaboration import (
-            CollaborationSession, Problem, ProblemType, CollaborationStrategy, Task,
+            CollaborationSession,
+            CollaborationStrategy,
+            Problem,
+            ProblemType,
+            Task,
         )
+
         prob = Problem(id="p1", description="test", problem_type=ProblemType.SEARCH, complexity=0.5)
         return CollaborationSession(
-            id="cs1", problem=prob, participants=["a", "b"],
+            id="cs1",
+            problem=prob,
+            participants=["a", "b"],
             strategy=CollaborationStrategy.HYBRID,
         )
 
     def test_add_task(self):
         from src.asi_build.agi_communication.collaboration import Task
+
         sess = self._make_session()
         t = Task(id="t1", problem_id="p1", description="task")
         sess.add_task(t)
@@ -663,6 +759,7 @@ class TestCollaborationSession:
 
     def test_get_available_tasks(self):
         from src.asi_build.agi_communication.collaboration import Task, TaskStatus
+
         sess = self._make_session()
         t1 = Task(id="t1", problem_id="p1", description="first")
         t2 = Task(id="t2", problem_id="p1", description="second", dependencies=["t1"])
@@ -680,6 +777,7 @@ class TestCollaborationSession:
 
     def test_completion_rate(self):
         from src.asi_build.agi_communication.collaboration import Task, TaskStatus
+
         sess = self._make_session()
         assert sess.get_completion_rate() == 0.0
         t1 = Task(id="t1", problem_id="p1", description="a")
@@ -691,6 +789,7 @@ class TestCollaborationSession:
 
     def test_is_completed(self):
         from src.asi_build.agi_communication.collaboration import Task, TaskStatus
+
         sess = self._make_session()
         t = Task(id="t1", problem_id="p1", description="x")
         sess.add_task(t)
@@ -702,41 +801,58 @@ class TestCollaborationSession:
 class TestProblemDecomposer:
     def _make_problem(self, ptype):
         from src.asi_build.agi_communication.collaboration import Problem
+
         return Problem(id="p1", description="test", problem_type=ptype, complexity=0.5)
 
     def test_decompose_optimization(self):
         from src.asi_build.agi_communication.collaboration import ProblemDecomposer, ProblemType
-        tasks = ProblemDecomposer.decompose_optimization_problem(self._make_problem(ProblemType.OPTIMIZATION))
+
+        tasks = ProblemDecomposer.decompose_optimization_problem(
+            self._make_problem(ProblemType.OPTIMIZATION)
+        )
         assert len(tasks) == 5
         # Check dependency chain: validation depends on execution
         assert tasks[-1].dependencies == [tasks[-2].id]
 
     def test_decompose_search(self):
         from src.asi_build.agi_communication.collaboration import ProblemDecomposer, ProblemType
+
         tasks = ProblemDecomposer.decompose_search_problem(self._make_problem(ProblemType.SEARCH))
         assert len(tasks) == 4
 
     def test_decompose_reasoning(self):
         from src.asi_build.agi_communication.collaboration import ProblemDecomposer, ProblemType
-        tasks = ProblemDecomposer.decompose_reasoning_problem(self._make_problem(ProblemType.REASONING))
+
+        tasks = ProblemDecomposer.decompose_reasoning_problem(
+            self._make_problem(ProblemType.REASONING)
+        )
         assert len(tasks) == 4
 
     def test_decompose_creative(self):
         from src.asi_build.agi_communication.collaboration import ProblemDecomposer, ProblemType
-        tasks = ProblemDecomposer.decompose_creative_problem(self._make_problem(ProblemType.CREATIVE))
+
+        tasks = ProblemDecomposer.decompose_creative_problem(
+            self._make_problem(ProblemType.CREATIVE)
+        )
         assert len(tasks) == 4
 
 
 class TestTaskScheduler:
     def test_assign_tasks_round_robin(self):
         from src.asi_build.agi_communication.collaboration import (
-            TaskScheduler, CollaborationSession, Problem, ProblemType,
-            CollaborationStrategy, Task,
+            CollaborationSession,
+            CollaborationStrategy,
+            Problem,
+            ProblemType,
+            Task,
+            TaskScheduler,
         )
+
         sched = TaskScheduler()
         prob = Problem(id="p1", description="t", problem_type=ProblemType.SEARCH, complexity=0.5)
-        sess = CollaborationSession(id="cs1", problem=prob, participants=["a", "b"],
-                                    strategy=CollaborationStrategy.HYBRID)
+        sess = CollaborationSession(
+            id="cs1", problem=prob, participants=["a", "b"], strategy=CollaborationStrategy.HYBRID
+        )
         t1 = Task(id="t1", problem_id="p1", description="first")
         t2 = Task(id="t2", problem_id="p1", description="second")
         sess.add_task(t1)
@@ -748,6 +864,7 @@ class TestTaskScheduler:
 
     def test_task_completed_updates_workload(self):
         from src.asi_build.agi_communication.collaboration import TaskScheduler
+
         sched = TaskScheduler()
         sched.agi_workloads["a"] = 3
         sched.task_completed("t1", "a")
@@ -755,6 +872,7 @@ class TestTaskScheduler:
 
     def test_update_agi_capabilities(self):
         from src.asi_build.agi_communication.collaboration import TaskScheduler
+
         sched = TaskScheduler()
         sched.update_agi_capabilities("a", {"reasoning", "search"})
         assert sched.agi_capabilities["a"] == {"reasoning", "search"}
@@ -763,8 +881,12 @@ class TestTaskScheduler:
 class TestSolutionValidator:
     def test_validate_solution_none_data(self):
         from src.asi_build.agi_communication.collaboration import (
-            SolutionValidator, Solution, Problem, ProblemType,
+            Problem,
+            ProblemType,
+            Solution,
+            SolutionValidator,
         )
+
         prob = Problem(id="p1", description="t", problem_type=ProblemType.SEARCH, complexity=0.5)
         sol = Solution(id="s1", problem_id="p1", solution_data=None, confidence=0.8)
         result = SolutionValidator.validate_solution(sol, prob)
@@ -773,8 +895,12 @@ class TestSolutionValidator:
 
     def test_validate_solution_basic(self):
         from src.asi_build.agi_communication.collaboration import (
-            SolutionValidator, Solution, Problem, ProblemType,
+            Problem,
+            ProblemType,
+            Solution,
+            SolutionValidator,
         )
+
         prob = Problem(id="p1", description="t", problem_type=ProblemType.SEARCH, complexity=0.5)
         sol = Solution(id="s1", problem_id="p1", solution_data={"x": 1}, confidence=0.9)
         result = SolutionValidator.validate_solution(sol, prob)
@@ -784,22 +910,45 @@ class TestSolutionValidator:
 
     def test_validate_solution_constraint_violation(self):
         from src.asi_build.agi_communication.collaboration import (
-            SolutionValidator, Solution, Problem, ProblemType,
+            Problem,
+            ProblemType,
+            Solution,
+            SolutionValidator,
         )
-        prob = Problem(id="p1", description="t", problem_type=ProblemType.SEARCH,
-                       complexity=0.5, constraints={"max_computation_time": 10})
-        sol = Solution(id="s1", problem_id="p1", solution_data={"x": 1},
-                       confidence=0.5, computational_cost=20)
+
+        prob = Problem(
+            id="p1",
+            description="t",
+            problem_type=ProblemType.SEARCH,
+            complexity=0.5,
+            constraints={"max_computation_time": 10},
+        )
+        sol = Solution(
+            id="s1", problem_id="p1", solution_data={"x": 1}, confidence=0.5, computational_cost=20
+        )
         result = SolutionValidator.validate_solution(sol, prob)
         assert any("exceeded" in issue for issue in result["issues"])
 
     def test_rank_solutions(self):
-        from src.asi_build.agi_communication.collaboration import SolutionValidator, Solution
+        from src.asi_build.agi_communication.collaboration import Solution, SolutionValidator
+
         sols = [
-            Solution(id="s1", problem_id="p1", solution_data="a",
-                     confidence=0.9, quality_score=0.8, contributors=["a"]),
-            Solution(id="s2", problem_id="p1", solution_data="b",
-                     confidence=0.5, quality_score=0.3, contributors=["a", "b"]),
+            Solution(
+                id="s1",
+                problem_id="p1",
+                solution_data="a",
+                confidence=0.9,
+                quality_score=0.8,
+                contributors=["a"],
+            ),
+            Solution(
+                id="s2",
+                problem_id="p1",
+                solution_data="b",
+                confidence=0.5,
+                quality_score=0.3,
+                contributors=["a", "b"],
+            ),
         ]
         ranked = SolutionValidator.rank_solutions(sols)
         assert ranked[0][0].id == "s1"
@@ -809,16 +958,24 @@ class TestSolutionValidator:
 class TestCollaborativeProblemSolver:
     def _make_solver(self):
         from src.asi_build.agi_communication.collaboration import CollaborativeProblemSolver
+
         proto = _make_mock_protocol()
         return CollaborativeProblemSolver(proto), proto
 
     def test_start_collaboration(self):
         from src.asi_build.agi_communication.collaboration import (
-            Problem, ProblemType, CollaborationStrategy,
+            CollaborationStrategy,
+            Problem,
+            ProblemType,
         )
+
         solver, proto = self._make_solver()
-        prob = Problem(id="p1", description="optimize", problem_type=ProblemType.OPTIMIZATION, complexity=0.5)
-        session_id = _run(solver.start_collaboration(prob, ["agi_2"], CollaborationStrategy.DIVIDE_AND_CONQUER))
+        prob = Problem(
+            id="p1", description="optimize", problem_type=ProblemType.OPTIMIZATION, complexity=0.5
+        )
+        session_id = _run(
+            solver.start_collaboration(prob, ["agi_2"], CollaborationStrategy.DIVIDE_AND_CONQUER)
+        )
         assert session_id in solver.active_sessions
         sess = solver.active_sessions[session_id]
         assert len(sess.tasks) == 5  # optimization → 5 tasks
@@ -826,10 +983,16 @@ class TestCollaborativeProblemSolver:
 
     def test_submit_solution(self):
         from src.asi_build.agi_communication.collaboration import (
-            Problem, ProblemType, CollaborationStrategy, Solution,
+            CollaborationStrategy,
+            Problem,
+            ProblemType,
+            Solution,
         )
+
         solver, _ = self._make_solver()
-        prob = Problem(id="p1", description="search", problem_type=ProblemType.SEARCH, complexity=0.3)
+        prob = Problem(
+            id="p1", description="search", problem_type=ProblemType.SEARCH, complexity=0.3
+        )
         sid = _run(solver.start_collaboration(prob, []))
         sol = Solution(id="sol1", problem_id="p1", solution_data={"answer": 42}, confidence=0.8)
         _run(solver.submit_solution(sid, sol))
@@ -840,14 +1003,18 @@ class TestCollaborativeProblemSolver:
     def test_submit_solution_no_session(self):
         solver, _ = self._make_solver()
         from src.asi_build.agi_communication.collaboration import Solution
+
         sol = Solution(id="sol1", problem_id="p1", solution_data={}, confidence=0.5)
         with pytest.raises(ValueError, match="No active session"):
             _run(solver.submit_solution("nonexistent", sol))
 
     def test_finalize_collaboration(self):
         from src.asi_build.agi_communication.collaboration import (
-            Problem, ProblemType, Solution,
+            Problem,
+            ProblemType,
+            Solution,
         )
+
         solver, _ = self._make_solver()
         prob = Problem(id="p1", description="t", problem_type=ProblemType.REASONING, complexity=0.3)
         sid = _run(solver.start_collaboration(prob, []))
@@ -860,8 +1027,11 @@ class TestCollaborativeProblemSolver:
 
     def test_decompose_generic_problem(self):
         from src.asi_build.agi_communication.collaboration import Problem, ProblemType
+
         solver, _ = self._make_solver()
-        prob = Problem(id="p1", description="generic", problem_type=ProblemType.SIMULATION, complexity=0.5)
+        prob = Problem(
+            id="p1", description="generic", problem_type=ProblemType.SIMULATION, complexity=0.5
+        )
         sid = _run(solver.start_collaboration(prob, []))
         sess = solver.active_sessions[sid]
         assert len(sess.tasks) == 1  # generic → 1 task
@@ -873,6 +1043,7 @@ class TestCollaborativeProblemSolver:
 
     def test_get_collaboration_statistics_with_history(self):
         from src.asi_build.agi_communication.collaboration import Problem, ProblemType, Solution
+
         solver, _ = self._make_solver()
         prob = Problem(id="p1", description="t", problem_type=ProblemType.CREATIVE, complexity=0.3)
         sid = _run(solver.start_collaboration(prob, []))
@@ -892,9 +1063,13 @@ class TestCollaborativeProblemSolver:
 class TestGoal:
     def _make_goal(self, utility_fn=None, priority=0.8):
         from src.asi_build.agi_communication.negotiation import Goal, GoalType, UtilityFunction
+
         return Goal(
-            id="g1", description="test goal", goal_type=GoalType.COLLABORATIVE,
-            priority=priority, owner_agi="a",
+            id="g1",
+            description="test goal",
+            goal_type=GoalType.COLLABORATIVE,
+            priority=priority,
+            owner_agi="a",
             utility_function=utility_fn or UtilityFunction.LINEAR,
             resource_requirements={"compute": 10},
         )
@@ -906,6 +1081,7 @@ class TestGoal:
 
     def test_logarithmic_utility(self):
         from src.asi_build.agi_communication.negotiation import UtilityFunction
+
         g = self._make_goal(UtilityFunction.LOGARITHMIC)
         u = g.calculate_utility({"achievement_rate": 0.5})
         expected = np.log(1.5) * 0.8
@@ -913,6 +1089,7 @@ class TestGoal:
 
     def test_exponential_utility(self):
         from src.asi_build.agi_communication.negotiation import UtilityFunction
+
         g = self._make_goal(UtilityFunction.EXPONENTIAL)
         u = g.calculate_utility({"achievement_rate": 0.5})
         expected = (np.exp(0.5) - 1) * 0.8
@@ -920,6 +1097,7 @@ class TestGoal:
 
     def test_sigmoid_utility(self):
         from src.asi_build.agi_communication.negotiation import UtilityFunction
+
         g = self._make_goal(UtilityFunction.SIGMOID)
         u = g.calculate_utility({"achievement_rate": 0.5})
         # sigmoid at midpoint ≈ 0.5
@@ -928,6 +1106,7 @@ class TestGoal:
 
     def test_custom_utility_default(self):
         from src.asi_build.agi_communication.negotiation import UtilityFunction
+
         g = self._make_goal(UtilityFunction.CUSTOM)
         u = g.calculate_utility({"achievement_rate": 0.9})
         assert u == 0.5  # default fallback
@@ -941,15 +1120,24 @@ class TestGoal:
 class TestNegotiationProposal:
     def test_calculate_social_welfare(self):
         from src.asi_build.agi_communication.negotiation import (
-            NegotiationProposal, Goal, GoalType, UtilityFunction,
+            Goal,
+            GoalType,
+            NegotiationProposal,
+            UtilityFunction,
         )
-        g1 = Goal(id="g1", description="a", goal_type=GoalType.INDIVIDUAL,
-                   priority=1.0, owner_agi="a")
-        g2 = Goal(id="g2", description="b", goal_type=GoalType.INDIVIDUAL,
-                   priority=0.5, owner_agi="b")
+
+        g1 = Goal(
+            id="g1", description="a", goal_type=GoalType.INDIVIDUAL, priority=1.0, owner_agi="a"
+        )
+        g2 = Goal(
+            id="g2", description="b", goal_type=GoalType.INDIVIDUAL, priority=0.5, owner_agi="b"
+        )
         prop = NegotiationProposal(
-            id="prop1", proposer_agi="a", goals_addressed=["g1", "g2"],
-            resource_allocation={}, outcome_prediction={"g1": 0.8, "g2": 0.6},
+            id="prop1",
+            proposer_agi="a",
+            goals_addressed=["g1", "g2"],
+            resource_allocation={},
+            outcome_prediction={"g1": 0.8, "g2": 0.6},
             conditions=[],
         )
         sw = prop.calculate_social_welfare([g1, g2])
@@ -958,13 +1146,20 @@ class TestNegotiationProposal:
 
     def test_calculate_fairness(self):
         from src.asi_build.agi_communication.negotiation import (
-            NegotiationProposal, Goal, GoalType,
+            Goal,
+            GoalType,
+            NegotiationProposal,
         )
-        g1 = Goal(id="g1", description="a", goal_type=GoalType.INDIVIDUAL,
-                   priority=1.0, owner_agi="a")
+
+        g1 = Goal(
+            id="g1", description="a", goal_type=GoalType.INDIVIDUAL, priority=1.0, owner_agi="a"
+        )
         prop = NegotiationProposal(
-            id="p1", proposer_agi="a", goals_addressed=["g1"],
-            resource_allocation={}, outcome_prediction={"g1": 0.8},
+            id="p1",
+            proposer_agi="a",
+            goals_addressed=["g1"],
+            resource_allocation={},
+            outcome_prediction={"g1": 0.8},
             conditions=[],
         )
         f = prop.calculate_fairness([g1])
@@ -972,35 +1167,51 @@ class TestNegotiationProposal:
 
     def test_fairness_no_goals(self):
         from src.asi_build.agi_communication.negotiation import NegotiationProposal
+
         prop = NegotiationProposal(
-            id="p1", proposer_agi="a", goals_addressed=[],
-            resource_allocation={}, outcome_prediction={}, conditions=[],
+            id="p1",
+            proposer_agi="a",
+            goals_addressed=[],
+            resource_allocation={},
+            outcome_prediction={},
+            conditions=[],
         )
         from src.asi_build.agi_communication.negotiation import Goal, GoalType
+
         assert prop.calculate_fairness([]) == 1.0
 
 
 class TestNegotiationSession:
     def test_is_expired_by_deadline(self):
         from src.asi_build.agi_communication.negotiation import NegotiationSession
+
         sess = NegotiationSession(
-            id="ns1", participants=["a"], goals=[],
+            id="ns1",
+            participants=["a"],
+            goals=[],
             deadline=datetime.now() - timedelta(hours=1),
         )
         assert sess.is_expired()
 
     def test_is_expired_by_rounds(self):
         from src.asi_build.agi_communication.negotiation import NegotiationSession
+
         sess = NegotiationSession(
-            id="ns1", participants=["a"], goals=[],
-            max_rounds=5, current_round=5,
+            id="ns1",
+            participants=["a"],
+            goals=[],
+            max_rounds=5,
+            current_round=5,
         )
         assert sess.is_expired()
 
     def test_not_expired(self):
         from src.asi_build.agi_communication.negotiation import NegotiationSession
+
         sess = NegotiationSession(
-            id="ns1", participants=["a"], goals=[],
+            id="ns1",
+            participants=["a"],
+            goals=[],
             deadline=datetime.now() + timedelta(hours=1),
         )
         assert not sess.is_expired()
@@ -1009,6 +1220,7 @@ class TestNegotiationSession:
 class TestGameTheoreticAnalyzer:
     def test_find_nash_equilibrium_pure(self):
         from src.asi_build.agi_communication.negotiation import GameTheoreticAnalyzer
+
         # Prisoner's dilemma-like: (1,1) is Nash equilibrium
         payoff = np.zeros((2, 2, 2))
         payoff[0, 0] = [3, 3]
@@ -1022,6 +1234,7 @@ class TestGameTheoreticAnalyzer:
 
     def test_find_nash_equilibrium_mixed(self):
         from src.asi_build.agi_communication.negotiation import GameTheoreticAnalyzer
+
         # Matching pennies — no pure NE, should return uniform mixed
         payoff = np.zeros((2, 2, 2))
         payoff[0, 0] = [1, -1]
@@ -1034,17 +1247,30 @@ class TestGameTheoreticAnalyzer:
 
     def test_calculate_pareto_frontier(self):
         from src.asi_build.agi_communication.negotiation import (
-            GameTheoreticAnalyzer, NegotiationProposal, Goal, GoalType,
+            GameTheoreticAnalyzer,
+            Goal,
+            GoalType,
+            NegotiationProposal,
         )
-        g = Goal(id="g1", description="a", goal_type=GoalType.INDIVIDUAL,
-                  priority=1.0, owner_agi="a")
+
+        g = Goal(
+            id="g1", description="a", goal_type=GoalType.INDIVIDUAL, priority=1.0, owner_agi="a"
+        )
         p1 = NegotiationProposal(
-            id="p1", proposer_agi="a", goals_addressed=["g1"],
-            resource_allocation={}, outcome_prediction={"g1": 0.9}, conditions=[],
+            id="p1",
+            proposer_agi="a",
+            goals_addressed=["g1"],
+            resource_allocation={},
+            outcome_prediction={"g1": 0.9},
+            conditions=[],
         )
         p2 = NegotiationProposal(
-            id="p2", proposer_agi="a", goals_addressed=["g1"],
-            resource_allocation={}, outcome_prediction={"g1": 0.5}, conditions=[],
+            id="p2",
+            proposer_agi="a",
+            goals_addressed=["g1"],
+            resource_allocation={},
+            outcome_prediction={"g1": 0.5},
+            conditions=[],
         )
         pareto = GameTheoreticAnalyzer.calculate_pareto_frontier([p1, p2], [g])
         # p1 dominates p2
@@ -1055,14 +1281,22 @@ class TestGameTheoreticAnalyzer:
         """NOTE: np.math.comb was removed in numpy 2.x (pre-existing bug in
         negotiation.py L258). We monkeypatch np.math to use stdlib math."""
         from src.asi_build.agi_communication.negotiation import (
-            GameTheoreticAnalyzer, Goal, GoalType,
+            GameTheoreticAnalyzer,
+            Goal,
+            GoalType,
         )
+
         # Monkeypatch np.math for numpy 2.x compat
         if not hasattr(np, "math"):
             np.math = math
-        g = Goal(id="g1", description="a", goal_type=GoalType.COLLABORATIVE,
-                  priority=1.0, owner_agi="a",
-                  resource_requirements={"compute": 10})
+        g = Goal(
+            id="g1",
+            description="a",
+            goal_type=GoalType.COLLABORATIVE,
+            priority=1.0,
+            owner_agi="a",
+            resource_requirements={"compute": 10},
+        )
         contributions = {
             "a": {"compute": 6},
             "b": {"compute": 4},
@@ -1077,12 +1311,14 @@ class TestGameTheoreticAnalyzer:
 class TestMechanismDesigner:
     def test_vickrey_auction(self):
         from src.asi_build.agi_communication.negotiation import MechanismDesigner
+
         result = MechanismDesigner.design_vickrey_auction([])
         assert result["type"] == "vickrey_auction"
         assert result["properties"]["truthful"] is True
 
     def test_combinatorial_auction(self):
         from src.asi_build.agi_communication.negotiation import MechanismDesigner
+
         result = MechanismDesigner.design_combinatorial_auction([])
         assert result["type"] == "combinatorial_auction"
         assert result["rules"]["payment"] == "vcg_payment"
@@ -1091,14 +1327,22 @@ class TestMechanismDesigner:
 class TestGoalNegotiationProtocol:
     def _make_negotiator(self):
         from src.asi_build.agi_communication.negotiation import GoalNegotiationProtocol
+
         proto = _make_mock_protocol()
         return GoalNegotiationProtocol(proto), proto
 
     def _make_goals(self, n=2):
         from src.asi_build.agi_communication.negotiation import Goal, GoalType
+
         return [
-            Goal(id=f"g{i}", description=f"goal {i}", goal_type=GoalType.COLLABORATIVE,
-                 priority=0.8, owner_agi="a", resource_requirements={"compute": 10})
+            Goal(
+                id=f"g{i}",
+                description=f"goal {i}",
+                goal_type=GoalType.COLLABORATIVE,
+                priority=0.8,
+                owner_agi="a",
+                resource_requirements={"compute": 10},
+            )
             for i in range(n)
         ]
 
@@ -1111,11 +1355,13 @@ class TestGoalNegotiationProtocol:
 
     def test_make_proposal(self):
         from src.asi_build.agi_communication.negotiation import NegotiationProposal
+
         neg, proto = self._make_negotiator()
         goals = self._make_goals()
         sid = _run(neg.initiate_negotiation(goals, []))
         proposal = NegotiationProposal(
-            id="prop1", proposer_agi=proto.identity.id,
+            id="prop1",
+            proposer_agi=proto.identity.id,
             goals_addressed=["g0", "g1"],
             resource_allocation={proto.identity.id: {"compute": 5}},
             outcome_prediction={"g0": 0.8, "g1": 0.7},
@@ -1126,27 +1372,34 @@ class TestGoalNegotiationProtocol:
 
     def test_make_proposal_invalid_goal(self):
         from src.asi_build.agi_communication.negotiation import NegotiationProposal
+
         neg, proto = self._make_negotiator()
         goals = self._make_goals()
         sid = _run(neg.initiate_negotiation(goals, []))
         proposal = NegotiationProposal(
-            id="prop1", proposer_agi=proto.identity.id,
+            id="prop1",
+            proposer_agi=proto.identity.id,
             goals_addressed=["nonexistent"],
-            resource_allocation={}, outcome_prediction={}, conditions=[],
+            resource_allocation={},
+            outcome_prediction={},
+            conditions=[],
         )
         with pytest.raises(ValueError, match="Invalid proposal"):
             _run(neg.make_proposal(sid, proposal))
 
     def test_make_proposal_negative_resource(self):
         from src.asi_build.agi_communication.negotiation import NegotiationProposal
+
         neg, proto = self._make_negotiator()
         goals = self._make_goals()
         sid = _run(neg.initiate_negotiation(goals, []))
         proposal = NegotiationProposal(
-            id="prop1", proposer_agi=proto.identity.id,
+            id="prop1",
+            proposer_agi=proto.identity.id,
             goals_addressed=["g0"],
             resource_allocation={proto.identity.id: {"compute": -5}},
-            outcome_prediction={"g0": 0.5}, conditions=[],
+            outcome_prediction={"g0": 0.5},
+            conditions=[],
         )
         with pytest.raises(ValueError, match="Invalid proposal"):
             _run(neg.make_proposal(sid, proposal))
@@ -1155,12 +1408,14 @@ class TestGoalNegotiationProtocol:
         if not hasattr(np, "math"):
             np.math = math
         from src.asi_build.agi_communication.negotiation import NegotiationProposal
+
         neg, proto = self._make_negotiator()
         goals = self._make_goals()
         sid = _run(neg.initiate_negotiation(goals, []))
         for i in range(2):
             p = NegotiationProposal(
-                id=f"p{i}", proposer_agi=proto.identity.id,
+                id=f"p{i}",
+                proposer_agi=proto.identity.id,
                 goals_addressed=["g0", "g1"],
                 resource_allocation={proto.identity.id: {"compute": 5}},
                 outcome_prediction={"g0": 0.5 + i * 0.2, "g1": 0.4 + i * 0.1},
@@ -1183,11 +1438,13 @@ class TestGoalNegotiationProtocol:
         if not hasattr(np, "math"):
             np.math = math
         from src.asi_build.agi_communication.negotiation import NegotiationProposal
+
         neg, proto = self._make_negotiator()
         goals = self._make_goals()
         sid = _run(neg.initiate_negotiation(goals, []))
         p = NegotiationProposal(
-            id="p1", proposer_agi=proto.identity.id,
+            id="p1",
+            proposer_agi=proto.identity.id,
             goals_addressed=["g0", "g1"],
             resource_allocation={proto.identity.id: {"compute": 5}},
             outcome_prediction={"g0": 0.9, "g1": 0.8},
@@ -1202,11 +1459,13 @@ class TestGoalNegotiationProtocol:
         if not hasattr(np, "math"):
             np.math = math
         from src.asi_build.agi_communication.negotiation import NegotiationProposal
+
         neg, proto = self._make_negotiator()
         goals = self._make_goals()
         sid = _run(neg.initiate_negotiation(goals, []))
         p = NegotiationProposal(
-            id="p1", proposer_agi=proto.identity.id,
+            id="p1",
+            proposer_agi=proto.identity.id,
             goals_addressed=["g0"],
             resource_allocation={proto.identity.id: {"compute": 5}},
             outcome_prediction={"g0": 0.9},
@@ -1237,22 +1496,28 @@ class TestGoalNegotiationProtocol:
 class TestKnowledgeRepresentation:
     def test_all_values(self):
         from src.asi_build.agi_communication.semantic import KnowledgeRepresentation
+
         assert len(KnowledgeRepresentation) == 10
 
 
 class TestSemanticFormat:
     def test_all_values(self):
         from src.asi_build.agi_communication.semantic import SemanticFormat
+
         assert len(SemanticFormat) == 9
 
 
 class TestSemanticEntity:
     def test_defaults(self):
         from src.asi_build.agi_communication.semantic import (
-            SemanticEntity, KnowledgeRepresentation, SemanticFormat,
+            KnowledgeRepresentation,
+            SemanticEntity,
+            SemanticFormat,
         )
+
         e = SemanticEntity(
-            id="e1", type="concept",
+            id="e1",
+            type="concept",
             representation=KnowledgeRepresentation.SYMBOLIC_LOGIC,
             format=SemanticFormat.PROLOG,
             content="parent(X,Y)",
@@ -1265,8 +1530,10 @@ class TestSemanticEntity:
 class TestSemanticMapping:
     def test_creation(self):
         from src.asi_build.agi_communication.semantic import (
-            SemanticMapping, KnowledgeRepresentation,
+            KnowledgeRepresentation,
+            SemanticMapping,
         )
+
         m = SemanticMapping(
             source_representation=KnowledgeRepresentation.SYMBOLIC_LOGIC,
             target_representation=KnowledgeRepresentation.NEURAL_EMBEDDINGS,
@@ -1285,19 +1552,21 @@ def _patch_rdf_enum():
     source code.
     """
     from src.asi_build.agi_communication.semantic import KnowledgeRepresentation
+
     if not hasattr(KnowledgeRepresentation, "RDF"):
         # Extend the enum at runtime — ugly but necessary to test the rest of the layer
         import enum
+
         KnowledgeRepresentation._member_map_["RDF"] = KnowledgeRepresentation.KNOWLEDGE_GRAPH
         # Also make it accessible as attribute
-        type.__setattr__(KnowledgeRepresentation, "RDF",
-                         KnowledgeRepresentation.KNOWLEDGE_GRAPH)
+        type.__setattr__(KnowledgeRepresentation, "RDF", KnowledgeRepresentation.KNOWLEDGE_GRAPH)
 
 
 class TestSemanticInteroperabilityLayer:
     def _make_layer(self):
         _patch_rdf_enum()
         from src.asi_build.agi_communication.semantic import SemanticInteroperabilityLayer
+
         proto = _make_mock_protocol()
         return SemanticInteroperabilityLayer(proto)
 
@@ -1312,11 +1581,15 @@ class TestSemanticInteroperabilityLayer:
 
     def test_translate_same_representation(self):
         from src.asi_build.agi_communication.semantic import (
-            SemanticEntity, KnowledgeRepresentation, SemanticFormat,
+            KnowledgeRepresentation,
+            SemanticEntity,
+            SemanticFormat,
         )
+
         layer = self._make_layer()
         entity = SemanticEntity(
-            id="e1", type="concept",
+            id="e1",
+            type="concept",
             representation=KnowledgeRepresentation.SYMBOLIC_LOGIC,
             format=SemanticFormat.PROLOG,
             content="fact(a,b)",
@@ -1326,11 +1599,15 @@ class TestSemanticInteroperabilityLayer:
 
     def test_translate_symbolic_to_neural(self):
         from src.asi_build.agi_communication.semantic import (
-            SemanticEntity, KnowledgeRepresentation, SemanticFormat,
+            KnowledgeRepresentation,
+            SemanticEntity,
+            SemanticFormat,
         )
+
         layer = self._make_layer()
         entity = SemanticEntity(
-            id="e1", type="concept",
+            id="e1",
+            type="concept",
             representation=KnowledgeRepresentation.SYMBOLIC_LOGIC,
             format=SemanticFormat.PROLOG,
             content="parent(john, mary)",
@@ -1342,11 +1619,15 @@ class TestSemanticInteroperabilityLayer:
 
     def test_translate_metta_to_symbolic(self):
         from src.asi_build.agi_communication.semantic import (
-            SemanticEntity, KnowledgeRepresentation, SemanticFormat,
+            KnowledgeRepresentation,
+            SemanticEntity,
+            SemanticFormat,
         )
+
         layer = self._make_layer()
         entity = SemanticEntity(
-            id="e1", type="concept",
+            id="e1",
+            type="concept",
             representation=KnowledgeRepresentation.METTA,
             format=SemanticFormat.METTA,
             content="(isa dog animal)",
@@ -1358,11 +1639,15 @@ class TestSemanticInteroperabilityLayer:
 
     def test_translate_pln_to_probabilistic(self):
         from src.asi_build.agi_communication.semantic import (
-            SemanticEntity, KnowledgeRepresentation, SemanticFormat,
+            KnowledgeRepresentation,
+            SemanticEntity,
+            SemanticFormat,
         )
+
         layer = self._make_layer()
         entity = SemanticEntity(
-            id="e1", type="belief",
+            id="e1",
+            type="belief",
             representation=KnowledgeRepresentation.PROBABILISTIC_LOGIC_NETWORKS,
             format=SemanticFormat.JSON_LD,
             content={"strength": 0.8, "confidence": 0.9},
@@ -1374,11 +1659,15 @@ class TestSemanticInteroperabilityLayer:
 
     def test_translate_nl_to_symbolic(self):
         from src.asi_build.agi_communication.semantic import (
-            SemanticEntity, KnowledgeRepresentation, SemanticFormat,
+            KnowledgeRepresentation,
+            SemanticEntity,
+            SemanticFormat,
         )
+
         layer = self._make_layer()
         entity = SemanticEntity(
-            id="e1", type="text",
+            id="e1",
+            type="text",
             representation=KnowledgeRepresentation.NATURAL_LANGUAGE,
             format=SemanticFormat.JSON_LD,
             content="cat is a animal",
@@ -1388,11 +1677,15 @@ class TestSemanticInteroperabilityLayer:
 
     def test_translate_nl_to_kg(self):
         from src.asi_build.agi_communication.semantic import (
-            SemanticEntity, KnowledgeRepresentation, SemanticFormat,
+            KnowledgeRepresentation,
+            SemanticEntity,
+            SemanticFormat,
         )
+
         layer = self._make_layer()
         entity = SemanticEntity(
-            id="e1", type="text",
+            id="e1",
+            type="text",
             representation=KnowledgeRepresentation.NATURAL_LANGUAGE,
             format=SemanticFormat.JSON_LD,
             content="Alice met Bob",
@@ -1411,11 +1704,18 @@ class TestSemanticInteroperabilityLayer:
     def test_graph_to_rdf_method(self):
         layer = self._make_layer()
         from src.asi_build.agi_communication.semantic import KnowledgeRepresentation
+
         content = {
             "nodes": [{"id": "n1", "type": "Entity", "properties": {"name": "Alice"}}],
             "edges": [{"source": "n1", "target": "n2", "type": "knows"}],
         }
-        result = _run(layer.graph_to_rdf(content, KnowledgeRepresentation.KNOWLEDGE_GRAPH, KnowledgeRepresentation.KNOWLEDGE_GRAPH))
+        result = _run(
+            layer.graph_to_rdf(
+                content,
+                KnowledgeRepresentation.KNOWLEDGE_GRAPH,
+                KnowledgeRepresentation.KNOWLEDGE_GRAPH,
+            )
+        )
         assert "triples" in result
         # 2 triples: 1 rdf:type + 1 property for node + 1 for edge
         assert len(result["triples"]) == 3
@@ -1423,36 +1723,72 @@ class TestSemanticInteroperabilityLayer:
     def test_symbolic_to_neural_non_string(self):
         layer = self._make_layer()
         from src.asi_build.agi_communication.semantic import KnowledgeRepresentation
-        result = _run(layer.symbolic_to_neural(42, KnowledgeRepresentation.SYMBOLIC_LOGIC, KnowledgeRepresentation.NEURAL_EMBEDDINGS))
+
+        result = _run(
+            layer.symbolic_to_neural(
+                42,
+                KnowledgeRepresentation.SYMBOLIC_LOGIC,
+                KnowledgeRepresentation.NEURAL_EMBEDDINGS,
+            )
+        )
         assert result == [0.0] * 768
 
     def test_neural_to_symbolic(self):
         layer = self._make_layer()
         from src.asi_build.agi_communication.semantic import KnowledgeRepresentation
+
         embedding = np.random.normal(0, 1, 768).tolist()
-        result = _run(layer.neural_to_symbolic(embedding, KnowledgeRepresentation.NEURAL_EMBEDDINGS, KnowledgeRepresentation.SYMBOLIC_LOGIC))
+        result = _run(
+            layer.neural_to_symbolic(
+                embedding,
+                KnowledgeRepresentation.NEURAL_EMBEDDINGS,
+                KnowledgeRepresentation.SYMBOLIC_LOGIC,
+            )
+        )
         assert "concept(" in result
 
     def test_nl_to_symbolic_has_pattern(self):
         layer = self._make_layer()
         from src.asi_build.agi_communication.semantic import KnowledgeRepresentation
-        result = _run(layer.nl_to_symbolic_logic("dog has tail", KnowledgeRepresentation.NATURAL_LANGUAGE, KnowledgeRepresentation.SYMBOLIC_LOGIC))
+
+        result = _run(
+            layer.nl_to_symbolic_logic(
+                "dog has tail",
+                KnowledgeRepresentation.NATURAL_LANGUAGE,
+                KnowledgeRepresentation.SYMBOLIC_LOGIC,
+            )
+        )
         assert "has(dog, tail)" == result
 
     def test_nl_to_symbolic_default(self):
         layer = self._make_layer()
         from src.asi_build.agi_communication.semantic import KnowledgeRepresentation
-        result = _run(layer.nl_to_symbolic_logic("hello world", KnowledgeRepresentation.NATURAL_LANGUAGE, KnowledgeRepresentation.SYMBOLIC_LOGIC))
+
+        result = _run(
+            layer.nl_to_symbolic_logic(
+                "hello world",
+                KnowledgeRepresentation.NATURAL_LANGUAGE,
+                KnowledgeRepresentation.SYMBOLIC_LOGIC,
+            )
+        )
         assert "relation(hello, world)" == result
 
     def test_nl_to_symbolic_single_word(self):
         layer = self._make_layer()
         from src.asi_build.agi_communication.semantic import KnowledgeRepresentation
-        result = _run(layer.nl_to_symbolic_logic("hello", KnowledgeRepresentation.NATURAL_LANGUAGE, KnowledgeRepresentation.SYMBOLIC_LOGIC))
+
+        result = _run(
+            layer.nl_to_symbolic_logic(
+                "hello",
+                KnowledgeRepresentation.NATURAL_LANGUAGE,
+                KnowledgeRepresentation.SYMBOLIC_LOGIC,
+            )
+        )
         assert "concept(hello)" == result
 
     def test_find_translation_path_direct(self):
         from src.asi_build.agi_communication.semantic import KnowledgeRepresentation
+
         layer = self._make_layer()
         path = layer._find_translation_path(
             KnowledgeRepresentation.SYMBOLIC_LOGIC,
@@ -1464,6 +1800,7 @@ class TestSemanticInteroperabilityLayer:
 
     def test_find_translation_path_indirect(self):
         from src.asi_build.agi_communication.semantic import KnowledgeRepresentation
+
         layer = self._make_layer()
         # MeTTa → Symbolic → Neural (indirect path)
         path = layer._find_translation_path(
@@ -1475,6 +1812,7 @@ class TestSemanticInteroperabilityLayer:
 
     def test_find_translation_path_none(self):
         from src.asi_build.agi_communication.semantic import KnowledgeRepresentation
+
         layer = self._make_layer()
         path = layer._find_translation_path(
             KnowledgeRepresentation.CATEGORY_THEORY,
@@ -1485,11 +1823,15 @@ class TestSemanticInteroperabilityLayer:
 
     def test_translate_no_path_raises(self):
         from src.asi_build.agi_communication.semantic import (
-            SemanticEntity, KnowledgeRepresentation, SemanticFormat,
+            KnowledgeRepresentation,
+            SemanticEntity,
+            SemanticFormat,
         )
+
         layer = self._make_layer()
         entity = SemanticEntity(
-            id="e1", type="concept",
+            id="e1",
+            type="concept",
             representation=KnowledgeRepresentation.CATEGORY_THEORY,
             format=SemanticFormat.CATEGORY_JSON,
             content="morphism",
@@ -1499,9 +1841,16 @@ class TestSemanticInteroperabilityLayer:
 
     def test_get_default_format(self):
         from src.asi_build.agi_communication.semantic import KnowledgeRepresentation, SemanticFormat
+
         layer = self._make_layer()
-        assert layer._get_default_format(KnowledgeRepresentation.SYMBOLIC_LOGIC) == SemanticFormat.PROLOG
-        assert layer._get_default_format(KnowledgeRepresentation.NEURAL_EMBEDDINGS) == SemanticFormat.VECTOR
+        assert (
+            layer._get_default_format(KnowledgeRepresentation.SYMBOLIC_LOGIC)
+            == SemanticFormat.PROLOG
+        )
+        assert (
+            layer._get_default_format(KnowledgeRepresentation.NEURAL_EMBEDDINGS)
+            == SemanticFormat.VECTOR
+        )
         assert layer._get_default_format(KnowledgeRepresentation.METTA) == SemanticFormat.METTA
 
     def test_translation_statistics_empty(self):
@@ -1518,6 +1867,7 @@ class TestSemanticInteroperabilityLayer:
 class TestKnowledgeNode:
     def test_hash(self):
         from src.asi_build.agi_communication.knowledge_graph import KnowledgeNode
+
         n1 = KnowledgeNode(id="n1", type="Entity", label="Alice")
         n2 = KnowledgeNode(id="n1", type="Entity", label="Alice")
         assert hash(n1) == hash(n2)
@@ -1534,6 +1884,7 @@ class TestKnowledgeNode:
 class TestKnowledgeEdge:
     def test_hash(self):
         from src.asi_build.agi_communication.knowledge_graph import KnowledgeEdge
+
         e1 = KnowledgeEdge(id="e1", source="n1", target="n2", relation_type="knows")
         e2 = KnowledgeEdge(id="e2", source="n1", target="n2", relation_type="knows")
         assert hash(e1) == hash(e2)  # same source_relation_target
@@ -1542,8 +1893,11 @@ class TestKnowledgeEdge:
 class TestKnowledgeGraph:
     def _make_graph(self):
         from src.asi_build.agi_communication.knowledge_graph import (
-            KnowledgeGraph, KnowledgeNode, KnowledgeEdge,
+            KnowledgeEdge,
+            KnowledgeGraph,
+            KnowledgeNode,
         )
+
         g = KnowledgeGraph(id="g1")
         g.add_node(KnowledgeNode(id="n1", type="Person", label="Alice"))
         g.add_node(KnowledgeNode(id="n2", type="Person", label="Bob"))
@@ -1574,12 +1928,18 @@ class TestKnowledgeGraph:
 class TestConflict:
     def test_default_resolution_strategies(self):
         from src.asi_build.agi_communication.knowledge_graph import (
-            Conflict, ConflictType, ResolutionStrategy, KnowledgeNode,
+            Conflict,
+            ConflictType,
+            KnowledgeNode,
+            ResolutionStrategy,
         )
+
         c = Conflict(
-            id="c1", conflict_type=ConflictType.FACTUAL,
+            id="c1",
+            conflict_type=ConflictType.FACTUAL,
             elements=[KnowledgeNode(id="n1", type="T", label="L")],
-            description="test", severity=0.5,
+            description="test",
+            severity=0.5,
         )
         assert c.resolution_strategies == [ResolutionStrategy.HYBRID]
 
@@ -1587,34 +1947,52 @@ class TestConflict:
 class TestKnowledgeGraphMerger:
     def _make_merger(self):
         from src.asi_build.agi_communication.knowledge_graph import KnowledgeGraphMerger
+
         proto = _make_mock_protocol()
         return KnowledgeGraphMerger(proto), proto
 
     def _make_two_graphs(self, conflict=False):
         from src.asi_build.agi_communication.knowledge_graph import (
-            KnowledgeGraph, KnowledgeNode, KnowledgeEdge,
+            KnowledgeEdge,
+            KnowledgeGraph,
+            KnowledgeNode,
         )
+
         g1 = KnowledgeGraph(id="g1", source_agi="agi_1")
-        g1.add_node(KnowledgeNode(id="n1", type="Person", label="Alice",
-                                   source_agi="agi_1", confidence=0.9))
-        g1.add_edge(KnowledgeEdge(id="e1", source="n1", target="n2",
-                                   relation_type="knows", source_agi="agi_1"))
+        g1.add_node(
+            KnowledgeNode(id="n1", type="Person", label="Alice", source_agi="agi_1", confidence=0.9)
+        )
+        g1.add_edge(
+            KnowledgeEdge(
+                id="e1", source="n1", target="n2", relation_type="knows", source_agi="agi_1"
+            )
+        )
 
         g2 = KnowledgeGraph(id="g2", source_agi="agi_2")
         if conflict:
             # Same label, different type → ontological conflict
-            g2.add_node(KnowledgeNode(id="n1_v2", type="Robot", label="Alice",
-                                       source_agi="agi_2", confidence=0.7))
+            g2.add_node(
+                KnowledgeNode(
+                    id="n1_v2", type="Robot", label="Alice", source_agi="agi_2", confidence=0.7
+                )
+            )
         else:
-            g2.add_node(KnowledgeNode(id="n3", type="Person", label="Charlie",
-                                       source_agi="agi_2", confidence=0.8))
-        g2.add_edge(KnowledgeEdge(id="e2", source="n2", target="n3",
-                                   relation_type="likes", source_agi="agi_2"))
+            g2.add_node(
+                KnowledgeNode(
+                    id="n3", type="Person", label="Charlie", source_agi="agi_2", confidence=0.8
+                )
+            )
+        g2.add_edge(
+            KnowledgeEdge(
+                id="e2", source="n2", target="n3", relation_type="likes", source_agi="agi_2"
+            )
+        )
 
         return g1, g2
 
     def test_merge_requires_two_graphs(self):
         from src.asi_build.agi_communication.knowledge_graph import KnowledgeGraph
+
         merger, _ = self._make_merger()
         with pytest.raises(ValueError, match="At least 2"):
             _run(merger.merge_graphs([KnowledgeGraph(id="only_one")]))
@@ -1633,17 +2011,34 @@ class TestKnowledgeGraphMerger:
         (or limitation) in _get_node_cluster_key. Test that with SAME type but
         different properties, we DO get a factual conflict."""
         from src.asi_build.agi_communication.knowledge_graph import (
-            KnowledgeGraph, KnowledgeNode, KnowledgeEdge,
+            KnowledgeEdge,
+            KnowledgeGraph,
+            KnowledgeNode,
         )
+
         merger, _ = self._make_merger()
         g1 = KnowledgeGraph(id="g1", source_agi="agi_1")
-        g1.add_node(KnowledgeNode(id="n1", type="Person", label="Alice",
-                                   properties={"age": 30}, source_agi="agi_1",
-                                   confidence=0.9))
+        g1.add_node(
+            KnowledgeNode(
+                id="n1",
+                type="Person",
+                label="Alice",
+                properties={"age": 30},
+                source_agi="agi_1",
+                confidence=0.9,
+            )
+        )
         g2 = KnowledgeGraph(id="g2", source_agi="agi_2")
-        g2.add_node(KnowledgeNode(id="n1_v2", type="Person", label="Alice",
-                                   properties={"age": 25}, source_agi="agi_2",
-                                   confidence=0.7))
+        g2.add_node(
+            KnowledgeNode(
+                id="n1_v2",
+                type="Person",
+                label="Alice",
+                properties={"age": 25},
+                source_agi="agi_2",
+                confidence=0.7,
+            )
+        )
         result = _run(merger.merge_graphs([g1, g2]))
         # Same type+label → same cluster → factual conflict on age
         assert len(result.conflicts) > 0
@@ -1658,14 +2053,20 @@ class TestKnowledgeGraphMerger:
 
     def test_resolve_by_confidence(self):
         from src.asi_build.agi_communication.knowledge_graph import (
-            Conflict, ConflictType, KnowledgeNode,
+            Conflict,
+            ConflictType,
+            KnowledgeNode,
         )
+
         merger, _ = self._make_merger()
         n1 = KnowledgeNode(id="n1", type="Person", label="Alice", confidence=0.9)
         n2 = KnowledgeNode(id="n2", type="Robot", label="Alice", confidence=0.3)
         conflict = Conflict(
-            id="c1", conflict_type=ConflictType.CONFIDENCE,
-            elements=[n1, n2], description="test", severity=0.5,
+            id="c1",
+            conflict_type=ConflictType.CONFIDENCE,
+            elements=[n1, n2],
+            description="test",
+            severity=0.5,
         )
         result = _run(merger._resolve_by_confidence(conflict))
         assert result is True
@@ -1674,54 +2075,74 @@ class TestKnowledgeGraphMerger:
 
     def test_resolve_by_time(self):
         from src.asi_build.agi_communication.knowledge_graph import (
-            Conflict, ConflictType, KnowledgeNode,
+            Conflict,
+            ConflictType,
+            KnowledgeNode,
         )
+
         merger, _ = self._make_merger()
-        n1 = KnowledgeNode(id="n1", type="T", label="L",
-                            timestamp=datetime.now() - timedelta(days=30))
-        n2 = KnowledgeNode(id="n2", type="T", label="L",
-                            timestamp=datetime.now())
+        n1 = KnowledgeNode(
+            id="n1", type="T", label="L", timestamp=datetime.now() - timedelta(days=30)
+        )
+        n2 = KnowledgeNode(id="n2", type="T", label="L", timestamp=datetime.now())
         conflict = Conflict(
-            id="c1", conflict_type=ConflictType.TEMPORAL,
-            elements=[n1, n2], description="test", severity=0.3,
+            id="c1",
+            conflict_type=ConflictType.TEMPORAL,
+            elements=[n1, n2],
+            description="test",
+            severity=0.3,
         )
         result = _run(merger._resolve_by_time(conflict))
         assert result is True
 
     def test_resolve_by_evidence(self):
         from src.asi_build.agi_communication.knowledge_graph import (
-            Conflict, ConflictType, KnowledgeNode,
+            Conflict,
+            ConflictType,
+            KnowledgeNode,
         )
+
         merger, _ = self._make_merger()
-        n1 = KnowledgeNode(id="n1", type="T", label="L",
-                            evidence=[{"fact": 1}, {"fact": 2}])
+        n1 = KnowledgeNode(id="n1", type="T", label="L", evidence=[{"fact": 1}, {"fact": 2}])
         n2 = KnowledgeNode(id="n2", type="T", label="L", evidence=[])
         conflict = Conflict(
-            id="c1", conflict_type=ConflictType.FACTUAL,
-            elements=[n1, n2], description="test", severity=0.5,
+            id="c1",
+            conflict_type=ConflictType.FACTUAL,
+            elements=[n1, n2],
+            description="test",
+            severity=0.5,
         )
         result = _run(merger._resolve_by_evidence(conflict))
         assert result is True
 
     def test_resolve_by_consensus(self):
         from src.asi_build.agi_communication.knowledge_graph import (
-            Conflict, ConflictType, KnowledgeNode,
+            Conflict,
+            ConflictType,
+            KnowledgeNode,
         )
+
         merger, _ = self._make_merger()
         n1 = KnowledgeNode(id="n1", type="Person", label="Alice")
         n2 = KnowledgeNode(id="n2", type="Person", label="Alice")
         n3 = KnowledgeNode(id="n3", type="Robot", label="Alice")
         conflict = Conflict(
-            id="c1", conflict_type=ConflictType.ONTOLOGICAL,
-            elements=[n1, n2, n3], description="test", severity=0.5,
+            id="c1",
+            conflict_type=ConflictType.ONTOLOGICAL,
+            elements=[n1, n2, n3],
+            description="test",
+            severity=0.5,
         )
         result = _run(merger._resolve_by_consensus(conflict))
         assert result is True
 
     def test_resolve_by_trust(self):
         from src.asi_build.agi_communication.knowledge_graph import (
-            Conflict, ConflictType, KnowledgeNode,
+            Conflict,
+            ConflictType,
+            KnowledgeNode,
         )
+
         merger, proto = self._make_merger()
         # Add known AGIs with trust scores
         agi_a = _make_identity("agi_a", "A")
@@ -1733,22 +2154,31 @@ class TestKnowledgeGraphMerger:
         n1 = KnowledgeNode(id="n1", type="T", label="L", source_agi="agi_a")
         n2 = KnowledgeNode(id="n2", type="T", label="L", source_agi="agi_b")
         conflict = Conflict(
-            id="c1", conflict_type=ConflictType.STRUCTURAL,
-            elements=[n1, n2], description="test", severity=0.4,
+            id="c1",
+            conflict_type=ConflictType.STRUCTURAL,
+            elements=[n1, n2],
+            description="test",
+            severity=0.4,
         )
         result = _run(merger._resolve_by_trust(conflict))
         assert result is True
 
     def test_resolve_by_trust_no_known_agis(self):
         from src.asi_build.agi_communication.knowledge_graph import (
-            Conflict, ConflictType, KnowledgeNode,
+            Conflict,
+            ConflictType,
+            KnowledgeNode,
         )
+
         merger, proto = self._make_merger()
         proto.known_agis = {}
         n1 = KnowledgeNode(id="n1", type="T", label="L", source_agi="unknown")
         conflict = Conflict(
-            id="c1", conflict_type=ConflictType.STRUCTURAL,
-            elements=[n1], description="test", severity=0.4,
+            id="c1",
+            conflict_type=ConflictType.STRUCTURAL,
+            elements=[n1],
+            description="test",
+            severity=0.4,
         )
         result = _run(merger._resolve_by_trust(conflict))
         assert result is False
@@ -1761,12 +2191,22 @@ class TestKnowledgeGraphMerger:
             "version": 2,
             "metadata": {"key": "val"},
             "nodes": [
-                {"id": "n1", "type": "Person", "label": "Alice",
-                 "properties": {"age": 30}, "confidence": 0.95},
+                {
+                    "id": "n1",
+                    "type": "Person",
+                    "label": "Alice",
+                    "properties": {"age": 30},
+                    "confidence": 0.95,
+                },
             ],
             "edges": [
-                {"id": "e1", "source": "n1", "target": "n2",
-                 "relation_type": "knows", "confidence": 0.8},
+                {
+                    "id": "e1",
+                    "source": "n1",
+                    "target": "n2",
+                    "relation_type": "knows",
+                    "confidence": 0.8,
+                },
             ],
         }
         g = merger._parse_graph_from_dict(graph_data)
@@ -1790,6 +2230,7 @@ class TestKnowledgeGraphMerger:
 
     def test_edge_conflict_contradictory_relations(self):
         from src.asi_build.agi_communication.knowledge_graph import KnowledgeEdge
+
         merger, _ = self._make_merger()
         e1 = KnowledgeEdge(id="e1", source="n1", target="n2", relation_type="causes")
         e2 = KnowledgeEdge(id="e2", source="n1", target="n2", relation_type="prevents")
@@ -1799,6 +2240,7 @@ class TestKnowledgeGraphMerger:
 
     def test_edge_conflict_no_contradiction(self):
         from src.asi_build.agi_communication.knowledge_graph import KnowledgeEdge
+
         merger, _ = self._make_merger()
         e1 = KnowledgeEdge(id="e1", source="n1", target="n2", relation_type="knows")
         e2 = KnowledgeEdge(id="e2", source="n1", target="n2", relation_type="likes")
@@ -1807,17 +2249,24 @@ class TestKnowledgeGraphMerger:
 
     def test_confidence_score_calculation(self):
         from src.asi_build.agi_communication.knowledge_graph import (
-            KnowledgeGraph, KnowledgeNode, Conflict, ConflictType,
+            Conflict,
+            ConflictType,
+            KnowledgeGraph,
+            KnowledgeNode,
         )
+
         merger, _ = self._make_merger()
         g = KnowledgeGraph(id="g")
         g.add_node(KnowledgeNode(id="n1", type="T", label="L", confidence=0.8))
-        score = merger._calculate_confidence_score(g, resolved_conflicts=[], unresolved_conflicts=[])
+        score = merger._calculate_confidence_score(
+            g, resolved_conflicts=[], unresolved_conflicts=[]
+        )
         assert score == pytest.approx(0.8, abs=0.01)
 
         # With unresolved conflicts → penalty
-        c = Conflict(id="c1", conflict_type=ConflictType.FACTUAL,
-                     elements=[], description="", severity=0.5)
+        c = Conflict(
+            id="c1", conflict_type=ConflictType.FACTUAL, elements=[], description="", severity=0.5
+        )
         score2 = merger._calculate_confidence_score(g, [], [c])
         assert score2 < score  # penalty applied
 
@@ -1831,10 +2280,14 @@ class TestEdgeCases:
     def test_message_roundtrip_all_types(self):
         """Every MessageType can be round-tripped through to_dict/from_dict."""
         from src.asi_build.agi_communication.core import CommunicationMessage, MessageType
+
         for mt in MessageType:
             msg = CommunicationMessage(
-                id="m", sender_id="s", receiver_id="r",
-                message_type=mt, timestamp=datetime.now(),
+                id="m",
+                sender_id="s",
+                receiver_id="r",
+                message_type=mt,
+                timestamp=datetime.now(),
                 payload={"type": mt.value},
             )
             d = msg.to_dict()
@@ -1843,11 +2296,16 @@ class TestEdgeCases:
 
     def test_trust_record_zero_interactions(self):
         """Avoid division by zero in success rate."""
-        from src.asi_build.agi_communication.auth import TrustRecord, TrustLevel
+        from src.asi_build.agi_communication.auth import TrustLevel, TrustRecord
+
         rec = TrustRecord(
-            agi_id="a", trust_score=0.5, reputation_points=0,
-            successful_interactions=0, failed_interactions=0,
-            last_interaction=datetime.now(), trust_level=TrustLevel.MEDIUM,
+            agi_id="a",
+            trust_score=0.5,
+            reputation_points=0,
+            successful_interactions=0,
+            failed_interactions=0,
+            last_interaction=datetime.now(),
+            trust_level=TrustLevel.MEDIUM,
         )
         total = rec.successful_interactions + rec.failed_interactions
         rate = rec.successful_interactions / max(1, total)
@@ -1856,8 +2314,10 @@ class TestEdgeCases:
     def test_empty_graph_merge_stats(self):
         """Merge two empty graphs."""
         from src.asi_build.agi_communication.knowledge_graph import (
-            KnowledgeGraph, KnowledgeGraphMerger,
+            KnowledgeGraph,
+            KnowledgeGraphMerger,
         )
+
         proto = _make_mock_protocol()
         merger = KnowledgeGraphMerger(proto)
         g1 = KnowledgeGraph(id="g1")
@@ -1867,38 +2327,56 @@ class TestEdgeCases:
 
     def test_solution_ranking_empty(self):
         from src.asi_build.agi_communication.collaboration import SolutionValidator
+
         assert SolutionValidator.rank_solutions([]) == []
 
     def test_collaboration_session_empty_tasks_completed(self):
         """Empty task set is considered 'completed'."""
         from src.asi_build.agi_communication.collaboration import (
-            CollaborationSession, Problem, ProblemType, CollaborationStrategy,
+            CollaborationSession,
+            CollaborationStrategy,
+            Problem,
+            ProblemType,
         )
+
         prob = Problem(id="p", description="t", problem_type=ProblemType.SEARCH, complexity=0.1)
-        sess = CollaborationSession(id="s", problem=prob, participants=[],
-                                    strategy=CollaborationStrategy.HYBRID)
+        sess = CollaborationSession(
+            id="s", problem=prob, participants=[], strategy=CollaborationStrategy.HYBRID
+        )
         assert sess.is_completed()  # vacuously true
 
     def test_pln_generic_content(self):
         """PLN translation with content that has no strength/confidence."""
         _patch_rdf_enum()
         from src.asi_build.agi_communication.semantic import SemanticInteroperabilityLayer
+
         layer = SemanticInteroperabilityLayer(_make_mock_protocol())
         from src.asi_build.agi_communication.semantic import KnowledgeRepresentation
-        result = _run(layer.pln_to_probabilistic(
-            {"custom": "data"}, KnowledgeRepresentation.PROBABILISTIC_LOGIC_NETWORKS,
-            KnowledgeRepresentation.PROBABILISTIC,
-        ))
+
+        result = _run(
+            layer.pln_to_probabilistic(
+                {"custom": "data"},
+                KnowledgeRepresentation.PROBABILISTIC_LOGIC_NETWORKS,
+                KnowledgeRepresentation.PROBABILISTIC,
+            )
+        )
         assert result == {"custom": "data"}
 
     def test_pln_non_dict(self):
         _patch_rdf_enum()
-        from src.asi_build.agi_communication.semantic import SemanticInteroperabilityLayer, KnowledgeRepresentation
+        from src.asi_build.agi_communication.semantic import (
+            KnowledgeRepresentation,
+            SemanticInteroperabilityLayer,
+        )
+
         layer = SemanticInteroperabilityLayer(_make_mock_protocol())
-        result = _run(layer.pln_to_probabilistic(
-            "not a dict", KnowledgeRepresentation.PROBABILISTIC_LOGIC_NETWORKS,
-            KnowledgeRepresentation.PROBABILISTIC,
-        ))
+        result = _run(
+            layer.pln_to_probabilistic(
+                "not a dict",
+                KnowledgeRepresentation.PROBABILISTIC_LOGIC_NETWORKS,
+                KnowledgeRepresentation.PROBABILISTIC,
+            )
+        )
         assert result == {"probability": 0.5, "confidence": 0.5}
 
 
@@ -1911,17 +2389,33 @@ class TestModuleInit:
     def test_version(self):
         """Package version is set."""
         from src.asi_build.agi_communication import __version__
+
         assert __version__ == "1.0.0-consolidated"
 
     def test_public_names_exported(self):
         """At least core types are exported."""
         import src.asi_build.agi_communication as pkg
+
         # These should all be importable from the package
-        for name in ["MessageType", "CommunicationStatus", "AGIIdentity",
-                      "CommunicationMessage", "CommunicationSession",
-                      "TrustLevel", "TrustRecord", "CryptographicManager",
-                      "ProblemType", "Task", "Solution",
-                      "GoalType", "NegotiationStrategy", "Goal",
-                      "KnowledgeRepresentation", "SemanticFormat",
-                      "ConflictType", "KnowledgeNode", "KnowledgeGraph"]:
+        for name in [
+            "MessageType",
+            "CommunicationStatus",
+            "AGIIdentity",
+            "CommunicationMessage",
+            "CommunicationSession",
+            "TrustLevel",
+            "TrustRecord",
+            "CryptographicManager",
+            "ProblemType",
+            "Task",
+            "Solution",
+            "GoalType",
+            "NegotiationStrategy",
+            "Goal",
+            "KnowledgeRepresentation",
+            "SemanticFormat",
+            "ConflictType",
+            "KnowledgeNode",
+            "KnowledgeGraph",
+        ]:
             assert hasattr(pkg, name), f"{name} not exported from package"

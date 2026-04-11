@@ -7,7 +7,7 @@ neural networks.
 """
 
 try:
-    from .stdp_learning import STDPLearning, STDPRule, SpikeTimingWindow
+    from .stdp_learning import SpikeTimingWindow, STDPLearning, STDPRule
 except (ImportError, ModuleNotFoundError, SyntaxError):
     STDPLearning = None
     STDPRule = None
@@ -19,7 +19,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     BCMRule = None
     SlidingThreshold = None
 try:
-    from .hebbian_learning import HebbianLearning, AntiHebbianLearning
+    from .hebbian_learning import AntiHebbianLearning, HebbianLearning
 except (ImportError, ModuleNotFoundError, SyntaxError):
     HebbianLearning = None
     AntiHebbianLearning = None
@@ -36,7 +36,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 
 __all__ = [
     "STDPLearning",
-    "STDPRule", 
+    "STDPRule",
     "SpikeTimingWindow",
     "BCMLearning",
     "BCMRule",
@@ -46,5 +46,5 @@ __all__ = [
     "HomeostaticPlasticity",
     "SynapticScaling",
     "Metaplasticity",
-    "PlasticityModulation"
+    "PlasticityModulation",
 ]

@@ -44,33 +44,33 @@ from asi_build.bci.core.config import (
     DeviceConfig,
     SignalProcessingConfig,
 )
-from asi_build.bci.core.signal_processor import (
-    ProcessedSignal,
-    SignalProcessor,
-    SpectralFeatureExtractor,
-    SpatialFeatureExtractor,
-    TemporalFeatureExtractor,
-)
 from asi_build.bci.core.device_interface import (
     BCIDevice,
     DataPacket,
     DeviceInfo,
     SimulatedEEGDevice,
 )
+from asi_build.bci.core.signal_processor import (
+    ProcessedSignal,
+    SignalProcessor,
+    SpatialFeatureExtractor,
+    SpectralFeatureExtractor,
+    TemporalFeatureExtractor,
+)
+from asi_build.bci.eeg.artifact_removal import ArtifactRemover
 from asi_build.bci.eeg.frequency_analysis import FrequencyAnalyzer
 from asi_build.bci.eeg.spatial_filters import SpatialFilterBank
-from asi_build.bci.eeg.artifact_removal import ArtifactRemover
 from asi_build.bci.motor_imagery.csp_processor import CSPProcessor
 from asi_build.bci.motor_imagery.feature_extractor import MotorImageryFeatureExtractor
 from asi_build.bci.ssvep.detector import SSVEPDetector
-from asi_build.bci.utils.signal_utils import SignalUtilities
 from asi_build.bci.utils.metrics import BCIMetrics
+from asi_build.bci.utils.signal_utils import SignalUtilities
 
 # ---------------------------------------------------------------------------
 # Helpers / Fixtures
 # ---------------------------------------------------------------------------
 SR = 250.0  # sampling rate
-N_CH = 10   # number of channels (default BCIConfig channels)
+N_CH = 10  # number of channels (default BCIConfig channels)
 N_SAMPLES = 1000  # 4 seconds at 250 Hz
 
 
@@ -187,6 +187,7 @@ class TestSignalUtilities:
         out = SignalUtilities.bandpass_filter(sig, 1.0, 40.0, SR)
         # Power at 60 Hz should be much reduced
         from scipy.signal import welch
+
         f, psd_orig = welch(sig, fs=SR, nperseg=256)
         f, psd_filt = welch(out, fs=SR, nperseg=256)
         idx60 = np.argmin(np.abs(f - 60))
@@ -197,6 +198,7 @@ class TestSignalUtilities:
         sig = np.sin(2 * np.pi * 10 * t) + 2 * np.sin(2 * np.pi * 50 * t)
         out = SignalUtilities.notch_filter(sig, 50.0, SR)
         from scipy.signal import welch
+
         f, psd = welch(out, fs=SR, nperseg=256)
         idx50 = np.argmin(np.abs(f - 50))
         idx10 = np.argmin(np.abs(f - 10))

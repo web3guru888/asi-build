@@ -10,12 +10,13 @@ Strategy: mock all missing modules in sys.modules BEFORE importing, then test
 the individual files that DO exist and have real code.
 """
 
-import sys
-import types
-import pytest
 import asyncio
+import sys
 import time
+import types
+
 import numpy as np
+import pytest
 
 # ---------------------------------------------------------------------------
 # Mock all missing bio_inspired submodules BEFORE any bio_inspired import
@@ -53,6 +54,7 @@ _MISSING = [
 
 class _AutoModule(types.ModuleType):
     """Module that returns a dummy class for any missing attribute."""
+
     def __getattr__(self, name):
         if name.startswith("_"):
             raise AttributeError(name)
@@ -70,46 +72,46 @@ for _mod_name in _MISSING:
 
 from asi_build.bio_inspired.core import (
     BioCognitiveArchitecture,
+    BioCognitiveModule,
     BiologicalMetrics,
     CognitiveState,
-    BioCognitiveModule,
 )
-from asi_build.bio_inspired.neuromorphic.neuromorphic_processor import (
-    NeuromorphicProcessor,
-    NeuromorphicChip,
-    NeuromorphicEvent,
-    EventDrivenProcessor,
-    LoadBalancer,
-    ThermalModel,
-    ProcessingMode,
-)
-from asi_build.bio_inspired.neuromorphic.spiking_networks import (
-    SpikingNeuralNetwork,
-    SpikeEvent,
+from asi_build.bio_inspired.energy_efficiency.energy_metrics import (
+    EnergyCalculator,
+    EnergyMetrics,
+    EnergyType,
+    MetabolicCost,
 )
 from asi_build.bio_inspired.evolutionary.evolutionary_optimizer import (
-    EvolutionaryOptimizer,
-    Individual,
-    Population,
     BiologicalFitnessFunction,
+    EvolutionaryOptimizer,
+    FitnessFunction,
+    Individual,
     MultiObjectiveOptimizer,
     OptimizationMethod,
-    FitnessFunction,
+    Population,
 )
 from asi_build.bio_inspired.homeostatic.homeostatic_regulator import (
     HomeostaticRegulator,
     HomeostaticVariable,
     RegulationMode,
 )
-from asi_build.bio_inspired.energy_efficiency.energy_metrics import (
-    EnergyCalculator,
-    EnergyMetrics,
-    MetabolicCost,
-    EnergyType,
+from asi_build.bio_inspired.neuromorphic.neuromorphic_processor import (
+    EventDrivenProcessor,
+    LoadBalancer,
+    NeuromorphicChip,
+    NeuromorphicEvent,
+    NeuromorphicProcessor,
+    ProcessingMode,
+    ThermalModel,
+)
+from asi_build.bio_inspired.neuromorphic.spiking_networks import (
+    SpikeEvent,
+    SpikingNeuralNetwork,
 )
 
-
 # ===== helpers =====
+
 
 def _run(coro):
     """Run an async coroutine synchronously."""
@@ -119,6 +121,7 @@ def _run(coro):
 # ===================================================================
 # BiologicalMetrics
 # ===================================================================
+
 
 class TestBiologicalMetrics:
 
@@ -144,6 +147,7 @@ class TestBiologicalMetrics:
 # CognitiveState enum
 # ===================================================================
 
+
 class TestCognitiveState:
 
     def test_values(self):
@@ -158,6 +162,7 @@ class TestCognitiveState:
 # BioCognitiveArchitecture
 # ===================================================================
 
+
 class TestBioCognitiveArchitecture:
 
     def test_default_init(self):
@@ -168,26 +173,56 @@ class TestBioCognitiveArchitecture:
         assert len(arch.modules) == 0
 
     def test_custom_config(self):
-        cfg = {"sleep_wake": {"sleep_threshold": 0.9, "wake_threshold": 0.1, "consolidation_strength": 0.5},
-               "evolutionary": {"mutation_rate": 0.05, "crossover_rate": 0.8, "population_size": 100, "selection_pressure": 0.2},
-               "energy_efficiency": {"spike_cost": 0.001, "metabolic_cost_weight": 0.2, "target_efficiency": 0.8}}
+        cfg = {
+            "sleep_wake": {
+                "sleep_threshold": 0.9,
+                "wake_threshold": 0.1,
+                "consolidation_strength": 0.5,
+            },
+            "evolutionary": {
+                "mutation_rate": 0.05,
+                "crossover_rate": 0.8,
+                "population_size": 100,
+                "selection_pressure": 0.2,
+            },
+            "energy_efficiency": {
+                "spike_cost": 0.001,
+                "metabolic_cost_weight": 0.2,
+                "target_efficiency": 0.8,
+            },
+        }
         arch = BioCognitiveArchitecture(config=cfg)
         assert arch.config["sleep_wake"]["sleep_threshold"] == 0.9
 
     def test_default_config_keys(self):
         arch = BioCognitiveArchitecture()
-        expected = {"neuromorphic", "evolutionary", "homeostatic", "developmental",
-                    "neuromodulation", "sleep_wake", "emotional", "embodied",
-                    "neuroplasticity", "energy_efficiency"}
+        expected = {
+            "neuromorphic",
+            "evolutionary",
+            "homeostatic",
+            "developmental",
+            "neuromodulation",
+            "sleep_wake",
+            "emotional",
+            "embodied",
+            "neuroplasticity",
+            "energy_efficiency",
+        }
         assert expected == set(arch.config.keys())
 
     def test_register_unregister_module(self):
         arch = BioCognitiveArchitecture()
+
         # Create a dummy concrete module
         class DummyModule(BioCognitiveModule):
-            async def process(self, inputs): return {}
-            def get_biological_metrics(self): return BiologicalMetrics()
-            def update_parameters(self, sig): pass
+            async def process(self, inputs):
+                return {}
+
+            def get_biological_metrics(self):
+                return BiologicalMetrics()
+
+            def update_parameters(self, sig):
+                pass
 
         mod = DummyModule("test_mod")
         arch.register_module(mod)
@@ -276,8 +311,11 @@ class TestBioCognitiveArchitecture:
     def test_evaluate_performance(self):
         arch = BioCognitiveArchitecture()
         result = {
-            "metrics": {"energy_efficiency": 0.5, "homeostatic_balance": 0.5,
-                        "plasticity_index": 0.5},
+            "metrics": {
+                "energy_efficiency": 0.5,
+                "homeostatic_balance": 0.5,
+                "plasticity_index": 0.5,
+            },
             "processing_time": 0.1,
         }
         fitness = arch._evaluate_performance(result)
@@ -297,6 +335,7 @@ class TestBioCognitiveArchitecture:
 # ===================================================================
 # LoadBalancer
 # ===================================================================
+
 
 class TestLoadBalancer:
 
@@ -320,6 +359,7 @@ class TestLoadBalancer:
 # ThermalModel
 # ===================================================================
 
+
 class TestThermalModel:
 
     def test_default_temperature(self):
@@ -341,6 +381,7 @@ class TestThermalModel:
 # NeuromorphicEvent
 # ===================================================================
 
+
 class TestNeuromorphicEvent:
 
     def test_creation(self):
@@ -357,6 +398,7 @@ class TestNeuromorphicEvent:
 # ===================================================================
 # NeuromorphicChip
 # ===================================================================
+
 
 class TestNeuromorphicChip:
 
@@ -384,6 +426,7 @@ class TestNeuromorphicChip:
 # EventDrivenProcessor
 # ===================================================================
 
+
 class TestEventDrivenProcessor:
 
     def test_register_handler(self):
@@ -403,6 +446,7 @@ class TestEventDrivenProcessor:
 # The constructor calls asyncio.create_task() which needs a running loop.
 # We patch _start_processing_tasks to avoid that requirement.
 # ===================================================================
+
 
 class TestNeuromorphicProcessor:
 
@@ -453,6 +497,7 @@ class TestNeuromorphicProcessor:
 # Individual & Population (evolutionary)
 # ===================================================================
 
+
 class TestIndividual:
 
     def test_creation(self):
@@ -480,34 +525,37 @@ class TestPopulation:
         assert len(pop.individuals) >= 1
 
     def test_best_individuals(self):
-        pop = Population(size=5, individuals=[
-            Individual(genome=[i], fitness=float(i) / 10) for i in range(5)
-        ])
+        pop = Population(
+            size=5, individuals=[Individual(genome=[i], fitness=float(i) / 10) for i in range(5)]
+        )
         best = pop.get_best_individuals(2)
         assert len(best) == 2
         assert best[0].fitness >= best[1].fitness
 
     def test_worst_individuals(self):
-        pop = Population(size=5, individuals=[
-            Individual(genome=[i], fitness=float(i) / 10) for i in range(5)
-        ])
+        pop = Population(
+            size=5, individuals=[Individual(genome=[i], fitness=float(i) / 10) for i in range(5)]
+        )
         worst = pop.get_worst_individuals(2)
         assert len(worst) == 2
         assert worst[0].fitness <= worst[1].fitness
 
     def test_diversity(self):
-        pop = Population(size=3, individuals=[
-            Individual(genome=[float(i)], fitness=0.0) for i in range(3)
-        ])
+        pop = Population(
+            size=3, individuals=[Individual(genome=[float(i)], fitness=0.0) for i in range(3)]
+        )
         d = pop.calculate_diversity()
         assert isinstance(d, float)
 
     def test_statistics(self):
-        pop = Population(size=3, individuals=[
-            Individual(genome=[1], fitness=0.3),
-            Individual(genome=[2], fitness=0.6),
-            Individual(genome=[3], fitness=0.9),
-        ])
+        pop = Population(
+            size=3,
+            individuals=[
+                Individual(genome=[1], fitness=0.3),
+                Individual(genome=[2], fitness=0.6),
+                Individual(genome=[3], fitness=0.9),
+            ],
+        )
         pop.update_statistics()
         # update_statistics should run without error
 
@@ -515,6 +563,7 @@ class TestPopulation:
 # ===================================================================
 # BiologicalFitnessFunction
 # ===================================================================
+
 
 class TestBiologicalFitnessFunction:
 
@@ -538,6 +587,7 @@ class TestBiologicalFitnessFunction:
 # ===================================================================
 # EvolutionaryOptimizer
 # ===================================================================
+
 
 class TestEvolutionaryOptimizer:
 
@@ -605,6 +655,7 @@ class TestEvolutionaryOptimizer:
 # HomeostaticVariable
 # ===================================================================
 
+
 class TestHomeostaticVariable:
 
     def test_creation(self):
@@ -632,6 +683,7 @@ class TestHomeostaticVariable:
 # ===================================================================
 # HomeostaticRegulator
 # ===================================================================
+
 
 class TestHomeostaticRegulator:
 
@@ -742,6 +794,7 @@ class TestHomeostaticRegulator:
 # EnergyCalculator
 # ===================================================================
 
+
 class TestEnergyCalculator:
 
     def test_init(self):
@@ -796,6 +849,7 @@ class TestEnergyCalculator:
 # MetabolicCost
 # ===================================================================
 
+
 class TestMetabolicCost:
 
     def test_defaults(self):
@@ -804,14 +858,21 @@ class TestMetabolicCost:
 
     def test_total_cost(self):
         mc = MetabolicCost()
-        cost = mc.total_cost(num_spikes=100, num_synapses=500, num_neurons=50,
-                            plasticity_events=5, memory_operations=10, dt=0.001)
+        cost = mc.total_cost(
+            num_spikes=100,
+            num_synapses=500,
+            num_neurons=50,
+            plasticity_events=5,
+            memory_operations=10,
+            dt=0.001,
+        )
         assert cost > 0
 
 
 # ===================================================================
 # EnergyType enum
 # ===================================================================
+
 
 class TestEnergyType:
 
@@ -823,6 +884,7 @@ class TestEnergyType:
 # ===================================================================
 # SpikingNeuralNetwork (if importable, basic checks)
 # ===================================================================
+
 
 class TestSpikingNeuralNetwork:
 
@@ -850,6 +912,7 @@ class TestSpikingNeuralNetwork:
 # MultiObjectiveOptimizer
 # ===================================================================
 
+
 class TestMultiObjectiveOptimizer:
 
     def test_init(self):
@@ -859,10 +922,12 @@ class TestMultiObjectiveOptimizer:
 
     def test_dominates_with_fitness_components(self):
         moo = MultiObjectiveOptimizer(population_size=10)
-        ind1 = Individual(genome=[], fitness=0.0,
-                          metadata={"fitness_components": {"a": 0.8, "b": 0.9}})
-        ind2 = Individual(genome=[], fitness=0.0,
-                          metadata={"fitness_components": {"a": 0.7, "b": 0.8}})
+        ind1 = Individual(
+            genome=[], fitness=0.0, metadata={"fitness_components": {"a": 0.8, "b": 0.9}}
+        )
+        ind2 = Individual(
+            genome=[], fitness=0.0, metadata={"fitness_components": {"a": 0.7, "b": 0.8}}
+        )
         assert moo._dominates_multi_objective(ind1, ind2)
 
     def test_dominates_no_components_fallback(self):
@@ -875,12 +940,15 @@ class TestMultiObjectiveOptimizer:
     def test_non_dominated_sorting(self):
         moo = MultiObjectiveOptimizer(population_size=10)
         individuals = [
-            Individual(genome=[1], fitness=0.0,
-                       metadata={"fitness_components": {"a": 0.9, "b": 0.9}}),
-            Individual(genome=[2], fitness=0.0,
-                       metadata={"fitness_components": {"a": 0.1, "b": 0.1}}),
-            Individual(genome=[3], fitness=0.0,
-                       metadata={"fitness_components": {"a": 0.5, "b": 0.5}}),
+            Individual(
+                genome=[1], fitness=0.0, metadata={"fitness_components": {"a": 0.9, "b": 0.9}}
+            ),
+            Individual(
+                genome=[2], fitness=0.0, metadata={"fitness_components": {"a": 0.1, "b": 0.1}}
+            ),
+            Individual(
+                genome=[3], fitness=0.0, metadata={"fitness_components": {"a": 0.5, "b": 0.5}}
+            ),
         ]
         fronts = moo._non_dominated_sorting(individuals)
         assert len(fronts) >= 1

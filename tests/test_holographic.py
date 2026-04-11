@@ -22,33 +22,39 @@ Covers:
 - TelepresenceManager (init, event handlers, remote users)
 - Exceptions
 """
-import pytest
-import numpy as np
-import math
-import time
-import asyncio
-import sys
-import types
-from unittest.mock import MagicMock, patch, AsyncMock
-from dataclasses import asdict
 
+import asyncio
+import math
+import sys
+import time
+import types
+from dataclasses import asdict
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import numpy as np
+import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _vec(x=0.0, y=0.0, z=0.0):
     from src.asi_build.holographic.core.base import Vector3D
+
     return Vector3D(x, y, z)
+
 
 def _quat(w=1.0, x=0.0, y=0.0, z=0.0):
     from src.asi_build.holographic.core.base import Quaternion
+
     return Quaternion(w, x, y, z)
 
 
 # ===========================================================================
 # 1.  Base types  (base.py)
 # ===========================================================================
+
 
 class TestVector3D:
     """Tests for Vector3D dataclass."""
@@ -119,6 +125,7 @@ class TestTransform3D:
 
     def test_default_init(self):
         from src.asi_build.holographic.core.base import Transform3D
+
         t = Transform3D()
         assert t.position.x == 0 and t.position.y == 0 and t.position.z == 0
         assert t.rotation.w == 1 and t.rotation.x == 0
@@ -126,16 +133,19 @@ class TestTransform3D:
 
     def test_to_matrix_shape(self):
         from src.asi_build.holographic.core.base import Transform3D
+
         M = Transform3D().to_matrix()
         assert M.shape == (4, 4)
 
     def test_identity_transform_is_identity(self):
         from src.asi_build.holographic.core.base import Transform3D
+
         M = Transform3D().to_matrix()
         np.testing.assert_allclose(M, np.eye(4), atol=1e-6)
 
     def test_translation_only(self):
         from src.asi_build.holographic.core.base import Transform3D
+
         t = Transform3D(position=_vec(5, 10, 15))
         M = t.to_matrix()
         assert abs(M[0, 3] - 5) < 1e-6
@@ -148,21 +158,25 @@ class TestBoundingBox3D:
 
     def test_contains_inside(self):
         from src.asi_build.holographic.core.base import BoundingBox3D
+
         bb = BoundingBox3D(min_point=_vec(-1, -1, -1), max_point=_vec(1, 1, 1))
         assert bb.contains(_vec(0, 0, 0))
 
     def test_contains_outside(self):
         from src.asi_build.holographic.core.base import BoundingBox3D
+
         bb = BoundingBox3D(min_point=_vec(-1, -1, -1), max_point=_vec(1, 1, 1))
         assert not bb.contains(_vec(2, 0, 0))
 
     def test_contains_boundary(self):
         from src.asi_build.holographic.core.base import BoundingBox3D
+
         bb = BoundingBox3D(min_point=_vec(0, 0, 0), max_point=_vec(1, 1, 1))
         assert bb.contains(_vec(0, 0, 0))  # Edge is inclusive
 
     def test_volume(self):
         from src.asi_build.holographic.core.base import BoundingBox3D
+
         bb = BoundingBox3D(min_point=_vec(0, 0, 0), max_point=_vec(2, 3, 4))
         assert abs(bb.volume() - 24.0) < 1e-6
 
@@ -172,16 +186,19 @@ class TestEnums:
 
     def test_hologram_types(self):
         from src.asi_build.holographic.core.base import HologramType
+
         assert HologramType.STATIC.value == "static"
         assert HologramType.VOLUMETRIC.value == "volumetric"
 
     def test_render_quality(self):
         from src.asi_build.holographic.core.base import RenderQuality
+
         assert RenderQuality.LOW.value == "low"
         assert RenderQuality.ULTRA.value == "ultra"
 
     def test_interaction_modes(self):
         from src.asi_build.holographic.core.base import InteractionMode
+
         assert InteractionMode.GESTURE.value == "gesture"
         assert InteractionMode.BRAIN.value == "brain"
 
@@ -191,9 +208,13 @@ class TestExceptions:
 
     def test_exception_hierarchy(self):
         from src.asi_build.holographic.core.base import (
-            HolographicException, InitializationError, RenderingError,
-            CalibrationError, GestureRecognitionError,
+            CalibrationError,
+            GestureRecognitionError,
+            HolographicException,
+            InitializationError,
+            RenderingError,
         )
+
         assert issubclass(InitializationError, HolographicException)
         assert issubclass(RenderingError, HolographicException)
         assert issubclass(CalibrationError, HolographicException)
@@ -201,6 +222,7 @@ class TestExceptions:
 
     def test_exceptions_are_catchable(self):
         from src.asi_build.holographic.core.base import HolographicException, InitializationError
+
         with pytest.raises(HolographicException):
             raise InitializationError("test")
 
@@ -209,9 +231,11 @@ class TestExceptions:
 # 2.  HolographicPerformanceMonitor
 # ===========================================================================
 
+
 class TestPerformanceMonitor:
     def _mon(self):
         from src.asi_build.holographic.core.base import HolographicPerformanceMonitor
+
         return HolographicPerformanceMonitor()
 
     def test_start_end_returns_positive(self):
@@ -253,9 +277,11 @@ class TestPerformanceMonitor:
 # 3.  SpatialHash
 # ===========================================================================
 
+
 class TestSpatialHash:
     def _hash(self, cell_size=1.0):
         from src.asi_build.holographic.core.base import SpatialHash
+
         return SpatialHash(cell_size)
 
     def test_insert_and_query(self):
@@ -297,9 +323,11 @@ class TestSpatialHash:
 # 4.  SpatialMath  (math_utils.py)
 # ===========================================================================
 
+
 class TestSpatialMath:
     def _sm(self):
         from src.asi_build.holographic.core.math_utils import SpatialMath
+
         return SpatialMath
 
     # ---- basic vector ops ----
@@ -391,12 +419,14 @@ class TestSpatialMath:
     # ---- transform_point ----
     def test_transform_point_identity(self):
         from src.asi_build.holographic.core.base import Transform3D
+
         sm = self._sm()
         pt = sm.transform_point(_vec(1, 2, 3), Transform3D())
         assert abs(pt.x - 1.0) < 1e-6
 
     def test_transform_point_translation(self):
         from src.asi_build.holographic.core.base import Transform3D
+
         sm = self._sm()
         t = Transform3D(position=_vec(10, 0, 0))
         pt = sm.transform_point(_vec(1, 0, 0), t)
@@ -404,6 +434,7 @@ class TestSpatialMath:
 
     def test_inverse_transform_roundtrip(self):
         from src.asi_build.holographic.core.base import Transform3D
+
         sm = self._sm()
         t = Transform3D(position=_vec(5, 5, 5))
         original = _vec(1, 2, 3)
@@ -423,9 +454,7 @@ class TestSpatialMath:
         assert mat.shape == (4, 4)
 
     def test_look_at_matrix(self):
-        mat = self._sm().create_look_at_matrix(
-            _vec(0, 0, 5), _vec(0, 0, 0), _vec(0, 1, 0)
-        )
+        mat = self._sm().create_look_at_matrix(_vec(0, 0, 5), _vec(0, 0, 0), _vec(0, 1, 0))
         assert mat.shape == (4, 4)
 
     # ---- screen ↔ world ----
@@ -504,37 +533,44 @@ class TestSpatialMath:
 # 5.  HolographicConfig  (config.py)
 # ===========================================================================
 
+
 class TestHolographicConfig:
     def test_defaults_valid(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         assert cfg.validate_config()
 
     def test_default_display(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         assert cfg.display.resolution_x == 1920
         assert cfg.display.resolution_y == 1080
 
     def test_update_config(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         assert cfg.update_config("display", {"resolution_x": 3840})
         assert cfg.display.resolution_x == 3840
 
     def test_update_invalid_section(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         assert not cfg.update_config("nonexistent", {"foo": 1})
 
     def test_get_config_dict(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         d = cfg.get_config_dict()
         assert "display" in d and "rendering" in d and "audio" in d
 
     def test_reset_to_defaults(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         cfg.display.resolution_x = 9999
         cfg.reset_to_defaults()
@@ -542,36 +578,42 @@ class TestHolographicConfig:
 
     def test_validate_rejects_negative_resolution(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         cfg.display.resolution_x = -1
         assert not cfg.validate_config()
 
     def test_validate_rejects_bad_quality(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         cfg.rendering.quality = "insane"
         assert not cfg.validate_config()
 
     def test_validate_rejects_bad_sample_rate(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         cfg.audio.sample_rate = 22050
         assert not cfg.validate_config()
 
     def test_validate_rejects_bad_port(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         cfg.network.server_port = 0
         assert not cfg.validate_config()
 
     def test_quality_preset_low(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         preset = cfg.get_quality_preset("low")
         assert preset["rendering"]["quality"] == "low"
 
     def test_apply_quality_preset(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         assert cfg.apply_quality_preset("ultra")
         assert cfg.rendering.quality == "ultra"
@@ -579,12 +621,14 @@ class TestHolographicConfig:
 
     def test_apply_invalid_preset_gets_high(self):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         preset = cfg.get_quality_preset("imaginary")
         assert preset["rendering"]["quality"] == "high"
 
     def test_save_and_load_config(self, tmp_path):
         from src.asi_build.holographic.core.config import HolographicConfig
+
         cfg = HolographicConfig()
         cfg.config_dir = tmp_path
         cfg.config_path = tmp_path / "test_config.json"
@@ -602,36 +646,43 @@ class TestSubConfigs:
 
     def test_display_config_defaults(self):
         from src.asi_build.holographic.core.config import DisplayConfig
+
         d = DisplayConfig()
         assert d.field_of_view == 110.0
 
     def test_rendering_config_defaults(self):
         from src.asi_build.holographic.core.config import RenderingConfig
+
         r = RenderingConfig()
         assert r.lighting_model == "pbr"
 
     def test_gesture_config_defaults(self):
         from src.asi_build.holographic.core.config import GestureConfig
+
         g = GestureConfig()
         assert g.sensitivity == 0.8
 
     def test_audio_config_defaults(self):
         from src.asi_build.holographic.core.config import AudioConfig
+
         a = AudioConfig()
         assert a.hrtf_enabled is True
 
     def test_network_config_defaults(self):
         from src.asi_build.holographic.core.config import NetworkConfig
+
         n = NetworkConfig()
         assert n.server_port == 8080
 
     def test_security_config_defaults(self):
         from src.asi_build.holographic.core.config import SecurityConfig
+
         s = SecurityConfig()
         assert s.data_retention_days == 30
 
     def test_performance_config_defaults(self):
         from src.asi_build.holographic.core.config import PerformanceConfig
+
         p = PerformanceConfig()
         assert p.max_fps == 120.0
 
@@ -640,24 +691,27 @@ class TestSubConfigs:
 # 6.  HolographicEventSystem  (event_system.py)
 # ===========================================================================
 
+
 class TestHolographicEvent:
     def test_event_creation(self):
-        from src.asi_build.holographic.core.event_system import HolographicEvent, EventPriority
+        from src.asi_build.holographic.core.event_system import EventPriority, HolographicEvent
+
         e = HolographicEvent(name="test", data={"k": 1}, timestamp=time.time())
         assert e.name == "test"
         assert e.event_id is not None
 
     def test_event_to_dict(self):
-        from src.asi_build.holographic.core.event_system import HolographicEvent, EventPriority
+        from src.asi_build.holographic.core.event_system import EventPriority, HolographicEvent
+
         e = HolographicEvent(name="test", data={}, timestamp=1.0)
         d = e.to_dict()
         assert d["name"] == "test"
         assert "event_id" in d
 
     def test_event_from_dict_roundtrip(self):
-        from src.asi_build.holographic.core.event_system import HolographicEvent, EventPriority
-        e = HolographicEvent(name="foo", data={"x": 42}, timestamp=1.0,
-                             priority=EventPriority.HIGH)
+        from src.asi_build.holographic.core.event_system import EventPriority, HolographicEvent
+
+        e = HolographicEvent(name="foo", data={"x": 42}, timestamp=1.0, priority=EventPriority.HIGH)
         d = e.to_dict()
         e2 = HolographicEvent.from_dict(d)
         assert e2.name == "foo"
@@ -669,6 +723,7 @@ class TestEventSystemSync:
 
     def _es(self):
         from src.asi_build.holographic.core.event_system import HolographicEventSystem
+
         return HolographicEventSystem()
 
     def test_subscribe_and_emit_sync(self):
@@ -701,6 +756,7 @@ class TestEventSystemSync:
 
     def test_priority_ordering(self):
         from src.asi_build.holographic.core.event_system import EventPriority
+
         es = self._es()
         order = []
         es.subscribe("ev", lambda d: order.append("normal"), EventPriority.NORMAL)
@@ -790,9 +846,11 @@ class TestEventSystemSync:
 # 7.  LightFieldProcessor  (light_field.py)
 # ===========================================================================
 
+
 class TestLightRay:
     def test_plenoptic_coords(self):
         from src.asi_build.holographic.core.light_field import LightRay
+
         ray = LightRay(
             origin=_vec(1, 2, 0),
             direction=_vec(0, 0, -1),
@@ -806,6 +864,7 @@ class TestLightRay:
 
     def test_plenoptic_coords_zero_direction_z(self):
         from src.asi_build.holographic.core.light_field import LightRay
+
         ray = LightRay(
             origin=_vec(3, 4, 0),
             direction=_vec(1, 0, 0),  # z=0
@@ -819,12 +878,14 @@ class TestLightRay:
 class TestLightFieldProcessorInit:
     def test_init_shapes(self):
         from src.asi_build.holographic.core.light_field import LightFieldProcessor
+
         lfp = LightFieldProcessor(resolution=(4, 4, 8, 8))
         assert lfp.light_field.shape == (4, 4, 8, 8, 3)
         assert lfp.depth_field.shape == (4, 4, 8, 8)
 
     def test_get_set_slice(self):
         from src.asi_build.holographic.core.light_field import LightFieldProcessor
+
         lfp = LightFieldProcessor(resolution=(4, 4, 8, 8))
         img = np.ones((8, 8, 3), dtype=np.float32)
         lfp.set_light_field_slice(0, 0, img)
@@ -833,11 +894,13 @@ class TestLightFieldProcessorInit:
 
     def test_get_slice_out_of_bounds(self):
         from src.asi_build.holographic.core.light_field import LightFieldProcessor
+
         lfp = LightFieldProcessor(resolution=(2, 2, 4, 4))
         assert lfp.get_light_field_slice(10, 10) is None
 
     def test_bilinear_sample(self):
         from src.asi_build.holographic.core.light_field import LightFieldProcessor
+
         lfp = LightFieldProcessor(resolution=(2, 2, 4, 4))
         lfp.light_field[0, 0, :, :, :] = 0.5
         sample = lfp._bilinear_sample(0, 0, 1.5, 1.5)
@@ -846,6 +909,7 @@ class TestLightFieldProcessorInit:
 
     def test_performance_stats(self):
         from src.asi_build.holographic.core.light_field import LightFieldProcessor
+
         lfp = LightFieldProcessor(resolution=(2, 2, 4, 4))
         stats = lfp.get_performance_stats()
         assert "camera_count" in stats
@@ -856,6 +920,7 @@ class TestLightFieldProcessorInit:
 class TestLightFieldCamera:
     def test_view_matrix(self):
         from src.asi_build.holographic.core.light_field import LightFieldCamera
+
         cam = LightFieldCamera(
             position=_vec(0, 0, 5),
             direction=_vec(0, 0, -1),
@@ -870,6 +935,7 @@ class TestLightFieldCamera:
 
     def test_projection_matrix(self):
         from src.asi_build.holographic.core.light_field import LightFieldCamera
+
         cam = LightFieldCamera(
             position=_vec(0, 0, 0),
             direction=_vec(0, 0, -1),
@@ -887,17 +953,20 @@ class TestLightFieldCamera:
 # 8.  HolographicEngine  (engine.py)  — no full init (too many deps)
 # ===========================================================================
 
+
 class TestHolographicEnginePartial:
     """Test engine without calling initialize() (avoids sub-manager imports)."""
 
     def test_creation(self):
         from src.asi_build.holographic.core.engine import HolographicEngine
+
         engine = HolographicEngine()
         assert engine.running is False
         assert engine.frame_count == 0
 
     def test_status_before_init(self):
         from src.asi_build.holographic.core.engine import HolographicEngine
+
         engine = HolographicEngine()
         status = engine.get_status()
         assert status["running"] is False
@@ -905,6 +974,7 @@ class TestHolographicEnginePartial:
 
     def test_callbacks_add_remove(self):
         from src.asi_build.holographic.core.engine import HolographicEngine
+
         engine = HolographicEngine()
         cb = lambda dt: None
         engine.add_update_callback(cb)
@@ -914,6 +984,7 @@ class TestHolographicEnginePartial:
 
     def test_render_callback_add_remove(self):
         from src.asi_build.holographic.core.engine import HolographicEngine
+
         engine = HolographicEngine()
         cb = lambda dt: None
         engine.add_render_callback(cb)
@@ -923,6 +994,7 @@ class TestHolographicEnginePartial:
 
     def test_frame_callback(self):
         from src.asi_build.holographic.core.engine import HolographicEngine
+
         engine = HolographicEngine()
         cb = lambda dt, fc: None
         engine.add_frame_callback(cb)
@@ -932,6 +1004,7 @@ class TestHolographicEnginePartial:
 
     def test_performance_metrics(self):
         from src.asi_build.holographic.core.engine import HolographicEngine
+
         engine = HolographicEngine()
         metrics = engine.get_performance_metrics()
         assert "fps" in metrics
@@ -939,6 +1012,7 @@ class TestHolographicEnginePartial:
 
     def test_enable_disable(self):
         from src.asi_build.holographic.core.engine import HolographicEngine
+
         engine = HolographicEngine()
         engine.disable()
         assert not engine.is_enabled()
@@ -950,9 +1024,11 @@ class TestHolographicEnginePartial:
 # 9.  VolumeRenderer + VolumetricDisplay  (display/volumetric_display.py)
 # ===========================================================================
 
+
 class TestVolumeRenderer:
     def _renderer(self, res=(16, 16, 16)):
         from src.asi_build.holographic.display.volumetric_display import VolumeRenderer
+
         return VolumeRenderer(res)
 
     def test_init_shapes(self):
@@ -1007,8 +1083,8 @@ class TestVolumeRenderer:
 class TestVoxelData:
     def test_to_array(self):
         from src.asi_build.holographic.display.volumetric_display import VoxelData
-        vd = VoxelData(position=_vec(1, 2, 3), color=(0.5, 0.6, 0.7, 1.0),
-                       intensity=0.9, size=1.0)
+
+        vd = VoxelData(position=_vec(1, 2, 3), color=(0.5, 0.6, 0.7, 1.0), intensity=0.9, size=1.0)
         arr = vd.to_array()
         assert len(arr) == 10
         assert arr[0] == 1.0  # position.x
@@ -1018,6 +1094,7 @@ class TestVolumetricDisplay:
     def _display(self):
         from src.asi_build.holographic.core.config import DisplayConfig
         from src.asi_build.holographic.display.volumetric_display import VolumetricDisplay
+
         return VolumetricDisplay(DisplayConfig())
 
     @pytest.mark.asyncio
@@ -1079,17 +1156,21 @@ class TestVolumetricDisplay:
 # 10.  Physics  (physics/physics_manager.py)
 # ===========================================================================
 
+
 class TestPhysicsTypes:
     def test_physics_properties_defaults(self):
         from src.asi_build.holographic.physics.physics_manager import PhysicsProperties
+
         pp = PhysicsProperties()
         assert pp.mass == 1.0
         assert pp.restitution == 0.5
 
     def test_force_is_active(self):
         from src.asi_build.holographic.physics.physics_manager import Force, ForceType
+
         f = Force(
-            force_id="f1", force_type=ForceType.GRAVITY,
+            force_id="f1",
+            force_type=ForceType.GRAVITY,
             magnitude=_vec(0, -9.81, 0),
             point_of_application=_vec(0, 0, 0),
             duration=1.0,
@@ -1100,8 +1181,10 @@ class TestPhysicsTypes:
 
     def test_force_infinite_duration(self):
         from src.asi_build.holographic.physics.physics_manager import Force, ForceType
+
         f = Force(
-            force_id="f2", force_type=ForceType.GRAVITY,
+            force_id="f2",
+            force_type=ForceType.GRAVITY,
             magnitude=_vec(0, -9.81, 0),
             point_of_application=_vec(0, 0, 0),
             start_time=0.0,
@@ -1112,6 +1195,7 @@ class TestPhysicsTypes:
 
     def test_physics_body_type_enum(self):
         from src.asi_build.holographic.physics.physics_manager import PhysicsBodyType
+
         assert PhysicsBodyType.DYNAMIC.value == "dynamic"
         assert PhysicsBodyType.STATIC.value == "static"
 
@@ -1119,6 +1203,7 @@ class TestPhysicsTypes:
 class TestSpatialGrid:
     def test_insert_and_potential_pairs(self):
         from src.asi_build.holographic.physics.physics_manager import SpatialGrid
+
         sg = SpatialGrid(cell_size=2.0)
         sg.insert("a", _vec(0, 0, 0))
         sg.insert("b", _vec(0.5, 0, 0))
@@ -1129,6 +1214,7 @@ class TestSpatialGrid:
 
     def test_clear(self):
         from src.asi_build.holographic.physics.physics_manager import SpatialGrid
+
         sg = SpatialGrid()
         sg.insert("a", _vec(0, 0, 0))
         sg.clear()
@@ -1138,11 +1224,13 @@ class TestSpatialGrid:
 class TestQuantumSimulator:
     def test_quantum_simulator_init(self):
         from src.asi_build.holographic.physics.physics_manager import QuantumSimulator
+
         qs = QuantumSimulator(config={})
         assert qs.quantum_states == {}
 
     def test_add_and_entangle(self):
         from src.asi_build.holographic.physics.physics_manager import QuantumSimulator
+
         qs = QuantumSimulator(config={})
         qs.add_quantum_body("a")
         qs.add_quantum_body("b")
@@ -1151,6 +1239,7 @@ class TestQuantumSimulator:
 
     def test_evolve(self):
         from src.asi_build.holographic.physics.physics_manager import QuantumSimulator
+
         qs = QuantumSimulator(config={})
         qs.add_quantum_body("a")
         qs.evolve_quantum_states(0.016)  # Should not crash
@@ -1161,6 +1250,7 @@ class TestPhysicsManagerBasic:
 
     def _mgr(self):
         from src.asi_build.holographic.physics.physics_manager import HolographicPhysicsManager
+
         return HolographicPhysicsManager(config={})
 
     def test_creation(self):
@@ -1189,6 +1279,7 @@ class TestPhysicsManagerBasic:
     @pytest.mark.asyncio
     async def test_add_and_get_body(self):
         from src.asi_build.holographic.physics.physics_manager import PhysicsBodyType
+
         mgr = self._mgr()
         result = await mgr.add_physics_body("box1", PhysicsBodyType.DYNAMIC, _vec(0, 5, 0))
         assert result is True
@@ -1199,6 +1290,7 @@ class TestPhysicsManagerBasic:
     @pytest.mark.asyncio
     async def test_add_duplicate_body(self):
         from src.asi_build.holographic.physics.physics_manager import PhysicsBodyType
+
         mgr = self._mgr()
         await mgr.add_physics_body("box1", PhysicsBodyType.DYNAMIC, _vec(0, 0, 0))
         result = await mgr.add_physics_body("box1", PhysicsBodyType.DYNAMIC, _vec(1, 1, 1))
@@ -1207,6 +1299,7 @@ class TestPhysicsManagerBasic:
     @pytest.mark.asyncio
     async def test_remove_body(self):
         from src.asi_build.holographic.physics.physics_manager import PhysicsBodyType
+
         mgr = self._mgr()
         await mgr.add_physics_body("box1", PhysicsBodyType.DYNAMIC, _vec(0, 0, 0))
         assert await mgr.remove_physics_body("box1")
@@ -1220,6 +1313,7 @@ class TestPhysicsManagerBasic:
     @pytest.mark.asyncio
     async def test_apply_force(self):
         from src.asi_build.holographic.physics.physics_manager import PhysicsBodyType
+
         mgr = self._mgr()
         await mgr.add_physics_body("box1", PhysicsBodyType.DYNAMIC, _vec(0, 0, 0))
         fid = await mgr.apply_force("box1", _vec(10, 0, 0))
@@ -1235,6 +1329,7 @@ class TestPhysicsManagerBasic:
     @pytest.mark.asyncio
     async def test_add_constraint(self):
         from src.asi_build.holographic.physics.physics_manager import PhysicsBodyType
+
         mgr = self._mgr()
         await mgr.add_physics_body("a", PhysicsBodyType.DYNAMIC, _vec(0, 0, 0))
         await mgr.add_physics_body("b", PhysicsBodyType.DYNAMIC, _vec(1, 0, 0))
@@ -1252,10 +1347,12 @@ class TestPhysicsManagerBasic:
 # 11.  SpatialAudioManager  (audio/spatial_audio_manager.py)
 # ===========================================================================
 
+
 class TestSpatialAudioManager:
     def _mgr(self):
-        from src.asi_build.holographic.core.config import AudioConfig
         from src.asi_build.holographic.audio.spatial_audio_manager import SpatialAudioManager
+        from src.asi_build.holographic.core.config import AudioConfig
+
         return SpatialAudioManager(AudioConfig())
 
     def test_creation(self):
@@ -1276,6 +1373,7 @@ class TestSpatialAudioManager:
     @pytest.mark.asyncio
     async def test_add_audio_source(self):
         from src.asi_build.holographic.audio.spatial_audio_manager import AudioSourceType
+
         mgr = self._mgr()
         audio = np.zeros(48000, dtype=np.float32)
         result = await mgr.add_audio_source("src1", AudioSourceType.POINT, _vec(0, 0, 0), audio)
@@ -1285,6 +1383,7 @@ class TestSpatialAudioManager:
     @pytest.mark.asyncio
     async def test_remove_audio_source(self):
         from src.asi_build.holographic.audio.spatial_audio_manager import AudioSourceType
+
         mgr = self._mgr()
         audio = np.zeros(48000, dtype=np.float32)
         await mgr.add_audio_source("src1", AudioSourceType.POINT, _vec(0, 0, 0), audio)
@@ -1305,6 +1404,7 @@ class TestSpatialAudioManager:
     @pytest.mark.asyncio
     async def test_set_source_position(self):
         from src.asi_build.holographic.audio.spatial_audio_manager import AudioSourceType
+
         mgr = self._mgr()
         audio = np.zeros(48000, dtype=np.float32)
         await mgr.add_audio_source("src1", AudioSourceType.POINT, _vec(0, 0, 0), audio)
@@ -1320,6 +1420,7 @@ class TestSpatialAudioManager:
 # 12.  HandTracker types  (gestures/hand_tracker.py)
 # ===========================================================================
 
+
 def _ensure_cv2_mock():
     """Mock cv2 before any gesture module import."""
     if "cv2" not in sys.modules or not isinstance(sys.modules["cv2"], MagicMock):
@@ -1332,6 +1433,7 @@ def _ensure_cv2_mock():
         sys.modules["cv2"] = mock_cv2
     # Force reload of gesture module so it picks up the mock
     import importlib
+
     if "src.asi_build.holographic.gestures.hand_tracker" in sys.modules:
         importlib.reload(sys.modules["src.asi_build.holographic.gestures.hand_tracker"])
     if "src.asi_build.holographic.gestures" in sys.modules:
@@ -1347,11 +1449,13 @@ class TestHandTrackerTypes:
 
     def test_joint3d(self):
         from src.asi_build.holographic.gestures.hand_tracker import Joint3D
+
         j = Joint3D(position=_vec(1, 2, 3), confidence=0.95)
         assert j.position.x == 1.0
 
     def test_finger_tip_position(self):
-        from src.asi_build.holographic.gestures.hand_tracker import Finger, Joint3D, FingerType
+        from src.asi_build.holographic.gestures.hand_tracker import Finger, FingerType, Joint3D
+
         joints = [
             Joint3D(position=_vec(0, 0, 0), confidence=1.0),
             Joint3D(position=_vec(1, 0, 0), confidence=1.0),
@@ -1363,7 +1467,8 @@ class TestHandTrackerTypes:
         assert tip.x == 3.0
 
     def test_finger_length(self):
-        from src.asi_build.holographic.gestures.hand_tracker import Finger, Joint3D, FingerType
+        from src.asi_build.holographic.gestures.hand_tracker import Finger, FingerType, Joint3D
+
         joints = [
             Joint3D(position=_vec(0, 0, 0), confidence=1.0),
             Joint3D(position=_vec(1, 0, 0), confidence=1.0),
@@ -1375,8 +1480,13 @@ class TestHandTrackerTypes:
 
     def test_hand_landmarks_fingertips(self):
         from src.asi_build.holographic.gestures.hand_tracker import (
-            HandLandmarks, Finger, Joint3D, FingerType, HandSide,
+            Finger,
+            FingerType,
+            HandLandmarks,
+            HandSide,
+            Joint3D,
         )
+
         def _make_finger(ft, tip_x):
             joints = [
                 Joint3D(position=_vec(0, 0, 0), confidence=1.0),
@@ -1409,17 +1519,20 @@ class TestHandTrackerTypes:
 
     def test_hand_side_enum(self):
         from src.asi_build.holographic.gestures.hand_tracker import HandSide
+
         assert HandSide.LEFT.value == "left"
         assert HandSide.RIGHT.value == "right"
 
     def test_finger_type_enum(self):
         from src.asi_build.holographic.gestures.hand_tracker import FingerType
+
         assert len(FingerType) == 5
 
 
 # ===========================================================================
 # 13.  MixedRealityEngine  (ar_overlay/mixed_reality_engine.py)
 # ===========================================================================
+
 
 class TestMixedRealityEngine:
     """Test MRE without cv2 by mocking it."""
@@ -1431,6 +1544,7 @@ class TestMixedRealityEngine:
     def _engine(self):
         _ensure_cv2_mock()
         from src.asi_build.holographic.ar_overlay.mixed_reality_engine import MixedRealityEngine
+
         return MixedRealityEngine(config={})
 
     def test_creation(self):
@@ -1489,6 +1603,7 @@ class TestMixedRealityEngine:
 
     def test_set_reality_mode(self):
         from src.asi_build.holographic.ar_overlay.mixed_reality_engine import RealityMode
+
         engine = self._engine()
         engine.set_reality_mode(RealityMode.MIXED_REALITY)
         assert engine.reality_mode == RealityMode.MIXED_REALITY
@@ -1507,12 +1622,14 @@ class TestMixedRealityEngine:
     def test_reality_mode_enum(self):
         _ensure_cv2_mock()
         from src.asi_build.holographic.ar_overlay.mixed_reality_engine import RealityMode
+
         assert RealityMode.AR_OVERLAY.value == "ar_overlay"
         assert RealityMode.PURE_VR.value == "pure_vr"
 
     def test_tracking_method_enum(self):
         _ensure_cv2_mock()
         from src.asi_build.holographic.ar_overlay.mixed_reality_engine import TrackingMethod
+
         assert TrackingMethod.SLAM.value == "slam"
 
 
@@ -1520,10 +1637,13 @@ class TestMixedRealityEngine:
 # 14.  TelepresenceManager  (telepresence/telepresence_manager.py)
 # ===========================================================================
 
+
 class TestTelepresenceManager:
     def _mock_websockets(self):
         """Mock websockets if not installed."""
-        if "websockets" not in sys.modules or not isinstance(sys.modules.get("websockets"), MagicMock):
+        if "websockets" not in sys.modules or not isinstance(
+            sys.modules.get("websockets"), MagicMock
+        ):
             sys.modules["websockets"] = MagicMock()
             sys.modules["websockets.serve"] = MagicMock()
 
@@ -1531,6 +1651,7 @@ class TestTelepresenceManager:
         self._mock_websockets()
         from src.asi_build.holographic.core.config import NetworkConfig
         from src.asi_build.holographic.telepresence.telepresence_manager import TelepresenceManager
+
         return TelepresenceManager(NetworkConfig())
 
     def test_creation(self):
@@ -1570,6 +1691,7 @@ class TestTelepresenceManager:
     def test_presence_state_enum(self):
         self._mock_websockets()
         from src.asi_build.holographic.telepresence.telepresence_manager import PresenceState
+
         assert PresenceState.ONLINE.value == "online"
         assert PresenceState.OFFLINE.value == "offline"
 
@@ -1578,27 +1700,33 @@ class TestTelepresenceManager:
 # 15.  Module-level __init__ lazy loading
 # ===========================================================================
 
+
 class TestModuleLazyImport:
     def test_version(self):
         from src.asi_build.holographic import __version__
+
         assert __version__ == "1.0.0"
 
     def test_spatial_math_import(self):
         from src.asi_build.holographic import SpatialMath
+
         assert hasattr(SpatialMath, "distance_3d")
 
     def test_holographic_config_import(self):
         from src.asi_build.holographic import HolographicConfig
+
         cfg = HolographicConfig()
         assert cfg.validate_config()
 
     def test_bad_attribute_raises(self):
         import src.asi_build.holographic as holo
+
         with pytest.raises(AttributeError):
             _ = holo.NonexistentClass
 
     def test_all_exports(self):
         from src.asi_build.holographic import __all__
+
         assert "SpatialMath" in __all__
         assert "HolographicEngine" in __all__
 
@@ -1607,9 +1735,11 @@ class TestModuleLazyImport:
 # 16.  HolographicBase abstract interface
 # ===========================================================================
 
+
 class TestHolographicBase:
     def test_cannot_instantiate_directly(self):
         from src.asi_build.holographic.core.base import HolographicBase
+
         with pytest.raises(TypeError):
             HolographicBase()
 
@@ -1620,6 +1750,7 @@ class TestHolographicBase:
             async def initialize(self) -> bool:
                 self.initialized = True
                 return True
+
             async def shutdown(self):
                 self.initialized = False
 
@@ -1634,6 +1765,7 @@ class TestHolographicBase:
         class ConcreteHolo(HolographicBase):
             async def initialize(self) -> bool:
                 return True
+
             async def shutdown(self):
                 pass
 
@@ -1648,16 +1780,19 @@ class TestHolographicBase:
 # 17.  EventSubscriber
 # ===========================================================================
 
+
 class TestEventSubscriber:
     def test_valid_subscriber(self):
-        from src.asi_build.holographic.core.event_system import EventSubscriber, EventPriority
+        from src.asi_build.holographic.core.event_system import EventPriority, EventSubscriber
+
         cb = lambda data: None
         sub = EventSubscriber(cb, "test_event", EventPriority.HIGH)
         assert sub.is_valid()
         assert sub.callback is cb
 
     def test_subscriber_priority(self):
-        from src.asi_build.holographic.core.event_system import EventSubscriber, EventPriority
+        from src.asi_build.holographic.core.event_system import EventPriority, EventSubscriber
+
         sub = EventSubscriber(lambda d: None, "ev", EventPriority.CRITICAL)
         assert sub.priority == EventPriority.CRITICAL
 
@@ -1666,10 +1801,12 @@ class TestEventSubscriber:
 # 18.  Integration: config ↔ engine defaults
 # ===========================================================================
 
+
 class TestConfigEngineIntegration:
     def test_engine_respects_fps_from_config(self):
-        from src.asi_build.holographic.core.engine import HolographicEngine
         from src.asi_build.holographic.core.config import HolographicConfig
+        from src.asi_build.holographic.core.engine import HolographicEngine
+
         cfg = HolographicConfig()
         cfg.performance.max_fps = 90.0
         engine = HolographicEngine(config=cfg)

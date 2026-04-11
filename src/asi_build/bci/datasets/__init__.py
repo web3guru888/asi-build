@@ -22,9 +22,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     DatasetValidator = None
 
-__all__ = [
-    'DatasetLoader',
-    'DatasetPreprocessor',
-    'SyntheticDataGenerator',
-    'DatasetValidator'
-]
+__all__ = ["DatasetLoader", "DatasetPreprocessor", "SyntheticDataGenerator", "DatasetValidator"]

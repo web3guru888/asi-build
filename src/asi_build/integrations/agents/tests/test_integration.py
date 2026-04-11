@@ -6,15 +6,16 @@ This script tests the integration of HyGM with the main
 MySQLToMemgraphAgent to ensure the enhanced SQL to Graph mapping works correctly.
 """
 
-import os
 import logging
-from dotenv import load_dotenv
-from typing import Dict, Any
+import os
+from typing import Any, Dict
 
-from ..utils.environment import probe_mysql_connection, probe_memgraph_connection
-from ..utils.config import get_preset_config
-from ..core.graph_modeling import HyGM
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
+
+from ..core.graph_modeling import HyGM
+from ..utils.config import get_preset_config
+from ..utils.environment import probe_memgraph_connection, probe_mysql_connection
 
 # Load environment variables
 load_dotenv()
@@ -151,17 +152,13 @@ def test_graph_modeler_standalone():
         logger.info("Graph modeling completed successfully!")
         logger.info("Created %d node types", len(graph_model.nodes))
         logger.info("Created %d relationships", len(graph_model.relationships))
-        logger.info(
-            "Generated %d modeling decisions", len(graph_model.modeling_decisions)
-        )
+        logger.info("Generated %d modeling decisions", len(graph_model.modeling_decisions))
 
         # Print some details for debugging
         if graph_model.nodes:
             logger.info("Sample node: %s", graph_model.nodes[0].__dict__)
         if graph_model.relationships:
-            logger.info(
-                "Sample relationship: %s", graph_model.relationships[0].__dict__
-            )
+            logger.info("Sample relationship: %s", graph_model.relationships[0].__dict__)
 
         assert len(graph_model.nodes) > 0, "Should create at least one node type"
         # Relationships might be 0 if LLM determined they should be created differently
@@ -170,12 +167,8 @@ def test_graph_modeler_standalone():
 
         logger.info("✅ Graph modeling successful!")
         logger.info("   - Created %d node types", len(graph_model.nodes))
-        logger.info(
-            "   - Created %d relationship types", len(graph_model.relationships)
-        )
-        logger.info(
-            "   - Generated %d modeling decisions", len(graph_model.modeling_decisions)
-        )
+        logger.info("   - Created %d relationship types", len(graph_model.relationships))
+        logger.info("   - Generated %d modeling decisions", len(graph_model.modeling_decisions))
 
         return True
 
@@ -219,14 +212,10 @@ def test_environment_setup():
 
         # Check OpenAI API key
         openai_available = bool(os.getenv("OPENAI_API_KEY"))
-        logger.info(
-            f"OpenAI API key: {'✅ Available' if openai_available else '❌ Not available'}"
-        )
+        logger.info(f"OpenAI API key: {'✅ Available' if openai_available else '❌ Not available'}")
 
         if not openai_available:
-            logger.warning(
-                "OpenAI API key is required for graph modeling functionality"
-            )
+            logger.warning("OpenAI API key is required for graph modeling functionality")
             return False
 
         return True

@@ -6,23 +6,24 @@ the SSE server needs 'neo4j' and 'fastapi'.
 We mock all external deps and test the data-handling / handler logic.
 """
 
-import pytest
 import asyncio
 import json
 import os
+import sys
 import time
-from unittest.mock import MagicMock, AsyncMock, patch, mock_open
+from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 
+import pytest
 
 # ── SSE Server (KennyGraphSSE + FastAPI endpoints) ──────────────────────
 # The SSE module can be imported as long as neo4j & fastapi are available;
 # we mock the driver to avoid a real connection.
 
-import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from asi_build.servers.kenny_graph_sse_server import (
-    KennyGraphSSE, app,
+    KennyGraphSSE,
+    app,
 )
 
 
@@ -52,8 +53,15 @@ class TestKennyGraphSSEStatsNoDriver:
     def test_get_kenny_graph_stats_structure(self):
         sse = KennyGraphSSE()
         stats = sse.get_kenny_graph_stats()
-        for key in ["timestamp", "status", "nodes", "relationships",
-                     "node_types", "relationship_types", "recent_activity"]:
+        for key in [
+            "timestamp",
+            "status",
+            "nodes",
+            "relationships",
+            "node_types",
+            "relationship_types",
+            "recent_activity",
+        ]:
             assert key in stats
 
     def test_get_kenny_analysis_stats_no_db(self):
@@ -138,10 +146,12 @@ class TestKennyGraphSSEWithMockDriver:
 
 # ── FastAPI endpoint tests (using TestClient) ───────────────────────────
 
+
 class TestSSEFastAPIEndpoints:
     @pytest.fixture
     def client(self):
         from fastapi.testclient import TestClient
+
         return TestClient(app)
 
     def test_root_endpoint(self, client):
@@ -192,6 +202,7 @@ class TestSSEFastAPIEndpoints:
 # We can't import KennyGraphMCP directly since 'mcp' is missing.
 # Instead we test the tool/resource schemas and handler logic conceptually,
 # and test the Cypher query builder patterns.
+
 
 class TestMCPServerQueryPatterns:
     """Test the Cypher query patterns used by the MCP server."""

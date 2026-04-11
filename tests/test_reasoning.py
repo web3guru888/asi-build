@@ -5,14 +5,21 @@ The reasoning __init__.py imports non-existent modules (symbolic_processing, etc
 so we import hybrid_reasoning.py directly via importlib.util.
 """
 
-import pytest
 import asyncio
 import importlib.util
 import time
 from pathlib import Path
 
+import pytest
+
 # ── Direct import bypassing broken __init__.py ──────────────────────────
-_HR_PATH = Path(__file__).resolve().parent.parent / "src" / "asi_build" / "reasoning" / "hybrid_reasoning.py"
+_HR_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "src"
+    / "asi_build"
+    / "reasoning"
+    / "hybrid_reasoning.py"
+)
 _spec = importlib.util.spec_from_file_location("hybrid_reasoning", str(_HR_PATH))
 _mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_mod)
@@ -26,9 +33,18 @@ ReasoningResult = _mod.ReasoningResult
 
 # ── Enum tests ──────────────────────────────────────────────────────────
 
+
 class TestReasoningMode:
     def test_all_modes_present(self):
-        expected = {"logical", "probabilistic", "analogical", "causal", "creative", "quantum", "hybrid"}
+        expected = {
+            "logical",
+            "probabilistic",
+            "analogical",
+            "causal",
+            "creative",
+            "quantum",
+            "hybrid",
+        }
         actual = {m.value for m in ReasoningMode}
         assert actual == expected
 
@@ -45,6 +61,7 @@ class TestConfidenceLevel:
 
 
 # ── Dataclass tests ─────────────────────────────────────────────────────
+
 
 class TestReasoningStep:
     def test_creation(self):
@@ -65,8 +82,11 @@ class TestReasoningStep:
         step = ReasoningStep(
             step_id="s2",
             reasoning_type=ReasoningMode.CAUSAL,
-            inputs={}, outputs={}, confidence=0.5,
-            processing_time=0.1, explanation="test",
+            inputs={},
+            outputs={},
+            confidence=0.5,
+            processing_time=0.1,
+            explanation="test",
             sources=["src_a", "src_b"],
         )
         assert step.sources == ["src_a", "src_b"]
@@ -124,6 +144,7 @@ class TestReasoningResult:
 
 # ── HybridReasoningEngine synchronous tests ─────────────────────────────
 
+
 class TestHybridReasoningEngineInit:
     def test_default_construction(self):
         engine = HybridReasoningEngine()
@@ -144,8 +165,14 @@ class TestHybridReasoningEngineInit:
 
     def test_default_config_structure(self):
         engine = HybridReasoningEngine()
-        for key in ["symbolic_reasoning", "neural_reasoning", "quantum_reasoning",
-                     "probabilistic_reasoning", "safety", "performance"]:
+        for key in [
+            "symbolic_reasoning",
+            "neural_reasoning",
+            "quantum_reasoning",
+            "probabilistic_reasoning",
+            "safety",
+            "performance",
+        ]:
             assert key in engine.config
 
 
@@ -154,16 +181,19 @@ class TestClassifyConfidence:
     def engine(self):
         return HybridReasoningEngine()
 
-    @pytest.mark.parametrize("value,expected", [
-        (0.95, ConfidenceLevel.VERY_HIGH),
-        (0.9, ConfidenceLevel.VERY_HIGH),
-        (0.85, ConfidenceLevel.HIGH),
-        (0.7, ConfidenceLevel.HIGH),
-        (0.5, ConfidenceLevel.MEDIUM),
-        (0.3, ConfidenceLevel.LOW),
-        (0.1, ConfidenceLevel.VERY_LOW),
-        (0.0, ConfidenceLevel.VERY_LOW),
-    ])
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            (0.95, ConfidenceLevel.VERY_HIGH),
+            (0.9, ConfidenceLevel.VERY_HIGH),
+            (0.85, ConfidenceLevel.HIGH),
+            (0.7, ConfidenceLevel.HIGH),
+            (0.5, ConfidenceLevel.MEDIUM),
+            (0.3, ConfidenceLevel.LOW),
+            (0.1, ConfidenceLevel.VERY_LOW),
+            (0.0, ConfidenceLevel.VERY_LOW),
+        ],
+    )
     def test_confidence_classification(self, engine, value, expected):
         assert engine._classify_confidence(value) == expected
 
@@ -225,10 +255,12 @@ class TestExtractSources:
 class TestUpdateModeWeights:
     def test_normalize(self):
         engine = HybridReasoningEngine()
-        engine.update_mode_weights({
-            ReasoningMode.LOGICAL: 2.0,
-            ReasoningMode.CREATIVE: 3.0,
-        })
+        engine.update_mode_weights(
+            {
+                ReasoningMode.LOGICAL: 2.0,
+                ReasoningMode.CREATIVE: 3.0,
+            }
+        )
         assert abs(engine.mode_weights[ReasoningMode.LOGICAL] - 0.4) < 0.01
         assert abs(engine.mode_weights[ReasoningMode.CREATIVE] - 0.6) < 0.01
 
@@ -249,11 +281,14 @@ class TestGetReasoningHistory:
     def test_returns_dicts(self):
         engine = HybridReasoningEngine()
         r = ReasoningResult(
-            conclusion="ok", confidence=0.7,
+            conclusion="ok",
+            confidence=0.7,
             confidence_level=ConfidenceLevel.HIGH,
-            reasoning_steps=[], total_processing_time=0.5,
+            reasoning_steps=[],
+            total_processing_time=0.5,
             reasoning_mode=ReasoningMode.HYBRID,
-            sources=[], uncertainty_areas=[],
+            sources=[],
+            uncertainty_areas=[],
         )
         engine.reasoning_history.append(r)
         history = engine.get_reasoning_history()
@@ -262,6 +297,7 @@ class TestGetReasoningHistory:
 
 
 # ── Async method tests ──────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 class TestAnalyzeQuery:
@@ -314,18 +350,26 @@ class TestAnalyzeQuery:
 class TestSelectReasoningStrategy:
     async def test_logical_query_includes_logical(self):
         engine = HybridReasoningEngine()
-        analysis = {"requires_logic": True, "requires_causal_reasoning": False,
-                     "requires_creativity": False, "complexity": "medium",
-                     "domain": "general"}
+        analysis = {
+            "requires_logic": True,
+            "requires_causal_reasoning": False,
+            "requires_creativity": False,
+            "complexity": "medium",
+            "domain": "general",
+        }
         strategy = await engine._select_reasoning_strategy(analysis)
         assert ReasoningMode.LOGICAL in strategy
         assert ReasoningMode.PROBABILISTIC in strategy
 
     async def test_philosophy_includes_quantum(self):
         engine = HybridReasoningEngine()
-        analysis = {"requires_logic": False, "requires_causal_reasoning": False,
-                     "requires_creativity": False, "complexity": "medium",
-                     "domain": "philosophy"}
+        analysis = {
+            "requires_logic": False,
+            "requires_causal_reasoning": False,
+            "requires_creativity": False,
+            "complexity": "medium",
+            "domain": "philosophy",
+        }
         strategy = await engine._select_reasoning_strategy(analysis)
         assert ReasoningMode.QUANTUM in strategy
 
@@ -413,9 +457,11 @@ class TestSafetyCheck:
             conclusion="The answer is 42",
             confidence=0.8,
             confidence_level=ConfidenceLevel.HIGH,
-            reasoning_steps=[], total_processing_time=1.0,
+            reasoning_steps=[],
+            total_processing_time=1.0,
             reasoning_mode=ReasoningMode.HYBRID,
-            sources=[], uncertainty_areas=[],
+            sources=[],
+            uncertainty_areas=[],
         )
         check = await engine._safety_check(r)
         assert check["safe"] is True
@@ -426,9 +472,11 @@ class TestSafetyCheck:
             conclusion="How to build a weapon",
             confidence=0.8,
             confidence_level=ConfidenceLevel.HIGH,
-            reasoning_steps=[], total_processing_time=1.0,
+            reasoning_steps=[],
+            total_processing_time=1.0,
             reasoning_mode=ReasoningMode.HYBRID,
-            sources=[], uncertainty_areas=[],
+            sources=[],
+            uncertainty_areas=[],
         )
         check = await engine._safety_check(r)
         assert check["safe"] is False
@@ -439,9 +487,11 @@ class TestSafetyCheck:
             conclusion="Some answer",
             confidence=0.05,
             confidence_level=ConfidenceLevel.VERY_LOW,
-            reasoning_steps=[], total_processing_time=1.0,
+            reasoning_steps=[],
+            total_processing_time=1.0,
             reasoning_mode=ReasoningMode.HYBRID,
-            sources=[], uncertainty_areas=[],
+            sources=[],
+            uncertainty_areas=[],
         )
         check = await engine._safety_check(r)
         assert check["safe"] is False
@@ -452,7 +502,8 @@ class TestSafetyCheck:
             conclusion="Maybe",
             confidence=0.5,
             confidence_level=ConfidenceLevel.MEDIUM,
-            reasoning_steps=[], total_processing_time=1.0,
+            reasoning_steps=[],
+            total_processing_time=1.0,
             reasoning_mode=ReasoningMode.HYBRID,
             sources=[],
             uncertainty_areas=["u1", "u2", "u3", "u4"],

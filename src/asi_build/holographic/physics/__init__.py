@@ -8,9 +8,9 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     HolographicPhysicsManager = None
 
 __all__ = [
-    'HolographicPhysicsManager',
-    'HologramPhysics',
-    'CollisionDetector',
-    'ForceSimulator',
-    'ParticleSystem'
+    "HolographicPhysicsManager",
+    "HologramPhysics",
+    "CollisionDetector",
+    "ForceSimulator",
+    "ParticleSystem",
 ]

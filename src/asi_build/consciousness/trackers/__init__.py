@@ -11,4 +11,4 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     ConsciousnessEvolutionTracker = None
     ConsciousnessSnapshot = None
 
-__all__ = ['ConsciousnessEvolutionTracker', 'ConsciousnessSnapshot']
+__all__ = ["ConsciousnessEvolutionTracker", "ConsciousnessSnapshot"]

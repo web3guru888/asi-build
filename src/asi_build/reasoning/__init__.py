@@ -14,19 +14,19 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     HybridReasoningEngine = None
     ReasoningMode = None
 try:
-    from .symbolic_processing import SymbolicProcessor, LogicalReasoner, PLNEngine
+    from .symbolic_processing import LogicalReasoner, PLNEngine, SymbolicProcessor
 except (ImportError, ModuleNotFoundError, SyntaxError):
     SymbolicProcessor = None
     LogicalReasoner = None
     PLNEngine = None
 try:
-    from .neural_networks import NeuralProcessor, TransformerReasoner, MultimodalNetwork
+    from .neural_networks import MultimodalNetwork, NeuralProcessor, TransformerReasoner
 except (ImportError, ModuleNotFoundError, SyntaxError):
     NeuralProcessor = None
     TransformerReasoner = None
     MultimodalNetwork = None
 try:
-    from .quantum_reasoning import QuantumReasoningEngine, QuantumLogic
+    from .quantum_reasoning import QuantumLogic, QuantumReasoningEngine
 except (ImportError, ModuleNotFoundError, SyntaxError):
     QuantumReasoningEngine = None
     QuantumLogic = None
@@ -39,7 +39,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 __all__ = [
     "HybridReasoningEngine",
     "ReasoningMode",
-    "SymbolicProcessor", 
+    "SymbolicProcessor",
     "LogicalReasoner",
     "PLNEngine",
     "NeuralProcessor",
@@ -48,5 +48,5 @@ __all__ = [
     "QuantumReasoningEngine",
     "QuantumLogic",
     "CognitiveArchitecture",
-    "OpenCogIntegration"
+    "OpenCogIntegration",
 ]

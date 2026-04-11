@@ -3,7 +3,7 @@ Encrypted machine learning modules using homomorphic encryption.
 """
 
 try:
-    from .neural_networks import EncryptedNeuralNetwork, EncryptedLayer
+    from .neural_networks import EncryptedLayer, EncryptedNeuralNetwork
 except (ImportError, ModuleNotFoundError, SyntaxError):
     EncryptedNeuralNetwork = None
     EncryptedLayer = None
@@ -13,12 +13,12 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     EncryptedLinearRegression = None
     EncryptedLogisticRegression = None
 try:
-    from .ensemble import EncryptedRandomForest, EncryptedGradientBoosting
+    from .ensemble import EncryptedGradientBoosting, EncryptedRandomForest
 except (ImportError, ModuleNotFoundError, SyntaxError):
     EncryptedRandomForest = None
     EncryptedGradientBoosting = None
 try:
-    from .clustering import EncryptedKMeans, EncryptedDBSCAN
+    from .clustering import EncryptedDBSCAN, EncryptedKMeans
 except (ImportError, ModuleNotFoundError, SyntaxError):
     EncryptedKMeans = None
     EncryptedDBSCAN = None
@@ -50,34 +50,26 @@ __all__ = [
     # Neural Networks
     "EncryptedNeuralNetwork",
     "EncryptedLayer",
-    
     # Linear Models
     "EncryptedLinearRegression",
     "EncryptedLogisticRegression",
-    
     # Ensemble Methods
     "EncryptedRandomForest",
     "EncryptedGradientBoosting",
-    
     # Clustering
     "EncryptedKMeans",
     "EncryptedDBSCAN",
-    
     # Preprocessing
     "EncryptedPreprocessor",
     "EncryptedScaler",
-    
     # Metrics
     "EncryptedMetrics",
-    
     # Training
     "EncryptedTrainer",
     "FederatedLearning",
-    
     # Inference
     "EncryptedInference",
-    
     # Privacy
     "DifferentialPrivacy",
-    "SecureAggregation"
+    "SecureAggregation",
 ]

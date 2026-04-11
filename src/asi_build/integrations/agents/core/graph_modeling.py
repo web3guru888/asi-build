@@ -8,11 +8,12 @@ Supports both automatic and interactive modeling modes.
 
 import json
 import logging
-from enum import Enum
-from typing import Dict, List, Any, Optional, Literal
 from dataclasses import dataclass
-from pydantic import BaseModel, Field
+from enum import Enum
+from typing import Any, Dict, List, Literal, Optional
+
 from langchain_core.messages import HumanMessage, SystemMessage
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -29,17 +30,11 @@ class LLMGraphNode(BaseModel):
     """Node definition for LLM-generated graph models."""
 
     name: str = Field(description="Unique identifier for the node")
-    label: str = Field(
-        description="Cypher label for the node (e.g., 'User', 'Product')"
-    )
-    properties: List[str] = Field(
-        description="List of properties to include from source table"
-    )
+    label: str = Field(description="Cypher label for the node (e.g., 'User', 'Product')")
+    properties: List[str] = Field(description="List of properties to include from source table")
     primary_key: str = Field(description="Primary key property name")
     indexes: List[str] = Field(description="Properties that should have indexes")
-    constraints: List[str] = Field(
-        description="Properties that should have uniqueness constraints"
-    )
+    constraints: List[str] = Field(description="Properties that should have uniqueness constraints")
     source_table: str = Field(description="Source SQL table name")
     modeling_rationale: str = Field(description="Explanation for modeling decisions")
 
@@ -79,9 +74,7 @@ class LLMGraphModel(BaseModel):
     relationships: List[LLMGraphRelationship] = Field(
         description="All relationships in the graph model"
     )
-    modeling_decisions: List[str] = Field(
-        description="High-level modeling decisions and rationale"
-    )
+    modeling_decisions: List[str] = Field(description="High-level modeling decisions and rationale")
     optimization_suggestions: List[str] = Field(
         description="Suggestions for query optimization and indexing"
     )
@@ -317,9 +310,7 @@ class HyGM:
             llm_model = structured_llm.invoke(messages)
 
             # Convert LLM model to standard GraphModel format
-            graph_model = self._convert_llm_model_to_graph_model(
-                llm_model, database_structure
-            )
+            graph_model = self._convert_llm_model_to_graph_model(llm_model, database_structure)
 
             logger.info("LLM-powered graph modeling completed")
             return graph_model
@@ -368,12 +359,8 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
 
         # Build schema description
         schema_parts = ["DATABASE SCHEMA:"]
-        schema_parts.append(
-            "IMPORTANT: Use exact table and column names in your model."
-        )
-        schema_parts.append(
-            "For relationships, reference nodes by their source_table names."
-        )
+        schema_parts.append("IMPORTANT: Use exact table and column names in your model.")
+        schema_parts.append("For relationships, reference nodes by their source_table names.")
 
         entity_tables = database_structure.get("entity_tables", {})
         join_tables = database_structure.get("join_tables", {})
@@ -457,9 +444,7 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
         if domain_context:
             schema_parts.append(f"\nDOMAIN CONTEXT: {domain_context}")
 
-        schema_parts.append(
-            "\nCreate an optimal graph model for this database structure."
-        )
+        schema_parts.append("\nCreate an optimal graph model for this database structure.")
 
         return "\n".join(schema_parts)
 
@@ -487,9 +472,7 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
         relationships = []
         for llm_rel in llm_model.relationships:
             # Find source info from database structure
-            source_info = self._find_relationship_source_info(
-                llm_rel, database_structure
-            )
+            source_info = self._find_relationship_source_info(llm_rel, database_structure)
 
             relationship = GraphRelationship(
                 name=llm_rel.name,
@@ -532,9 +515,7 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
                 return rel
 
             # Check reversed relationship (LLM might infer wrong direction)
-            rev_from_match = (
-                rel.get("from_table", "").lower() == llm_rel.to_node.lower()
-            )
+            rev_from_match = rel.get("from_table", "").lower() == llm_rel.to_node.lower()
             rev_to_match = rel.get("to_table", "").lower() == llm_rel.from_node.lower()
             if rev_from_match and rev_to_match:
                 # Return with swapped direction to match LLM's inference
@@ -542,16 +523,14 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
                 reversed_rel["from_table"] = llm_rel.from_node
                 reversed_rel["to_table"] = llm_rel.to_node
                 logger.info(
-                    f"Found reversed relationship for "
-                    f"{llm_rel.from_node} -> {llm_rel.to_node}"
+                    f"Found reversed relationship for " f"{llm_rel.from_node} -> {llm_rel.to_node}"
                 )
                 return reversed_rel
 
         # Log when relationship is not found
         rel_info = f"{llm_rel.from_node} -> {llm_rel.to_node}"
         logger.warning(
-            f"Could not find relationship source info for "
-            f"{rel_info} (type: {llm_rel.type})"
+            f"Could not find relationship source info for " f"{rel_info} (type: {llm_rel.type})"
         )
 
         available_rels = [
@@ -608,9 +587,7 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
         validation_result = self.validate_graph_model(graph_model, database_structure)
 
         if not validation_result["is_valid"]:
-            logger.warning(
-                "Generated model has validation issues, attempting to fix..."
-            )
+            logger.warning("Generated model has validation issues, attempting to fix...")
             graph_model = self._fix_validation_issues(graph_model, validation_result)
 
         logger.info("Automatic graph modeling completed")
@@ -625,9 +602,7 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
         logger.info("Starting interactive graph modeling...")
 
         # Generate initial model
-        self.current_graph_model = self._generate_initial_model(
-            database_structure, domain_context
-        )
+        self.current_graph_model = self._generate_initial_model(database_structure, domain_context)
         self.iteration_count = 0
 
         # Interactive feedback loop
@@ -643,9 +618,7 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
             print("\n" + "=" * 60)
 
             # Get user feedback via terminal input
-            print(
-                "\n🔄 Interactive Graph Modeling - Iteration", self.iteration_count + 1
-            )
+            print("\n🔄 Interactive Graph Modeling - Iteration", self.iteration_count + 1)
             print("\nOptions:")
             print("  • Type 'approve' to accept the current model")
             print("  • Type 'quit' to exit interactive mode")
@@ -656,9 +629,7 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
             print("  - 'Create a LIVES_IN relationship between Person and Address'")
 
             try:
-                user_feedback = input(
-                    "\n💭 Your feedback (or 'approve' to continue): "
-                ).strip()
+                user_feedback = input("\n💭 Your feedback (or 'approve' to continue): ").strip()
             except KeyboardInterrupt:
                 print("\n⚠️ Interactive modeling cancelled by user")
                 return self.current_graph_model
@@ -691,10 +662,7 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
                 for issue in validation_result["issues"]:
                     print(f"  - {issue}")
 
-        logger.info(
-            f"Interactive modeling completed after {self.iteration_count} "
-            f"iterations"
-        )
+        logger.info(f"Interactive modeling completed after {self.iteration_count} " f"iterations")
         return self.current_graph_model
 
     def validate_graph_model(
@@ -723,13 +691,9 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
                 table_info = database_structure["entity_tables"][source_table]
                 available_columns = self._get_table_columns(table_info)
 
-                invalid_props = [
-                    prop for prop in node.properties if prop not in available_columns
-                ]
+                invalid_props = [prop for prop in node.properties if prop not in available_columns]
                 if invalid_props:
-                    issues.append(
-                        f"Node {node.label} has invalid properties: {invalid_props}"
-                    )
+                    issues.append(f"Node {node.label} has invalid properties: {invalid_props}")
 
         # 3. Check primary key mapping
         for node in graph_model.nodes:
@@ -755,8 +719,7 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
                         break
                 if not found:
                     issues.append(
-                        f"Relationship {rel.name} references unknown from_node: "
-                        f"{rel.from_node}"
+                        f"Relationship {rel.name} references unknown from_node: " f"{rel.from_node}"
                     )
 
             if rel.to_node not in node_labels:
@@ -768,8 +731,7 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
                         break
                 if not found:
                     issues.append(
-                        f"Relationship {rel.name} references unknown to_node: "
-                        f"{rel.to_node}"
+                        f"Relationship {rel.name} references unknown to_node: " f"{rel.to_node}"
                     )
 
         # 5. Check for graph modeling best practices
@@ -802,8 +764,7 @@ DO NOT create relationships that don't correspond to actual foreign keys in the 
         """
         logger.info("Processing natural language feedback with structured output...")
 
-        system_message = SystemMessage(
-            content="""
+        system_message = SystemMessage(content="""
 You are a graph modeling expert that processes natural language feedback
 to modify graph models.
 
@@ -820,21 +781,18 @@ Available operations:
 - drop_index: Remove an index from a node property
 
 Analyze the feedback carefully and return the appropriate operations.
-"""
-        )
+""")
 
         current_model_summary = self._get_model_summary()
 
-        human_message = HumanMessage(
-            content=f"""
+        human_message = HumanMessage(content=f"""
 Current graph model:
 {current_model_summary}
 
 User feedback: "{feedback}"
 
 Parse this feedback into specific operations to modify the graph model.
-"""
-        )
+""")
 
         try:
             # Use structured output if the LLM supports it
@@ -918,16 +876,12 @@ Parse this feedback into specific operations to modify the graph model.
                 if rel.to_node == old_node_id:
                     rel.to_node = new_node_id
 
-    def _rename_node_property(
-        self, node_label: str, old_prop: str, new_prop: str
-    ) -> None:
+    def _rename_node_property(self, node_label: str, old_prop: str, new_prop: str) -> None:
         """Rename a property in a node."""
         for node in self.current_graph_model.nodes:
             if node.label == node_label:
                 if old_prop in node.properties:
-                    logger.info(
-                        f"Renaming property in {node_label}: {old_prop} -> {new_prop}"
-                    )
+                    logger.info(f"Renaming property in {node_label}: {old_prop} -> {new_prop}")
                     idx = node.properties.index(old_prop)
                     node.properties[idx] = new_prop
 
@@ -970,9 +924,7 @@ Parse this feedback into specific operations to modify the graph model.
     def _drop_relationship(self, rel_name: str) -> None:
         """Drop a relationship."""
         self.current_graph_model.relationships = [
-            rel
-            for rel in self.current_graph_model.relationships
-            if rel.name != rel_name
+            rel for rel in self.current_graph_model.relationships if rel.name != rel_name
         ]
         logger.info(f"Dropped relationship: {rel_name}")
 
@@ -1132,17 +1084,13 @@ Parse this feedback into specific operations to modify the graph model.
 
         return graph_model
 
-    def _extract_node_properties_from_table(
-        self, table_info: Dict[str, Any]
-    ) -> List[str]:
+    def _extract_node_properties_from_table(self, table_info: Dict[str, Any]) -> List[str]:
         """Extract node properties from table info."""
         properties = []
         if "schema" in table_info:
             for col in table_info["schema"]:
                 col_name = col.get("field", "")
-                if col_name and (
-                    not col_name.endswith("_id") or col.get("key") == "PRI"
-                ):
+                if col_name and (not col_name.endswith("_id") or col.get("key") == "PRI"):
                     properties.append(col_name)
         elif "columns" in table_info:
             for col_name, col_info in table_info["columns"].items():

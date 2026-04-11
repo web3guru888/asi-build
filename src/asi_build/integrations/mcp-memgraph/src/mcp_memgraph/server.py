@@ -1,19 +1,18 @@
-from mcp.server.fastmcp import FastMCP
+import os
+from typing import Any, Dict, List
 
+from mcp.server.fastmcp import FastMCP
 from memgraph_toolbox.api.memgraph import Memgraph
-from memgraph_toolbox.tools.cypher import CypherTool
+from memgraph_toolbox.tools.betweenness_centrality import BetweennessCentralityTool
 from memgraph_toolbox.tools.config import ShowConfigTool
-from memgraph_toolbox.tools.index import ShowIndexInfoTool
 from memgraph_toolbox.tools.constraint import ShowConstraintInfoTool
+from memgraph_toolbox.tools.cypher import CypherTool
+from memgraph_toolbox.tools.index import ShowIndexInfoTool
+from memgraph_toolbox.tools.page_rank import PageRankTool
 from memgraph_toolbox.tools.schema import ShowSchemaInfoTool
 from memgraph_toolbox.tools.storage import ShowStorageInfoTool
 from memgraph_toolbox.tools.trigger import ShowTriggersTool
-from memgraph_toolbox.tools.betweenness_centrality import BetweennessCentralityTool
-from memgraph_toolbox.tools.page_rank import PageRankTool
 from memgraph_toolbox.utils.logging import logger_init
-
-import os
-from typing import Any, Dict, List
 
 # Configure logging
 logger = logger_init("mcp-memgraph")
@@ -27,7 +26,9 @@ MEMGRAPH_USER = os.environ.get("MEMGRAPH_USER", "")
 MEMGRAPH_PASSWORD = os.environ.get("MEMGRAPH_PASSWORD", "")
 MEMGRAPH_DATABASE = os.environ.get("MEMGRAPH_DATABASE", "memgraph")
 
-logger.info(f"Connecting to Memgraph db '{MEMGRAPH_DATABASE}' at {MEMGRAPH_URL} with user '{MEMGRAPH_USER}'")
+logger.info(
+    f"Connecting to Memgraph db '{MEMGRAPH_DATABASE}' at {MEMGRAPH_URL} with user '{MEMGRAPH_USER}'"
+)
 
 # Initialize Memgraph client
 db = Memgraph(

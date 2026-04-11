@@ -1,10 +1,8 @@
 from typing import Type
 
+from langchain_memgraph.tools import RunQueryTool, RunShowStorageInfoTool
 from langchain_tests.unit_tests import ToolsUnitTests
-
 from memgraph_toolbox.api.memgraph import Memgraph
-from langchain_memgraph.tools import RunQueryTool
-from langchain_memgraph.tools import RunShowStorageInfoTool
 
 
 class TestMemgraphIntegration(ToolsUnitTests):

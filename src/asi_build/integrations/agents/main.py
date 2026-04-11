@@ -7,18 +7,18 @@ Run with: uv run main.py
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
-from .utils import (
-    MigrationEnvironmentError,
-    DatabaseConnectionError,
-    setup_and_validate_environment,
-    probe_all_connections,
-    print_environment_help,
-    print_troubleshooting_help,
-)
 from .core import SQLToMemgraphAgent
 from .core.graph_modeling import GraphModelingStrategy
+from .utils import (
+    DatabaseConnectionError,
+    MigrationEnvironmentError,
+    print_environment_help,
+    print_troubleshooting_help,
+    probe_all_connections,
+    setup_and_validate_environment,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -81,9 +81,7 @@ def get_graph_modeling_strategy() -> GraphModelingStrategy:
 
     while True:
         try:
-            choice = input(
-                "Select strategy (1-2) or press Enter for deterministic: "
-            ).strip()
+            choice = input("Select strategy (1-2) or press Enter for deterministic: ").strip()
             if not choice:
                 return GraphModelingStrategy.DETERMINISTIC  # Default
 
@@ -245,9 +243,7 @@ def main() -> None:
         graph_strategy = get_graph_modeling_strategy()
 
         # Run migration
-        result = run_migration(
-            source_db_config, memgraph_config, graph_interactive, graph_strategy
-        )
+        result = run_migration(source_db_config, memgraph_config, graph_interactive, graph_strategy)
 
         # Display results
         print_migration_results(result)

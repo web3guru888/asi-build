@@ -28,11 +28,11 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     HolographicEventSystem = None
 
 __all__ = [
-    'HolographicEngine',
-        'SpatialRenderer', 
-    'LightFieldProcessor',
-    'HolographicConfig',
-    'HolographicBase',
-    'SpatialMath',
-    'HolographicEventSystem'
+    "HolographicEngine",
+    "SpatialRenderer",
+    "LightFieldProcessor",
+    "HolographicConfig",
+    "HolographicBase",
+    "SpatialMath",
+    "HolographicEventSystem",
 ]

@@ -22,9 +22,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     SSVEPClassifier = None
 
-__all__ = [
-    'SSVEPDetector',
-    'SSVEPFrequencyAnalyzer',
-    'SSVEPStimulusGenerator', 
-    'SSVEPClassifier'
-]
+__all__ = ["SSVEPDetector", "SSVEPFrequencyAnalyzer", "SSVEPStimulusGenerator", "SSVEPClassifier"]

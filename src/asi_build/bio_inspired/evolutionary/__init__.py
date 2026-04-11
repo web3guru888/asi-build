@@ -13,13 +13,13 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     Individual = None
     Population = None
 try:
-    from .genetic_programming import GeneticProgramming, GPTree, GPNode
+    from .genetic_programming import GeneticProgramming, GPNode, GPTree
 except (ImportError, ModuleNotFoundError, SyntaxError):
     GeneticProgramming = None
     GPTree = None
     GPNode = None
 try:
-    from .evolutionary_strategies import EvolutionaryStrategy, CMAEvolutionaryStrategy
+    from .evolutionary_strategies import CMAEvolutionaryStrategy, EvolutionaryStrategy
 except (ImportError, ModuleNotFoundError, SyntaxError):
     EvolutionaryStrategy = None
     CMAEvolutionaryStrategy = None
@@ -31,7 +31,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 
 __all__ = [
     "GeneticAlgorithm",
-    "Individual", 
+    "Individual",
     "Population",
     "GeneticProgramming",
     "GPTree",
@@ -39,5 +39,5 @@ __all__ = [
     "EvolutionaryStrategy",
     "CMAEvolutionaryStrategy",
     "EvolutionaryOptimizer",
-    "MultiObjectiveOptimizer"
+    "MultiObjectiveOptimizer",
 ]

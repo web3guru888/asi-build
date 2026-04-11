@@ -12,7 +12,7 @@ from typing import Dict, List, Optional
 @dataclass
 class NetworkConfig:
     """Configuration for a blockchain network"""
-    
+
     name: str
     chain_id: int
     rpc_urls: List[str]
@@ -46,7 +46,7 @@ ETHEREUM_MAINNET = NetworkConfig(
     max_fee_per_gas_gwei=50.0,
     supports_eip1559=True,
     confirmation_blocks=12,
-    timeout_seconds=300
+    timeout_seconds=300,
 )
 
 ETHEREUM_GOERLI = NetworkConfig(
@@ -66,7 +66,7 @@ ETHEREUM_GOERLI = NetworkConfig(
     max_fee_per_gas_gwei=5.0,
     supports_eip1559=True,
     confirmation_blocks=3,
-    timeout_seconds=180
+    timeout_seconds=180,
 )
 
 ETHEREUM_SEPOLIA = NetworkConfig(
@@ -86,7 +86,7 @@ ETHEREUM_SEPOLIA = NetworkConfig(
     max_fee_per_gas_gwei=5.0,
     supports_eip1559=True,
     confirmation_blocks=3,
-    timeout_seconds=180
+    timeout_seconds=180,
 )
 
 # Polygon Networks
@@ -108,7 +108,7 @@ POLYGON_MAINNET = NetworkConfig(
     max_fee_per_gas_gwei=50.0,
     supports_eip1559=True,
     confirmation_blocks=5,
-    timeout_seconds=120
+    timeout_seconds=120,
 )
 
 POLYGON_MUMBAI = NetworkConfig(
@@ -128,7 +128,7 @@ POLYGON_MUMBAI = NetworkConfig(
     max_fee_per_gas_gwei=5.0,
     supports_eip1559=True,
     confirmation_blocks=2,
-    timeout_seconds=60
+    timeout_seconds=60,
 )
 
 # Arbitrum Networks
@@ -146,7 +146,7 @@ ARBITRUM_MAINNET = NetworkConfig(
     gas_price_gwei=0.1,
     supports_eip1559=True,
     confirmation_blocks=1,
-    timeout_seconds=60
+    timeout_seconds=60,
 )
 
 ARBITRUM_GOERLI = NetworkConfig(
@@ -162,7 +162,7 @@ ARBITRUM_GOERLI = NetworkConfig(
     gas_price_gwei=0.1,
     supports_eip1559=True,
     confirmation_blocks=1,
-    timeout_seconds=60
+    timeout_seconds=60,
 )
 
 # Optimism Networks
@@ -180,7 +180,7 @@ OPTIMISM_MAINNET = NetworkConfig(
     gas_price_gwei=0.001,
     supports_eip1559=True,
     confirmation_blocks=1,
-    timeout_seconds=60
+    timeout_seconds=60,
 )
 
 OPTIMISM_GOERLI = NetworkConfig(
@@ -196,7 +196,7 @@ OPTIMISM_GOERLI = NetworkConfig(
     gas_price_gwei=0.001,
     supports_eip1559=True,
     confirmation_blocks=1,
-    timeout_seconds=60
+    timeout_seconds=60,
 )
 
 # BSC Networks
@@ -215,7 +215,7 @@ BSC_MAINNET = NetworkConfig(
     gas_price_gwei=5.0,
     supports_eip1559=False,
     confirmation_blocks=3,
-    timeout_seconds=120
+    timeout_seconds=120,
 )
 
 BSC_TESTNET = NetworkConfig(
@@ -232,7 +232,7 @@ BSC_TESTNET = NetworkConfig(
     gas_price_gwei=10.0,
     supports_eip1559=False,
     confirmation_blocks=3,
-    timeout_seconds=120
+    timeout_seconds=120,
 )
 
 # Network registry
@@ -241,19 +241,15 @@ NETWORKS = {
     1: ETHEREUM_MAINNET,
     5: ETHEREUM_GOERLI,
     11155111: ETHEREUM_SEPOLIA,
-    
     # Polygon
     137: POLYGON_MAINNET,
     80001: POLYGON_MUMBAI,
-    
     # Arbitrum
     42161: ARBITRUM_MAINNET,
     421613: ARBITRUM_GOERLI,
-    
     # Optimism
     10: OPTIMISM_MAINNET,
     420: OPTIMISM_GOERLI,
-    
     # BSC
     56: BSC_MAINNET,
     97: BSC_TESTNET,
@@ -267,23 +263,19 @@ NAMED_NETWORKS = {
     "ethereum-sepolia": ETHEREUM_SEPOLIA,
     "goerli": ETHEREUM_GOERLI,
     "sepolia": ETHEREUM_SEPOLIA,
-    
     "polygon": POLYGON_MAINNET,
     "polygon-mainnet": POLYGON_MAINNET,
     "polygon-mumbai": POLYGON_MUMBAI,
     "mumbai": POLYGON_MUMBAI,
     "matic": POLYGON_MAINNET,
-    
     "arbitrum": ARBITRUM_MAINNET,
     "arbitrum-mainnet": ARBITRUM_MAINNET,
     "arbitrum-goerli": ARBITRUM_GOERLI,
     "arb": ARBITRUM_MAINNET,
-    
     "optimism": OPTIMISM_MAINNET,
     "optimism-mainnet": OPTIMISM_MAINNET,
     "optimism-goerli": OPTIMISM_GOERLI,
     "op": OPTIMISM_MAINNET,
-    
     "bsc": BSC_MAINNET,
     "binance": BSC_MAINNET,
     "bsc-mainnet": BSC_MAINNET,
@@ -320,10 +312,10 @@ def get_l2_networks() -> List[NetworkConfig]:
 def validate_network_config(config: NetworkConfig) -> bool:
     """
     Validate network configuration
-    
+
     Args:
         config: Network configuration to validate
-        
+
     Returns:
         True if configuration is valid
     """
@@ -332,24 +324,32 @@ def validate_network_config(config: NetworkConfig) -> bool:
         assert config.name and isinstance(config.name, str)
         assert isinstance(config.chain_id, int) and config.chain_id > 0
         assert config.rpc_urls and isinstance(config.rpc_urls, list)
-        assert all(isinstance(url, str) and url.startswith(('http://', 'https://')) 
-                  for url in config.rpc_urls)
+        assert all(
+            isinstance(url, str) and url.startswith(("http://", "https://"))
+            for url in config.rpc_urls
+        )
         assert config.block_explorer_url and isinstance(config.block_explorer_url, str)
         assert config.native_token and isinstance(config.native_token, str)
         assert isinstance(config.is_testnet, bool)
         assert isinstance(config.confirmation_blocks, int) and config.confirmation_blocks > 0
         assert isinstance(config.timeout_seconds, int) and config.timeout_seconds > 0
-        
+
         # Optional field validation
         if config.gas_price_gwei is not None:
             assert isinstance(config.gas_price_gwei, (int, float)) and config.gas_price_gwei >= 0
         if config.max_priority_fee_gwei is not None:
-            assert isinstance(config.max_priority_fee_gwei, (int, float)) and config.max_priority_fee_gwei >= 0
+            assert (
+                isinstance(config.max_priority_fee_gwei, (int, float))
+                and config.max_priority_fee_gwei >= 0
+            )
         if config.max_fee_per_gas_gwei is not None:
-            assert isinstance(config.max_fee_per_gas_gwei, (int, float)) and config.max_fee_per_gas_gwei >= 0
-            
+            assert (
+                isinstance(config.max_fee_per_gas_gwei, (int, float))
+                and config.max_fee_per_gas_gwei >= 0
+            )
+
         return True
-        
+
     except (AssertionError, AttributeError):
         return False
 
@@ -357,15 +357,15 @@ def validate_network_config(config: NetworkConfig) -> bool:
 def get_network_summary() -> Dict[str, Dict[str, any]]:
     """Get summary of all configured networks"""
     summary = {}
-    
+
     for chain_id, network in NETWORKS.items():
         summary[network.name] = {
-            'chain_id': chain_id,
-            'native_token': network.native_token,
-            'is_testnet': network.is_testnet,
-            'supports_eip1559': network.supports_eip1559,
-            'rpc_count': len(network.rpc_urls),
-            'confirmation_blocks': network.confirmation_blocks
+            "chain_id": chain_id,
+            "native_token": network.native_token,
+            "is_testnet": network.is_testnet,
+            "supports_eip1559": network.supports_eip1559,
+            "rpc_count": len(network.rpc_urls),
+            "confirmation_blocks": network.confirmation_blocks,
         }
-        
+
     return summary

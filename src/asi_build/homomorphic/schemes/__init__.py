@@ -7,7 +7,7 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     CKKSScheme = None
 try:
-    from .bfv import BFVScheme  
+    from .bfv import BFVScheme
 except (ImportError, ModuleNotFoundError, SyntaxError):
     BFVScheme = None
 try:
@@ -19,21 +19,16 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     SchemeType = None
 
-__all__ = [
-    "CKKSScheme",
-    "BFVScheme", 
-    "BGVScheme",
-    "get_scheme_class"
-]
+__all__ = ["CKKSScheme", "BFVScheme", "BGVScheme", "get_scheme_class"]
 
 
 def get_scheme_class(scheme_type: SchemeType):
     """
     Get the appropriate scheme class for the given scheme type.
-    
+
     Args:
         scheme_type: The type of FHE scheme
-    
+
     Returns:
         Appropriate scheme class
     """

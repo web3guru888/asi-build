@@ -12,13 +12,13 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     SpikingNeuron = None
     SynapticConnection = None
 try:
-    from .neuromorphic_processor import NeuromorphicProcessor, NeuromorphicChip
+    from .neuromorphic_processor import NeuromorphicChip, NeuromorphicProcessor
 except (ImportError, ModuleNotFoundError, SyntaxError):
     NeuromorphicProcessor = None
     NeuromorphicChip = None
 
 try:
-    from .temporal_coding import TemporalCoding, SpikeTrainAnalyzer
+    from .temporal_coding import SpikeTrainAnalyzer, TemporalCoding
 except ImportError:
     TemporalCoding = None
     SpikeTrainAnalyzer = None
@@ -31,12 +31,12 @@ except ImportError:
 
 __all__ = [
     "SpikingNeuralNetwork",
-    "SpikingNeuron", 
+    "SpikingNeuron",
     "SynapticConnection",
     "NeuromorphicProcessor",
     "NeuromorphicChip",
     "TemporalCoding",
     "SpikeTrainAnalyzer",
     "EventDrivenProcessor",
-    "SpikeEvent"
+    "SpikeEvent",
 ]

@@ -10,7 +10,7 @@ Simulates various neuromorphic computing architectures including:
 """
 
 try:
-    from .chip_simulator import NeuromorphicChip, ChipConfig
+    from .chip_simulator import ChipConfig, NeuromorphicChip
 except (ImportError, ModuleNotFoundError, SyntaxError):
     NeuromorphicChip = None
     ChipConfig = None
@@ -20,7 +20,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     MemristiveDevice = None
     MemristorArray = None
 try:
-    from .synaptic_array import SynapticArray, CrossbarArray
+    from .synaptic_array import CrossbarArray, SynapticArray
 except (ImportError, ModuleNotFoundError, SyntaxError):
     SynapticArray = None
     CrossbarArray = None
@@ -42,14 +42,14 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
     SpiNNakerChip = None
 
 __all__ = [
-    'NeuromorphicChip',
-    'ChipConfig',
-    'MemristiveDevice', 
-    'MemristorArray',
-    'SynapticArray',
-    'CrossbarArray',
-    'HardwareSimulator',
-    'LoihiChip',
-    'TrueNorthChip', 
-    'SpiNNakerChip'
+    "NeuromorphicChip",
+    "ChipConfig",
+    "MemristiveDevice",
+    "MemristorArray",
+    "SynapticArray",
+    "CrossbarArray",
+    "HardwareSimulator",
+    "LoihiChip",
+    "TrueNorthChip",
+    "SpiNNakerChip",
 ]

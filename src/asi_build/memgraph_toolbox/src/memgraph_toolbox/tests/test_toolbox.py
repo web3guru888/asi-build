@@ -2,11 +2,11 @@ from typing import Any, Dict, List
 
 import pytest
 
+from ..api.memgraph import Memgraph
+from ..api.tool import BaseTool
 from ..api.toolbox import BaseToolbox
 from ..memgraph_toolbox import MemgraphToolbox
-from ..api.tool import BaseTool
 from ..utils.logging import logger_init
-from ..api.memgraph import Memgraph
 
 logger = logger_init("test-toolbox")  # Set up logger for the test
 

@@ -22,9 +22,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     GovernanceContract = None
 
-__all__ = [
-    'AGIServiceContract',
-    'AGIXTokenContract',
-    'StakingContract',
-    'GovernanceContract'
-]
+__all__ = ["AGIServiceContract", "AGIXTokenContract", "StakingContract", "GovernanceContract"]

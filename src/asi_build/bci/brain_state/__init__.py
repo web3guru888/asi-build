@@ -22,9 +22,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     EmotionClassifier = None
 
-__all__ = [
-    'BrainStateDecoder',
-    'AttentionMonitor',
-    'WorkloadEstimator', 
-    'EmotionClassifier'
-]
+__all__ = ["BrainStateDecoder", "AttentionMonitor", "WorkloadEstimator", "EmotionClassifier"]

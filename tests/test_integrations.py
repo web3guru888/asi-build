@@ -9,13 +9,13 @@ These tests are designed to work WITHOUT external dependencies
 """
 
 import ast
-import os
-import sys
 import importlib
 import importlib.util
-from pathlib import Path
+import os
+import sys
 from dataclasses import fields
-from unittest.mock import patch, MagicMock
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -48,9 +48,7 @@ def _load_module_from_file(name: str, filepath: Path):
 
 
 # Pre-load the interface module once (no external deps needed)
-_INTERFACE_PATH = (
-    _INTEGRATIONS_DIR / "agents" / "database" / "interface.py"
-)
+_INTERFACE_PATH = _INTEGRATIONS_DIR / "agents" / "database" / "interface.py"
 _interface_mod = _load_module_from_file(
     "asi_build.integrations.agents.database.interface", _INTERFACE_PATH
 )
@@ -59,6 +57,7 @@ _interface_mod = _load_module_from_file(
 # ==================================================================
 # Section 1: Module Structure (3 tests)
 # ==================================================================
+
 
 class TestModuleStructure:
     """Verify the integrations package layout and lazy-import mechanism."""
@@ -94,6 +93,7 @@ class TestModuleStructure:
 # Section 2: Agent Data Structures (5 tests)
 # ==================================================================
 
+
 class TestAgentDataStructures:
     """Test pure-Python data classes from the agents sub-package.
 
@@ -116,15 +116,32 @@ class TestAgentDataStructures:
         DBA = _interface_mod.DatabaseAnalyzer
 
         class FakeAnalyzer(DBA):
-            def _get_database_type(self): return "fake"
-            def connect(self): return True
-            def disconnect(self): pass
-            def get_tables(self): return []
-            def get_table_schema(self, t): return []
-            def get_foreign_keys(self, t): return []
-            def get_table_data(self, t, limit=None): return []
-            def get_table_row_count(self, t): return 0
-            def is_view(self, t): return False
+            def _get_database_type(self):
+                return "fake"
+
+            def connect(self):
+                return True
+
+            def disconnect(self):
+                pass
+
+            def get_tables(self):
+                return []
+
+            def get_table_schema(self, t):
+                return []
+
+            def get_foreign_keys(self, t):
+                return []
+
+            def get_table_data(self, t, limit=None):
+                return []
+
+            def get_table_row_count(self, t):
+                return 0
+
+            def is_view(self, t):
+                return False
 
         return FakeAnalyzer(connection_config=config or {})
 
@@ -261,12 +278,11 @@ class TestAgentDataStructures:
 # Section 3: Graph Modeling (AST-based, avoids langchain import)
 # ==================================================================
 
+
 class TestGraphModeling:
     """Verify graph_modeling.py structure via AST since it imports langchain_core."""
 
-    _GM_PATH = (
-        _INTEGRATIONS_DIR / "agents" / "core" / "graph_modeling.py"
-    )
+    _GM_PATH = _INTEGRATIONS_DIR / "agents" / "core" / "graph_modeling.py"
 
     def test_graph_modeling_file_exists(self):
         """graph_modeling.py should exist."""
@@ -276,9 +292,7 @@ class TestGraphModeling:
         """AST should contain HyGM, GraphNode, GraphRelationship, GraphModel,
         and the Pydantic models for LLM output."""
         tree = _parse_py(self._GM_PATH)
-        class_names = {
-            node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
-        }
+        class_names = {node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)}
         expected = {
             "HyGM",
             "GraphNode",
@@ -320,6 +334,7 @@ class TestGraphModeling:
 # Section 4: LangChain Structures (3 tests, AST-based)
 # ==================================================================
 
+
 class TestLangChainStructures:
     """Test the langchain-memgraph sub-package (can't import due to langchain dep)."""
 
@@ -336,9 +351,7 @@ class TestLangChainStructures:
         """graph_document.py should define Node, Relationship, GraphDocument."""
         path = self._LC_DIR / "graphs" / "graph_document.py"
         tree = _parse_py(path)
-        class_names = {
-            node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
-        }
+        class_names = {node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)}
         assert {"Node", "Relationship", "GraphDocument"} <= class_names
 
     def test_graph_store_protocol(self):
@@ -353,7 +366,13 @@ class TestLangChainStructures:
                 for item in node.body:
                     if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
                         gs_methods.add(item.name)
-        expected = {"get_schema", "get_structured_schema", "query", "refresh_schema", "add_graph_documents"}
+        expected = {
+            "get_schema",
+            "get_structured_schema",
+            "query",
+            "refresh_schema",
+            "add_graph_documents",
+        }
         missing = expected - gs_methods
         assert not missing, f"Missing GraphStore methods: {missing}"
 
@@ -361,6 +380,7 @@ class TestLangChainStructures:
 # ==================================================================
 # Section 5: MCP Server Structure (3 tests)
 # ==================================================================
+
 
 class TestMCPServerStructure:
     """Test the mcp-memgraph sub-package structure via AST."""
@@ -378,11 +398,7 @@ class TestMCPServerStructure:
         path = self._MCP_DIR / "server.py"
         tree = _parse_py(path)
         # Collect top-level function names
-        func_names = {
-            node.name
-            for node in ast.walk(tree)
-            if isinstance(node, ast.FunctionDef)
-        }
+        func_names = {node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)}
         expected_tools = {
             "run_query",
             "get_configuration",
@@ -405,14 +421,15 @@ class TestMCPServerStructure:
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
                 docstring = ast.get_docstring(node)
-                assert docstring is not None, (
-                    f"MCP tool function '{node.name}' is missing a docstring"
-                )
+                assert (
+                    docstring is not None
+                ), f"MCP tool function '{node.name}' is missing a docstring"
 
 
 # ==================================================================
 # Section 6: Cross-cutting (2 tests)
 # ==================================================================
+
 
 class TestCrossCutting:
     """Cross-cutting structural tests."""

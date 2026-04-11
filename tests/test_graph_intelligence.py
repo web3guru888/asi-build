@@ -18,37 +18,36 @@ import uuid
 
 import pytest
 
-from asi_build.graph_intelligence.schema import (
-    BaseNode,
-    NodeType,
-    RelationshipType,
-    KnowledgeGraphSchema,
-    Relationship,
-    UIElementNode,
-    WorkflowNode,
-    CommunityNode,
+from asi_build.graph_intelligence.schema import (  # Factory functions
     ApplicationNode,
-    ScreenNode,
-    PatternNode,
+    BaseNode,
+    CommunityNode,
     ErrorNode,
+    KnowledgeGraphSchema,
     MemoryItemNode,
-    MemorySessionNode,
-    UserProfileNode,
     MemoryPatternNode,
-    # Factory functions
-    create_ui_element,
+    MemorySessionNode,
+    NodeType,
+    PatternNode,
+    Relationship,
+    RelationshipType,
+    ScreenNode,
+    UIElementNode,
+    UserProfileNode,
+    WorkflowNode,
     create_community,
-    create_workflow,
     create_memory_item,
-    create_memory_session,
-    create_user_profile,
     create_memory_pattern,
+    create_memory_session,
+    create_ui_element,
+    create_user_profile,
+    create_workflow,
 )
-
 
 # =========================================================================
 # Section 1 — Enum completeness
 # =========================================================================
+
 
 class TestEnums:
     """Verify enums have expected members."""
@@ -75,6 +74,7 @@ class TestEnums:
 # =========================================================================
 # Section 2 — BaseNode
 # =========================================================================
+
 
 class TestBaseNode:
     """Tests for the BaseNode dataclass."""
@@ -106,6 +106,7 @@ class TestBaseNode:
 # =========================================================================
 # Section 3 — Concrete node types
 # =========================================================================
+
 
 class TestUIElementNode:
     """Tests for UIElementNode."""
@@ -193,6 +194,7 @@ class TestMemoryNodes:
 # Section 4 — Relationship
 # =========================================================================
 
+
 class TestRelationship:
     """Tests for the Relationship dataclass."""
 
@@ -218,22 +220,19 @@ class TestRelationship:
 # Section 5 — KnowledgeGraphSchema
 # =========================================================================
 
+
 class TestKnowledgeGraphSchema:
     """Tests for the KnowledgeGraphSchema class methods."""
 
     def test_create_node_ui_element(self):
         """create_node returns UIElementNode for UI_ELEMENT type."""
-        node = KnowledgeGraphSchema.create_node(
-            NodeType.UI_ELEMENT, type="button", text="OK"
-        )
+        node = KnowledgeGraphSchema.create_node(NodeType.UI_ELEMENT, type="button", text="OK")
         assert isinstance(node, UIElementNode)
         assert node.text == "OK"
 
     def test_create_node_workflow(self):
         """create_node returns WorkflowNode for WORKFLOW type."""
-        node = KnowledgeGraphSchema.create_node(
-            NodeType.WORKFLOW, name="deploy"
-        )
+        node = KnowledgeGraphSchema.create_node(NodeType.WORKFLOW, name="deploy")
         assert isinstance(node, WorkflowNode)
 
     def test_create_node_invalid_type_raises(self):
@@ -311,6 +310,7 @@ class TestKnowledgeGraphSchema:
 # Section 6 — Factory functions
 # =========================================================================
 
+
 class TestFactoryFunctions:
     """Tests for convenience factory functions."""
 
@@ -360,6 +360,7 @@ class TestFactoryFunctions:
 # Section 7 — SchemaManager (requires Neo4j — skip if unavailable)
 # =========================================================================
 
+
 @pytest.mark.skip(reason="Requires live Neo4j/Memgraph instance")
 class TestSchemaManager:
     """
@@ -369,6 +370,7 @@ class TestSchemaManager:
 
     def test_create_and_get_node(self):
         from asi_build.graph_intelligence.schema_manager import SchemaManager
+
         with SchemaManager() as sm:
             node = create_ui_element("button", "Test", [0, 0], 0.9)
             node_id = sm.create_node(node, NodeType.UI_ELEMENT)

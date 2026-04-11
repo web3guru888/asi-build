@@ -18,8 +18,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     PriceDiscoveryEngine = None
 
-__all__ = [
-    'MarketplaceDynamics',
-    'SupplyDemandModel',
-    'PriceDiscoveryEngine'
-]
+__all__ = ["MarketplaceDynamics", "SupplyDemandModel", "PriceDiscoveryEngine"]

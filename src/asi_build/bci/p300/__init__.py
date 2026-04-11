@@ -22,9 +22,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     P300FeatureExtractor = None
 
-__all__ = [
-    'P300Speller',
-    'StimulusController',
-    'P300Classifier',
-    'P300FeatureExtractor'
-]
+__all__ = ["P300Speller", "StimulusController", "P300Classifier", "P300FeatureExtractor"]

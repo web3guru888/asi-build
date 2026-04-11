@@ -22,9 +22,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     TextPredictor = None
 
-__all__ = [
-    'ThoughtToTextConverter',
-    'SpeechImageryDecoder',
-    'NeuralLanguageModel',
-    'TextPredictor'
-]
+__all__ = ["ThoughtToTextConverter", "SpeechImageryDecoder", "NeuralLanguageModel", "TextPredictor"]

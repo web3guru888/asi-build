@@ -25,10 +25,4 @@ try:
 except (ImportError, ModuleNotFoundError, SyntaxError):
     DeviceInterface = None
 
-__all__ = [
-    'BCIManager',
-    'SignalProcessor',
-    'NeuralDecoder', 
-    'BCIConfig',
-    'DeviceInterface'
-]
+__all__ = ["BCIManager", "SignalProcessor", "NeuralDecoder", "BCIConfig", "DeviceInterface"]
