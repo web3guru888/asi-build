@@ -92,8 +92,8 @@ class MetacognitiveJudgment:
         return 0.0
 
 @dataclass
-class MetacognitiveStrategy:
-    """Represents a metacognitive strategy"""
+class MetacognitiveStrategyInstance:
+    """Represents a concrete metacognitive strategy instance"""
     strategy_id: str
     strategy_type: MetacognitiveStrategy
     description: str
@@ -125,45 +125,36 @@ class MetacognitionSystem(BaseConsciousness):
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        super().__init__("Metacognition", config)
-        
-        # Core components
+        # Pre-initialize instance attributes before super().__init__() which
+        # calls _initialize() — attributes must exist before that hook runs.
         self.active_processes: Dict[str, CognitiveProcess] = {}
         self.completed_processes: deque = deque(maxlen=100)
         self.metacognitive_judgments: Dict[str, MetacognitiveJudgment] = {}
-        self.available_strategies: Dict[str, MetacognitiveStrategy] = {}
-        
-        # Monitoring systems
+        self.available_strategies: Dict[str, MetacognitiveStrategyInstance] = {}
         self.current_cognitive_state = CognitiveState.FOCUSED
         self.state_history: deque = deque(maxlen=50)
         self.attention_monitor = AttentionMonitor()
         self.memory_monitor = MemoryMonitor()
         self.learning_monitor = LearningMonitor()
-        
-        # Control and regulation
         self.cognitive_load = 0.0
-        self.max_cognitive_load = self.config.get('max_load', 1.0)
-        self.load_threshold = self.config.get('load_threshold', 0.8)
         self.regulation_active = False
-        
-        # Performance tracking
         self.overall_confidence = 0.5
         self.judgment_accuracy = 0.5
         self.strategy_effectiveness = defaultdict(float)
-        
-        # Parameters
-        self.monitoring_interval = self.config.get('monitoring_interval', 0.5)
-        self.confidence_threshold = self.config.get('confidence_threshold', 0.7)
-        self.uncertainty_threshold = self.config.get('uncertainty_threshold', 0.3)
-        
-        # Threading
         self.metacognition_lock = threading.Lock()
         self.last_monitoring_time = 0
-        
-        # Statistics
         self.total_judgments_made = 0
         self.total_strategies_applied = 0
         self.regulation_events = 0
+
+        super().__init__("Metacognition", config)
+
+        # Parameters (require self.config from super)
+        self.max_cognitive_load = self.config.get('max_load', 1.0)
+        self.load_threshold = self.config.get('load_threshold', 0.8)
+        self.monitoring_interval = self.config.get('monitoring_interval', 0.5)
+        self.confidence_threshold = self.config.get('confidence_threshold', 0.7)
+        self.uncertainty_threshold = self.config.get('uncertainty_threshold', 0.3)
     
     def _initialize(self):
         """Initialize the Metacognition system"""
@@ -186,7 +177,7 @@ class MetacognitionSystem(BaseConsciousness):
         ]
         
         for strategy_id, strategy_type, description, contexts in default_strategies:
-            strategy = MetacognitiveStrategy(
+            strategy = MetacognitiveStrategyInstance(
                 strategy_id=strategy_id,
                 strategy_type=strategy_type,
                 description=description,

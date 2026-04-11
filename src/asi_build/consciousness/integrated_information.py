@@ -89,37 +89,30 @@ class IntegratedInformationTheory(BaseConsciousness):
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        super().__init__("IntegratedInformation", config)
-        
-        # System components
+        # Pre-initialize instance attributes before super().__init__() which
+        # calls _initialize() — attributes must exist before that hook runs.
         self.elements: Dict[str, SystemElement] = {}
         self.connections: List[Connection] = []
         self.system_graph = nx.DiGraph()
-        
-        # IIT parameters
-        self.phi_threshold = self.config.get('phi_threshold', 0.1)
-        self.max_partition_size = self.config.get('max_partition_size', 8)
-        self.integration_window = self.config.get('integration_window', 1.0)
-        
-        # Current state
         self.current_phi = 0.0
         self.main_complex: Optional[IntegratedComplex] = None
         self.all_complexes: List[IntegratedComplex] = []
         self.system_state_history: List[Dict[str, float]] = []
-        
-        # Computation
         self.phi_calculation_lock = threading.Lock()
         self.last_phi_calculation = 0
-        self.phi_calculation_interval = self.config.get('phi_interval', 2.0)
-        
-        # Cache for efficiency
         self.partition_cache: Dict[str, float] = {}
         self.connection_matrix: Optional[np.ndarray] = None
-        
-        # Statistics
         self.total_phi_calculations = 0
         self.average_phi = 0.0
         self.phi_history: List[Tuple[float, float]] = []  # (timestamp, phi)
+
+        super().__init__("IntegratedInformation", config)
+
+        # IIT parameters (require self.config from super)
+        self.phi_threshold = self.config.get('phi_threshold', 0.1)
+        self.max_partition_size = self.config.get('max_partition_size', 8)
+        self.integration_window = self.config.get('integration_window', 1.0)
+        self.phi_calculation_interval = self.config.get('phi_interval', 2.0)
     
     def _initialize(self):
         """Initialize the IIT system"""

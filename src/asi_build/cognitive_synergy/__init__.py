@@ -1,28 +1,79 @@
 """
-cognitive_synergy - ASI:BUILD Integrated System
-Consolidated on: Tue Aug 19 06:40:01 +08 2025
+Cognitive Synergy Module — ASI:BUILD
+
+Information-theoretic synergy metrics, self-organization mechanisms,
+pattern reasoning, and cognitive engine integration.
+
+Key classes:
+- SynergyMetrics: Mutual information, transfer entropy, phase locking, LZ complexity
+- CognitiveSynergyEngine: Core engine coordinating cognitive module interactions
+- EmergentPropertyDetector: Detects emergent behaviors in multi-module systems
+- PRIMUSFoundation: Cognitive primitive operations (PRIMUS framework)
+- PatternMiningEngine: Pattern discovery and hierarchy building
+- ReasoningEngine: Deductive, inductive, abductive reasoning
 """
 
-# Auto-import all modules
-import os
-import importlib
-from pathlib import Path
+from asi_build.cognitive_synergy.core.synergy_metrics import (
+    SynergyMetrics,
+    SynergyMeasurement,
+    SynergyProfile,
+)
+from asi_build.cognitive_synergy.core.cognitive_synergy_engine import (
+    CognitiveSynergyEngine,
+    SynergyPair,
+    CognitiveDynamic,
+)
+from asi_build.cognitive_synergy.core.emergent_properties import (
+    EmergentPropertyDetector,
+    EmergentProperty,
+    EmergenceSignature,
+)
+from asi_build.cognitive_synergy.core.primus_foundation import (
+    PRIMUSFoundation,
+    PRIMUSState,
+    CognitivePrimitive,
+)
+from asi_build.cognitive_synergy.core.self_organization import (
+    SelfOrganizationMechanism,
+    HomeostaticController,
+    AdaptiveRestructurer,
+)
+from asi_build.cognitive_synergy.pattern_reasoning.reasoning_engine import (
+    ReasoningEngine,
+    ReasoningType,
+)
+from asi_build.cognitive_synergy.pattern_reasoning.pattern_mining_engine import (
+    PatternMiningEngine,
+    Pattern,
+)
 
-current_dir = Path(__file__).parent
-python_files = [f.stem for f in current_dir.glob("*.py") if f.stem != "__init__"]
+__all__ = [
+    # Core metrics
+    "SynergyMetrics",
+    "SynergyMeasurement",
+    "SynergyProfile",
+    # Engine
+    "CognitiveSynergyEngine",
+    "SynergyPair",
+    "CognitiveDynamic",
+    # Emergence
+    "EmergentPropertyDetector",
+    "EmergentProperty",
+    "EmergenceSignature",
+    # PRIMUS
+    "PRIMUSFoundation",
+    "PRIMUSState",
+    "CognitivePrimitive",
+    # Self-organization
+    "SelfOrganizationMechanism",
+    "HomeostaticController",
+    "AdaptiveRestructurer",
+    # Reasoning
+    "ReasoningEngine",
+    "ReasoningType",
+    # Pattern mining
+    "PatternMiningEngine",
+    "Pattern",
+]
 
-__all__ = []
-for module_name in python_files:
-    try:
-        module = importlib.import_module(f".{module_name}", package=__name__)
-        for attr_name in dir(module):
-            if not attr_name.startswith('_'):
-                attr = getattr(module, attr_name)
-                if callable(attr) or isinstance(attr, type):
-                    globals()[attr_name] = attr
-                    __all__.append(attr_name)
-    except ImportError:
-        pass
-
-__version__ = "1.0.0-consolidated"
-__consolidation_date__ = "Tue Aug 19 06:40:01 +08 2025"
+__version__ = "2.0.0"

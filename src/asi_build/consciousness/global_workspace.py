@@ -79,31 +79,26 @@ class GlobalWorkspaceTheory(BaseConsciousness):
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        super().__init__("GlobalWorkspace", config)
-        
-        # Core GWT components
+        # Pre-initialize instance attributes before super().__init__() which
+        # calls _initialize() — attributes must exist before that hook runs.
         self.workspace_buffer: List[WorkspaceContent] = []
         self.cognitive_processors: Dict[str, CognitiveProcessor] = {}
         self.broadcast_history: deque = deque(maxlen=100)
-        
-        # Competition parameters
-        self.max_workspace_size = self.config.get('max_workspace_size', 5)
-        self.competition_threshold = self.config.get('competition_threshold', 0.3)
-        self.broadcast_interval = self.config.get('broadcast_interval', 0.5)
-        
-        # State tracking
         self.current_broadcast: Optional[BroadcastEvent] = None
         self.conscious_content: Optional[WorkspaceContent] = None
         self.attention_focus: Dict[str, float] = defaultdict(float)
-        
-        # Threading
         self.workspace_lock = threading.Lock()
         self.last_broadcast_time = 0
-        
-        # Statistics
         self.total_broadcasts = 0
         self.competition_events = 0
         self.processor_activations = defaultdict(int)
+
+        super().__init__("GlobalWorkspace", config)
+
+        # Competition parameters (require self.config from super)
+        self.max_workspace_size = self.config.get('max_workspace_size', 5)
+        self.competition_threshold = self.config.get('competition_threshold', 0.3)
+        self.broadcast_interval = self.config.get('broadcast_interval', 0.5)
     
     def _initialize(self):
         """Initialize the Global Workspace Theory system"""

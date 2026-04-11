@@ -100,39 +100,30 @@ class AttentionSchemaTheory(BaseConsciousness):
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        super().__init__("AttentionSchema", config)
-        
-        # Core AST components
+        # Pre-initialize instance attributes before super().__init__() which
+        # calls _initialize() — attributes must exist before that hook runs.
         self.attention_targets: Dict[str, AttentionTarget] = {}
         self.attention_processes: Dict[str, AttentionProcess] = {}
         self.attention_schemas: Dict[str, AttentionSchema] = {}
         self.awareness_state = AwarenessState()
-        
-        # Attention parameters
+        self.spatial_attention_map = np.zeros((20, 20, 10))
+        self.attention_history: deque = deque(maxlen=100)
+        self.total_attention_shifts = 0
+        self.schema_prediction_accuracy = 0.0
+        self.awareness_episodes = []
+        self.attention_lock = threading.Lock()
+
+        super().__init__("AttentionSchema", config)
+
+        # Parameters (require self.config from super)
         self.max_simultaneous_targets = self.config.get('max_targets', 5)
         self.attention_decay_rate = self.config.get('decay_rate', 0.95)
         self.salience_threshold = self.config.get('salience_threshold', 0.3)
         self.schema_update_rate = self.config.get('schema_update_rate', 0.1)
-        
-        # Spatial attention
-        self.spatial_attention_map = np.zeros((20, 20, 10))  # 3D attention map
         self.attention_focus_sigma = self.config.get('focus_sigma', 2.0)
-        
-        # Temporal attention
         self.temporal_window = self.config.get('temporal_window', 2.0)
-        self.attention_history: deque = deque(maxlen=100)
-        
-        # Competition and selection
         self.competition_strength = self.config.get('competition_strength', 0.8)
         self.winner_take_all_threshold = self.config.get('wta_threshold', 0.7)
-        
-        # State tracking
-        self.total_attention_shifts = 0
-        self.schema_prediction_accuracy = 0.0
-        self.awareness_episodes = []
-        
-        # Threading
-        self.attention_lock = threading.Lock()
     
     def _initialize(self):
         """Initialize the Attention Schema Theory system"""
