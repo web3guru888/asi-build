@@ -9,14 +9,23 @@ from setuptools import setup, find_packages
 import os
 
 # Read README file
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
+_setup_dir = os.path.dirname(os.path.abspath(__file__))
+_readme_path = os.path.join(_setup_dir, "README.md")
+try:
+    with open(_readme_path, "r", encoding="utf-8") as fh:
+        long_description = fh.read()
+except FileNotFoundError:
+    long_description = ""
 
 # Read requirements
 def read_requirements():
     """Read requirements from requirements.txt"""
-    with open("requirements.txt", "r") as f:
-        return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+    _req_path = os.path.join(_setup_dir, "requirements.txt")
+    try:
+        with open(_req_path, "r") as f:
+            return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+    except FileNotFoundError:
+        return []
 
 # Version
 VERSION = "1.0.0"

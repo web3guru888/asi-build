@@ -7,7 +7,8 @@ import numpy as np
 from typing import List, Dict, Optional, Tuple
 import logging
 
-from .base import FHEParameters, NoiseException
+from .parameters import FHEParameters
+from .base import NoiseException
 from .encryption import Ciphertext
 from .polynomial import Polynomial
 

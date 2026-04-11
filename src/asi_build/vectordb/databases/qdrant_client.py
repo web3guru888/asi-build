@@ -28,6 +28,13 @@ try:
     QDRANT_AVAILABLE = True
 except ImportError:
     QDRANT_AVAILABLE = False
+    # Provide stub names so the module can be imported without qdrant_client installed
+    QdrantClientBase = None
+    Distance = VectorParams = CollectionStatus = SearchRequest = None
+    PointStruct = Filter = FieldCondition = Range = MatchValue = None
+    CountRequest = ScrollRequest = UpdateResult = PointsSelector = None
+    PointIdsList = FilterSelector = OptimizersConfigDiff = None
+    CreateCollection = UpdateCollection = None
 
 from ..core.config import QdrantConfig
 

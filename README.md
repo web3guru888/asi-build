@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-160%2B-brightgreen)
+![Tests](https://img.shields.io/badge/tests-250%2B-brightgreen)
 ![Status](https://img.shields.io/badge/status-research--alpha-orange)
 
 > ⚠️ **Research Software**: ASI:BUILD is an active research framework, not a production system. Module maturity varies significantly — some are well-implemented and tested, others are structural scaffolding awaiting real backends. See the [Modules](#modules) table for per-module status.
@@ -49,8 +49,20 @@ asi-build/
 │       ├── compute/                # Job scheduling + GPU allocation
 │       ├── bio_inspired/           # Evolutionary + swarm intelligence
 │       ├── deployment/             # Cloud deployment (CUDO + HuggingFace)
-│       └── memgraph_toolbox/       # Memgraph graph DB tools
-├── tests/                          # Test suite (160+ tests)
+│       ├── memgraph_toolbox/       # Memgraph graph DB tools
+│       ├── bci/                    # Brain-Computer Interface (EEG, CSP, SSVEP)
+│       ├── blockchain/             # Audit trails, IPFS, Web3
+│       ├── distributed_training/   # Federated orchestration, Byzantine tolerance
+│       ├── holographic/            # Volumetric display, spatial audio, MR
+│       ├── neuromorphic/           # Spiking neural networks
+│       ├── pln_accelerator/        # Hardware-accelerated PLN
+│       ├── knowledge_management/   # Omniscience knowledge management
+│       ├── federated/              # Federated learning framework
+│       ├── agi_economics/          # AGI economics: algorithms, DeFi
+│       ├── agi_reproducibility/    # Experiment tracking, PLN validation
+│       ├── agi_communication/      # AGI communication protocols
+│       └── servers/                # MCP + SSE graph servers
+├── tests/                          # Test suite (250+ tests)
 ├── examples/                       # Runnable examples + MiniMind LLM reference
 ├── docs/                           # Documentation + research notes
 ├── configs/                        # Configuration templates
@@ -90,7 +102,7 @@ Cognitive Synergy Architecture:
 
 ```bash
 # 1. Clone the repository
-git clone https://gitlab.com/asi-build/asi-build.git
+git clone https://github.com/web3guru888/asi-build.git
 cd asi-build
 
 # 2. Install with core dependencies
@@ -106,59 +118,67 @@ pip install -e ".[all]"               # Everything (includes dev tools)
 ### Hello, Consciousness
 
 ```python
-from asi_build.consciousness import GlobalWorkspaceTheory, IntegratedInformationTheory
+from asi_build.consciousness import GlobalWorkspaceTheory
 
 # Initialize a Global Workspace
-gwt = GlobalWorkspaceTheory(workspace_capacity=7)
-gwt.initialize()
+gwt = GlobalWorkspaceTheory()
 
-# Broadcast information to the workspace
-result = gwt.broadcast(content="novel sensory input", salience=0.85)
-print(f"Access consciousness: {result.is_conscious}")  # True if salience > threshold
-
-# Measure integrated information (Φ)
-iit = IntegratedInformationTheory(phi_threshold=0.3)
-phi = iit.compute_phi(network_state=[[1,0,1],[0,1,0],[1,1,0]])
-print(f"Φ = {phi:.3f}")  # Higher Φ → more integrated information
+# The system starts with 8 cognitive processors
+print(f"Processors: {len(gwt.cognitive_processors)}")
+# Each processor monitors specific content types (visual, linguistic, motor, etc.)
+for pid, proc in list(gwt.cognitive_processors.items())[:3]:
+    print(f"  {pid}: interests={proc.interests}")
 ```
 
 ### Knowledge Graph with A* Pathfinding
 
 ```python
-from asi_build.knowledge_graph import BiTemporalKnowledgeGraph
+from asi_build.knowledge_graph import TemporalKnowledgeGraph
 
-kg = BiTemporalKnowledgeGraph(database="sqlite", path="data/kg.db")
+kg = TemporalKnowledgeGraph(db_path=":memory:")
 
-# Add bi-temporal facts with provenance
+# Add temporal facts with provenance
 kg.add_triple(
     subject="ASTR-J1234",
     predicate="hasProperty",
     object="high_redshift",
-    valid_time=("2024-01-01", "2024-12-31"),
-    transaction_time="now",
     confidence=0.92,
     source="HST-observation-42"
 )
+kg.add_triple(
+    subject="high_redshift",
+    predicate="indicates",
+    object="dark_energy_candidate",
+    confidence=0.85,
+    source="cosmology-model-7"
+)
 
-# Find paths between entities
-path = kg.find_path("ASTR-J1234", "dark_energy_candidate", algorithm="astar")
-print(f"Path length: {len(path.edges)}, cost: {path.cost:.2f}")
+# Find paths between entities using A* pathfinding
+from asi_build.knowledge_graph import KGPathfinder
+pathfinder = KGPathfinder(kg)
+path = pathfinder.find_path("ASTR-J1234", "dark_energy_candidate")
+print(f"Path found: {path['complete']}")        # True — complete path exists
+print(f"Hops: {path['hops']}, Cost: {path['cost']:.3f}")
 ```
 
 ### Cognitive Synergy Metrics
 
 ```python
-from asi_build.cognitive_synergy import SynergyAnalyzer
+from asi_build.cognitive_synergy import SynergyMetrics
+import numpy as np
 
-analyzer = SynergyAnalyzer()
+metrics = SynergyMetrics()
 
-# Measure information synergy between cognitive modules
-synergy = analyzer.compute_synergy(
-    sources=[consciousness_output, knowledge_graph_output],
-    target=reasoning_output,
-    metric="transfer_entropy"
-)
-print(f"Synergy Φ_SI = {synergy.value:.4f} bits")
+# Feed time series data from two cognitive modules
+data_a = np.random.randn(100)
+data_b = np.random.randn(100)
+for i in range(len(data_a)):
+    metrics.add_time_series_data("consciousness_reasoning", data_a[i], data_b[i])
+
+# Compute synergy profile between modules
+profile = metrics.compute_synergy_profile("consciousness_reasoning")
+print(f"Mutual Information: {profile.mutual_information:.4f}")
+print(f"Transfer Entropy: {profile.transfer_entropy:.4f}")
 ```
 
 ---
@@ -167,21 +187,31 @@ print(f"Synergy Φ_SI = {synergy.value:.4f} bits")
 
 | Module | Status | Description | LOC |
 |--------|--------|-------------|-----|
-| `consciousness` | 🟢 Implemented | Multi-theory consciousness (GWT, IIT, AST, metacognition) — 15 submodules | ~3,200 |
-| `cognitive_synergy` | 🟢 Implemented | Synergy metrics: mutual info, transfer entropy, phase locking, LZ complexity | ~1,100 |
-| `graph_intelligence` | 🟢 Implemented | KG reasoning with FastToG (arXiv:2501.14300), Memgraph, community detection | ~1,800 |
-| `homomorphic` | 🟢 Implemented | FHE: BGV, BFV, CKKS schemes with polynomial ring arithmetic | ~2,400 |
-| `knowledge_graph` | 🟢 Implemented | Bi-temporal KG, provenance tracking, A\* pathfinding, pheromone learning | ~1,600 |
-| `vectordb` | 🟡 Structural | Unified client for Pinecone, Qdrant, Weaviate (backends not fully wired) | ~800 |
-| `optimization` | 🟡 Structural | PyTorch quantization, pruning, knowledge distillation | ~900 |
-| `quantum` | 🟡 Structural | Quantum-classical hybrid via Qiskit (circuit templates implemented) | ~700 |
-| `reasoning` | 🟡 Structural | Hybrid symbolic-neural reasoning engine (framework scaffolding) | ~1,100 |
-| `safety` | 🟢 Implemented | Constitutional AI + governance: SymPy formal verification, DAO (quadratic voting, liquid democracy), smart contracts, Merkle audit ledger, entity rights | ~6,800 |
-| `integrations` | 🟢 Implemented | LangChain-Memgraph adapter, MCP-Memgraph server, SQL→graph migration agent, HyGM graph modeling | ~6,300 |
-| `compute` | 🟡 Structural | Job scheduling, resource management, GPU allocation | ~500 |
-| `bio_inspired` | 🟡 Structural | Evolutionary optimization, swarm intelligence | ~700 |
-| `deployment` | 🟡 Structural | CUDO Compute + HuggingFace Transformers deployment | ~600 |
-| `memgraph_toolbox` | 🟡 Structural | Memgraph tools: PageRank, betweenness centrality, Cypher helpers | ~400 |
+| `consciousness` | 🟢 Implemented | Multi-theory consciousness (GWT, IIT, AST, metacognition) — 15 submodules | ~12,200 |
+| `cognitive_synergy` | 🟢 Implemented | Synergy metrics: mutual info, transfer entropy, phase locking, LZ complexity | ~6,000 |
+| `graph_intelligence` | 🟢 Implemented | KG reasoning with FastToG (arXiv:2501.14300), Memgraph, community detection | ~8,200 |
+| `homomorphic` | 🟢 Implemented | FHE: BGV, BFV, CKKS schemes with polynomial ring arithmetic | ~11,900 |
+| `knowledge_graph` | 🟢 Implemented | Bi-temporal KG, provenance tracking, A\* pathfinding, pheromone learning | ~1,450 |
+| `vectordb` | 🟡 Structural | Unified client for Pinecone, Qdrant, Weaviate (backends not fully wired) | ~8,000 |
+| `optimization` | 🟡 Structural | PyTorch quantization, pruning, knowledge distillation | ~4,200 |
+| `quantum` | 🟡 Structural | Quantum-classical hybrid via Qiskit (circuit templates implemented) | ~5,300 |
+| `reasoning` | 🟡 Structural | Hybrid symbolic-neural reasoning engine (framework scaffolding) | ~880 |
+| `safety` | 🟢 Implemented | Constitutional AI + governance: SymPy formal verification, DAO (quadratic voting, liquid democracy), smart contracts, Merkle audit ledger, entity rights | ~6,200 |
+| `integrations` | 🟢 Implemented | LangChain-Memgraph adapter, MCP-Memgraph server, SQL→graph migration agent, HyGM graph modeling | ~7,300 |
+| `compute` | 🟡 Structural | Job scheduling, resource management, GPU allocation | ~11,500 |
+| `bio_inspired` | 🟡 Structural | Evolutionary optimization, swarm intelligence | ~4,350 |
+| `deployment` | 🟡 Structural | CUDO Compute + HuggingFace Transformers deployment | ~3,350 |
+| `memgraph_toolbox` | 🟡 Structural | Memgraph tools: PageRank, betweenness centrality, Cypher helpers | ~930 |
+| `bci` | 🟢 Implemented | Brain-Computer Interface: EEG processing, CSP, SSVEP detection | ~8,000 |
+| `blockchain` | 🟡 Structural | Audit trails, IPFS storage, Web3 interaction | ~5,950 |
+| `distributed_training` | 🟡 Structural | Federated orchestration, Byzantine tolerance, secure aggregation | ~8,200 |
+| `holographic` | 🟡 Structural | Volumetric display, spatial audio, mixed reality engine | ~8,000 |
+| `neuromorphic` | 🟡 Structural | Spiking neural networks, brain-inspired processors | ~3,700 |
+| `pln_accelerator` | 🟡 Structural | Hardware-accelerated Probabilistic Logic Networks | ~12,500 |
+| `knowledge_management` | 🟡 Structural | Omniscience knowledge management system | ~5,500 |
+| `federated` | 🟡 Structural | Federated learning framework with secure aggregation | ~6,400 |
+| `agi_economics` | 🟡 Structural | AGI economics: algorithms, blockchain, DeFi | ~7,200 |
+| `agi_reproducibility` | 🟡 Structural | Experiment tracking, PLN validation, reproducibility | ~7,500 |
 
 **Status legend:**
 - 🟢 **Implemented** — Core algorithms present, tested, documented
@@ -224,7 +254,7 @@ make install
 ### Running Tests
 
 ```bash
-# Run full test suite
+# Run full test suite (250+ tests)
 pytest tests/ -v
 
 # Quick run (stop on first failure)
@@ -277,13 +307,21 @@ ASI:BUILD began in **August 2025** as an ambitious attempt to implement a compre
 In **April 2026**, the project underwent a major restructure:
 - All real, tested code moved to `src/asi_build/`
 - Template-generated and untested scaffolding moved to `archive/`
-- A proper test suite added (125+ tests)
+- A proper test suite added (250+ tests)
 - Modern Python packaging (`pyproject.toml`)
 - Import paths standardized
+- Public release on [GitHub](https://github.com/web3guru888/asi-build) (MIT license)
 
 The goal of the restructure was honesty: clearly separate what works from what's aspirational, and provide a solid foundation for research contributions.
 
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
+
+---
+
+## Links
+
+- **GitHub**: [https://github.com/web3guru888/asi-build](https://github.com/web3guru888/asi-build) (public, primary)
+- **GitLab**: [https://gitlab.com/asi-build/asi-build](https://gitlab.com/asi-build/asi-build) (mirror)
 
 ---
 

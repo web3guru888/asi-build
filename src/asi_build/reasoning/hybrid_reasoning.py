@@ -848,4 +848,4 @@ class HybridReasoningEngine:
         explanation += f"\nThe final conclusion would synthesize insights from all approaches, "
         explanation += f"with higher confidence given to approaches most suitable for this type of query."
         
-        return explanation"
+        return explanation

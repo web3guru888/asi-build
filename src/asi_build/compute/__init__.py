@@ -9,7 +9,11 @@ from .core.pool_manager import ComputePoolManager
 from .core.resource_allocator import ResourceAllocator
 from .core.job_scheduler import JobScheduler
 from .monitoring.metrics_collector import MetricsCollector
-from .analytics.predictor import ResourcePredictor
+
+try:
+    from .analytics.predictor import ResourcePredictor
+except ImportError:
+    ResourcePredictor = None
 
 __version__ = "1.0.0"
 __author__ = "Kenny AGI Team"
