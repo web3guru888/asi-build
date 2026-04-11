@@ -6,6 +6,9 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 [![CI](https://github.com/web3guru888/asi-build/actions/workflows/ci.yml/badge.svg)](https://github.com/web3guru888/asi-build/actions/workflows/ci.yml)
 ![Status](https://img.shields.io/badge/status-research--alpha-orange)
+[![Discussions](https://img.shields.io/badge/discussions-join%20us-blueviolet)](https://github.com/web3guru888/asi-build/discussions)
+[![Issues](https://img.shields.io/github/issues/web3guru888/asi-build)](https://github.com/web3guru888/asi-build/issues)
+[![Wiki](https://img.shields.io/badge/wiki-documentation-blue)](https://github.com/web3guru888/asi-build/wiki)
 
 > ⚠️ **Research Software**: ASI:BUILD is an active research framework, not a production system. Module maturity varies significantly — some are well-implemented and tested, others are structural scaffolding awaiting real backends. See the [Modules](#modules) table for per-module status.
 
@@ -15,11 +18,55 @@
 
 ASI:BUILD is a Python research framework exploring the computational foundations of artificial general intelligence. Inspired by Dr. Ben Goertzel's cognitive synergy approach to AGI — the idea that intelligence emerges from the interaction of diverse cognitive subsystems — the project provides modular, composable implementations of key AGI building blocks.
 
-The framework spans consciousness modeling (Global Workspace Theory, Integrated Information Theory, Attention Schema), information-theoretic synergy metrics, knowledge graph reasoning, homomorphic encryption, quantum-classical hybrid computing, and more. Each module is designed to be used independently or composed with others to study emergent cognitive behaviors.
+The framework spans consciousness modeling (Global Workspace Theory, Integrated Information Theory, Attention Schema), information-theoretic synergy metrics, knowledge graph reasoning, homomorphic encryption, quantum-classical hybrid computing, and more. Each module is designed to be used independently or composed with others to study emergent cognitive behaviors. At the core is a **Cognitive Blackboard** integration layer that lets modules communicate through a shared workspace and event bus.
 
 The `knowledge_graph` module features a bi-temporal knowledge graph with provenance tracking, A\* pathfinding, and pheromone-based learning, contributed by the [MemPalace-AGI](https://github.com/milla-jovovich/mempalace) project — an integration exploring spatial memory architectures for autonomous scientific discovery.
 
 ASI:BUILD is research software. We prioritize correctness and clarity over performance. Published benchmarks and experimental results live in `docs/research/`. If you're looking for a production AGI framework, this isn't it — but if you want to experiment with the building blocks, you're in the right place.
+
+**We welcome contributors from all backgrounds** — whether you're into neuroscience, ML, distributed systems, formal verification, or just curious about AGI. There's something here for everyone, from bite-sized documentation tasks to open research problems.
+
+---
+
+## 🤝 Get Involved
+
+ASI:BUILD is built in the open and grows through community contributions. Here's how to participate:
+
+### 💬 Discussions
+Join the conversation at **[github.com/web3guru888/asi-build/discussions](https://github.com/web3guru888/asi-build/discussions)**
+
+Key threads to start with:
+- 👋 **[Welcome & Introductions](https://github.com/web3guru888/asi-build/discussions/9)** — Say hello and tell us what you're building
+- 🔬 **[Research Directions](https://github.com/web3guru888/asi-build/discussions/5)** — What should ASI:BUILD tackle next? Open research questions
+- 🏗️ **[Why a Cognitive Blackboard?](https://github.com/web3guru888/asi-build/discussions/10)** — Architecture decision deep-dive
+- 🗺️ **[Phase 4 Roadmap](https://github.com/web3guru888/asi-build/discussions/12)** — Help shape where the project goes
+- ❓ **[FAQ](https://github.com/web3guru888/asi-build/discussions/16)** — Getting started, architecture questions, module usage
+
+### 📖 Wiki
+Comprehensive documentation at **[github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki)**
+
+- **Getting Started** — Installation, environment setup, first steps
+- **Architecture Guide** — Cognitive Blackboard, layered design, module interaction patterns
+- **Module Index** — Per-module guides and API references
+- **Cognitive Blackboard** — Detailed docs for the integration layer
+- **Roadmap** — Current phase status and upcoming milestones
+
+### 🐛 Issues & Good First Issues
+Browse open issues at **[github.com/web3guru888/asi-build/issues](https://github.com/web3guru888/asi-build/issues)**
+
+Looking for a place to start? Check the **[`good first issue`](https://github.com/web3guru888/asi-build/labels/good%20first%20issue)** label — these are carefully scoped tasks suitable for new contributors:
+- Adding type hints to modules
+- Writing documentation for existing APIs
+- Creating example scripts
+- Improving test coverage
+
+There are issues for all skill levels — from documentation and testing to deep research problems tagged [`research`](https://github.com/web3guru888/asi-build/labels/research).
+
+### 📊 Live Dashboard
+A live project status dashboard (test results, module stats, commit timeline) is maintained by the project team and updated automatically.
+
+### 🔬 Research
+Interested in the science? Start with **[Discussion #5: Research Directions](https://github.com/web3guru888/asi-build/discussions/5)** — it covers open problems in IIT Φ computation, consciousness measurement, and module integration that need fresh eyes.
 
 ---
 
@@ -95,6 +142,12 @@ Cognitive Synergy Architecture:
   │  vectordb · homomorphic · quantum · safety      │
   │  compute · bio_inspired · optimization          │
   └─────────────────────────────────────────────────┘
+                │
+  ┌─────────────▼───────────────────────────────────┐
+  │           Cognitive Blackboard                  │
+  │  Shared workspace + EventBus — wires all        │
+  │  modules together for cross-module synergy      │
+  └─────────────────────────────────────────────────┘
 ```
 
 ---
@@ -115,6 +168,8 @@ pip install -e ".[graph]"             # Knowledge graphs, Memgraph
 pip install -e ".[ml]"                # PyTorch optimization + deployment
 pip install -e ".[all]"               # Everything (includes dev tools)
 ```
+
+> 📖 **New here?** Check out the **[Getting Started guide on the Wiki](https://github.com/web3guru888/asi-build/wiki/Getting-Started)** for a more detailed walkthrough including environment setup, module selection, and first experiments.
 
 ### Hello, Consciousness
 
@@ -214,6 +269,8 @@ print(f"Transfer Entropy: {profile.transfer_entropy:.4f}")
 | `federated` | 🟡 Structural | Federated learning framework with secure aggregation | ~6,400 |
 | `agi_economics` | 🟡 Structural | AGI economics: algorithms, blockchain, DeFi | ~7,200 |
 | `agi_reproducibility` | 🟡 Structural | Experiment tracking, PLN validation, reproducibility | ~7,500 |
+| `agi_communication` | 🟡 Structural | AGI communication protocols and interfaces | ~2,800 |
+| `servers` | 🟡 Structural | MCP + SSE graph servers | ~1,400 |
 
 **Status legend:**
 - 🟢 **Implemented** — Core algorithms present, tested, documented
@@ -324,18 +381,35 @@ See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
 - **GitHub**: [https://github.com/web3guru888/asi-build](https://github.com/web3guru888/asi-build) (public, primary)
 - **GitLab**: [https://gitlab.com/asi-build/asi-build](https://gitlab.com/asi-build/asi-build) (mirror)
+- **Discussions**: [https://github.com/web3guru888/asi-build/discussions](https://github.com/web3guru888/asi-build/discussions)
+- **Wiki**: [https://github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki)
+- **Issues**: [https://github.com/web3guru888/asi-build/issues](https://github.com/web3guru888/asi-build/issues)
+- **CI**: [GitHub Actions](https://github.com/web3guru888/asi-build/actions)
 
 ---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide. We welcome contributions of all kinds — code, documentation, research, bug reports, and discussion.
 
-Quick summary:
-- Fork → branch → PR
-- Every module must have tests
-- Type hints + docstrings required
-- `black` formatting enforced
+### Getting Started as a Contributor
+
+1. **Find something to work on** — Browse [`good first issue`](https://github.com/web3guru888/asi-build/labels/good%20first%20issue) for beginner-friendly tasks, or [`help wanted`](https://github.com/web3guru888/asi-build/labels/help%20wanted) for things we need most. Research problems are tagged [`research`](https://github.com/web3guru888/asi-build/labels/research).
+
+2. **Ask questions** — Join [Discussions](https://github.com/web3guru888/asi-build/discussions) before diving in. The [FAQ thread](https://github.com/web3guru888/asi-build/discussions/16) covers common questions; for architecture questions, start with the [Cognitive Blackboard discussion](https://github.com/web3guru888/asi-build/discussions/10).
+
+3. **Read the docs** — The [Wiki](https://github.com/web3guru888/asi-build/wiki) has architecture guides and per-module documentation.
+
+4. **Submit your PR** — Fork → branch → PR. Include tests and docstrings; CI will check formatting and type hints automatically.
+
+### What We're Looking For
+
+- **All backgrounds welcome** — neuroscience, ML, distributed systems, formal methods, frontend, DevOps — there's a corner of this project for you
+- **Documentation & examples** — Just as valuable as code; we have several open `good first issue` items here
+- **Bug fixes** — Especially for the known issues in IIT Φ computation ([#6](https://github.com/web3guru888/asi-build/issues/6)), formal verification ([#7](https://github.com/web3guru888/asi-build/issues/7)), and homomorphic NTT ([#8](https://github.com/web3guru888/asi-build/issues/8))
+- **Module implementations** — Several 🟡 Structural modules need real backends
+
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing. We're committed to a welcoming, respectful community.
 
 ---
 
