@@ -50,9 +50,9 @@ from __future__ import annotations
 import logging
 from typing import Any, List, Sequence
 
+from .cognitive_synergy_adapter import CognitiveSynergyAdapter
 from .consciousness_adapter import ConsciousnessAdapter
 from .knowledge_graph_adapter import KnowledgeGraphAdapter
-from .cognitive_synergy_adapter import CognitiveSynergyAdapter
 from .reasoning_adapter import ReasoningAdapter
 
 logger = logging.getLogger(__name__)

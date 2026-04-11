@@ -39,7 +39,6 @@ from asi_build.integration.adapters import (
     wire_all,
 )
 
-
 # =========================================================================
 # Mock objects for underlying modules
 # =========================================================================
@@ -96,13 +95,26 @@ class MockTemporalKG:
         self._counter = 0
         self._stats = {"total_triples": 0, "active_triples": 0}
 
-    def add_triple(self, subject, predicate, object, source="", confidence=1.0,
-                   agent="", statement_type="fact", **kwargs) -> str:
+    def add_triple(
+        self,
+        subject,
+        predicate,
+        object,
+        source="",
+        confidence=1.0,
+        agent="",
+        statement_type="fact",
+        **kwargs,
+    ) -> str:
         self._counter += 1
         tid = f"t_{self._counter}"
         self._triples[tid] = {
-            "triple_id": tid, "subject": subject, "predicate": predicate,
-            "object": object, "source": source, "confidence": confidence,
+            "triple_id": tid,
+            "subject": subject,
+            "predicate": predicate,
+            "object": object,
+            "source": source,
+            "confidence": confidence,
         }
         self._stats["total_triples"] = len(self._triples)
         self._stats["active_triples"] = len(self._triples)
@@ -612,9 +624,9 @@ class TestKnowledgeGraphAdapter:
 
     def test_contradiction_events(self):
         kg = MockTemporalKG()
-        kg.detect_contradictions = MagicMock(return_value=[
-            {"triple_id": "t_old", "object": "old_val"}
-        ])
+        kg.detect_contradictions = MagicMock(
+            return_value=[{"triple_id": "t_old", "object": "old_val"}]
+        )
         adapter = KnowledgeGraphAdapter(kg=kg)
         events: list = []
         adapter.set_event_handler(lambda e: events.append(e))
@@ -738,16 +750,24 @@ class TestCognitiveSynergyAdapter:
         adapter = CognitiveSynergyAdapter(metrics=metrics)
 
         # Feed consciousness data (side a) and reasoning data (side b)
-        adapter.consume([BlackboardEntry(
-            topic="consciousness.phi",
-            data={"phi": 2.0},
-            source_module="consciousness",
-        )])
-        adapter.consume([BlackboardEntry(
-            topic="reasoning.inference",
-            data={"confidence": 0.8},
-            source_module="reasoning",
-        )])
+        adapter.consume(
+            [
+                BlackboardEntry(
+                    topic="consciousness.phi",
+                    data={"phi": 2.0},
+                    source_module="consciousness",
+                )
+            ]
+        )
+        adapter.consume(
+            [
+                BlackboardEntry(
+                    topic="reasoning.inference",
+                    data={"confidence": 0.8},
+                    source_module="reasoning",
+                )
+            ]
+        )
 
     def test_measure_pair_posts_to_blackboard(self):
         bb = CognitiveBlackboard()
@@ -846,10 +866,22 @@ class TestReasoningAdapter:
         assert inf_entries[0].confidence == 0.85
 
     def test_reason_produces_step_entries(self):
-        result = MockReasoningResult(reasoning_steps=[
-            {"mode": "logical", "output_data": "step1", "confidence": 0.9, "processing_time": 0.1},
-            {"mode": "causal", "output_data": "step2", "confidence": 0.8, "processing_time": 0.2},
-        ])
+        result = MockReasoningResult(
+            reasoning_steps=[
+                {
+                    "mode": "logical",
+                    "output_data": "step1",
+                    "confidence": 0.9,
+                    "processing_time": 0.1,
+                },
+                {
+                    "mode": "causal",
+                    "output_data": "step2",
+                    "confidence": 0.8,
+                    "processing_time": 0.2,
+                },
+            ]
+        )
         engine = MockReasoningEngine(result=result)
         adapter = ReasoningAdapter(engine=engine)
 
@@ -877,11 +909,13 @@ class TestReasoningAdapter:
         bb.register_module(adapter)
 
         # Post some KG data to the blackboard
-        bb.post(BlackboardEntry(
-            topic="knowledge_graph.triple",
-            data={"subject": "earth", "predicate": "orbits", "object": "sun"},
-            source_module="knowledge_graph",
-        ))
+        bb.post(
+            BlackboardEntry(
+                topic="knowledge_graph.triple",
+                data={"subject": "earth", "predicate": "orbits", "object": "sun"},
+                source_module="knowledge_graph",
+            )
+        )
 
         result = adapter.reason("about earth")
         assert result is not None
@@ -1229,11 +1263,13 @@ class TestCrossAdapterIntegration:
         wire_all(bb, cons, reas)
 
         # Manually emit an event on the bus as if KG posted a triple
-        bb.event_bus.emit(CognitiveEvent(
-            event_type="knowledge_graph.triple.added",
-            payload={"subject": "test", "predicate": "is", "object": "good"},
-            source="knowledge_graph",
-        ))
+        bb.event_bus.emit(
+            CognitiveEvent(
+                event_type="knowledge_graph.triple.added",
+                payload={"subject": "test", "predicate": "is", "object": "good"},
+                source="knowledge_graph",
+            )
+        )
 
         # Reasoning should have accumulated context from the event
         assert len(reas._kg_context) == 1
@@ -1259,8 +1295,7 @@ class TestCrossAdapterIntegration:
                 errors.append(e)
 
         threads = [
-            threading.Thread(target=sweep_and_check, args=(a,))
-            for a in [cons, kg, syn, reas]
+            threading.Thread(target=sweep_and_check, args=(a,)) for a in [cons, kg, syn, reas]
         ]
         for t in threads:
             t.start()

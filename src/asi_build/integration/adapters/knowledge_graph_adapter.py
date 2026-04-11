@@ -111,25 +111,27 @@ class KnowledgeGraphAdapter:
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
             capabilities=(
-                ModuleCapability.PRODUCER
-                | ModuleCapability.CONSUMER
-                | ModuleCapability.TRANSFORMER
+                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.TRANSFORMER
             ),
             description=(
                 "Temporal knowledge graph with provenance tracking, contradiction "
                 "detection, and semantic A* pathfinding."
             ),
-            topics_produced=frozenset({
-                "knowledge_graph.triple",
-                "knowledge_graph.contradiction",
-                "knowledge_graph.pathfinding",
-                "knowledge_graph.statistics",
-            }),
-            topics_consumed=frozenset({
-                "reasoning",
-                "consciousness",
-                "cognitive_synergy",
-            }),
+            topics_produced=frozenset(
+                {
+                    "knowledge_graph.triple",
+                    "knowledge_graph.contradiction",
+                    "knowledge_graph.pathfinding",
+                    "knowledge_graph.statistics",
+                }
+            ),
+            topics_consumed=frozenset(
+                {
+                    "reasoning",
+                    "consciousness",
+                    "cognitive_synergy",
+                }
+            ),
         )
 
     def on_registered(self, blackboard: Any) -> None:
@@ -147,11 +149,13 @@ class KnowledgeGraphAdapter:
 
     def _emit(self, event_type: str, payload: Dict[str, Any]) -> None:
         if self._event_handler is not None:
-            self._event_handler(CognitiveEvent(
-                event_type=event_type,
-                payload=payload,
-                source=self.MODULE_NAME,
-            ))
+            self._event_handler(
+                CognitiveEvent(
+                    event_type=event_type,
+                    payload=payload,
+                    source=self.MODULE_NAME,
+                )
+            )
 
     # ── EventListener ─────────────────────────────────────────────────
 
@@ -168,7 +172,8 @@ class KnowledgeGraphAdapter:
                 self._handle_broadcast_event(event)
         except Exception:
             logger.debug(
-                "KGAdapter: failed to handle event %s", event.event_type,
+                "KGAdapter: failed to handle event %s",
+                event.event_type,
                 exc_info=True,
             )
 
@@ -207,7 +212,9 @@ class KnowledgeGraphAdapter:
                     self._ingest_synergy_entry(entry)
             except Exception:
                 logger.debug(
-                    "KGAdapter: failed to consume %s", entry.topic, exc_info=True,
+                    "KGAdapter: failed to consume %s",
+                    entry.topic,
+                    exc_info=True,
                 )
 
     # ── BlackboardTransformer ─────────────────────────────────────────
@@ -278,18 +285,24 @@ class KnowledgeGraphAdapter:
             self._pending_triples.append(triple_data)
             self._posted_triple_ids.add(triple_id)
 
-        self._emit("knowledge_graph.triple.added", {
-            "triple_id": triple_id,
-            "subject": subject,
-            "predicate": predicate,
-            "object": obj,
-        })
+        self._emit(
+            "knowledge_graph.triple.added",
+            {
+                "triple_id": triple_id,
+                "subject": subject,
+                "predicate": predicate,
+                "object": obj,
+            },
+        )
 
         if contradictions:
-            self._emit("knowledge_graph.contradiction.found", {
-                "triple_id": triple_id,
-                "contradictions": contradictions,
-            })
+            self._emit(
+                "knowledge_graph.contradiction.found",
+                {
+                    "triple_id": triple_id,
+                    "contradictions": contradictions,
+                },
+            )
 
         return triple_id
 
@@ -319,12 +332,15 @@ class KnowledgeGraphAdapter:
                 metadata={"start": start, "goal": goal},
             )
             self._blackboard.post(entry)
-            self._emit("knowledge_graph.pathfinding.completed", {
-                "start": start,
-                "goal": goal,
-                "entry_id": entry.entry_id,
-                "path_length": len(result.get("path", [])),
-            })
+            self._emit(
+                "knowledge_graph.pathfinding.completed",
+                {
+                    "start": start,
+                    "goal": goal,
+                    "entry_id": entry.entry_id,
+                    "path_length": len(result.get("path", [])),
+                },
+            )
 
         return result
 
@@ -333,11 +349,7 @@ class KnowledgeGraphAdapter:
     def _triple_to_entry(self, triple_data: Dict[str, Any]) -> BlackboardEntry:
         """Convert a triple dict to a BlackboardEntry."""
         has_contradictions = bool(triple_data.get("contradictions"))
-        topic = (
-            "knowledge_graph.contradiction"
-            if has_contradictions
-            else "knowledge_graph.triple"
-        )
+        topic = "knowledge_graph.contradiction" if has_contradictions else "knowledge_graph.triple"
         priority = EntryPriority.HIGH if has_contradictions else EntryPriority.NORMAL
 
         return BlackboardEntry(
@@ -347,11 +359,13 @@ class KnowledgeGraphAdapter:
             confidence=triple_data.get("confidence", 1.0),
             priority=priority,
             ttl_seconds=self._triple_ttl,
-            tags=frozenset({
-                "triple",
-                triple_data.get("statement_type", "fact"),
-                *(["contradiction"] if has_contradictions else []),
-            }),
+            tags=frozenset(
+                {
+                    "triple",
+                    triple_data.get("statement_type", "fact"),
+                    *(["contradiction"] if has_contradictions else []),
+                }
+            ),
             metadata={
                 "triple_id": triple_data.get("triple_id", ""),
                 "subject": triple_data.get("subject", ""),

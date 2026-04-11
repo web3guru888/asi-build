@@ -115,24 +115,26 @@ class ReasoningAdapter:
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
             capabilities=(
-                ModuleCapability.PRODUCER
-                | ModuleCapability.CONSUMER
-                | ModuleCapability.REASONER
+                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.REASONER
             ),
             description=(
                 "Hybrid reasoning engine combining logical, probabilistic, "
                 "analogical, causal, creative, and quantum reasoning modes."
             ),
-            topics_produced=frozenset({
-                "reasoning.inference",
-                "reasoning.step",
-                "reasoning.performance",
-            }),
-            topics_consumed=frozenset({
-                "knowledge_graph",
-                "consciousness",
-                "cognitive_synergy",
-            }),
+            topics_produced=frozenset(
+                {
+                    "reasoning.inference",
+                    "reasoning.step",
+                    "reasoning.performance",
+                }
+            ),
+            topics_consumed=frozenset(
+                {
+                    "knowledge_graph",
+                    "consciousness",
+                    "cognitive_synergy",
+                }
+            ),
         )
 
     def on_registered(self, blackboard: Any) -> None:
@@ -146,11 +148,13 @@ class ReasoningAdapter:
 
     def _emit(self, event_type: str, payload: Dict[str, Any]) -> None:
         if self._event_handler is not None:
-            self._event_handler(CognitiveEvent(
-                event_type=event_type,
-                payload=payload,
-                source=self.MODULE_NAME,
-            ))
+            self._event_handler(
+                CognitiveEvent(
+                    event_type=event_type,
+                    payload=payload,
+                    source=self.MODULE_NAME,
+                )
+            )
 
     # ── EventListener ─────────────────────────────────────────────────
 
@@ -269,20 +273,26 @@ class ReasoningAdapter:
             self._inference_count += 1
 
         # Emit events
-        self._emit("reasoning.inference.completed", {
-            "query": query,
-            "conclusion": result_data.get("conclusion", ""),
-            "confidence": result_data.get("confidence", 0.0),
-            "mode": result_data.get("reasoning_mode", ""),
-        })
+        self._emit(
+            "reasoning.inference.completed",
+            {
+                "query": query,
+                "conclusion": result_data.get("conclusion", ""),
+                "confidence": result_data.get("confidence", 0.0),
+                "mode": result_data.get("reasoning_mode", ""),
+            },
+        )
 
         # Safety check
         safety = result_data.get("safety", {})
         if safety.get("flagged", False):
-            self._emit("reasoning.safety.flagged", {
-                "query": query,
-                "concerns": safety.get("concerns", []),
-            })
+            self._emit(
+                "reasoning.safety.flagged",
+                {
+                    "query": query,
+                    "concerns": safety.get("concerns", []),
+                },
+            )
 
         return result_data
 
@@ -295,7 +305,7 @@ class ReasoningAdapter:
         # 1. Accumulated event context
         with self._lock:
             if self._kg_context:
-                ctx["kg_triples"] = list(self._kg_context[-self._max_context_entries:])
+                ctx["kg_triples"] = list(self._kg_context[-self._max_context_entries :])
             if self._consciousness_context:
                 ctx["consciousness_state"] = dict(self._consciousness_context)
 
@@ -319,7 +329,8 @@ class ReasoningAdapter:
             kg_entries = self._blackboard.get_by_topic("knowledge_graph")
             if kg_entries:
                 ctx["blackboard_kg"] = [
-                    e.data for e in kg_entries[:self._max_context_entries]
+                    e.data
+                    for e in kg_entries[: self._max_context_entries]
                     if isinstance(e.data, dict)
                 ]
 
@@ -354,8 +365,7 @@ class ReasoningAdapter:
             "total_processing_time": getattr(result, "total_processing_time", 0.0),
             "explanation": getattr(result, "explanation", ""),
             "reasoning_steps": [
-                self._step_to_dict(s)
-                for s in getattr(result, "reasoning_steps", [])
+                self._step_to_dict(s) for s in getattr(result, "reasoning_steps", [])
             ],
             "sources": list(getattr(result, "sources", [])),
             "uncertainty_areas": list(getattr(result, "uncertainty_areas", [])),
@@ -381,39 +391,42 @@ class ReasoningAdapter:
 
         # Main inference entry
         confidence = result_data.get("confidence", 0.5)
-        entries.append(BlackboardEntry(
-            topic="reasoning.inference",
-            data=result_data,
-            source_module=self.MODULE_NAME,
-            confidence=confidence,
-            priority=(
-                EntryPriority.HIGH if confidence > 0.8
-                else EntryPriority.NORMAL
-            ),
-            ttl_seconds=self._inference_ttl,
-            tags=frozenset({
-                "inference",
-                result_data.get("reasoning_mode", "hybrid"),
-            }),
-            metadata={
-                "conclusion": str(result_data.get("conclusion", ""))[:200],
-                "mode": result_data.get("reasoning_mode", ""),
-            },
-        ))
+        entries.append(
+            BlackboardEntry(
+                topic="reasoning.inference",
+                data=result_data,
+                source_module=self.MODULE_NAME,
+                confidence=confidence,
+                priority=(EntryPriority.HIGH if confidence > 0.8 else EntryPriority.NORMAL),
+                ttl_seconds=self._inference_ttl,
+                tags=frozenset(
+                    {
+                        "inference",
+                        result_data.get("reasoning_mode", "hybrid"),
+                    }
+                ),
+                metadata={
+                    "conclusion": str(result_data.get("conclusion", ""))[:200],
+                    "mode": result_data.get("reasoning_mode", ""),
+                },
+            )
+        )
 
         # Individual step entries (for fine-grained provenance)
         for i, step in enumerate(result_data.get("reasoning_steps", [])):
-            entries.append(BlackboardEntry(
-                topic="reasoning.step",
-                data=step,
-                source_module=self.MODULE_NAME,
-                confidence=step.get("confidence", 0.5),
-                priority=EntryPriority.LOW,
-                ttl_seconds=self._step_ttl,
-                tags=frozenset({"step", f"step_{i}"}),
-                parent_id=entries[0].entry_id,  # Link to main inference
-                metadata={"step_index": i},
-            ))
+            entries.append(
+                BlackboardEntry(
+                    topic="reasoning.step",
+                    data=step,
+                    source_module=self.MODULE_NAME,
+                    confidence=step.get("confidence", 0.5),
+                    priority=EntryPriority.LOW,
+                    ttl_seconds=self._step_ttl,
+                    tags=frozenset({"step", f"step_{i}"}),
+                    parent_id=entries[0].entry_id,  # Link to main inference
+                    metadata={"step_index": i},
+                )
+            )
 
         return entries
 
@@ -447,7 +460,7 @@ class ReasoningAdapter:
             self._kg_context.append(data)
             # Keep bounded
             if len(self._kg_context) > self._max_context_entries * 2:
-                self._kg_context = self._kg_context[-self._max_context_entries:]
+                self._kg_context = self._kg_context[-self._max_context_entries :]
 
     def _consume_consciousness(self, entry: BlackboardEntry) -> None:
         """Update consciousness context for reasoning."""
@@ -469,7 +482,7 @@ class ReasoningAdapter:
         with self._lock:
             self._kg_context.append(event.payload)
             if len(self._kg_context) > self._max_context_entries * 2:
-                self._kg_context = self._kg_context[-self._max_context_entries:]
+                self._kg_context = self._kg_context[-self._max_context_entries :]
 
     def _update_consciousness_context(self, event: CognitiveEvent) -> None:
         """Update consciousness state from events."""
@@ -526,6 +539,7 @@ class ReasoningAdapter:
 
 
 # ── Utility ───────────────────────────────────────────────────────────
+
 
 def _nudge_weight(weights: Dict, key_suffix: str, delta: float) -> None:
     """Nudge a weight by *delta*, keeping it in [0.01, 0.95].

@@ -1,5 +1,7 @@
 # ASI:BUILD Integration Overview
 
+> ⚠️ **v1 artifact**: This document was written for a v1 codebase with "47 subsystems" and modules that no longer exist. The current codebase has 28 modules in `src/asi_build/`. Treat this as historical reference only. See the root [README.md](/README.md) for accurate information.
+
 ## Table of Contents
 - [Introduction](#introduction)
 - [Integration Architecture](#integration-architecture)

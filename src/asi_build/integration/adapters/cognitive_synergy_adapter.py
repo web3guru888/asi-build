@@ -126,17 +126,21 @@ class CognitiveSynergyAdapter:
                 "metrics (MI, TE, PLV), emergence detection, and global "
                 "coherence tracking."
             ),
-            topics_produced=frozenset({
-                "cognitive_synergy.pair",
-                "cognitive_synergy.emergence",
-                "cognitive_synergy.coherence",
-                "cognitive_synergy.profile",
-            }),
-            topics_consumed=frozenset({
-                "consciousness",
-                "reasoning",
-                "knowledge_graph",
-            }),
+            topics_produced=frozenset(
+                {
+                    "cognitive_synergy.pair",
+                    "cognitive_synergy.emergence",
+                    "cognitive_synergy.coherence",
+                    "cognitive_synergy.profile",
+                }
+            ),
+            topics_consumed=frozenset(
+                {
+                    "consciousness",
+                    "reasoning",
+                    "knowledge_graph",
+                }
+            ),
         )
 
     def on_registered(self, blackboard: Any) -> None:
@@ -154,11 +158,13 @@ class CognitiveSynergyAdapter:
 
     def _emit(self, event_type: str, payload: Dict[str, Any]) -> None:
         if self._event_handler is not None:
-            self._event_handler(CognitiveEvent(
-                event_type=event_type,
-                payload=payload,
-                source=self.MODULE_NAME,
-            ))
+            self._event_handler(
+                CognitiveEvent(
+                    event_type=event_type,
+                    payload=payload,
+                    source=self.MODULE_NAME,
+                )
+            )
 
     # ── EventListener ─────────────────────────────────────────────────
 
@@ -214,7 +220,8 @@ class CognitiveSynergyAdapter:
                 self._feed_into_metrics(entry)
             except Exception:
                 logger.debug(
-                    "SynergyAdapter: failed to consume %s", entry.topic,
+                    "SynergyAdapter: failed to consume %s",
+                    entry.topic,
                     exc_info=True,
                 )
 
@@ -233,20 +240,22 @@ class CognitiveSynergyAdapter:
             if not relevant_pairs:
                 continue
 
-            results.append(BlackboardEntry(
-                topic="cognitive_synergy.annotation",
-                data={
-                    "original_entry_id": entry.entry_id,
-                    "original_topic": entry.topic,
-                    "relevant_pairs": relevant_pairs,
-                },
-                source_module=self.MODULE_NAME,
-                confidence=0.7,
-                priority=EntryPriority.LOW,
-                ttl_seconds=self._pair_ttl,
-                parent_id=entry.entry_id,
-                tags=frozenset({"annotation", "synergy"}),
-            ))
+            results.append(
+                BlackboardEntry(
+                    topic="cognitive_synergy.annotation",
+                    data={
+                        "original_entry_id": entry.entry_id,
+                        "original_topic": entry.topic,
+                        "relevant_pairs": relevant_pairs,
+                    },
+                    source_module=self.MODULE_NAME,
+                    confidence=0.7,
+                    priority=EntryPriority.LOW,
+                    ttl_seconds=self._pair_ttl,
+                    parent_id=entry.entry_id,
+                    tags=frozenset({"annotation", "synergy"}),
+                )
+            )
 
         return results
 
@@ -313,28 +322,31 @@ class CognitiveSynergyAdapter:
                 continue
             self._last_pair_values[pair_name] = current
 
-            entries.append(BlackboardEntry(
-                topic="cognitive_synergy.pair",
-                data={
+            entries.append(
+                BlackboardEntry(
+                    topic="cognitive_synergy.pair",
+                    data={
+                        "pair_name": pair_name,
+                        "synergy": current,
+                        "module_a": getattr(pair_obj, "module_a", ""),
+                        "module_b": getattr(pair_obj, "module_b", ""),
+                    },
+                    source_module=self.MODULE_NAME,
+                    confidence=0.85,
+                    priority=(EntryPriority.HIGH if current > 0.8 else EntryPriority.NORMAL),
+                    ttl_seconds=self._pair_ttl,
+                    tags=frozenset({"pair", pair_name}),
+                    metadata={"pair_name": pair_name, "synergy": current},
+                )
+            )
+
+            self._emit(
+                "cognitive_synergy.pair.updated",
+                {
                     "pair_name": pair_name,
                     "synergy": current,
-                    "module_a": getattr(pair_obj, "module_a", ""),
-                    "module_b": getattr(pair_obj, "module_b", ""),
                 },
-                source_module=self.MODULE_NAME,
-                confidence=0.85,
-                priority=(
-                    EntryPriority.HIGH if current > 0.8 else EntryPriority.NORMAL
-                ),
-                ttl_seconds=self._pair_ttl,
-                tags=frozenset({"pair", pair_name}),
-                metadata={"pair_name": pair_name, "synergy": current},
-            ))
-
-            self._emit("cognitive_synergy.pair.updated", {
-                "pair_name": pair_name,
-                "synergy": current,
-            })
+            )
 
         return entries
 
@@ -350,17 +362,17 @@ class CognitiveSynergyAdapter:
         except Exception:
             return None
 
-        if (
-            self._last_coherence is not None
-            and abs(coherence - self._last_coherence) < 0.01
-        ):
+        if self._last_coherence is not None and abs(coherence - self._last_coherence) < 0.01:
             return None
 
         self._last_coherence = coherence
 
-        self._emit("cognitive_synergy.coherence.updated", {
-            "coherence": coherence,
-        })
+        self._emit(
+            "cognitive_synergy.coherence.updated",
+            {
+                "coherence": coherence,
+            },
+        )
 
         return BlackboardEntry(
             topic="cognitive_synergy.coherence",
@@ -393,24 +405,29 @@ class CognitiveSynergyAdapter:
         if new_count <= self._emergence_count:
             return []
 
-        new_indicators = indicators[self._emergence_count:]
+        new_indicators = indicators[self._emergence_count :]
         self._emergence_count = new_count
 
         entries: List[BlackboardEntry] = []
         for indicator in new_indicators:
-            entries.append(BlackboardEntry(
-                topic="cognitive_synergy.emergence",
-                data=indicator,
-                source_module=self.MODULE_NAME,
-                confidence=0.8,
-                priority=EntryPriority.HIGH,
-                ttl_seconds=self._emergence_ttl,
-                tags=frozenset({"emergence", "detected"}),
-            ))
+            entries.append(
+                BlackboardEntry(
+                    topic="cognitive_synergy.emergence",
+                    data=indicator,
+                    source_module=self.MODULE_NAME,
+                    confidence=0.8,
+                    priority=EntryPriority.HIGH,
+                    ttl_seconds=self._emergence_ttl,
+                    tags=frozenset({"emergence", "detected"}),
+                )
+            )
 
-            self._emit("cognitive_synergy.emergence.detected", {
-                "indicator": indicator,
-            })
+            self._emit(
+                "cognitive_synergy.emergence.detected",
+                {
+                    "indicator": indicator,
+                },
+            )
 
         return entries
 
@@ -426,25 +443,27 @@ class CognitiveSynergyAdapter:
             return []
 
         for pair_name, profile in all_profiles.items():
-            entries.append(BlackboardEntry(
-                topic="cognitive_synergy.profile",
-                data={
-                    "pair_name": pair_name,
-                    "mutual_information": getattr(profile, "mutual_information", 0.0),
-                    "transfer_entropy": getattr(profile, "transfer_entropy", 0.0),
-                    "phase_coupling": getattr(profile, "phase_coupling", 0.0),
-                    "coherence": getattr(profile, "coherence", 0.0),
-                    "emergence_index": getattr(profile, "emergence_index", 0.0),
-                    "integration_index": getattr(profile, "integration_index", 0.0),
-                    "complexity_resonance": getattr(profile, "complexity_resonance", 0.0),
-                },
-                source_module=self.MODULE_NAME,
-                confidence=0.85,
-                priority=EntryPriority.LOW,
-                ttl_seconds=self._pair_ttl,
-                tags=frozenset({"profile", pair_name}),
-                metadata={"pair_name": pair_name},
-            ))
+            entries.append(
+                BlackboardEntry(
+                    topic="cognitive_synergy.profile",
+                    data={
+                        "pair_name": pair_name,
+                        "mutual_information": getattr(profile, "mutual_information", 0.0),
+                        "transfer_entropy": getattr(profile, "transfer_entropy", 0.0),
+                        "phase_coupling": getattr(profile, "phase_coupling", 0.0),
+                        "coherence": getattr(profile, "coherence", 0.0),
+                        "emergence_index": getattr(profile, "emergence_index", 0.0),
+                        "integration_index": getattr(profile, "integration_index", 0.0),
+                        "complexity_resonance": getattr(profile, "complexity_resonance", 0.0),
+                    },
+                    source_module=self.MODULE_NAME,
+                    confidence=0.85,
+                    priority=EntryPriority.LOW,
+                    ttl_seconds=self._pair_ttl,
+                    tags=frozenset({"profile", pair_name}),
+                    metadata={"pair_name": pair_name},
+                )
+            )
 
         return entries
 
@@ -549,12 +568,14 @@ class CognitiveSynergyAdapter:
         for name in pair_names:
             pair = pairs.get(name)
             if pair is not None:
-                result.append({
-                    "pair_name": name,
-                    "synergy": getattr(pair, "synergy_strength", 0.0),
-                    "module_a": getattr(pair, "module_a", ""),
-                    "module_b": getattr(pair, "module_b", ""),
-                })
+                result.append(
+                    {
+                        "pair_name": name,
+                        "synergy": getattr(pair, "synergy_strength", 0.0),
+                        "module_a": getattr(pair, "module_a", ""),
+                        "module_b": getattr(pair, "module_b", ""),
+                    }
+                )
 
         return result
 

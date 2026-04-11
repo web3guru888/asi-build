@@ -1,5 +1,7 @@
 # ASI:BUILD Subsystem APIs
 
+> ⚠️ **v1 artifact**: This document was written for a v1 codebase with "47 subsystems" and modules that no longer exist. The current codebase has 28 modules in `src/asi_build/`. Treat this as historical reference only. See the root [README.md](/README.md) for accurate information.
+
 ## Overview
 
 This document provides detailed documentation for each of the 47 subsystems in the ASI:BUILD framework. Each subsystem exposes specialized APIs for their unique capabilities, from consciousness processing to quantum computing to reality manipulation.

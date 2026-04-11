@@ -61,6 +61,7 @@ def _get_consciousness():
     if _consciousness_module is None:
         try:
             from asi_build import consciousness as _cm
+
             _consciousness_module = _cm
         except (ImportError, ModuleNotFoundError):
             _consciousness_module = False
@@ -135,26 +136,28 @@ class ConsciousnessAdapter:
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
             capabilities=(
-                ModuleCapability.PRODUCER
-                | ModuleCapability.CONSUMER
-                | ModuleCapability.LEARNER
+                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.LEARNER
             ),
             description=(
                 "Consciousness module: GWT workspace competition, IIT Φ computation, "
                 "attention schema, and state broadcasting."
             ),
-            topics_produced=frozenset({
-                "consciousness.phi",
-                "consciousness.broadcast",
-                "consciousness.state",
-                "consciousness.attention",
-                "consciousness.competition",
-            }),
-            topics_consumed=frozenset({
-                "reasoning",
-                "knowledge_graph",
-                "cognitive_synergy",
-            }),
+            topics_produced=frozenset(
+                {
+                    "consciousness.phi",
+                    "consciousness.broadcast",
+                    "consciousness.state",
+                    "consciousness.attention",
+                    "consciousness.competition",
+                }
+            ),
+            topics_consumed=frozenset(
+                {
+                    "reasoning",
+                    "knowledge_graph",
+                    "cognitive_synergy",
+                }
+            ),
         )
 
     def on_registered(self, blackboard: Any) -> None:
@@ -175,11 +178,13 @@ class ConsciousnessAdapter:
     def _emit(self, event_type: str, payload: Dict[str, Any]) -> None:
         """Emit an event via the injected handler."""
         if self._event_handler is not None:
-            self._event_handler(CognitiveEvent(
-                event_type=event_type,
-                payload=payload,
-                source=self.MODULE_NAME,
-            ))
+            self._event_handler(
+                CognitiveEvent(
+                    event_type=event_type,
+                    payload=payload,
+                    source=self.MODULE_NAME,
+                )
+            )
 
     # ── EventListener protocol ────────────────────────────────────────
 
@@ -272,7 +277,9 @@ class ConsciousnessAdapter:
         # Only post if Φ changed significantly (>1% relative or absolute >0.01)
         if self._last_phi is not None:
             delta = abs(phi - self._last_phi)
-            if delta < 0.01 and (self._last_phi == 0 or delta / max(abs(self._last_phi), 1e-9) < 0.01):
+            if delta < 0.01 and (
+                self._last_phi == 0 or delta / max(abs(self._last_phi), 1e-9) < 0.01
+            ):
                 return None
 
         self._last_phi = phi
@@ -322,7 +329,8 @@ class ConsciousnessAdapter:
 
         try:
             broadcast_data = {
-                "content_id": getattr(broadcast, "content_id", None) or getattr(broadcast.content, "content_id", "unknown"),
+                "content_id": getattr(broadcast, "content_id", None)
+                or getattr(broadcast.content, "content_id", "unknown"),
                 "broadcast_strength": getattr(broadcast, "strength", 0.0),
                 "processors_reached": getattr(broadcast, "processors_reached", 0),
                 "timestamp": getattr(broadcast, "timestamp", time.time()),
@@ -346,10 +354,13 @@ class ConsciousnessAdapter:
             tags=frozenset({"gwt", "broadcast", "global_workspace"}),
         )
 
-        self._emit("consciousness.broadcast.completed", {
-            "entry_id": entry.entry_id,
-            "broadcast_count": current_count,
-        })
+        self._emit(
+            "consciousness.broadcast.completed",
+            {
+                "entry_id": entry.entry_id,
+                "broadcast_count": current_count,
+            },
+        )
         return entry
 
     def _produce_state(self) -> Optional[BlackboardEntry]:
@@ -380,10 +391,13 @@ class ConsciousnessAdapter:
             metadata={"state_name": state_name},
         )
 
-        self._emit("consciousness.state.changed", {
-            "new_state": state_name,
-            "entry_id": entry.entry_id,
-        })
+        self._emit(
+            "consciousness.state.changed",
+            {
+                "new_state": state_name,
+                "entry_id": entry.entry_id,
+            },
+        )
         return entry
 
     # ── Consumer helpers ──────────────────────────────────────────────
@@ -463,6 +477,7 @@ class ConsciousnessAdapter:
             # Try direct import from submodule
             try:
                 from asi_build.consciousness.global_workspace import WorkspaceContent as _WC
+
                 WorkspaceContent = _WC
             except (ImportError, AttributeError):
                 return

@@ -1,5 +1,7 @@
 # Kenny Integration Documentation
 
+> ⚠️ **v1 artifact**: This document was written for a v1 codebase with "47 subsystems" and modules that no longer exist. The current codebase has 28 modules in `src/asi_build/`. Treat this as historical reference only. See the root [README.md](/README.md) for accurate information.
+
 ## Overview
 
 The Kenny Integration pattern is the unified interface design that enables seamless communication and coordination across all 47 subsystems in the ASI:BUILD framework. Kenny serves as the central nervous system, providing standardized APIs, message routing, state synchronization, and orchestration capabilities.
