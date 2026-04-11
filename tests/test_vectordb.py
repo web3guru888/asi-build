@@ -27,30 +27,39 @@ _MOCK_EXTERNAL = [
     "weaviate.classes",
     "weaviate.classes.config",
     "weaviate.classes.query",
-    "torch",
-    "torch.nn",
-    "torch.nn.functional",
     "sentence_transformers",
     "openai",
     "cohere",
     "transformers",
 ]
 
+# Only stub packages that are genuinely unavailable.
+# Torch is handled separately below to avoid shadowing a real install
+# (which would break tests in other files like test_bci_extended).
 for _pkg in _MOCK_EXTERNAL:
     if _pkg not in sys.modules:
         sys.modules[_pkg] = types.ModuleType(_pkg)
 
-# Give torch the minimal API surface that embeddings.py probes at import time
-_torch = sys.modules["torch"]
-_torch.device = lambda *a, **kw: "cpu"
-_torch.no_grad = lambda: type(
-    "ctx", (), {"__enter__": lambda s: None, "__exit__": lambda s, *a: None}
-)()
-if not hasattr(_torch, "cuda"):
-    _cuda = types.ModuleType("torch.cuda")
-    _cuda.is_available = lambda: False
-    _torch.cuda = _cuda
-    sys.modules["torch.cuda"] = _cuda
+# Try importing real torch; only stub if unavailable.
+try:
+    import torch as _torch  # noqa: F401
+except ImportError:
+    for _tpkg in ["torch", "torch.nn", "torch.nn.functional"]:
+        if _tpkg not in sys.modules:
+            sys.modules[_tpkg] = types.ModuleType(_tpkg)
+    _torch = sys.modules["torch"]
+    _torch.device = lambda *a, **kw: "cpu"
+    _torch.Tensor = type("Tensor", (), {})  # stub Tensor class (sklearn checks for it)
+    _torch.no_grad = lambda: type(
+        "ctx", (), {"__enter__": lambda s: None, "__exit__": lambda s, *a: None}
+    )()
+    if not hasattr(_torch, "cuda"):
+        _cuda = types.ModuleType("torch.cuda")
+        _cuda.is_available = lambda: False
+        _torch.cuda = _cuda
+        sys.modules["torch.cuda"] = _cuda
+else:
+    _torch = sys.modules["torch"]
 
 # Ensure source tree is importable
 if "/shared/asi-build/src" not in sys.path:

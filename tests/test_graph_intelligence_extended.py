@@ -27,6 +27,7 @@ Covers (without external services):
 - CommunityScore / CommunityDetectionResult / CommunityQualityMetrics dataclasses
 """
 
+import importlib
 import json
 import threading
 import time
@@ -1477,6 +1478,10 @@ class TestPerformanceOptimizer:
         finally:
             optimizer.shutdown()
 
+    @pytest.mark.skipif(
+        not importlib.util.find_spec("psutil"),
+        reason="psutil required for memory stats in performance report",
+    )
     def test_performance_report_with_metrics(self):
         sm = _mock_schema_manager()
         optimizer = PerformanceOptimizer(schema_manager=sm)

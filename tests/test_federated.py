@@ -77,51 +77,61 @@ sys.modules["sklearn"].cluster = sys.modules["sklearn.cluster"]
 sys.modules["sklearn"].preprocessing = sys.modules["sklearn.preprocessing"]
 
 # --- 1d. cryptography (needed by secure_aggregation.py) ---
-_ensure_module("cryptography")
-_ensure_module("cryptography.hazmat")
-_ensure_module("cryptography.hazmat.primitives")
-_ensure_module("cryptography.hazmat.primitives.hashes")
-_ensure_module("cryptography.hazmat.primitives.serialization")
-_ensure_module("cryptography.hazmat.primitives.asymmetric")
-_ensure_module("cryptography.hazmat.primitives.asymmetric.rsa")
-_ensure_module("cryptography.hazmat.primitives.asymmetric.padding")
-_ensure_module(
-    "cryptography.hazmat.primitives.ciphers",
-    {
-        "Cipher": _stub_class("Cipher"),
-        "algorithms": types.ModuleType("algorithms"),
-        "modes": types.ModuleType("modes"),
-    },
-)
-_ensure_module(
-    "cryptography.hazmat.backends",
-    {
-        "default_backend": lambda: None,
-    },
-)
+# Try importing the real cryptography package first; only stub if unavailable.
+# Stubbing over a real install breaks other tests (e.g. agi_communication auth).
+try:
+    import cryptography.hazmat.primitives.asymmetric.rsa  # noqa: F401
+    import cryptography.hazmat.primitives.asymmetric.padding  # noqa: F401
+    import cryptography.hazmat.primitives.hashes  # noqa: F401
+    import cryptography.hazmat.primitives.serialization  # noqa: F401
+    import cryptography.hazmat.primitives.ciphers  # noqa: F401
+    import cryptography.hazmat.backends  # noqa: F401
+except ImportError:
+    _ensure_module("cryptography")
+    _ensure_module("cryptography.hazmat")
+    _ensure_module("cryptography.hazmat.primitives")
+    _ensure_module("cryptography.hazmat.primitives.hashes")
+    _ensure_module("cryptography.hazmat.primitives.serialization")
+    _ensure_module("cryptography.hazmat.primitives.asymmetric")
+    _ensure_module("cryptography.hazmat.primitives.asymmetric.rsa")
+    _ensure_module("cryptography.hazmat.primitives.asymmetric.padding")
+    _ensure_module(
+        "cryptography.hazmat.primitives.ciphers",
+        {
+            "Cipher": _stub_class("Cipher"),
+            "algorithms": types.ModuleType("algorithms"),
+            "modes": types.ModuleType("modes"),
+        },
+    )
+    _ensure_module(
+        "cryptography.hazmat.backends",
+        {
+            "default_backend": lambda: None,
+        },
+    )
 
-# Wire cryptography hierarchy
-sys.modules["cryptography"].hazmat = sys.modules["cryptography.hazmat"]
-sys.modules["cryptography.hazmat"].primitives = sys.modules["cryptography.hazmat.primitives"]
-sys.modules["cryptography.hazmat.primitives"].hashes = sys.modules[
-    "cryptography.hazmat.primitives.hashes"
-]
-sys.modules["cryptography.hazmat.primitives"].serialization = sys.modules[
-    "cryptography.hazmat.primitives.serialization"
-]
-sys.modules["cryptography.hazmat.primitives"].asymmetric = sys.modules[
-    "cryptography.hazmat.primitives.asymmetric"
-]
-sys.modules["cryptography.hazmat.primitives.asymmetric"].rsa = sys.modules[
-    "cryptography.hazmat.primitives.asymmetric.rsa"
-]
-sys.modules["cryptography.hazmat.primitives.asymmetric"].padding = sys.modules[
-    "cryptography.hazmat.primitives.asymmetric.padding"
-]
-sys.modules["cryptography.hazmat.primitives"].ciphers = sys.modules[
-    "cryptography.hazmat.primitives.ciphers"
-]
-sys.modules["cryptography.hazmat"].backends = sys.modules["cryptography.hazmat.backends"]
+    # Wire cryptography hierarchy
+    sys.modules["cryptography"].hazmat = sys.modules["cryptography.hazmat"]
+    sys.modules["cryptography.hazmat"].primitives = sys.modules["cryptography.hazmat.primitives"]
+    sys.modules["cryptography.hazmat.primitives"].hashes = sys.modules[
+        "cryptography.hazmat.primitives.hashes"
+    ]
+    sys.modules["cryptography.hazmat.primitives"].serialization = sys.modules[
+        "cryptography.hazmat.primitives.serialization"
+    ]
+    sys.modules["cryptography.hazmat.primitives"].asymmetric = sys.modules[
+        "cryptography.hazmat.primitives.asymmetric"
+    ]
+    sys.modules["cryptography.hazmat.primitives.asymmetric"].rsa = sys.modules[
+        "cryptography.hazmat.primitives.asymmetric.rsa"
+    ]
+    sys.modules["cryptography.hazmat.primitives.asymmetric"].padding = sys.modules[
+        "cryptography.hazmat.primitives.asymmetric.padding"
+    ]
+    sys.modules["cryptography.hazmat.primitives"].ciphers = sys.modules[
+        "cryptography.hazmat.primitives.ciphers"
+    ]
+    sys.modules["cryptography.hazmat"].backends = sys.modules["cryptography.hazmat.backends"]
 
 # --- 1e. Missing federated sub-modules ---
 
