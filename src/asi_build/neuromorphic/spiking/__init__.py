@@ -10,51 +10,51 @@ Implements various spiking neuron models and network architectures:
 - Network topology generators
 """
 
-from .neuron_models import (
-    LeakyIntegrateFireNeuron,
-    AdaptiveExponentialIF,
-    IzhikevichNeuron,
-    HodgkinHuxleyNeuron,
-    SpikingNeuron
-)
+_names = {}
 
-from .synapse_models import (
-    ExponentialSynapse,
-    AlphaFunctionSynapse,
-    STDPSynapse,
-    SynapticConnection
-)
+try:
+    from .neuron_models import (
+        LeakyIntegrateFireNeuron,
+        AdaptiveExponentialIF,
+        IzhikevichNeuron,
+        HodgkinHuxleyNeuron,
+        SpikingNeuron
+    )
+    _names.update({k: v for k, v in locals().items() if not k.startswith('_')})
+except (ImportError, ModuleNotFoundError):
+    pass
 
-from .network_builder import (
-    SpikingNetwork,
-    NetworkTopology,
-    RandomNetwork,
-    SmallWorldNetwork,
-    ScaleFreeNetwork
-)
+try:
+    from .synapse_models import (
+        ExponentialSynapse,
+        AlphaFunctionSynapse,
+        STDPSynapse,
+        SynapticConnection
+    )
+    _names.update({k: v for k, v in locals().items() if not k.startswith('_')})
+except (ImportError, ModuleNotFoundError):
+    pass
 
-from .population import (
-    NeuronPopulation,
-    PopulationConnector,
-    PopulationEncoder
-)
+try:
+    from .network_builder import (
+        SpikingNetwork,
+        NetworkTopology,
+        RandomNetwork,
+        SmallWorldNetwork,
+        ScaleFreeNetwork
+    )
+    _names.update({k: v for k, v in locals().items() if not k.startswith('_')})
+except (ImportError, ModuleNotFoundError):
+    pass
 
-__all__ = [
-    'LeakyIntegrateFireNeuron',
-    'AdaptiveExponentialIF', 
-    'IzhikevichNeuron',
-    'HodgkinHuxleyNeuron',
-    'SpikingNeuron',
-    'ExponentialSynapse',
-    'AlphaFunctionSynapse',
-    'STDPSynapse',
-    'SynapticConnection',
-    'SpikingNetwork',
-    'NetworkTopology',
-    'RandomNetwork',
-    'SmallWorldNetwork',
-    'ScaleFreeNetwork',
-    'NeuronPopulation',
-    'PopulationConnector',
-    'PopulationEncoder'
-]
+try:
+    from .population import (
+        NeuronPopulation,
+        PopulationConnector,
+        PopulationEncoder
+    )
+    _names.update({k: v for k, v in locals().items() if not k.startswith('_')})
+except (ImportError, ModuleNotFoundError):
+    pass
+
+__all__ = list(_names.keys())

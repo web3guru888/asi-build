@@ -20,130 +20,68 @@ the temporal dynamics and energy efficiency of biological neural systems.
 __version__ = "1.0.0"
 __author__ = "Kenny AI - Neuromorphic Computing Specialist NC1"
 
+
+def _try_import(module_path, names):
+    """Attempt to import names from a submodule, silently skip on failure."""
+    result = {}
+    try:
+        import importlib
+        mod = importlib.import_module(module_path, package=__name__)
+        for name in names:
+            val = getattr(mod, name, None)
+            if val is not None:
+                result[name] = val
+    except (ImportError, ModuleNotFoundError, SyntaxError):
+        pass
+    return result
+
+
+_all_imports = {}
+
 # Core imports
-from .core import (
-    NeuromorphicConfig,
-    NeuromorphicManager,
-    EventProcessor,
-    TemporalDynamics
-)
+_all_imports.update(_try_import('.core', [
+    'NeuromorphicConfig', 'NeuromorphicManager', 'EventProcessor', 'TemporalDynamics'
+]))
 
 # Spiking neural network components
-from .spiking import (
-    SpikingNeuron,
-    SpikingNetwork,
-    SynapticConnection,
-    NeuronModels
-)
+_all_imports.update(_try_import('.spiking', [
+    'SpikingNeuron', 'SpikingNetwork', 'SynapticConnection', 'NeuronModels'
+]))
 
 # Hardware simulation
-from .hardware import (
-    NeuromorphicChip,
-    MemristiveDevice,
-    SynapticArray,
-    HardwareSimulator
-)
+_all_imports.update(_try_import('.hardware', [
+    'NeuromorphicChip', 'MemristiveDevice', 'SynapticArray', 'HardwareSimulator'
+]))
 
 # Learning algorithms
-from .learning import (
-    STDPLearning,
-    HomeostasticPlasticity,
-    MetaplasticityLearning,
-    TemporalLearning
-)
+_all_imports.update(_try_import('.learning', [
+    'STDPLearning', 'HomeostasticPlasticity', 'MetaplasticityLearning', 'TemporalLearning'
+]))
 
 # Reservoir computing
-from .reservoir import (
-    LiquidStateMachine,
-    EchoStateNetwork,
-    ReservoirComputer,
-    DynamicReservoir
-)
+_all_imports.update(_try_import('.reservoir', [
+    'LiquidStateMachine', 'EchoStateNetwork', 'ReservoirComputer', 'DynamicReservoir'
+]))
 
 # Vision processing
-from .vision import (
-    DVSProcessor,
-    SpikeBasedVision,
-    TemporalContrast,
-    EventBasedTracking
-)
+_all_imports.update(_try_import('.vision', [
+    'DVSProcessor', 'SpikeBasedVision', 'TemporalContrast', 'EventBasedTracking'
+]))
 
 # Brain-computer interfaces
-from .bci import (
-    SpikeDecoder,
-    MotorIntention,
-    BrainSignalProcessor,
-    NeuroprostheticControl
-)
+_all_imports.update(_try_import('.bci', [
+    'SpikeDecoder', 'MotorIntention', 'BrainSignalProcessor', 'NeuroprostheticControl'
+]))
 
 # Neural coding
-from .coding import (
-    RateCodec,
-    TemporalCodec,
-    PopulationCodec,
-    SparseCodec
-)
+_all_imports.update(_try_import('.coding', [
+    'RateCodec', 'TemporalCodec', 'PopulationCodec', 'SparseCodec'
+]))
 
 # Robotics control
-from .robotics import (
-    NeuromorphicController,
-    SensoriMotorMapper,
-    AdaptiveBehavior,
-    EmbodiedLearning
-)
+_all_imports.update(_try_import('.robotics', [
+    'NeuromorphicController', 'SensoriMotorMapper', 'AdaptiveBehavior', 'EmbodiedLearning'
+]))
 
-__all__ = [
-    # Core
-    'NeuromorphicConfig',
-    'NeuromorphicManager', 
-    'EventProcessor',
-    'TemporalDynamics',
-    
-    # Spiking networks
-    'SpikingNeuron',
-    'SpikingNetwork',
-    'SynapticConnection',
-    'NeuronModels',
-    
-    # Hardware
-    'NeuromorphicChip',
-    'MemristiveDevice',
-    'SynapticArray',
-    'HardwareSimulator',
-    
-    # Learning
-    'STDPLearning',
-    'HomeostasticPlasticity',
-    'MetaplasticityLearning',
-    'TemporalLearning',
-    
-    # Reservoir
-    'LiquidStateMachine',
-    'EchoStateNetwork',
-    'ReservoirComputer',
-    'DynamicReservoir',
-    
-    # Vision
-    'DVSProcessor',
-    'SpikeBasedVision',
-    'TemporalContrast',
-    'EventBasedTracking',
-    
-    # BCI
-    'SpikeDecoder',
-    'MotorIntention',
-    'BrainSignalProcessor',
-    'NeuroprostheticControl',
-    
-    # Coding
-    'RateCodec',
-    'TemporalCodec',
-    'PopulationCodec',
-    'SparseCodec',
-    
-    # Robotics
-    'NeuromorphicController',
-    'SensoriMotorMapper',
-    'AdaptiveBehavior',
-    'EmbodiedLearning'
-]
+globals().update(_all_imports)
+__all__ = list(_all_imports.keys())

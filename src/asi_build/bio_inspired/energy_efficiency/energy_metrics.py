@@ -183,4 +183,289 @@ class EnergyMetrics(BioCognitiveModule):
         self.temperature = 25.0  # Celsius
         self.thermal_resistance = 10.0  # K/W
         
-        logger.info(\"Initialized energy metrics system\")\n    \n    async def process(self, inputs: Dict[str, Any]) -> Dict[str, Any]:\n        \"\"\"Process energy measurements and optimization\"\"\"\n        \n        # Extract system state\n        num_spikes = inputs.get('num_spikes', 0)\n        num_neurons = inputs.get('num_neurons', self.num_neurons)\n        num_synapses = inputs.get('num_synapses', self.num_synapses)\n        plasticity_events = inputs.get('plasticity_events', 0)\n        memory_ops = inputs.get('memory_operations', 0)\n        dt = inputs.get('dt', 0.001)  # 1ms default\n        \n        # Update system parameters\n        self.num_neurons = num_neurons\n        self.num_synapses = num_synapses\n        \n        # Update counters\n        self.spike_count += num_spikes\n        self.plasticity_count += plasticity_events\n        self.memory_operations += memory_ops\n        \n        # Calculate energy consumption\n        energy_breakdown = self.energy_calculator.calculate_total_energy(\n            num_spikes, num_synapses, num_neurons, plasticity_events, dt\n        )\n        \n        # Update tracking\n        self.total_energy_consumed += energy_breakdown['total_energy']\n        self.current_power = energy_breakdown['power']\n        \n        # Calculate efficiency\n        total_operations = num_spikes + plasticity_events + memory_ops\n        self.efficiency_ratio = self.energy_calculator.calculate_efficiency_ratio(\n            energy_breakdown['total_energy'], total_operations\n        )\n        \n        # Update histories\n        self.energy_history.append({\n            'timestamp': time.time(),\n            'energy': energy_breakdown['total_energy'],\n            'power': self.current_power,\n            'efficiency': self.efficiency_ratio\n        })\n        \n        self.power_history.append(self.current_power)\n        self.efficiency_history.append(self.efficiency_ratio)\n        \n        # Update temperature\n        self._update_temperature()\n        \n        # Generate optimization recommendations\n        optimization_recommendations = self._generate_optimization_recommendations()\n        \n        # Prepare output\n        output = {\n            'energy_breakdown': energy_breakdown,\n            'current_power': self.current_power,\n            'total_energy': self.total_energy_consumed,\n            'efficiency_ratio': self.efficiency_ratio,\n            'biological_comparison': self._get_biological_comparison(),\n            'thermal_state': {\n                'temperature': self.temperature,\n                'thermal_resistance': self.thermal_resistance\n            },\n            'optimization_recommendations': optimization_recommendations,\n            'performance_metrics': self._calculate_performance_metrics(),\n            'energy_budget_status': self._check_energy_budget()\n        }\n        \n        return output\n    \n    def _update_temperature(self):\n        \"\"\"Update thermal state based on power consumption\"\"\"\n        ambient_temp = 25.0  # Celsius\n        temp_rise = self.current_power * self.thermal_resistance\n        self.temperature = ambient_temp + temp_rise\n    \n    def _generate_optimization_recommendations(self) -> List[Dict[str, Any]]:\n        \"\"\"Generate energy optimization recommendations\"\"\"\n        recommendations = []\n        \n        # Check efficiency ratio\n        if self.efficiency_ratio < self.target_efficiency_ratio * 0.5:\n            recommendations.append({\n                'type': 'efficiency_improvement',\n                'priority': 'high',\n                'description': 'System efficiency significantly below biological benchmark',\n                'actions': [\n                    'reduce_unnecessary_spikes',\n                    'optimize_network_topology',\n                    'implement_sparse_coding'\n                ]\n            })\n        \n        # Check power budget\n        if self.current_power > self.max_power_budget * 0.8:\n            recommendations.append({\n                'type': 'power_reduction',\n                'priority': 'high',\n                'description': 'Power consumption approaching budget limit',\n                'actions': [\n                    'reduce_firing_rates',\n                    'implement_power_gating',\n                    'optimize_synaptic_weights'\n                ]\n            })\n        \n        # Check thermal state\n        if self.temperature > 60.0:  # Thermal limit\n            recommendations.append({\n                'type': 'thermal_management',\n                'priority': 'critical',\n                'description': 'Temperature exceeding safe operating limits',\n                'actions': [\n                    'reduce_computational_load',\n                    'implement_thermal_throttling',\n                    'improve_cooling'\n                ]\n            })\n        \n        # Check plasticity energy\n        if len(self.energy_history) > 100:\n            recent_energy = [e['energy'] for e in list(self.energy_history)[-100:]]\n            plasticity_ratio = sum(recent_energy) / (self.plasticity_count + 1)\n            \n            if plasticity_ratio > 0.3:  # Plasticity using >30% of energy\n                recommendations.append({\n                    'type': 'plasticity_optimization',\n                    'priority': 'medium',\n                    'description': 'Plasticity consuming excessive energy',\n                    'actions': [\n                        'implement_homeostatic_plasticity',\n                        'use_sparse_plasticity_updates',\n                        'optimize_learning_schedules'\n                    ]\n                })\n        \n        return recommendations\n    \n    def _get_biological_comparison(self) -> Dict[str, float]:\n        \"\"\"Get comparison metrics to biological neural networks\"\"\"\n        bio_efficiency = self.energy_calculator.biological_efficiency\n        \n        # Calculate relative metrics\n        if self.num_neurons > 0:\n            neurons_ratio = self.num_neurons / self.energy_calculator.num_neurons_brain\n            synapses_ratio = self.num_synapses / self.energy_calculator.num_synapses_brain\n            power_ratio = self.current_power / self.energy_calculator.brain_power\n        else:\n            neurons_ratio = synapses_ratio = power_ratio = 0.0\n        \n        return {\n            'efficiency_ratio': self.efficiency_ratio,\n            'neurons_ratio': neurons_ratio,\n            'synapses_ratio': synapses_ratio,\n            'power_ratio': power_ratio,\n            'energy_density_ratio': (self.current_power / 1.0) / bio_efficiency['energy_density'],  # Assuming 1kg system\n            'biological_benchmark_spikes_per_joule': bio_efficiency['spikes_per_joule'],\n            'system_spikes_per_joule': self.spike_count / (self.total_energy_consumed + 1e-12)\n        }\n    \n    def _calculate_performance_metrics(self) -> Dict[str, float]:\n        \"\"\"Calculate performance metrics\"\"\"\n        if len(self.efficiency_history) < 2:\n            return {'efficiency_trend': 0.0, 'power_stability': 1.0}\n        \n        # Efficiency trend\n        recent_efficiency = list(self.efficiency_history)[-10:]\n        if len(recent_efficiency) > 1:\n            efficiency_trend = (recent_efficiency[-1] - recent_efficiency[0]) / len(recent_efficiency)\n        else:\n            efficiency_trend = 0.0\n        \n        # Power stability (inverse of coefficient of variation)\n        recent_power = list(self.power_history)[-100:]\n        if len(recent_power) > 1:\n            power_cv = np.std(recent_power) / (np.mean(recent_power) + 1e-6)\n            power_stability = 1.0 / (1.0 + power_cv)\n        else:\n            power_stability = 1.0\n        \n        # Energy efficiency score (0-1, where 1 is biological efficiency)\n        efficiency_score = min(1.0, self.efficiency_ratio)\n        \n        return {\n            'efficiency_trend': efficiency_trend,\n            'power_stability': power_stability,\n            'efficiency_score': efficiency_score,\n            'thermal_efficiency': max(0.0, 1.0 - (self.temperature - 25.0) / 50.0)  # Penalty for heating\n        }\n    \n    def _check_energy_budget(self) -> Dict[str, Any]:\n        \"\"\"Check energy budget status\"\"\"\n        power_utilization = self.current_power / self.max_power_budget\n        \n        if power_utilization > 1.0:\n            status = 'over_budget'\n            severity = 'critical'\n        elif power_utilization > 0.8:\n            status = 'approaching_limit'\n            severity = 'warning'\n        elif power_utilization > 0.6:\n            status = 'moderate_usage'\n            severity = 'normal'\n        else:\n            status = 'low_usage'\n            severity = 'good'\n        \n        return {\n            'status': status,\n            'severity': severity,\n            'power_utilization': power_utilization,\n            'remaining_budget': max(0.0, self.max_power_budget - self.current_power),\n            'efficiency_target_met': self.efficiency_ratio >= self.target_efficiency_ratio\n        }\n    \n    def get_biological_metrics(self) -> BiologicalMetrics:\n        \"\"\"Get biological metrics for energy system\"\"\"\n        efficiency_score = min(1.0, self.efficiency_ratio)\n        \n        self.metrics = BiologicalMetrics(\n            energy_efficiency=efficiency_score,\n            plasticity_index=min(1.0, self.plasticity_count / 1000.0),  # Normalize\n            neurotransmitter_levels={\n                'atp': max(0.1, 1.0 - self.current_power / self.max_power_budget),  # Energy availability\n                'lactate': min(1.0, self.current_power / self.max_power_budget),  # Metabolic byproduct\n                'glucose': 0.7  # Baseline energy substrate\n            }\n        )\n        \n        return self.metrics\n    \n    def update_parameters(self, learning_signal: float):\n        \"\"\"Update energy parameters based on learning signal\"\"\"\n        # Adjust efficiency targets based on performance\n        if learning_signal > 0.8:\n            # High performance - can afford slightly higher energy usage\n            self.target_efficiency_ratio = min(1.0, self.target_efficiency_ratio * 1.01)\n        elif learning_signal < 0.3:\n            # Poor performance - need to be more energy efficient\n            self.target_efficiency_ratio = max(0.01, self.target_efficiency_ratio * 0.99)\n    \n    def set_power_budget(self, budget: float):\n        \"\"\"Set power budget in watts\"\"\"\n        self.max_power_budget = max(0.1, budget)\n        logger.info(f\"Set power budget to {budget}W\")\n    \n    def get_energy_statistics(self) -> Dict[str, Any]:\n        \"\"\"Get comprehensive energy statistics\"\"\"\n        if not self.energy_history:\n            return {}\n        \n        energies = [e['energy'] for e in self.energy_history]\n        powers = [e['power'] for e in self.energy_history]\n        efficiencies = [e['efficiency'] for e in self.energy_history]\n        \n        return {\n            'total_energy_consumed': self.total_energy_consumed,\n            'average_power': np.mean(powers),\n            'peak_power': np.max(powers),\n            'average_efficiency': np.mean(efficiencies),\n            'peak_efficiency': np.max(efficiencies),\n            'energy_per_spike': self.total_energy_consumed / (self.spike_count + 1),\n            'energy_per_plasticity_event': self.total_energy_consumed / (self.plasticity_count + 1),\n            'uptime': len(self.energy_history) * 0.001,  # Assuming 1ms timesteps\n            'thermal_efficiency': 1.0 / (1.0 + (self.temperature - 25.0) / 25.0)\n        }\n    \n    def reset_energy_tracking(self):\n        \"\"\"Reset energy tracking\"\"\"\n        self.energy_history.clear()\n        self.power_history.clear()\n        self.efficiency_history.clear()\n        \n        self.current_power = 0.0\n        self.total_energy_consumed = 0.0\n        self.efficiency_ratio = 0.0\n        \n        self.spike_count = 0\n        self.plasticity_count = 0\n        self.memory_operations = 0\n        \n        self.temperature = 25.0\n        \n        logger.info(\"Reset energy tracking\")"
+        logger.info("Initialized energy metrics system")
+    
+    async def process(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+        """Process energy measurements and optimization"""
+        
+        # Extract system state
+        num_spikes = inputs.get('num_spikes', 0)
+        num_neurons = inputs.get('num_neurons', self.num_neurons)
+        num_synapses = inputs.get('num_synapses', self.num_synapses)
+        plasticity_events = inputs.get('plasticity_events', 0)
+        memory_ops = inputs.get('memory_operations', 0)
+        dt = inputs.get('dt', 0.001)  # 1ms default
+        
+        # Update system parameters
+        self.num_neurons = num_neurons
+        self.num_synapses = num_synapses
+        
+        # Update counters
+        self.spike_count += num_spikes
+        self.plasticity_count += plasticity_events
+        self.memory_operations += memory_ops
+        
+        # Calculate energy consumption
+        energy_breakdown = self.energy_calculator.calculate_total_energy(
+            num_spikes, num_synapses, num_neurons, plasticity_events, dt
+        )
+        
+        # Update tracking
+        self.total_energy_consumed += energy_breakdown['total_energy']
+        self.current_power = energy_breakdown['power']
+        
+        # Calculate efficiency
+        total_operations = num_spikes + plasticity_events + memory_ops
+        self.efficiency_ratio = self.energy_calculator.calculate_efficiency_ratio(
+            energy_breakdown['total_energy'], total_operations
+        )
+        
+        # Update histories
+        self.energy_history.append({
+            'timestamp': time.time(),
+            'energy': energy_breakdown['total_energy'],
+            'power': self.current_power,
+            'efficiency': self.efficiency_ratio
+        })
+        
+        self.power_history.append(self.current_power)
+        self.efficiency_history.append(self.efficiency_ratio)
+        
+        # Update temperature
+        self._update_temperature()
+        
+        # Generate optimization recommendations
+        optimization_recommendations = self._generate_optimization_recommendations()
+        
+        # Prepare output
+        output = {
+            'energy_breakdown': energy_breakdown,
+            'current_power': self.current_power,
+            'total_energy': self.total_energy_consumed,
+            'efficiency_ratio': self.efficiency_ratio,
+            'biological_comparison': self._get_biological_comparison(),
+            'thermal_state': {
+                'temperature': self.temperature,
+                'thermal_resistance': self.thermal_resistance
+            },
+            'optimization_recommendations': optimization_recommendations,
+            'performance_metrics': self._calculate_performance_metrics(),
+            'energy_budget_status': self._check_energy_budget()
+        }
+        
+        return output
+    
+    def _update_temperature(self):
+        """Update thermal state based on power consumption"""
+        ambient_temp = 25.0  # Celsius
+        temp_rise = self.current_power * self.thermal_resistance
+        self.temperature = ambient_temp + temp_rise
+    
+    def _generate_optimization_recommendations(self) -> List[Dict[str, Any]]:
+        """Generate energy optimization recommendations"""
+        recommendations = []
+        
+        # Check efficiency ratio
+        if self.efficiency_ratio < self.target_efficiency_ratio * 0.5:
+            recommendations.append({
+                'type': 'efficiency_improvement',
+                'priority': 'high',
+                'description': 'System efficiency significantly below biological benchmark',
+                'actions': [
+                    'reduce_unnecessary_spikes',
+                    'optimize_network_topology',
+                    'implement_sparse_coding'
+                ]
+            })
+        
+        # Check power budget
+        if self.current_power > self.max_power_budget * 0.8:
+            recommendations.append({
+                'type': 'power_reduction',
+                'priority': 'high',
+                'description': 'Power consumption approaching budget limit',
+                'actions': [
+                    'reduce_firing_rates',
+                    'implement_power_gating',
+                    'optimize_synaptic_weights'
+                ]
+            })
+        
+        # Check thermal state
+        if self.temperature > 60.0:  # Thermal limit
+            recommendations.append({
+                'type': 'thermal_management',
+                'priority': 'critical',
+                'description': 'Temperature exceeding safe operating limits',
+                'actions': [
+                    'reduce_computational_load',
+                    'implement_thermal_throttling',
+                    'improve_cooling'
+                ]
+            })
+        
+        # Check plasticity energy
+        if len(self.energy_history) > 100:
+            recent_energy = [e['energy'] for e in list(self.energy_history)[-100:]]
+            plasticity_ratio = sum(recent_energy) / (self.plasticity_count + 1)
+            
+            if plasticity_ratio > 0.3:  # Plasticity using >30% of energy
+                recommendations.append({
+                    'type': 'plasticity_optimization',
+                    'priority': 'medium',
+                    'description': 'Plasticity consuming excessive energy',
+                    'actions': [
+                        'implement_homeostatic_plasticity',
+                        'use_sparse_plasticity_updates',
+                        'optimize_learning_schedules'
+                    ]
+                })
+        
+        return recommendations
+    
+    def _get_biological_comparison(self) -> Dict[str, float]:
+        """Get comparison metrics to biological neural networks"""
+        bio_efficiency = self.energy_calculator.biological_efficiency
+        
+        # Calculate relative metrics
+        if self.num_neurons > 0:
+            neurons_ratio = self.num_neurons / self.energy_calculator.num_neurons_brain
+            synapses_ratio = self.num_synapses / self.energy_calculator.num_synapses_brain
+            power_ratio = self.current_power / self.energy_calculator.brain_power
+        else:
+            neurons_ratio = synapses_ratio = power_ratio = 0.0
+        
+        return {
+            'efficiency_ratio': self.efficiency_ratio,
+            'neurons_ratio': neurons_ratio,
+            'synapses_ratio': synapses_ratio,
+            'power_ratio': power_ratio,
+            'energy_density_ratio': (self.current_power / 1.0) / bio_efficiency['energy_density'],  # Assuming 1kg system
+            'biological_benchmark_spikes_per_joule': bio_efficiency['spikes_per_joule'],
+            'system_spikes_per_joule': self.spike_count / (self.total_energy_consumed + 1e-12)
+        }
+    
+    def _calculate_performance_metrics(self) -> Dict[str, float]:
+        """Calculate performance metrics"""
+        if len(self.efficiency_history) < 2:
+            return {'efficiency_trend': 0.0, 'power_stability': 1.0}
+        
+        # Efficiency trend
+        recent_efficiency = list(self.efficiency_history)[-10:]
+        if len(recent_efficiency) > 1:
+            efficiency_trend = (recent_efficiency[-1] - recent_efficiency[0]) / len(recent_efficiency)
+        else:
+            efficiency_trend = 0.0
+        
+        # Power stability (inverse of coefficient of variation)
+        recent_power = list(self.power_history)[-100:]
+        if len(recent_power) > 1:
+            power_cv = np.std(recent_power) / (np.mean(recent_power) + 1e-6)
+            power_stability = 1.0 / (1.0 + power_cv)
+        else:
+            power_stability = 1.0
+        
+        # Energy efficiency score (0-1, where 1 is biological efficiency)
+        efficiency_score = min(1.0, self.efficiency_ratio)
+        
+        return {
+            'efficiency_trend': efficiency_trend,
+            'power_stability': power_stability,
+            'efficiency_score': efficiency_score,
+            'thermal_efficiency': max(0.0, 1.0 - (self.temperature - 25.0) / 50.0)  # Penalty for heating
+        }
+    
+    def _check_energy_budget(self) -> Dict[str, Any]:
+        """Check energy budget status"""
+        power_utilization = self.current_power / self.max_power_budget
+        
+        if power_utilization > 1.0:
+            status = 'over_budget'
+            severity = 'critical'
+        elif power_utilization > 0.8:
+            status = 'approaching_limit'
+            severity = 'warning'
+        elif power_utilization > 0.6:
+            status = 'moderate_usage'
+            severity = 'normal'
+        else:
+            status = 'low_usage'
+            severity = 'good'
+        
+        return {
+            'status': status,
+            'severity': severity,
+            'power_utilization': power_utilization,
+            'remaining_budget': max(0.0, self.max_power_budget - self.current_power),
+            'efficiency_target_met': self.efficiency_ratio >= self.target_efficiency_ratio
+        }
+    
+    def get_biological_metrics(self) -> BiologicalMetrics:
+        """Get biological metrics for energy system"""
+        efficiency_score = min(1.0, self.efficiency_ratio)
+        
+        self.metrics = BiologicalMetrics(
+            energy_efficiency=efficiency_score,
+            plasticity_index=min(1.0, self.plasticity_count / 1000.0),  # Normalize
+            neurotransmitter_levels={
+                'atp': max(0.1, 1.0 - self.current_power / self.max_power_budget),  # Energy availability
+                'lactate': min(1.0, self.current_power / self.max_power_budget),  # Metabolic byproduct
+                'glucose': 0.7  # Baseline energy substrate
+            }
+        )
+        
+        return self.metrics
+    
+    def update_parameters(self, learning_signal: float):
+        """Update energy parameters based on learning signal"""
+        # Adjust efficiency targets based on performance
+        if learning_signal > 0.8:
+            # High performance - can afford slightly higher energy usage
+            self.target_efficiency_ratio = min(1.0, self.target_efficiency_ratio * 1.01)
+        elif learning_signal < 0.3:
+            # Poor performance - need to be more energy efficient
+            self.target_efficiency_ratio = max(0.01, self.target_efficiency_ratio * 0.99)
+    
+    def set_power_budget(self, budget: float):
+        """Set power budget in watts"""
+        self.max_power_budget = max(0.1, budget)
+        logger.info(f"Set power budget to {budget}W")
+    
+    def get_energy_statistics(self) -> Dict[str, Any]:
+        """Get comprehensive energy statistics"""
+        if not self.energy_history:
+            return {}
+        
+        energies = [e['energy'] for e in self.energy_history]
+        powers = [e['power'] for e in self.energy_history]
+        efficiencies = [e['efficiency'] for e in self.energy_history]
+        
+        return {
+            'total_energy_consumed': self.total_energy_consumed,
+            'average_power': np.mean(powers),
+            'peak_power': np.max(powers),
+            'average_efficiency': np.mean(efficiencies),
+            'peak_efficiency': np.max(efficiencies),
+            'energy_per_spike': self.total_energy_consumed / (self.spike_count + 1),
+            'energy_per_plasticity_event': self.total_energy_consumed / (self.plasticity_count + 1),
+            'uptime': len(self.energy_history) * 0.001,  # Assuming 1ms timesteps
+            'thermal_efficiency': 1.0 / (1.0 + (self.temperature - 25.0) / 25.0)
+        }
+    
+    def reset_energy_tracking(self):
+        """Reset energy tracking"""
+        self.energy_history.clear()
+        self.power_history.clear()
+        self.efficiency_history.clear()
+        
+        self.current_power = 0.0
+        self.total_energy_consumed = 0.0
+        self.efficiency_ratio = 0.0
+        
+        self.spike_count = 0
+        self.plasticity_count = 0
+        self.memory_operations = 0
+        
+        self.temperature = 25.0
+        
+        logger.info("Reset energy tracking")

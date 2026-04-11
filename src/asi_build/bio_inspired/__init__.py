@@ -19,19 +19,36 @@ This module implements:
 - Energy efficiency metrics
 """
 
-from .core import BioCognitiveArchitecture
-from .neuromorphic import SpikingNeuralNetwork, NeuromorphicProcessor
-from .evolutionary import EvolutionaryOptimizer, GeneticProgramming
-from .homeostatic import HomeostaticRegulator, AllostasisController
-from .developmental import DevelopmentalLearning, CognitiveDevelopment
-from .neuromodulation import NeuromodulationSystem, NeurotransmitterManager
-from .sleep_wake import SleepWakeCycle, MemoryConsolidation
-from .emotional import EmotionalRegulation, AffectiveComputing
-from .embodied import EmbodiedCognition, SensorimotorIntegration
-from .neuroplasticity import NeuroplasticityManager, SynapticPruning
-from .hierarchical_memory import HierarchicalTemporalMemory, HTMNetwork
-from .learning_rules import STDPLearning, BCMLearning, BiologicalLearning
-from .energy_efficiency import EnergyMetrics, BiologicalEfficiencyComparator
+def _safe_import(module_path, names):
+    """Import names from a submodule, returning None for any that fail."""
+    result = {}
+    try:
+        import importlib
+        mod = importlib.import_module(module_path, package=__name__)
+        for name in names:
+            result[name] = getattr(mod, name, None)
+    except (ImportError, ModuleNotFoundError, SyntaxError):
+        for name in names:
+            result[name] = None
+    return result
+
+_imports = {}
+_imports.update(_safe_import('.core', ['BioCognitiveArchitecture']))
+_imports.update(_safe_import('.neuromorphic', ['SpikingNeuralNetwork', 'NeuromorphicProcessor']))
+_imports.update(_safe_import('.evolutionary', ['EvolutionaryOptimizer', 'GeneticProgramming']))
+_imports.update(_safe_import('.homeostatic', ['HomeostaticRegulator', 'AllostasisController']))
+_imports.update(_safe_import('.developmental', ['DevelopmentalLearning', 'CognitiveDevelopment']))
+_imports.update(_safe_import('.neuromodulation', ['NeuromodulationSystem', 'NeurotransmitterManager']))
+_imports.update(_safe_import('.sleep_wake', ['SleepWakeCycle', 'MemoryConsolidation']))
+_imports.update(_safe_import('.emotional', ['EmotionalRegulation', 'AffectiveComputing']))
+_imports.update(_safe_import('.embodied', ['EmbodiedCognition', 'SensorimotorIntegration']))
+_imports.update(_safe_import('.neuroplasticity', ['NeuroplasticityManager', 'SynapticPruning']))
+_imports.update(_safe_import('.hierarchical_memory', ['HierarchicalTemporalMemory', 'HTMNetwork']))
+_imports.update(_safe_import('.learning_rules', ['STDPLearning', 'BCMLearning', 'BiologicalLearning']))
+_imports.update(_safe_import('.energy_efficiency', ['EnergyMetrics', 'BiologicalEfficiencyComparator']))
+
+# Promote to module namespace
+globals().update(_imports)
 
 __version__ = "1.0.0"
 __author__ = "Kenny AGI Team"

@@ -4,7 +4,7 @@ Noise estimation and management for homomorphic encryption.
 
 import math
 import numpy as np
-from typing import List, Dict, Optional, Tuple
+from typing import Any, List, Dict, Optional, Tuple
 import logging
 
 from .parameters import FHEParameters

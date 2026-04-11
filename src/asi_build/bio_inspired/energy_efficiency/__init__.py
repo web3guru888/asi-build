@@ -7,9 +7,24 @@ plausible energy constraints.
 """
 
 from .energy_metrics import EnergyMetrics, EnergyCalculator, MetabolicCost
-from .biological_efficiency import BiologicalEfficiencyComparator, NeuralEnergyBenchmark
-from .power_management import PowerManager, EnergyOptimizer
-from .thermal_dynamics import ThermalModel, CoolingSystem
+
+try:
+    from .biological_efficiency import BiologicalEfficiencyComparator, NeuralEnergyBenchmark
+except ImportError:
+    BiologicalEfficiencyComparator = None
+    NeuralEnergyBenchmark = None
+
+try:
+    from .power_management import PowerManager, EnergyOptimizer
+except ImportError:
+    PowerManager = None
+    EnergyOptimizer = None
+
+try:
+    from .thermal_dynamics import ThermalModel, CoolingSystem
+except ImportError:
+    ThermalModel = None
+    CoolingSystem = None
 
 __all__ = [
     "EnergyMetrics",

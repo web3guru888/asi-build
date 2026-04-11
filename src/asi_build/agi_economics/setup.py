@@ -30,7 +30,8 @@ def read_requirements():
 # Version
 VERSION = "1.0.0"
 
-setup(
+if __name__ == "__main__":
+  setup(
     name="agi-economics",
     version=VERSION,
     author="Kenny AGI Team",

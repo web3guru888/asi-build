@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional, Tuple, Callable
 from dataclasses import dataclass
 import logging
 
-from .base import FHEParameters
+from .parameters import FHEParameters
 from .encryption import Ciphertext, Plaintext
 from .polynomial import Polynomial
 

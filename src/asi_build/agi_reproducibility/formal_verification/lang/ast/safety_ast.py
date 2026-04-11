@@ -89,7 +89,7 @@ class SafetyExpression(SafetyNode):
 @dataclass
 class Variable(SafetyExpression):
     """Variable reference in safety specifications."""
-    name: str
+    name: str = ""
     domain: Optional[str] = None  # Type domain (e.g., "Real", "Boolean", "Goal")
     
     def accept(self, visitor):
@@ -99,8 +99,8 @@ class Variable(SafetyExpression):
 @dataclass
 class Constant(SafetyExpression):
     """Constant value in safety specifications."""
-    value: Any
-    type_name: str
+    value: Any = None
+    type_name: str = ""
     
     def accept(self, visitor):
         return visitor.visit_constant(self)
@@ -109,9 +109,9 @@ class Constant(SafetyExpression):
 @dataclass
 class BinaryOperation(SafetyExpression):
     """Binary operation between two expressions."""
-    left: SafetyExpression
-    operator: Union[LogicalOperator, str]
-    right: SafetyExpression
+    left: SafetyExpression = None
+    operator: Union[LogicalOperator, str] = None
+    right: SafetyExpression = None
     
     def accept(self, visitor):
         return visitor.visit_binary_op(self)
@@ -120,8 +120,8 @@ class BinaryOperation(SafetyExpression):
 @dataclass
 class UnaryOperation(SafetyExpression):
     """Unary operation on an expression."""
-    operator: Union[LogicalOperator, str]
-    operand: SafetyExpression
+    operator: Union[LogicalOperator, str] = None
+    operand: SafetyExpression = None
     
     def accept(self, visitor):
         return visitor.visit_unary_op(self)
@@ -130,10 +130,10 @@ class UnaryOperation(SafetyExpression):
 @dataclass
 class QuantifiedExpression(SafetyExpression):
     """Quantified expression (forall, exists)."""
-    quantifier: LogicalOperator  # FORALL or EXISTS
-    variables: List[Variable]
-    domain_constraints: List[SafetyExpression]
-    body: SafetyExpression
+    quantifier: LogicalOperator = None  # FORALL or EXISTS
+    variables: List[Variable] = field(default_factory=list)
+    domain_constraints: List[SafetyExpression] = field(default_factory=list)
+    body: SafetyExpression = None
     
     def accept(self, visitor):
         return visitor.visit_quantified(self)
@@ -144,8 +144,8 @@ class QuantifiedExpression(SafetyExpression):
 @dataclass
 class TemporalExpression(SafetyExpression):
     """Temporal logic expression for time-dependent properties."""
-    operator: TemporalOperator
-    operand: SafetyExpression
+    operator: TemporalOperator = None
+    operand: SafetyExpression = None
     time_bound: Optional[int] = None  # For bounded temporal operators
     
     def accept(self, visitor):
@@ -155,9 +155,9 @@ class TemporalExpression(SafetyExpression):
 @dataclass
 class BinaryTemporalExpression(SafetyExpression):
     """Binary temporal expression (Until, Release)."""
-    left: SafetyExpression
-    operator: TemporalOperator
-    right: SafetyExpression
+    left: SafetyExpression = None
+    operator: TemporalOperator = None
+    right: SafetyExpression = None
     time_bound: Optional[int] = None
     
     def accept(self, visitor):
@@ -169,8 +169,8 @@ class BinaryTemporalExpression(SafetyExpression):
 @dataclass
 class SafetyInvariant(SafetyNode):
     """Safety invariant that must always hold."""
-    name: str
-    condition: SafetyExpression
+    name: str = ""
+    condition: SafetyExpression = None
     priority: int = 1  # Higher numbers = higher priority
     enforcement_level: str = "CRITICAL"  # CRITICAL, HIGH, MEDIUM, LOW
     
@@ -181,10 +181,10 @@ class SafetyInvariant(SafetyNode):
 @dataclass
 class ValueAlignmentSpec(SafetyNode):
     """Value alignment specification."""
-    name: str
-    value_function: SafetyExpression
-    preservation_condition: SafetyExpression
-    alignment_metric: SafetyExpression
+    name: str = ""
+    value_function: SafetyExpression = None
+    preservation_condition: SafetyExpression = None
+    alignment_metric: SafetyExpression = None
     tolerance: float = 0.01
     
     def accept(self, visitor):
@@ -194,10 +194,10 @@ class ValueAlignmentSpec(SafetyNode):
 @dataclass
 class GoalPreservationSpec(SafetyNode):
     """Goal preservation specification."""
-    name: str
-    goal_definition: SafetyExpression
-    stability_condition: SafetyExpression
-    modification_constraints: List[SafetyExpression]
+    name: str = ""
+    goal_definition: SafetyExpression = None
+    stability_condition: SafetyExpression = None
+    modification_constraints: List[SafetyExpression] = field(default_factory=list)
     convergence_proof: Optional[SafetyExpression] = None
     
     def accept(self, visitor):
@@ -207,11 +207,11 @@ class GoalPreservationSpec(SafetyNode):
 @dataclass
 class CorrigibilitySpec(SafetyNode):
     """Corrigibility specification for safe modification."""
-    name: str
-    modification_acceptance: SafetyExpression
-    shutdown_compliance: SafetyExpression
-    goal_modification_bounds: SafetyExpression
-    human_override_conditions: List[SafetyExpression]
+    name: str = ""
+    modification_acceptance: SafetyExpression = None
+    shutdown_compliance: SafetyExpression = None
+    goal_modification_bounds: SafetyExpression = None
+    human_override_conditions: List[SafetyExpression] = field(default_factory=list)
     
     def accept(self, visitor):
         return visitor.visit_corrigibility(self)
@@ -220,11 +220,11 @@ class CorrigibilitySpec(SafetyNode):
 @dataclass
 class ImpactBound(SafetyNode):
     """Impact limitation bounds for optimization."""
-    name: str
-    impact_metric: SafetyExpression
-    upper_bound: SafetyExpression
-    measurement_function: SafetyExpression
-    violation_response: SafetyExpression
+    name: str = ""
+    impact_metric: SafetyExpression = None
+    upper_bound: SafetyExpression = None
+    measurement_function: SafetyExpression = None
+    violation_response: SafetyExpression = None
     
     def accept(self, visitor):
         return visitor.visit_impact_bound(self)
@@ -233,11 +233,11 @@ class ImpactBound(SafetyNode):
 @dataclass
 class MesaOptimizationGuard(SafetyNode):
     """Mesa-optimization safety guard."""
-    name: str
-    detection_condition: SafetyExpression
-    prevention_mechanism: SafetyExpression
-    monitoring_invariants: List[SafetyExpression]
-    intervention_threshold: SafetyExpression
+    name: str = ""
+    detection_condition: SafetyExpression = None
+    prevention_mechanism: SafetyExpression = None
+    monitoring_invariants: List[SafetyExpression] = field(default_factory=list)
+    intervention_threshold: SafetyExpression = None
     
     def accept(self, visitor):
         return visitor.visit_mesa_guard(self)
@@ -248,9 +248,9 @@ class MesaOptimizationGuard(SafetyNode):
 @dataclass
 class SystemState(SafetyNode):
     """System state representation."""
-    name: str
-    variables: Dict[str, Variable]
-    invariants: List[SafetyInvariant]
+    name: str = ""
+    variables: Dict[str, Variable] = field(default_factory=dict)
+    invariants: List[SafetyInvariant] = field(default_factory=list)
     
     def accept(self, visitor):
         return visitor.visit_system_state(self)
@@ -259,11 +259,11 @@ class SystemState(SafetyNode):
 @dataclass
 class StateTransition(SafetyNode):
     """State transition specification."""
-    name: str
-    precondition: SafetyExpression
-    postcondition: SafetyExpression
-    action: SafetyExpression
-    safety_constraints: List[SafetyExpression]
+    name: str = ""
+    precondition: SafetyExpression = None
+    postcondition: SafetyExpression = None
+    action: SafetyExpression = None
+    safety_constraints: List[SafetyExpression] = field(default_factory=list)
     
     def accept(self, visitor):
         return visitor.visit_transition(self)
@@ -272,9 +272,9 @@ class StateTransition(SafetyNode):
 @dataclass
 class SafetyProperty(SafetyNode):
     """Complete safety property specification."""
-    name: str
-    property_type: SafetyPropertyType
-    specification: SafetyExpression
+    name: str = ""
+    property_type: SafetyPropertyType = None
+    specification: SafetyExpression = None
     verification_method: str = "MODEL_CHECKING"
     proof_obligations: List[SafetyExpression] = field(default_factory=list)
     
@@ -287,9 +287,9 @@ class SafetyProperty(SafetyNode):
 @dataclass
 class SafetySpecification(SafetyNode):
     """Complete AGI safety specification document."""
-    name: str
-    version: str
-    target_system: str
+    name: str = ""
+    version: str = ""
+    target_system: str = ""
     
     # Core safety components
     invariants: List[SafetyInvariant] = field(default_factory=list)

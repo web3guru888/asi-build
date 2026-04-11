@@ -375,281 +375,281 @@ class SpikeMonitor:
         else:
             i += 1
         
-    burst_rate = len(bursts) / (self.current_time - self.start_time) if self.current_time > self.start_time else 0.0
+        burst_rate = len(bursts) / (self.current_time - self.start_time) if self.current_time > self.start_time else 0.0
     
-    return {
-        'bursts': bursts,
-        'burst_rate': burst_rate,
-        'total_bursts': len(bursts)
-    }
+        return {
+            'bursts': bursts,
+            'burst_rate': burst_rate,
+            'total_bursts': len(bursts)
+        }
 
-def add_neuron_filter(self, neuron_id: int) -> None:
-    """Add neuron to monitoring filter."""
-    self.neuron_filters.add(neuron_id)
+    def add_neuron_filter(self, neuron_id: int) -> None:
+        """Add neuron to monitoring filter."""
+        self.neuron_filters.add(neuron_id)
 
-def remove_neuron_filter(self, neuron_id: int) -> None:
-    """Remove neuron from monitoring filter."""
-    self.neuron_filters.discard(neuron_id)
+    def remove_neuron_filter(self, neuron_id: int) -> None:
+        """Remove neuron from monitoring filter."""
+        self.neuron_filters.discard(neuron_id)
 
-def clear_neuron_filters(self) -> None:
-    """Clear all neuron filters."""
-    self.neuron_filters.clear()
+    def clear_neuron_filters(self) -> None:
+        """Clear all neuron filters."""
+        self.neuron_filters.clear()
 
-def set_amplitude_threshold(self, threshold: float) -> None:
-    """Set minimum amplitude threshold for spike recording."""
-    self.amplitude_threshold = threshold
+    def set_amplitude_threshold(self, threshold: float) -> None:
+        """Set minimum amplitude threshold for spike recording."""
+        self.amplitude_threshold = threshold
 
-def add_spike_callback(self, callback: Callable) -> None:
-    """Add callback for spike events."""
-    self.spike_callbacks.append(callback)
+    def add_spike_callback(self, callback: Callable) -> None:
+        """Add callback for spike events."""
+        self.spike_callbacks.append(callback)
 
-def add_stats_callback(self, callback: Callable) -> None:
-    """Add callback for statistics updates."""
-    self.stats_callbacks.append(callback)
+    def add_stats_callback(self, callback: Callable) -> None:
+        """Add callback for statistics updates."""
+        self.stats_callbacks.append(callback)
 
-def get_raster_data(self, time_window: float = None) -> Dict[int, List[float]]:
-    """Get raster plot data."""
-    if time_window is None:
-        # Return all data
-        return {nid: list(times) for nid, times in self.spike_times_by_neuron.items()}
+    def get_raster_data(self, time_window: float = None) -> Dict[int, List[float]]:
+        """Get raster plot data."""
+        if time_window is None:
+            # Return all data
+            return {nid: list(times) for nid, times in self.spike_times_by_neuron.items()}
     
-    cutoff_time = self.current_time - time_window
-    raster_data = {}
+        cutoff_time = self.current_time - time_window
+        raster_data = {}
     
-    for neuron_id, spike_times in self.spike_times_by_neuron.items():
-        recent_spikes = [t for t in spike_times if t >= cutoff_time]
-        if recent_spikes:
-            raster_data[neuron_id] = recent_spikes
+        for neuron_id, spike_times in self.spike_times_by_neuron.items():
+            recent_spikes = [t for t in spike_times if t >= cutoff_time]
+            if recent_spikes:
+                raster_data[neuron_id] = recent_spikes
     
-    return raster_data
+        return raster_data
 
-def get_rate_histogram(self, bin_size: float = 0.01) -> Tuple[np.ndarray, np.ndarray]:
-    """Get firing rate histogram."""
-    if not self.spike_records:
-        return np.array([]), np.array([])
+    def get_rate_histogram(self, bin_size: float = 0.01) -> Tuple[np.ndarray, np.ndarray]:
+        """Get firing rate histogram."""
+        if not self.spike_records:
+            return np.array([]), np.array([])
     
-    # Create time bins
-    max_time = max(record.timestamp for record in self.spike_records)
-    bins = np.arange(0, max_time + bin_size, bin_size)
+        # Create time bins
+        max_time = max(record.timestamp for record in self.spike_records)
+        bins = np.arange(0, max_time + bin_size, bin_size)
     
-    # Count spikes in each bin
-    spike_times = [record.timestamp for record in self.spike_records]
-    counts, _ = np.histogram(spike_times, bins=bins)
+        # Count spikes in each bin
+        spike_times = [record.timestamp for record in self.spike_records]
+        counts, _ = np.histogram(spike_times, bins=bins)
     
-    # Convert to rates (spikes/second)
-    rates = counts / bin_size
+        # Convert to rates (spikes/second)
+        rates = counts / bin_size
     
-    return bins[:-1], rates
+        return bins[:-1], rates
 
-def export_data(self, filename: str = None) -> str:
-    """Export recorded data to file."""
-    if filename is None:
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        filename = f"spike_data_{timestamp}.json"
+    def export_data(self, filename: str = None) -> str:
+        """Export recorded data to file."""
+        if filename is None:
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = f"spike_data_{timestamp}.json"
     
-    filepath = self.export_directory / filename
+        filepath = self.export_directory / filename
     
-    # Prepare export data
-    export_data = {
-        'metadata': {
-            'recording_start': self.start_time,
-            'recording_duration': self.current_time,
-            'total_spikes': len(self.spike_records),
-            'active_neurons': len(self.spike_times_by_neuron),
-            'export_timestamp': time.time()
-        },
-        'statistics': {
-            'total_spikes': self.stats.total_spikes,
-            'avg_firing_rate': self.stats.avg_firing_rate,
-            'max_firing_rate': self.stats.max_firing_rate,
-            'network_synchrony': self.stats.network_synchrony
-        },
-        'spike_data': [
-            {
-                'neuron_id': record.neuron_id,
-                'timestamp': record.timestamp,
-                'amplitude': record.amplitude,
-                'metadata': record.metadata
-            }
-            for record in self.spike_records
-        ],
-        'firing_rates': dict(self.firing_rates),
-        'neuron_spike_counts': dict(self.spike_counts)
-    }
+        # Prepare export data
+        export_data = {
+            'metadata': {
+                'recording_start': self.start_time,
+                'recording_duration': self.current_time,
+                'total_spikes': len(self.spike_records),
+                'active_neurons': len(self.spike_times_by_neuron),
+                'export_timestamp': time.time()
+            },
+            'statistics': {
+                'total_spikes': self.stats.total_spikes,
+                'avg_firing_rate': self.stats.avg_firing_rate,
+                'max_firing_rate': self.stats.max_firing_rate,
+                'network_synchrony': self.stats.network_synchrony
+            },
+            'spike_data': [
+                {
+                    'neuron_id': record.neuron_id,
+                    'timestamp': record.timestamp,
+                    'amplitude': record.amplitude,
+                    'metadata': record.metadata
+                }
+                for record in self.spike_records
+            ],
+            'firing_rates': dict(self.firing_rates),
+            'neuron_spike_counts': dict(self.spike_counts)
+        }
     
-    try:
-        with open(filepath, 'w') as f:
-            json.dump(export_data, f, indent=2)
-        
-        self.logger.info(f"Exported spike data to {filepath}")
-        return str(filepath)
-        
-    except Exception as e:
-        self.logger.error(f"Failed to export data: {e}")
-        raise
-
-def get_statistics(self) -> MonitoringStats:
-    """Get current monitoring statistics."""
-    with self._lock:
-        return self.stats
-
-def get_monitor_performance(self) -> Dict[str, Any]:
-    """Get monitor performance metrics."""
-    avg_processing_time = (
-        np.mean(self.processing_times) if self.processing_times else 0.0
-    )
-    
-    return {
-        'avg_processing_time': avg_processing_time,
-        'max_processing_time': max(self.processing_times) if self.processing_times else 0.0,
-        'total_records': len(self.spike_records),
-        'memory_usage_mb': sum(self.memory_usage) / len(self.memory_usage) if self.memory_usage else 0.0,
-        'recording_duration': self.current_time,
-        'records_per_second': len(self.spike_records) / self.current_time if self.current_time > 0 else 0.0
-    }
-
-def _update_statistics(self) -> None:
-    """Update monitoring statistics."""
-    self.stats.total_spikes = len(self.spike_records)
-    self.stats.active_neurons = len(self.spike_times_by_neuron)
-    self.stats.recording_duration = self.current_time
-    
-    # Calculate firing rates
-    if self.spike_times_by_neuron:
-        rates = []
-        for neuron_id in self.spike_times_by_neuron:
-            rate = self.get_firing_rate(neuron_id)
-            self.firing_rates[neuron_id] = rate
-            rates.append(rate)
-        
-        self.stats.avg_firing_rate = np.mean(rates) if rates else 0.0
-        self.stats.max_firing_rate = max(rates) if rates else 0.0
-    
-    # Calculate network synchrony
-    self.stats.network_synchrony = self.get_synchrony_index()
-    
-    self.stats.last_update = self.current_time
-    
-    # Call statistics callbacks
-    for callback in self.stats_callbacks:
         try:
-            callback(self.stats)
+            with open(filepath, 'w') as f:
+                json.dump(export_data, f, indent=2)
+        
+            self.logger.info(f"Exported spike data to {filepath}")
+            return str(filepath)
+        
         except Exception as e:
-            self.logger.warning(f"Stats callback failed: {e}")
+            self.logger.error(f"Failed to export data: {e}")
+            raise
 
-def _update_realtime_data(self, spike_record: SpikeRecord) -> None:
-    """Update real-time analysis data."""
-    # Add to sliding window
-    self.sliding_window_data.append(spike_record)
-    
-    # Update raster data
-    self.raster_data[spike_record.neuron_id].append(spike_record.timestamp)
-    
-    # Limit raster data size
-    max_raster_points = 1000
-    if len(self.raster_data[spike_record.neuron_id]) > max_raster_points:
-        self.raster_data[spike_record.neuron_id] = (
-            self.raster_data[spike_record.neuron_id][-max_raster_points:]
+    def get_statistics(self) -> MonitoringStats:
+        """Get current monitoring statistics."""
+        with self._lock:
+            return self.stats
+
+    def get_monitor_performance(self) -> Dict[str, Any]:
+        """Get monitor performance metrics."""
+        avg_processing_time = (
+            np.mean(self.processing_times) if self.processing_times else 0.0
         )
-
-def _calculate_synchrony(self, spike_trains: List[List[float]], 
-                       time_window: float) -> float:
-    """Calculate synchrony index between spike trains."""
-    if len(spike_trains) < 2:
-        return 0.0
     
-    # Remove empty spike trains
-    non_empty_trains = [train for train in spike_trains if train]
-    
-    if len(non_empty_trains) < 2:
-        return 0.0
-    
-    # Calculate pairwise synchrony
-    synchrony_values = []
-    coincidence_window = 0.005  # 5ms
-    
-    for i in range(len(non_empty_trains)):
-        for j in range(i + 1, len(non_empty_trains)):
-            train_a = non_empty_trains[i]
-            train_b = non_empty_trains[j]
-            
-            coincidences = 0
-            for spike_a in train_a:
-                for spike_b in train_b:
-                    if abs(spike_a - spike_b) <= coincidence_window:
-                        coincidences += 1
-                        break
-            
-            max_coincidences = min(len(train_a), len(train_b))
-            if max_coincidences > 0:
-                sync = coincidences / max_coincidences
-                synchrony_values.append(sync)
-    
-    return np.mean(synchrony_values) if synchrony_values else 0.0
+        return {
+            'avg_processing_time': avg_processing_time,
+            'max_processing_time': max(self.processing_times) if self.processing_times else 0.0,
+            'total_records': len(self.spike_records),
+            'memory_usage_mb': sum(self.memory_usage) / len(self.memory_usage) if self.memory_usage else 0.0,
+            'recording_duration': self.current_time,
+            'records_per_second': len(self.spike_records) / self.current_time if self.current_time > 0 else 0.0
+        }
 
-def _start_analysis_thread(self) -> None:
-    """Start background analysis thread."""
-    self._analysis_thread = threading.Thread(
-        target=self._analysis_loop,
-        daemon=True
-    )
-    self._analysis_thread.start()
-    self.logger.debug("Started analysis thread")
+    def _update_statistics(self) -> None:
+        """Update monitoring statistics."""
+        self.stats.total_spikes = len(self.spike_records)
+        self.stats.active_neurons = len(self.spike_times_by_neuron)
+        self.stats.recording_duration = self.current_time
+    
+        # Calculate firing rates
+        if self.spike_times_by_neuron:
+            rates = []
+            for neuron_id in self.spike_times_by_neuron:
+                rate = self.get_firing_rate(neuron_id)
+                self.firing_rates[neuron_id] = rate
+                rates.append(rate)
+        
+            self.stats.avg_firing_rate = np.mean(rates) if rates else 0.0
+            self.stats.max_firing_rate = max(rates) if rates else 0.0
+    
+        # Calculate network synchrony
+        self.stats.network_synchrony = self.get_synchrony_index()
+    
+        self.stats.last_update = self.current_time
+    
+        # Call statistics callbacks
+        for callback in self.stats_callbacks:
+            try:
+                callback(self.stats)
+            except Exception as e:
+                self.logger.warning(f"Stats callback failed: {e}")
 
-def _start_export_thread(self) -> None:
-    """Start background export thread."""
-    self._export_thread = threading.Thread(
-        target=self._export_loop,
-        daemon=True
-    )
-    self._export_thread.start()
-    self.logger.debug("Started export thread")
+    def _update_realtime_data(self, spike_record: SpikeRecord) -> None:
+        """Update real-time analysis data."""
+        # Add to sliding window
+        self.sliding_window_data.append(spike_record)
+    
+        # Update raster data
+        self.raster_data[spike_record.neuron_id].append(spike_record.timestamp)
+    
+        # Limit raster data size
+        max_raster_points = 1000
+        if len(self.raster_data[spike_record.neuron_id]) > max_raster_points:
+            self.raster_data[spike_record.neuron_id] = (
+                self.raster_data[spike_record.neuron_id][-max_raster_points:]
+            )
 
-def _analysis_loop(self) -> None:
-    """Background analysis loop."""
-    while not self._stop_event.is_set():
-        try:
-            if self.is_recording:
-                # Perform periodic analysis
-                self._perform_advanced_analysis()
+    def _calculate_synchrony(self, spike_trains: List[List[float]], 
+                           time_window: float) -> float:
+        """Calculate synchrony index between spike trains."""
+        if len(spike_trains) < 2:
+            return 0.0
+    
+        # Remove empty spike trains
+        non_empty_trains = [train for train in spike_trains if train]
+    
+        if len(non_empty_trains) < 2:
+            return 0.0
+    
+        # Calculate pairwise synchrony
+        synchrony_values = []
+        coincidence_window = 0.005  # 5ms
+    
+        for i in range(len(non_empty_trains)):
+            for j in range(i + 1, len(non_empty_trains)):
+                train_a = non_empty_trains[i]
+                train_b = non_empty_trains[j]
             
-            # Sleep for analysis interval
-            time.sleep(1.0)  # Analyze every second
+                coincidences = 0
+                for spike_a in train_a:
+                    for spike_b in train_b:
+                        if abs(spike_a - spike_b) <= coincidence_window:
+                            coincidences += 1
+                            break
             
-        except Exception as e:
-            self.logger.error(f"Analysis loop error: {e}")
+                max_coincidences = min(len(train_a), len(train_b))
+                if max_coincidences > 0:
+                    sync = coincidences / max_coincidences
+                    synchrony_values.append(sync)
+    
+        return np.mean(synchrony_values) if synchrony_values else 0.0
 
-def _export_loop(self) -> None:
-    """Background export loop."""
-    while not self._stop_event.is_set():
-        try:
-            current_time = time.time()
+    def _start_analysis_thread(self) -> None:
+        """Start background analysis thread."""
+        self._analysis_thread = threading.Thread(
+            target=self._analysis_loop,
+            daemon=True
+        )
+        self._analysis_thread.start()
+        self.logger.debug("Started analysis thread")
+
+    def _start_export_thread(self) -> None:
+        """Start background export thread."""
+        self._export_thread = threading.Thread(
+            target=self._export_loop,
+            daemon=True
+        )
+        self._export_thread.start()
+        self.logger.debug("Started export thread")
+
+    def _analysis_loop(self) -> None:
+        """Background analysis loop."""
+        while not self._stop_event.is_set():
+            try:
+                if self.is_recording:
+                    # Perform periodic analysis
+                    self._perform_advanced_analysis()
             
-            if (self.is_recording and 
-                current_time - self.last_export_time > self.export_interval):
+                # Sleep for analysis interval
+                time.sleep(1.0)  # Analyze every second
+            
+            except Exception as e:
+                self.logger.error(f"Analysis loop error: {e}")
+
+    def _export_loop(self) -> None:
+        """Background export loop."""
+        while not self._stop_event.is_set():
+            try:
+                current_time = time.time()
+            
+                if (self.is_recording and 
+                    current_time - self.last_export_time > self.export_interval):
                 
-                self.export_data()
-                self.last_export_time = current_time
+                    self.export_data()
+                    self.last_export_time = current_time
             
-            # Sleep for export check interval
-            time.sleep(10.0)  # Check every 10 seconds
+                # Sleep for export check interval
+                time.sleep(10.0)  # Check every 10 seconds
             
-        except Exception as e:
-            self.logger.error(f"Export loop error: {e}")
+            except Exception as e:
+                self.logger.error(f"Export loop error: {e}")
 
-def _perform_advanced_analysis(self) -> None:
-    """Perform advanced spike train analysis."""
-    # This method can be extended with more sophisticated analysis
-    # For now, it updates basic statistics
+    def _perform_advanced_analysis(self) -> None:
+        """Perform advanced spike train analysis."""
+        # This method can be extended with more sophisticated analysis
+        # For now, it updates basic statistics
     
-    if not self.is_recording or not self.spike_records:
-        return
+        if not self.is_recording or not self.spike_records:
+            return
     
-    # Update synchrony history
-    current_synchrony = self.get_synchrony_index(time_window=1.0)
-    self.synchrony_history.append(current_synchrony)
+        # Update synchrony history
+        current_synchrony = self.get_synchrony_index(time_window=1.0)
+        self.synchrony_history.append(current_synchrony)
     
-    # Update rate history for active neurons
-    for neuron_id in self.spike_times_by_neuron:
-        current_rate = self.get_firing_rate(neuron_id, time_window=1.0)
-        self.rate_history[neuron_id].append(current_rate)"
+        # Update rate history for active neurons
+        for neuron_id in self.spike_times_by_neuron:
+            current_rate = self.get_firing_rate(neuron_id, time_window=1.0)
+            self.rate_history[neuron_id].append(current_rate)
