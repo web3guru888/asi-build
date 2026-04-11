@@ -1,0 +1,141 @@
+# =============================================================================
+# ASI:BUILD .gitignore
+# Based on: github/gitignore Python template + project-specific extras
+# =============================================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+htmlcov/
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# --- Environment ---
+.env
+.env.local
+.env.*.local
+.venv
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Conda
+.conda/
+
+# --- Secrets and credentials ---
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.yaml
+secrets.json
+config.yaml          # Use configs/default.yaml as your template — don't commit local config
+*_credentials*
+*_secrets*
+
+# --- Databases ---
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# --- Editors and IDEs ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Project-specific ---
+# Memgraph / graph DB data
+memgraph-data/
+bolt-logs/
+
+# Vector DB local stores
+qdrant_storage/
+chroma_db/
+lancedb/
+
+# Model weights and checkpoints (download on demand)
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+models/
+
+# Experiment outputs (too large to commit)
+experiments/outputs/
+runs/
+
+# Compiled documentation
+docs/_build/
+docs/site/
+
+# Node.js (for asi-code TypeScript IDE)
+node_modules/
+asi-code/node_modules/
+asi-code/dist/
+asi-code/.next/
+asi-code/out/
+
+# Archive — treated as read-only historical reference
+# (files inside archive/ can be committed, but new files should not be added)

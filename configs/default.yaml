@@ -1,0 +1,209 @@
+# =============================================================================
+# ASI:BUILD Default Configuration
+# =============================================================================
+# Copy this file to config.yaml in the project root and customize.
+# config.yaml is gitignored — never commit your local configuration.
+#
+# Environment variables override all config values.
+# Use ASI_BUILD_<SECTION>_<KEY> (e.g., ASI_BUILD_GRAPH_INTELLIGENCE_MEMGRAPH_HOST)
+# =============================================================================
+
+# --- Consciousness Module ---
+consciousness:
+  # Default theory to use when not specified
+  # Options: "global_workspace" | "integrated_information" | "attention_schema"
+  default_theory: "global_workspace"
+
+  # Integrated Information Theory: minimum Φ to classify as conscious
+  phi_threshold: 0.3
+
+  # Global Workspace Theory: number of concurrent representations in workspace
+  workspace_capacity: 7
+
+  # Attention Schema Theory: self-model update frequency (Hz)
+  attention_update_hz: 10
+
+  # Metacognition: enable self-monitoring layer
+  metacognition_enabled: true
+
+# --- Cognitive Synergy Module ---
+cognitive_synergy:
+  # Default synergy metric
+  # Options: "mutual_information" | "transfer_entropy" | "phase_locking" |
+  #          "spectral_coherence" | "lempel_ziv"
+  default_metric: "transfer_entropy"
+
+  # Number of bins for histogram-based entropy estimation
+  n_bins: 32
+
+  # Time lag for transfer entropy computation (in samples)
+  transfer_entropy_lag: 1
+
+# --- Graph Intelligence Module ---
+graph_intelligence:
+  # Memgraph connection
+  memgraph_host: "127.0.0.1"
+  memgraph_port: 7687
+  memgraph_username: ""           # Set via environment: ASI_BUILD_GRAPH_INTELLIGENCE_MEMGRAPH_USERNAME
+  memgraph_password: ""           # Set via environment: ASI_BUILD_GRAPH_INTELLIGENCE_MEMGRAPH_PASSWORD
+
+  # Connection pool
+  max_retries: 3
+  retry_delay_s: 1.0
+  connection_timeout_s: 30
+
+  # FastToG pipeline settings
+  fasttog_max_hops: 3
+  fasttog_beam_width: 5
+  community_algorithm: "louvain"  # Options: "louvain" | "label_propagation" | "girvan_newman"
+
+# --- Knowledge Graph Module ---
+knowledge_graph:
+  # Storage backend
+  # Options: "sqlite" | "postgresql" | "in_memory"
+  database: "sqlite"
+  path: "data/knowledge_graph.db"
+
+  # SQLite performance options
+  wal_mode: true
+  cache_size_kb: 65536            # 64 MB page cache
+
+  # Bi-temporal settings
+  bi_temporal: true               # Track both valid time and transaction time
+  timezone: "UTC"
+
+  # Pheromone learning
+  pheromone_decay: 0.95           # Evaporation rate per cycle (0–1)
+  pheromone_deposit: 1.0          # Reward per successful traversal
+
+  # A* pathfinding
+  max_path_depth: 10
+  max_candidates: 1000
+
+# --- Vector DB Module ---
+vectordb:
+  # Backend provider
+  # Options: "qdrant" | "pinecone" | "weaviate"
+  backend: "qdrant"
+
+  # Embedding model (used for local embedding)
+  embedding_model: "all-MiniLM-L6-v2"
+  embedding_dim: 384
+
+  # Qdrant settings (when backend = "qdrant")
+  qdrant_host: "localhost"
+  qdrant_port: 6333
+  qdrant_collection: "asi_build"
+
+  # Pinecone settings (when backend = "pinecone")
+  pinecone_api_key: ""            # Set via environment: ASI_BUILD_VECTORDB_PINECONE_API_KEY
+  pinecone_environment: "us-east-1-aws"
+  pinecone_index: "asi-build"
+
+  # Weaviate settings (when backend = "weaviate")
+  weaviate_url: "http://localhost:8080"
+  weaviate_api_key: ""            # Set via environment: ASI_BUILD_VECTORDB_WEAVIATE_API_KEY
+
+# --- Homomorphic Encryption Module ---
+homomorphic:
+  # Default FHE scheme
+  # Options: "bgv" | "bfv" | "ckks"
+  default_scheme: "ckks"
+
+  # Polynomial modulus degree (must be power of 2)
+  poly_modulus_degree: 8192
+
+  # CKKS: scale for floating-point encoding (2^scale_bits)
+  ckks_scale_bits: 40
+
+  # Security level (bits)
+  security_level: 128
+
+# --- Optimization Module ---
+optimization:
+  # Default quantization scheme
+  # Options: "int8" | "float16" | "bfloat16"
+  quantization_dtype: "int8"
+
+  # Pruning: target sparsity (0–1)
+  pruning_sparsity: 0.5
+
+  # Knowledge distillation: temperature
+  distillation_temperature: 4.0
+
+# --- Quantum Module ---
+quantum:
+  # Qiskit backend
+  # Options: "statevector_simulator" | "qasm_simulator" | "ibm_*" (requires IBM credentials)
+  backend: "statevector_simulator"
+
+  # Number of shots for sampling-based simulations
+  shots: 1024
+
+  # IBM Quantum credentials (only needed for real hardware)
+  ibm_token: ""                   # Set via environment: ASI_BUILD_QUANTUM_IBM_TOKEN
+  ibm_instance: ""
+
+# --- Compute Module ---
+compute:
+  # Maximum concurrent jobs
+  max_concurrent_jobs: 10
+
+  # GPU memory limit per job
+  gpu_memory_limit_gb: 8
+
+  # Job queue settings
+  queue_timeout_s: 300
+  job_timeout_s: 3600
+
+# --- Bio-Inspired Module ---
+bio_inspired:
+  # Evolutionary optimization
+  population_size: 100
+  generations: 500
+  mutation_rate: 0.01
+  crossover_rate: 0.8
+  selection: "tournament"         # Options: "tournament" | "roulette" | "rank"
+
+  # Swarm intelligence
+  swarm_size: 50
+  pso_inertia: 0.729
+  pso_cognitive: 1.494
+  pso_social: 1.494
+
+# --- Safety Module ---
+safety:
+  # Enable constitutional AI constraint checking
+  constitutional_ai: true
+
+  # Maximum recursion depth for self-referential reasoning
+  max_recursion_depth: 5
+
+  # Ethical constraint set
+  # Options: "strict" | "standard" | "research"
+  constraint_set: "standard"
+
+  # Audit log
+  audit_log_enabled: true
+  audit_log_path: "logs/safety_audit.log"
+
+# --- Deployment Module ---
+deployment:
+  # CUDO Compute settings
+  cudo_project_id: ""             # Set via environment: ASI_BUILD_DEPLOYMENT_CUDO_PROJECT_ID
+  cudo_api_key: ""                # Set via environment: ASI_BUILD_DEPLOYMENT_CUDO_API_KEY
+
+  # HuggingFace settings
+  hf_token: ""                    # Set via environment: ASI_BUILD_DEPLOYMENT_HF_TOKEN
+  hf_cache_dir: "~/.cache/huggingface"
+
+# --- Memgraph Toolbox ---
+memgraph_toolbox:
+  # Same connection as graph_intelligence by default
+  host: "127.0.0.1"
+  port: 7687
+
+  # Analysis defaults
+  pagerank_max_iterations: 100
+  pagerank_damping: 0.85
+  betweenness_normalize: true

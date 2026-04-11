@@ -1,0 +1,6 @@
+pytest>=7.0
+pytest-cov
+numpy
+scipy
+scikit-learn
+networkx
