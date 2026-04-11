@@ -84,6 +84,7 @@ ci = [
     "sympy>=1.12",
     "fastapi>=0.100",
     "httpx>=0.25",
+    "aiohttp>=3.9",
     "brotli>=1.0",
     "lz4>=4.0",
     "aiodns>=3.0",
