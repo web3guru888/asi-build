@@ -136,23 +136,23 @@ class CognitiveBlackboard:
         info = participant.module_info
         with self._lock:
             if info.name in self._modules:
-                raise ValueError(
-                    f"Module '{info.name}' is already registered"
-                )
+                raise ValueError(f"Module '{info.name}' is already registered")
             self._modules[info.name] = info
             self._module_instances[info.name] = participant
 
         participant.on_registered(self)
 
-        self.event_bus.emit(CognitiveEvent(
-            event_type="blackboard.module.registered",
-            payload={
-                "module_name": info.name,
-                "capabilities": str(info.capabilities),
-                "version": info.version,
-            },
-            source="blackboard",
-        ))
+        self.event_bus.emit(
+            CognitiveEvent(
+                event_type="blackboard.module.registered",
+                payload={
+                    "module_name": info.name,
+                    "capabilities": str(info.capabilities),
+                    "version": info.version,
+                },
+                source="blackboard",
+            )
+        )
         logger.info("Module registered: %s (v%s)", info.name, info.version)
 
     def unregister_module(self, module_name: str) -> bool:
@@ -163,11 +163,13 @@ class CognitiveBlackboard:
             self._module_instances.pop(module_name, None)
 
         if existed:
-            self.event_bus.emit(CognitiveEvent(
-                event_type="blackboard.module.unregistered",
-                payload={"module_name": module_name},
-                source="blackboard",
-            ))
+            self.event_bus.emit(
+                CognitiveEvent(
+                    event_type="blackboard.module.unregistered",
+                    payload={"module_name": module_name},
+                    source="blackboard",
+                )
+            )
         return existed
 
     def get_module(self, module_name: str) -> Optional[ModuleInfo]:
@@ -204,16 +206,18 @@ class CognitiveBlackboard:
             self._source_index[entry.source_module].add(entry.entry_id)
             self._total_posted += 1
 
-        self.event_bus.emit(CognitiveEvent(
-            event_type="blackboard.entry.added",
-            payload={
-                "entry_id": entry.entry_id,
-                "topic": entry.topic,
-                "source_module": entry.source_module,
-                "priority": entry.priority.name,
-            },
-            source="blackboard",
-        ))
+        self.event_bus.emit(
+            CognitiveEvent(
+                event_type="blackboard.entry.added",
+                payload={
+                    "entry_id": entry.entry_id,
+                    "topic": entry.topic,
+                    "source_module": entry.source_module,
+                    "priority": entry.priority.name,
+                },
+                source="blackboard",
+            )
+        )
         return entry.entry_id
 
     def post_many(self, entries: Sequence[BlackboardEntry]) -> List[str]:
@@ -231,15 +235,17 @@ class CognitiveBlackboard:
 
         # Events outside lock
         for entry in entries:
-            self.event_bus.emit(CognitiveEvent(
-                event_type="blackboard.entry.added",
-                payload={
-                    "entry_id": entry.entry_id,
-                    "topic": entry.topic,
-                    "source_module": entry.source_module,
-                },
-                source="blackboard",
-            ))
+            self.event_bus.emit(
+                CognitiveEvent(
+                    event_type="blackboard.entry.added",
+                    payload={
+                        "entry_id": entry.entry_id,
+                        "topic": entry.topic,
+                        "source_module": entry.source_module,
+                    },
+                    source="blackboard",
+                )
+            )
         return ids
 
     def get(self, entry_id: str) -> Optional[BlackboardEntry]:
@@ -272,10 +278,7 @@ class CognitiveBlackboard:
                     for indexed_topic, ids in self._topic_index.items():
                         if indexed_topic.startswith(topic + "."):
                             candidate_ids |= ids
-                candidates = [
-                    self._entries[eid] for eid in candidate_ids
-                    if eid in self._entries
-                ]
+                candidates = [self._entries[eid] for eid in candidate_ids if eid in self._entries]
             else:
                 candidates = list(self._entries.values())
 
@@ -284,7 +287,7 @@ class CognitiveBlackboard:
         # Sort: priority desc, then timestamp desc
         results.sort(key=lambda e: (e.priority.value, e.timestamp), reverse=True)
         if q.limit is not None:
-            results = results[:q.limit]
+            results = results[: q.limit]
         return results
 
     def get_by_topic(self, topic: str, include_subtopics: bool = True) -> List[BlackboardEntry]:
@@ -355,7 +358,9 @@ class CognitiveBlackboard:
                 changes.append({"field": "status", "old": entry.status.value, "new": status.value})
                 entry.status = status
             if priority is not _UNSET:
-                changes.append({"field": "priority", "old": entry.priority.name, "new": priority.name})
+                changes.append(
+                    {"field": "priority", "old": entry.priority.name, "new": priority.name}
+                )
                 entry.priority = priority
             if tags is not _UNSET:
                 changes.append({"field": "tags", "old": set(entry.tags), "new": set(tags)})
@@ -365,11 +370,13 @@ class CognitiveBlackboard:
                 entry.metadata = metadata
 
         for change in changes:
-            self.event_bus.emit(CognitiveEvent(
-                event_type="blackboard.entry.updated",
-                payload={"entry_id": entry_id, "topic": entry.topic, **change},
-                source="blackboard",
-            ))
+            self.event_bus.emit(
+                CognitiveEvent(
+                    event_type="blackboard.entry.updated",
+                    payload={"entry_id": entry_id, "topic": entry.topic, **change},
+                    source="blackboard",
+                )
+            )
         return bool(changes)
 
     def remove(self, entry_id: str, reason: str = "explicit") -> bool:
@@ -386,15 +393,17 @@ class CognitiveBlackboard:
             self._source_index[entry.source_module].discard(entry_id)
             self._total_removed += 1
 
-        self.event_bus.emit(CognitiveEvent(
-            event_type="blackboard.entry.removed",
-            payload={
-                "entry_id": entry_id,
-                "topic": entry.topic,
-                "reason": reason,
-            },
-            source="blackboard",
-        ))
+        self.event_bus.emit(
+            CognitiveEvent(
+                event_type="blackboard.entry.removed",
+                payload={
+                    "entry_id": entry_id,
+                    "topic": entry.topic,
+                    "reason": reason,
+                },
+                source="blackboard",
+            )
+        )
         return True
 
     def retract(self, entry_id: str) -> bool:
@@ -423,16 +432,15 @@ class CognitiveBlackboard:
         """
         with self._lock:
             count = self._sweep_expired()
-            active = sum(
-                1 for e in self._entries.values()
-                if e.status == EntryStatus.ACTIVE
-            )
+            active = sum(1 for e in self._entries.values() if e.status == EntryStatus.ACTIVE)
 
-        self.event_bus.emit(CognitiveEvent(
-            event_type="blackboard.sweep.complete",
-            payload={"expired_count": count, "active_count": active},
-            source="blackboard",
-        ))
+        self.event_bus.emit(
+            CognitiveEvent(
+                event_type="blackboard.sweep.complete",
+                payload={"expired_count": count, "active_count": active},
+                source="blackboard",
+            )
+        )
         return count
 
     def clear(self) -> int:
@@ -458,7 +466,8 @@ class CognitiveBlackboard:
         """Count of ACTIVE, non-expired entries."""
         with self._lock:
             return sum(
-                1 for e in self._entries.values()
+                1
+                for e in self._entries.values()
                 if e.status == EntryStatus.ACTIVE and not e.is_expired
             )
 
@@ -501,7 +510,8 @@ class CognitiveBlackboard:
     def _sweep_expired(self) -> int:
         """Expire entries past TTL.  Caller must hold ``self._lock``."""
         expired_ids = [
-            eid for eid, entry in self._entries.items()
+            eid
+            for eid, entry in self._entries.items()
             if entry.status == EntryStatus.ACTIVE and entry.is_expired
         ]
         for eid in expired_ids:
@@ -512,11 +522,13 @@ class CognitiveBlackboard:
         """Mark a single entry as expired.  Caller must hold ``self._lock``."""
         entry.status = EntryStatus.EXPIRED
         # Don't remove from storage — keep for provenance queries
-        self.event_bus.emit(CognitiveEvent(
-            event_type="blackboard.entry.expired",
-            payload={"entry_id": entry.entry_id, "topic": entry.topic},
-            source="blackboard",
-        ))
+        self.event_bus.emit(
+            CognitiveEvent(
+                event_type="blackboard.entry.expired",
+                payload={"entry_id": entry.entry_id, "topic": entry.topic},
+                source="blackboard",
+            )
+        )
 
     def _evict_one(self) -> None:
         """Evict the oldest LOW-priority entry to make room.
@@ -528,8 +540,7 @@ class CognitiveBlackboard:
         """
         for priority_level in (EntryPriority.LOW, EntryPriority.NORMAL, EntryPriority.HIGH):
             candidates = [
-                (eid, e) for eid, e in self._entries.items()
-                if e.priority == priority_level
+                (eid, e) for eid, e in self._entries.items() if e.priority == priority_level
             ]
             if candidates:
                 # Oldest first

@@ -37,10 +37,10 @@ from typing import (
     runtime_checkable,
 )
 
-
 # ---------------------------------------------------------------------------
 # Enums
 # ---------------------------------------------------------------------------
+
 
 class ModuleCapability(enum.Flag):
     """Capability flags that modules declare on registration.
@@ -48,12 +48,12 @@ class ModuleCapability(enum.Flag):
     Flags are combinable:  ``PRODUCER | CONSUMER | TRANSFORMER``
     """
 
-    PRODUCER = enum.auto()       # Can write new entries to the blackboard
-    CONSUMER = enum.auto()       # Reads entries from the blackboard
-    TRANSFORMER = enum.auto()    # Reads, transforms, and writes back
-    REASONER = enum.auto()       # Can perform reasoning over entries
-    VALIDATOR = enum.auto()      # Can validate / score entries
-    LEARNER = enum.auto()        # Adapts based on blackboard history
+    PRODUCER = enum.auto()  # Can write new entries to the blackboard
+    CONSUMER = enum.auto()  # Reads entries from the blackboard
+    TRANSFORMER = enum.auto()  # Reads, transforms, and writes back
+    REASONER = enum.auto()  # Can perform reasoning over entries
+    VALIDATOR = enum.auto()  # Can validate / score entries
+    LEARNER = enum.auto()  # Adapts based on blackboard history
 
 
 class EntryPriority(enum.IntEnum):
@@ -78,6 +78,7 @@ class EntryStatus(enum.Enum):
 # ---------------------------------------------------------------------------
 # Data containers
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class BlackboardEntry:
@@ -165,6 +166,7 @@ class ModuleInfo:
 # Event types
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CognitiveEvent:
     """An event published on the EventBus.
@@ -204,6 +206,7 @@ T = TypeVar("T")
 # ---------------------------------------------------------------------------
 # Protocols — structural subtyping
 # ---------------------------------------------------------------------------
+
 
 @runtime_checkable
 class BlackboardParticipant(Protocol):
@@ -287,16 +290,14 @@ class EventListener(Protocol):
 class AsyncBlackboardProducer(Protocol):
     """Async variant of BlackboardProducer."""
 
-    async def produce_async(self) -> Sequence[BlackboardEntry]:
-        ...
+    async def produce_async(self) -> Sequence[BlackboardEntry]: ...
 
 
 @runtime_checkable
 class AsyncBlackboardConsumer(Protocol):
     """Async variant of BlackboardConsumer."""
 
-    async def consume_async(self, entries: Sequence[BlackboardEntry]) -> None:
-        ...
+    async def consume_async(self, entries: Sequence[BlackboardEntry]) -> None: ...
 
 
 @runtime_checkable
@@ -305,21 +306,20 @@ class AsyncBlackboardTransformer(Protocol):
 
     async def transform_async(
         self, entries: Sequence[BlackboardEntry]
-    ) -> Sequence[BlackboardEntry]:
-        ...
+    ) -> Sequence[BlackboardEntry]: ...
 
 
 @runtime_checkable
 class AsyncEventListener(Protocol):
     """Async variant of EventListener."""
 
-    async def handle_event_async(self, event: CognitiveEvent) -> None:
-        ...
+    async def handle_event_async(self, event: CognitiveEvent) -> None: ...
 
 
 # ---------------------------------------------------------------------------
 # Query helpers
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class BlackboardQuery:
@@ -333,8 +333,8 @@ class BlackboardQuery:
     source_modules: Optional[List[str]] = None
     min_confidence: Optional[float] = None
     min_priority: Optional[EntryPriority] = None
-    tags_any: Optional[Set[str]] = None     # match if entry has ANY of these
-    tags_all: Optional[Set[str]] = None     # match if entry has ALL of these
+    tags_any: Optional[Set[str]] = None  # match if entry has ANY of these
+    tags_all: Optional[Set[str]] = None  # match if entry has ALL of these
     statuses: Optional[Set[EntryStatus]] = None
     since_timestamp: Optional[float] = None
     limit: Optional[int] = None
@@ -347,10 +347,7 @@ class BlackboardQuery:
         if self.statuses and entry.status not in self.statuses:
             return False
         if self.topics:
-            if not any(
-                entry.topic == t or entry.topic.startswith(t + ".")
-                for t in self.topics
-            ):
+            if not any(entry.topic == t or entry.topic.startswith(t + ".") for t in self.topics):
                 return False
         if self.source_modules and entry.source_module not in self.source_modules:
             return False
