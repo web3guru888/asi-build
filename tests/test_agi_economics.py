@@ -752,12 +752,17 @@ class TestReputationSystem:
         assert result is True
         assert ('a1', 'a2') in rs.trust_relationships
 
-    def test_trust_score_range_clamped(self):
+    def test_trust_score_out_of_range_rejected(self):
         rs = self._system()
-        # Score > 1.0 should be clamped
-        rs.update_trust_relationship('a1', 'a2', 1.5, 'general')
-        rel = rs.trust_relationships[('a1', 'a2')]
-        assert rel.trust_score <= 1.0
+        # Score > 1.0 is rejected by update_trust_relationship
+        result = rs.update_trust_relationship('a1', 'a2', 1.5, 'general')
+        assert result is False
+        assert ('a1', 'a2') not in rs.trust_relationships
+
+    def test_trust_score_boundary_accepted(self):
+        rs = self._system()
+        assert rs.update_trust_relationship('a1', 'a2', 1.0, 'general') is True
+        assert rs.trust_relationships[('a1', 'a2')].trust_score == 1.0
 
     def test_calculate_transitive_trust(self):
         rs = self._system()

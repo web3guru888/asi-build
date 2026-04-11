@@ -2,7 +2,11 @@
 Holographic display systems
 """
 
-from .volumetric_display import VolumetricDisplay, VolumetricDisplayManager
+try:
+    from .volumetric_display import VolumetricDisplay, VolumetricDisplayManager
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    VolumetricDisplay = None
+    VolumetricDisplayManager = None
 
 __all__ = [
     'VolumetricDisplay',

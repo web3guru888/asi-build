@@ -5,7 +5,8 @@ This package provides database-agnostic interfaces and implementations
 for analyzing SQL database structures.
 """
 
-from .interface import (
+try:
+    from .interface import (
     DatabaseAnalyzer,
     ColumnInfo,
     ForeignKeyInfo,
@@ -13,9 +14,23 @@ from .interface import (
     TableType,
     RelationshipInfo,
     DatabaseStructure,
-)
-from .factory import DatabaseAnalyzerFactory
-from .data_interface import DatabaseDataInterface
+    )
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    DatabaseAnalyzer = None
+    ColumnInfo = None
+    ForeignKeyInfo = None
+    TableInfo = None
+    TableType = None
+    RelationshipInfo = None
+    DatabaseStructure = None
+try:
+    from .factory import DatabaseAnalyzerFactory
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    DatabaseAnalyzerFactory = None
+try:
+    from .data_interface import DatabaseDataInterface
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    DatabaseDataInterface = None
 
 __all__ = [
     "DatabaseAnalyzer",

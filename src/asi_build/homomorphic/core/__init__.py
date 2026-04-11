@@ -2,16 +2,53 @@
 Core homomorphic encryption components and utilities.
 """
 
-from .base import FHECore, SecurityLevel
-from .parameters import ParameterGenerator, FHEParameters
-from .keys import KeyGenerator, PublicKey, SecretKey, RelinearizationKeys
-from .encryption import Encryptor, Decryptor
-from .evaluation import Evaluator
-from .utils import HomomorphicUtils
-from .polynomial import PolynomialRing, Polynomial
-from .modular import ModularArithmetic
-from .noise import NoiseEstimator
-from .optimization import OptimizationEngine
+try:
+    from .base import FHECore, SecurityLevel
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    FHECore = None
+    SecurityLevel = None
+try:
+    from .parameters import ParameterGenerator, FHEParameters
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    ParameterGenerator = None
+    FHEParameters = None
+try:
+    from .keys import KeyGenerator, PublicKey, SecretKey, RelinearizationKeys
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    KeyGenerator = None
+    PublicKey = None
+    SecretKey = None
+    RelinearizationKeys = None
+try:
+    from .encryption import Encryptor, Decryptor
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    Encryptor = None
+    Decryptor = None
+try:
+    from .evaluation import Evaluator
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    Evaluator = None
+try:
+    from .utils import HomomorphicUtils
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    HomomorphicUtils = None
+try:
+    from .polynomial import PolynomialRing, Polynomial
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    PolynomialRing = None
+    Polynomial = None
+try:
+    from .modular import ModularArithmetic
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    ModularArithmetic = None
+try:
+    from .noise import NoiseEstimator
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    NoiseEstimator = None
+try:
+    from .optimization import OptimizationEngine
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    OptimizationEngine = None
 
 __all__ = [
     "FHECore",

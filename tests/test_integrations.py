@@ -75,15 +75,13 @@ class TestModuleStructure:
         expected = {"agents", "langchain_memgraph", "mcp_memgraph"}
         assert set(mod.__all__) == expected
 
-    def test_integrations_lazy_import_error(self):
-        """Accessing a lazy sub-module whose deps are missing should raise an error.
-        Note: the current __getattr__ for 'agents' has a recursion issue (it
-        re-triggers itself via `from asi_build.integrations import agents`).
-        We accept either ImportError (intended) or RecursionError (known bug)."""
+    def test_integrations_agents_importable(self):
+        """The 'agents' sub-module should be importable even without optional deps.
+        Import guards (try/except) should allow graceful degradation."""
         mod = importlib.import_module("asi_build.integrations")
-        # 'agents' depends on langgraph, langchain-openai, etc. — almost certainly missing.
-        with pytest.raises((ImportError, RecursionError)):
-            _ = mod.agents
+        # 'agents' should now import without error due to try/except guards
+        agents = mod.agents
+        assert agents is not None
 
     def test_integrations_nonexistent_attr_raises_attribute_error(self):
         """Accessing a completely unknown attribute should raise AttributeError."""

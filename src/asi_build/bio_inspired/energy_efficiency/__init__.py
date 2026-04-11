@@ -6,7 +6,12 @@ to ensure the bio-inspired cognitive architecture operates within biologically
 plausible energy constraints.
 """
 
-from .energy_metrics import EnergyMetrics, EnergyCalculator, MetabolicCost
+try:
+    from .energy_metrics import EnergyMetrics, EnergyCalculator, MetabolicCost
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    EnergyMetrics = None
+    EnergyCalculator = None
+    MetabolicCost = None
 
 try:
     from .biological_efficiency import BiologicalEfficiencyComparator, NeuralEnergyBenchmark

@@ -9,21 +9,69 @@ Author: Kenny AI Consciousness Research Team
 Version: 1.0.0
 """
 
-from .base_consciousness import BaseConsciousness, ConsciousnessEvent, ConsciousnessState, ConsciousnessMetrics
-from .global_workspace import GlobalWorkspaceTheory
-from .integrated_information import IntegratedInformationTheory
-from .attention_schema import AttentionSchemaTheory
-from .predictive_processing import PredictiveProcessing
-from .metacognition import MetacognitionSystem
-from .self_awareness import SelfAwarenessEngine
-from .qualia_processor import QualiaProcessor
-from .theory_of_mind import TheoryOfMind
-from .emotional_consciousness import EmotionalConsciousness
-from .recursive_improvement import RecursiveSelfImprovement
-from .memory_integration import MemoryIntegration
-from .temporal_consciousness import TemporalConsciousness
-from .sensory_integration import SensoryIntegration
-from .consciousness_orchestrator import ConsciousnessOrchestrator
+try:
+    from .base_consciousness import BaseConsciousness, ConsciousnessEvent, ConsciousnessState, ConsciousnessMetrics
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    BaseConsciousness = None
+    ConsciousnessEvent = None
+    ConsciousnessState = None
+    ConsciousnessMetrics = None
+try:
+    from .global_workspace import GlobalWorkspaceTheory
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    GlobalWorkspaceTheory = None
+try:
+    from .integrated_information import IntegratedInformationTheory
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    IntegratedInformationTheory = None
+try:
+    from .attention_schema import AttentionSchemaTheory
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    AttentionSchemaTheory = None
+try:
+    from .predictive_processing import PredictiveProcessing
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    PredictiveProcessing = None
+try:
+    from .metacognition import MetacognitionSystem
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    MetacognitionSystem = None
+try:
+    from .self_awareness import SelfAwarenessEngine
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SelfAwarenessEngine = None
+try:
+    from .qualia_processor import QualiaProcessor
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    QualiaProcessor = None
+try:
+    from .theory_of_mind import TheoryOfMind
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    TheoryOfMind = None
+try:
+    from .emotional_consciousness import EmotionalConsciousness
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    EmotionalConsciousness = None
+try:
+    from .recursive_improvement import RecursiveSelfImprovement
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    RecursiveSelfImprovement = None
+try:
+    from .memory_integration import MemoryIntegration
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    MemoryIntegration = None
+try:
+    from .temporal_consciousness import TemporalConsciousness
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    TemporalConsciousness = None
+try:
+    from .sensory_integration import SensoryIntegration
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SensoryIntegration = None
+try:
+    from .consciousness_orchestrator import ConsciousnessOrchestrator
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    ConsciousnessOrchestrator = None
 
 __all__ = [
     # Core infrastructure

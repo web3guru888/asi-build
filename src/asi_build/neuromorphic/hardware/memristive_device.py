@@ -571,4 +571,4 @@ class MemristorArray:
                     
                     total_sneak_current += abs(sneak_current) * 0.1  # Reduced contribution
         
-        return total_sneak_current"
+        return total_sneak_current

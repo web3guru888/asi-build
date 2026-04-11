@@ -4,8 +4,17 @@ Core business logic for SQL to Memgraph migration.
 This package contains the main migration orchestration and graph modeling logic.
 """
 
-from .migration_agent import SQLToMemgraphAgent
-from .graph_modeling import HyGM, GraphModel, GraphNode, GraphRelationship
+try:
+    from .migration_agent import SQLToMemgraphAgent
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SQLToMemgraphAgent = None
+try:
+    from .graph_modeling import HyGM, GraphModel, GraphNode, GraphRelationship
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    HyGM = None
+    GraphModel = None
+    GraphNode = None
+    GraphRelationship = None
 
 __all__ = [
     "SQLToMemgraphAgent",

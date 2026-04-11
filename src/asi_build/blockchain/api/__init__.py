@@ -6,12 +6,38 @@ blockchain-based audit trail system, including query, verification,
 and management endpoints.
 """
 
-from .rest_api import AuditTrailAPI, create_app
-from .graphql_api import GraphQLAPI, create_graphql_app
-from .websocket_api import WebSocketAPI, AuditEventSubscription
-from .auth import AuthManager, APIKey, JWTAuth
-from .validators import RequestValidator, ResponseValidator
-from .middleware import CORSMiddleware, RateLimitMiddleware, LoggingMiddleware
+try:
+    from .rest_api import AuditTrailAPI, create_app
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    AuditTrailAPI = None
+    create_app = None
+try:
+    from .graphql_api import GraphQLAPI, create_graphql_app
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    GraphQLAPI = None
+    create_graphql_app = None
+try:
+    from .websocket_api import WebSocketAPI, AuditEventSubscription
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    WebSocketAPI = None
+    AuditEventSubscription = None
+try:
+    from .auth import AuthManager, APIKey, JWTAuth
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    AuthManager = None
+    APIKey = None
+    JWTAuth = None
+try:
+    from .validators import RequestValidator, ResponseValidator
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    RequestValidator = None
+    ResponseValidator = None
+try:
+    from .middleware import CORSMiddleware, RateLimitMiddleware, LoggingMiddleware
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    CORSMiddleware = None
+    RateLimitMiddleware = None
+    LoggingMiddleware = None
 
 __all__ = [
     'AuditTrailAPI',

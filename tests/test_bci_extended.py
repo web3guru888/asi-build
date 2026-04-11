@@ -29,6 +29,8 @@ _fake_module("asi_build.bci.ssvep.classifier", ["SSVEPClassifier"])
 _fake_module("asi_build.bci.p300.stimulus_controller", ["StimulusController"])
 _fake_module("asi_build.bci.p300.p300_classifier", ["P300Classifier"])
 _fake_module("asi_build.bci.p300.feature_extractor", ["P300FeatureExtractor"])
+_fake_module("asi_build.bci.utils.visualization", ["BCIVisualizer"])
+_fake_module("asi_build.bci.utils.validation", ["ValidationUtils"])
 
 # ---------------------------------------------------------------------------
 # Imports

@@ -10,47 +10,83 @@ Implements biologically-inspired learning rules for neuromorphic systems:
 - Unsupervised feature learning
 """
 
-from .stdp import (
-    STDPLearning,
-    PairSTDP,
-    TripletSTDP,
-    VoltageSTDP
-)
+try:
+    from .stdp import (
+        STDPLearning,
+        PairSTDP,
+        TripletSTDP,
+        VoltageSTDP
+    )
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    STDPLearning = None
+    PairSTDP = None
+    TripletSTDP = None
+    VoltageSTDP = None
 
-from .homeostatic_plasticity import (
-    HomeostasticPlasticity,
-    SynapticScaling,
-    IntrinsicPlasticity,
-    ActivityDependentScaling
-)
+try:
+    from .homeostatic_plasticity import (
+        HomeostasticPlasticity,
+        SynapticScaling,
+        IntrinsicPlasticity,
+        ActivityDependentScaling
+    )
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    HomeostasticPlasticity = None
+    SynapticScaling = None
+    IntrinsicPlasticity = None
+    ActivityDependentScaling = None
 
-from .metaplasticity import (
-    MetaplasticityLearning,
-    BCMRule,
-    SlidingThreshold,
-    PriorExperienceRule
-)
+try:
+    from .metaplasticity import (
+        MetaplasticityLearning,
+        BCMRule,
+        SlidingThreshold,
+        PriorExperienceRule
+    )
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    MetaplasticityLearning = None
+    BCMRule = None
+    SlidingThreshold = None
+    PriorExperienceRule = None
 
-from .temporal_learning import (
-    TemporalLearning,
-    SequenceLearning,
-    PatternCompletion,
-    TemporalMemory
-)
+try:
+    from .temporal_learning import (
+        TemporalLearning,
+        SequenceLearning,
+        PatternCompletion,
+        TemporalMemory
+    )
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    TemporalLearning = None
+    SequenceLearning = None
+    PatternCompletion = None
+    TemporalMemory = None
 
-from .reinforcement import (
-    ReinforcementLearning,
-    DopamineModulation,
-    RewardPredictionError,
-    ActorCriticLearning
-)
+try:
+    from .reinforcement import (
+        ReinforcementLearning,
+        DopamineModulation,
+        RewardPredictionError,
+        ActorCriticLearning
+    )
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    ReinforcementLearning = None
+    DopamineModulation = None
+    RewardPredictionError = None
+    ActorCriticLearning = None
 
-from .unsupervised import (
-    UnsupervisedLearning,
-    CompetitiveLearning,
-    SparseCodeLearning,
-    PrincipalComponentLearning
-)
+try:
+    from .unsupervised import (
+        UnsupervisedLearning,
+        CompetitiveLearning,
+        SparseCodeLearning,
+        PrincipalComponentLearning
+    )
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    UnsupervisedLearning = None
+    CompetitiveLearning = None
+    SparseCodeLearning = None
+    PrincipalComponentLearning = None
 
 __all__ = [
     'STDPLearning',

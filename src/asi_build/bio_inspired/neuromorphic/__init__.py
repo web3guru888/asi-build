@@ -5,8 +5,17 @@ Implements biologically-inspired spiking neural networks and neuromorphic proces
 that mimic the temporal dynamics and energy efficiency of biological neurons.
 """
 
-from .spiking_networks import SpikingNeuralNetwork, SpikingNeuron, SynapticConnection
-from .neuromorphic_processor import NeuromorphicProcessor, NeuromorphicChip
+try:
+    from .spiking_networks import SpikingNeuralNetwork, SpikingNeuron, SynapticConnection
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SpikingNeuralNetwork = None
+    SpikingNeuron = None
+    SynapticConnection = None
+try:
+    from .neuromorphic_processor import NeuromorphicProcessor, NeuromorphicChip
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    NeuromorphicProcessor = None
+    NeuromorphicChip = None
 
 try:
     from .temporal_coding import TemporalCoding, SpikeTrainAnalyzer

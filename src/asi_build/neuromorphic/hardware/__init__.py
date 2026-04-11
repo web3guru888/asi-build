@@ -9,13 +9,37 @@ Simulates various neuromorphic computing architectures including:
 - Custom neuromorphic processors
 """
 
-from .chip_simulator import NeuromorphicChip, ChipConfig
-from .memristive_device import MemristiveDevice, MemristorArray
-from .synaptic_array import SynapticArray, CrossbarArray
-from .hardware_simulator import HardwareSimulator
-from .loihi_simulator import LoihiChip
-from .truenorth_simulator import TrueNorthChip
-from .spinnaker_simulator import SpiNNakerChip
+try:
+    from .chip_simulator import NeuromorphicChip, ChipConfig
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    NeuromorphicChip = None
+    ChipConfig = None
+try:
+    from .memristive_device import MemristiveDevice, MemristorArray
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    MemristiveDevice = None
+    MemristorArray = None
+try:
+    from .synaptic_array import SynapticArray, CrossbarArray
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SynapticArray = None
+    CrossbarArray = None
+try:
+    from .hardware_simulator import HardwareSimulator
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    HardwareSimulator = None
+try:
+    from .loihi_simulator import LoihiChip
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    LoihiChip = None
+try:
+    from .truenorth_simulator import TrueNorthChip
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    TrueNorthChip = None
+try:
+    from .spinnaker_simulator import SpiNNakerChip
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SpiNNakerChip = None
 
 __all__ = [
     'NeuromorphicChip',

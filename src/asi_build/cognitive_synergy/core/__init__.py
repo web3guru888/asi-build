@@ -9,11 +9,26 @@ Author: Kenny AGI Development Team
 License: MIT
 """
 
-from .cognitive_synergy_engine import CognitiveSynergyEngine
-from .primus_foundation import PRIMUSFoundation
-from .synergy_metrics import SynergyMetrics
-from .emergent_properties import EmergentPropertyDetector
-from .self_organization import SelfOrganizationMechanism
+try:
+    from .cognitive_synergy_engine import CognitiveSynergyEngine
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    CognitiveSynergyEngine = None
+try:
+    from .primus_foundation import PRIMUSFoundation
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    PRIMUSFoundation = None
+try:
+    from .synergy_metrics import SynergyMetrics
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SynergyMetrics = None
+try:
+    from .emergent_properties import EmergentPropertyDetector
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    EmergentPropertyDetector = None
+try:
+    from .self_organization import SelfOrganizationMechanism
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SelfOrganizationMechanism = None
 
 __all__ = [
     'CognitiveSynergyEngine',

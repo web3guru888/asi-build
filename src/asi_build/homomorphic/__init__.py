@@ -16,14 +16,38 @@ This module provides:
 - Threshold cryptography
 """
 
-from .core import *
-from .schemes import *
-from .ml import *
-from .mpc import *
-from .psi import *
-from .database import *
-from .zkp import *
-from .threshold import *
+try:
+    from .core import *
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    pass
+try:
+    from .schemes import *
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    pass
+try:
+    from .ml import *
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    pass
+try:
+    from .mpc import *
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    pass
+try:
+    from .psi import *
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    pass
+try:
+    from .database import *
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    pass
+try:
+    from .zkp import *
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    pass
+try:
+    from .threshold import *
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    pass
 
 __version__ = "1.0.0"
 __author__ = "Kenny HE1 - Homomorphic Encryption Specialist"

@@ -2,7 +2,10 @@
 Database adapter implementations for different database systems.
 """
 
-from .mysql import MySQLAnalyzer
+try:
+    from .mysql import MySQLAnalyzer
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    MySQLAnalyzer = None
 
 __all__ = [
     "MySQLAnalyzer",

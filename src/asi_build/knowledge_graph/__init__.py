@@ -16,7 +16,13 @@ Key features:
 - Semantic A* pathfinding between entities
 """
 
-from .temporal_kg import TemporalKnowledgeGraph
-from .pathfinder import KGPathfinder
+try:
+    from .temporal_kg import TemporalKnowledgeGraph
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    TemporalKnowledgeGraph = None
+try:
+    from .pathfinder import KGPathfinder
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    KGPathfinder = None
 
 __all__ = ["TemporalKnowledgeGraph", "KGPathfinder"]

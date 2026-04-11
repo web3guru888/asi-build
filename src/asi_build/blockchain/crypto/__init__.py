@@ -6,11 +6,34 @@ digital signatures, encryption, hashing, and key management for secure
 audit trail operations.
 """
 
-from .signature_manager import SignatureManager, SignatureVerifier, KeyPair
-from .encryption_manager import EncryptionManager, SymmetricKey, AsymmetricKeyPair
-from .hash_manager import HashManager, MerkleTree, HashChain
-from .key_manager import KeyManager, KeyStore
-from .zero_knowledge import ZKProofSystem, ZKProof
+try:
+    from .signature_manager import SignatureManager, SignatureVerifier, KeyPair
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SignatureManager = None
+    SignatureVerifier = None
+    KeyPair = None
+try:
+    from .encryption_manager import EncryptionManager, SymmetricKey, AsymmetricKeyPair
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    EncryptionManager = None
+    SymmetricKey = None
+    AsymmetricKeyPair = None
+try:
+    from .hash_manager import HashManager, MerkleTree, HashChain
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    HashManager = None
+    MerkleTree = None
+    HashChain = None
+try:
+    from .key_manager import KeyManager, KeyStore
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    KeyManager = None
+    KeyStore = None
+try:
+    from .zero_knowledge import ZKProofSystem, ZKProof
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    ZKProofSystem = None
+    ZKProof = None
 
 __all__ = [
     'SignatureManager',

@@ -10,20 +10,64 @@ This module provides a comprehensive federated learning framework with:
 - Production-ready TensorFlow integration
 """
 
-from .core.base import FederatedClient, FederatedServer, FederatedModel
-from .core.config import FederatedConfig
-from .core.manager import FederatedManager
-from .aggregation.fedavg import FedAvgAggregator
-from .aggregation.secure_aggregation import SecureAggregator
-from .aggregation.byzantine_robust import ByzantineRobustAggregator
-from .privacy.differential_privacy import DifferentialPrivacyManager
-from .algorithms.personalized_fl import PersonalizedFederatedLearning
-from .algorithms.federated_transfer import FederatedTransferLearning
-from .algorithms.async_fl import AsynchronousFederatedLearning
-from .algorithms.meta_learning import FederatedMetaLearning
-from .communication.protocols import FederatedCommunicationProtocol
-from .utils.model_compression import ModelCompressor
-from .utils.metrics import FederatedMetrics
+try:
+    from .core.base import FederatedClient, FederatedServer, FederatedModel
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    FederatedClient = None
+    FederatedServer = None
+    FederatedModel = None
+try:
+    from .core.config import FederatedConfig
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    FederatedConfig = None
+try:
+    from .core.manager import FederatedManager
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    FederatedManager = None
+try:
+    from .aggregation.fedavg import FedAvgAggregator
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    FedAvgAggregator = None
+try:
+    from .aggregation.secure_aggregation import SecureAggregator
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SecureAggregator = None
+try:
+    from .aggregation.byzantine_robust import ByzantineRobustAggregator
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    ByzantineRobustAggregator = None
+try:
+    from .privacy.differential_privacy import DifferentialPrivacyManager
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    DifferentialPrivacyManager = None
+try:
+    from .algorithms.personalized_fl import PersonalizedFederatedLearning
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    PersonalizedFederatedLearning = None
+try:
+    from .algorithms.federated_transfer import FederatedTransferLearning
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    FederatedTransferLearning = None
+try:
+    from .algorithms.async_fl import AsynchronousFederatedLearning
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    AsynchronousFederatedLearning = None
+try:
+    from .algorithms.meta_learning import FederatedMetaLearning
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    FederatedMetaLearning = None
+try:
+    from .communication.protocols import FederatedCommunicationProtocol
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    FederatedCommunicationProtocol = None
+try:
+    from .utils.model_compression import ModelCompressor
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    ModelCompressor = None
+try:
+    from .utils.metrics import FederatedMetrics
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    FederatedMetrics = None
 
 __version__ = "1.0.0"
 __author__ = "Kenny AI Systems"

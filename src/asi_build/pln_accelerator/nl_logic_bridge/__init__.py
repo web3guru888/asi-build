@@ -21,16 +21,46 @@ Author: Kenny (with Ben Goertzel's AGI vision)
 Version: 1.0.0
 """
 
-from .core.bridge import NLLogicBridge
-from .core.architecture import BridgeArchitecture
-from .parsers.semantic_parser import SemanticParser
-from .parsers.pln_extractor import PLNExtractor
-from .generators.explanation_generator import ExplanationGenerator
-from .generators.nl_generator import NLGenerator
-from .knowledge.commonsense import CommonsenseReasoner
-from .knowledge.graph_builder import KnowledgeGraphBuilder
-from .interfaces.query_interface import QueryInterface
-from .models.transformer_models import TransformerModels
+try:
+    from .core.bridge import NLLogicBridge
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    NLLogicBridge = None
+try:
+    from .core.architecture import BridgeArchitecture
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    BridgeArchitecture = None
+try:
+    from .parsers.semantic_parser import SemanticParser
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SemanticParser = None
+try:
+    from .parsers.pln_extractor import PLNExtractor
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    PLNExtractor = None
+try:
+    from .generators.explanation_generator import ExplanationGenerator
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    ExplanationGenerator = None
+try:
+    from .generators.nl_generator import NLGenerator
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    NLGenerator = None
+try:
+    from .knowledge.commonsense import CommonsenseReasoner
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    CommonsenseReasoner = None
+try:
+    from .knowledge.graph_builder import KnowledgeGraphBuilder
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    KnowledgeGraphBuilder = None
+try:
+    from .interfaces.query_interface import QueryInterface
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    QueryInterface = None
+try:
+    from .models.transformer_models import TransformerModels
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    TransformerModels = None
 
 __version__ = "1.0.0"
 __author__ = "Kenny"

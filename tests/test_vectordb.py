@@ -239,14 +239,10 @@ class TestVectorDBConfig:
         assert cfg.validate_config() is True
 
     def test_validate_config_bad_search_alpha(self):
-        """Setting alpha out of range should fail validation."""
+        """Setting alpha out of range should fail validation and return False."""
         cfg = VectorDBConfig()
         cfg.search.alpha = 2.0
-        # Source has `except AssertionError:` — a misspelling of AssertionError.
-        # This means the AssertionError is NOT caught, and propagates.
-        # BUG: this should return False but instead raises.
-        with pytest.raises(AssertionError):
-            cfg.validate_config()
+        assert cfg.validate_config() is False
 
     def test_save_and_load_json(self, tmp_path):
         cfg = VectorDBConfig()

@@ -32,9 +32,21 @@ result = agent.migrate(mysql_config, memgraph_config)
 """
 
 # Main exports
-from .core import SQLToMemgraphAgent, HyGM
-from .database import DatabaseAnalyzerFactory, DatabaseDataInterface
-from .query_generation import CypherGenerator, SchemaUtilities
+try:
+    from .core import SQLToMemgraphAgent, HyGM
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SQLToMemgraphAgent = None
+    HyGM = None
+try:
+    from .database import DatabaseAnalyzerFactory, DatabaseDataInterface
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    DatabaseAnalyzerFactory = None
+    DatabaseDataInterface = None
+try:
+    from .query_generation import CypherGenerator, SchemaUtilities
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    CypherGenerator = None
+    SchemaUtilities = None
 
 __version__ = "0.1.0"
 

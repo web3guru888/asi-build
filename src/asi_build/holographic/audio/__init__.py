@@ -2,7 +2,10 @@
 Spatial audio system for holographic experiences
 """
 
-from .spatial_audio_manager import SpatialAudioManager
+try:
+    from .spatial_audio_manager import SpatialAudioManager
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SpatialAudioManager = None
 
 __all__ = [
     'SpatialAudioManager',

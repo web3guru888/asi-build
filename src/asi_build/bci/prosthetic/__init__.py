@@ -5,10 +5,22 @@ BCI systems for controlling prosthetic devices and assistive technology.
 Includes limb control, wheelchair navigation, and environmental control.
 """
 
-from .controller import ProstheticController
-from .limb_control import LimbController
-from .wheelchair_controller import WheelchairController
-from .environmental_control import EnvironmentalController
+try:
+    from .controller import ProstheticController
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    ProstheticController = None
+try:
+    from .limb_control import LimbController
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    LimbController = None
+try:
+    from .wheelchair_controller import WheelchairController
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    WheelchairController = None
+try:
+    from .environmental_control import EnvironmentalController
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    EnvironmentalController = None
 
 __all__ = [
     'ProstheticController',

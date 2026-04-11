@@ -959,11 +959,13 @@ class TestRecursiveSelfImprovement:
             "metric_id": "accuracy",
             "type": "parameter_tuning",
             "parameter": "attention_threshold",
+            "target_metric": "accuracy",
+            "expected_improvement": 0.1,
             "relevant_parameters": ["attention_threshold"],
         }
         proposal = self.rsi.generate_improvement_proposal(opportunity)
         assert isinstance(proposal, self.ImprovementProposal)
-        assert proposal.improvement_type in list(self.ImprovementType)
+        assert proposal.improvement_type == self.ImprovementType.PARAMETER_TUNING
 
     # -- safety evaluation --
     def test_evaluate_proposal_safety_safe(self):

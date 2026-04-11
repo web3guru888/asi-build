@@ -13,15 +13,42 @@ Author: Kenny AGI System
 Version: 1.0.0
 """
 
-from .core.config import VectorDBConfig
-from .core.embeddings import EmbeddingPipeline
-from .core.search import SemanticSearchEngine
-from .databases.pinecone_client import PineconeClient
-from .databases.weaviate_client import WeaviateClient
-from .databases.qdrant_client import QdrantClient
-from .api.unified_client import UnifiedVectorDB
-from .api.indexing import IndexingAPI
-from .api.retrieval import RetrievalAPI
+try:
+    from .core.config import VectorDBConfig
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    VectorDBConfig = None
+try:
+    from .core.embeddings import EmbeddingPipeline
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    EmbeddingPipeline = None
+try:
+    from .core.search import SemanticSearchEngine
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SemanticSearchEngine = None
+try:
+    from .databases.pinecone_client import PineconeClient
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    PineconeClient = None
+try:
+    from .databases.weaviate_client import WeaviateClient
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    WeaviateClient = None
+try:
+    from .databases.qdrant_client import QdrantClient
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    QdrantClient = None
+try:
+    from .api.unified_client import UnifiedVectorDB
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    UnifiedVectorDB = None
+try:
+    from .api.indexing import IndexingAPI
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    IndexingAPI = None
+try:
+    from .api.retrieval import RetrievalAPI
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    RetrievalAPI = None
 
 __version__ = "1.0.0"
 __author__ = "Kenny AGI System"

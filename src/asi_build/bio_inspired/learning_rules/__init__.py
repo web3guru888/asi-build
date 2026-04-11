@@ -6,11 +6,33 @@ STDP, BCM rule, and other synaptic plasticity mechanisms found in biological
 neural networks.
 """
 
-from .stdp_learning import STDPLearning, STDPRule, SpikeTimingWindow
-from .bcm_learning import BCMLearning, BCMRule, SlidingThreshold
-from .hebbian_learning import HebbianLearning, AntiHebbianLearning
-from .homeostatic_plasticity import HomeostaticPlasticity, SynapticScaling
-from .metaplasticity import Metaplasticity, PlasticityModulation
+try:
+    from .stdp_learning import STDPLearning, STDPRule, SpikeTimingWindow
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    STDPLearning = None
+    STDPRule = None
+    SpikeTimingWindow = None
+try:
+    from .bcm_learning import BCMLearning, BCMRule, SlidingThreshold
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    BCMLearning = None
+    BCMRule = None
+    SlidingThreshold = None
+try:
+    from .hebbian_learning import HebbianLearning, AntiHebbianLearning
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    HebbianLearning = None
+    AntiHebbianLearning = None
+try:
+    from .homeostatic_plasticity import HomeostaticPlasticity, SynapticScaling
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    HomeostaticPlasticity = None
+    SynapticScaling = None
+try:
+    from .metaplasticity import Metaplasticity, PlasticityModulation
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    Metaplasticity = None
+    PlasticityModulation = None
 
 __all__ = [
     "STDPLearning",

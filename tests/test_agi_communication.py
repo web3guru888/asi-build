@@ -36,13 +36,19 @@ from datetime import datetime, timedelta
 from unittest.mock import MagicMock, AsyncMock, patch
 from dataclasses import asdict
 
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 def _run(coro):
     """Run an async coroutine synchronously."""
-    return asyncio.get_event_loop().run_until_complete(coro)
+    loop = asyncio.new_event_loop()
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
 
 
 def _make_identity(agi_id="agi_1", name="TestAGI", capabilities=None):

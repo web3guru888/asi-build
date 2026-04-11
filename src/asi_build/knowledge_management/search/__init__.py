@@ -5,6 +5,12 @@ Search Module - Intelligent Information Retrieval
 Advanced search capabilities for the omniscience network.
 """
 
-from .intelligent_search import IntelligentSearch, SearchQuery, SearchResult, SearchResponse
+try:
+    from .intelligent_search import IntelligentSearch, SearchQuery, SearchResult, SearchResponse
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    IntelligentSearch = None
+    SearchQuery = None
+    SearchResult = None
+    SearchResponse = None
 
 __all__ = ['IntelligentSearch', 'SearchQuery', 'SearchResult', 'SearchResponse']

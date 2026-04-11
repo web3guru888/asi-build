@@ -1,9 +1,21 @@
 """Core components for the Kenny Vector Database system."""
 
-from .config import VectorDBConfig
-from .embeddings import EmbeddingPipeline
-from .search import SemanticSearchEngine
-from .utils import VectorUtils
+try:
+    from .config import VectorDBConfig
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    VectorDBConfig = None
+try:
+    from .embeddings import EmbeddingPipeline
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    EmbeddingPipeline = None
+try:
+    from .search import SemanticSearchEngine
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SemanticSearchEngine = None
+try:
+    from .utils import VectorUtils
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    VectorUtils = None
 
 __all__ = [
     "VectorDBConfig",

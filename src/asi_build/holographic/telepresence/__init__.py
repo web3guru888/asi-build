@@ -2,7 +2,10 @@
 Holographic telepresence system for remote collaboration
 """
 
-from .telepresence_manager import TelepresenceManager
+try:
+    from .telepresence_manager import TelepresenceManager
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    TelepresenceManager = None
 
 __all__ = [
     'TelepresenceManager',

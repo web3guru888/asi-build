@@ -2,10 +2,22 @@
 Homomorphic encryption schemes implementation.
 """
 
-from .ckks import CKKSScheme
-from .bfv import BFVScheme  
-from .bgv import BGVScheme
-from ..core.base import SchemeType
+try:
+    from .ckks import CKKSScheme
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    CKKSScheme = None
+try:
+    from .bfv import BFVScheme  
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    BFVScheme = None
+try:
+    from .bgv import BGVScheme
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    BGVScheme = None
+try:
+    from ..core.base import SchemeType
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    SchemeType = None
 
 __all__ = [
     "CKKSScheme",

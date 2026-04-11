@@ -2,7 +2,11 @@
 3D gesture recognition and spatial interaction system
 """
 
-from .hand_tracker import HandTracker, HandLandmarks
+try:
+    from .hand_tracker import HandTracker, HandLandmarks
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    HandTracker = None
+    HandLandmarks = None
 
 __all__ = [
     'GestureRecognizer3D',

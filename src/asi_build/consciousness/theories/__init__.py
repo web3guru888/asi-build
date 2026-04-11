@@ -21,8 +21,19 @@ free energy assessment, etc.).
 
 try:
     from .tensor_iit import IITCalculator as TensorIITCalculator, PhiComplex, ConceptualStructure
-    from .higher_order_thought import HOTTheoryImplementation, HOTStructure, ConsciousnessMetrics, MentalState
-    from .predictive_processing_tensor import PredictiveProcessingMetrics as PredictiveProcessingTensor, PredictiveHierarchy, ConsciousPredictionMetrics
+    try:
+        from .higher_order_thought import HOTTheoryImplementation, HOTStructure, ConsciousnessMetrics, MentalState
+    except (ImportError, ModuleNotFoundError, SyntaxError):
+        HOTTheoryImplementation = None
+        HOTStructure = None
+        ConsciousnessMetrics = None
+        MentalState = None
+    try:
+        from .predictive_processing_tensor import PredictiveProcessingMetrics as PredictiveProcessingTensor, PredictiveHierarchy, ConsciousPredictionMetrics
+    except (ImportError, ModuleNotFoundError, SyntaxError):
+        PredictiveProcessingTensor = None
+        PredictiveHierarchy = None
+        ConsciousPredictionMetrics = None
 
     __all__ = [
         'TensorIITCalculator',

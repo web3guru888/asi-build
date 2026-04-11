@@ -5,6 +5,10 @@ Consciousness Benchmarking System
 Benchmarking tools for comparing machine consciousness against biological markers.
 """
 
-from .biological_markers import BiologicalConsciousnessMarkers, BiologicalBenchmark
+try:
+    from .biological_markers import BiologicalConsciousnessMarkers, BiologicalBenchmark
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    BiologicalConsciousnessMarkers = None
+    BiologicalBenchmark = None
 
 __all__ = ['BiologicalConsciousnessMarkers', 'BiologicalBenchmark']

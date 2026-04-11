@@ -8,16 +8,36 @@ Subpackages:
     governance  – DAO, smart contracts, Merkle audit ledger, consensus, overrides, rights
 """
 
-from .framework import ConstitutionalAI
-from .value_engine import ValueAlignmentEngine
-from .constraints import BehavioralConstraints
-from .governance import GovernanceFramework  # legacy stub re-exported from governance pkg
-from .compliance import ComplianceChecker
-from .formal_verification import (
+try:
+    from .framework import ConstitutionalAI
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    ConstitutionalAI = None
+try:
+    from .value_engine import ValueAlignmentEngine
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    ValueAlignmentEngine = None
+try:
+    from .constraints import BehavioralConstraints
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    BehavioralConstraints = None
+try:
+    from .governance import GovernanceFramework  # legacy stub re-exported from governance pkg
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    GovernanceFramework  # legacy stub re-exported from governance pkg = None
+try:
+    from .compliance import ComplianceChecker
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    ComplianceChecker = None
+try:
+    from .formal_verification import (
     TheoremProver,
     EthicalVerificationEngine,
     EthicalAxiom,
-)
+    )
+except (ImportError, ModuleNotFoundError, SyntaxError):
+    TheoremProver = None
+    EthicalVerificationEngine = None
+    EthicalAxiom = None
 
 __all__ = [
     "ConstitutionalAI",
