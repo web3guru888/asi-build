@@ -441,6 +441,185 @@ class TestIntegratedInformationTheory:
         assert "edges" in viz
         assert len(viz["nodes"]) == 13
 
+    # ----- TPM-based IIT 3.0 tests (Issue #6) ----- #
+
+    @staticmethod
+    def _make_clean_iit(**kwargs) -> "IntegratedInformationTheory":
+        """Helper: return an IIT instance with an empty network."""
+        iit = IntegratedInformationTheory(config={"max_partition_size": 8, **kwargs})
+        iit.elements.clear()
+        iit.connections.clear()
+        iit.system_state_history.clear()
+        iit.partition_cache.clear()
+        iit.system_graph.clear()
+        return iit
+
+    def test_tpm_shape(self):
+        """For n=3 binary elements the TPM should be 8×3."""
+        iit = self._make_clean_iit()
+        for name in ("x", "y", "z"):
+            iit.add_element(SystemElement(name, state=0.0, activation_function="threshold",
+                                          threshold=0.5))
+        # Add some connections so it's not trivial
+        iit.add_connection(Connection("x", "y", weight=1.0))
+        iit.add_connection(Connection("y", "z", weight=1.0))
+
+        tpm = iit._build_tpm(sorted(iit.elements.keys()))
+        assert tpm.shape == (8, 3), f"Expected (8, 3), got {tpm.shape}"
+
+    def test_tpm_rows_sum_to_valid_probabilities(self):
+        """Each entry in the state-by-node TPM is in [0, 1]."""
+        iit = self._make_clean_iit()
+        for name in ("a", "b", "c"):
+            iit.add_element(SystemElement(name, state=0.0, activation_function="sigmoid"))
+        iit.add_connection(Connection("a", "b", weight=0.8))
+        iit.add_connection(Connection("b", "c", weight=0.6))
+        iit.add_connection(Connection("c", "a", weight=0.4))
+
+        tpm = iit._build_tpm(sorted(iit.elements.keys()))
+        assert np.all(tpm >= 0.0) and np.all(tpm <= 1.0), "TPM entries must be valid probabilities"
+
+    def test_tpm_effect_distribution_sums_to_one(self):
+        """The effect distribution derived from the TPM sums to 1."""
+        iit = self._make_clean_iit()
+        for name in ("a", "b"):
+            iit.add_element(SystemElement(name, state=1.0, activation_function="threshold",
+                                          threshold=0.5))
+        iit.add_connection(Connection("a", "b", weight=1.0))
+        iit.add_connection(Connection("b", "a", weight=1.0))
+
+        tpm = iit._build_tpm(["a", "b"])
+        state = (1, 1)
+        dist = iit._effect_distribution_from_sbn_tpm(tpm, state, 2)
+        assert dist.sum() == pytest.approx(1.0, abs=1e-9)
+
+    def test_phi_recurrent_integrated_network(self):
+        """A fully connected recurrent network in the all-ON state has Φ > 0.
+
+        IIT 3.0: Φ > 0 requires that *every* bipartition's unidirectional
+        cut loses information about the whole system.  A fully-connected
+        sigmoid network with strong bidirectional weights in the all-ON
+        state achieves this because each node contributes non-zero input
+        to all others — no cut direction is "free".
+
+        This is the standard "Tononi triangle" scenario.
+
+        Note: Φ is state-dependent.  When some nodes are OFF (binary 0),
+        cutting connections FROM those nodes costs nothing (they contribute
+        0 input), yielding a free cut and Φ = 0.  The all-ON state avoids
+        this because every node's contribution is non-zero.
+        """
+        iit = self._make_clean_iit()
+        for name in ("a", "b", "c"):
+            iit.add_element(SystemElement(name, state=1.0,
+                                          activation_function="sigmoid"))
+        # Strong bidirectional connections ensure integration
+        for src, dst in [("a", "b"), ("b", "a"), ("b", "c"),
+                         ("c", "b"), ("a", "c"), ("c", "a")]:
+            iit.add_connection(Connection(src, dst, weight=2.0))
+
+        phi = iit.calculate_phi({"a", "b", "c"})
+        assert phi > 0.0, f"Fully connected recurrent network (all-ON) should have Φ > 0, got {phi}"
+
+    def test_phi_copy_gate(self):
+        """COPY gate: A→B (no feedback) has Φ = 0 because the partition
+        {A} | {B} loses no integrated information — B is fully determined
+        by A alone.
+        """
+        iit = self._make_clean_iit()
+        iit.add_element(SystemElement("a", state=1.0, activation_function="threshold",
+                                      threshold=0.5))
+        iit.add_element(SystemElement("b", state=0.0, activation_function="threshold",
+                                      threshold=0.5))
+        # One-way: A copies to B, no feedback
+        iit.add_connection(Connection("a", "b", weight=1.0))
+
+        phi = iit.calculate_phi({"a", "b"})
+        assert phi == pytest.approx(0.0, abs=1e-6), \
+            f"Feed-forward COPY should have Φ ≈ 0, got {phi}"
+
+    def test_phi_increases_with_connectivity(self):
+        """More recurrent connections → higher Φ (general trend).
+
+        We compare a sparse network (one bidirectional pair, r isolated)
+        against a fully connected bidirectional network.  Both use sigmoid
+        activation with strong weights so that connections create genuine
+        causal influence between nodes.
+        """
+        def make_system(connections):
+            iit = self._make_clean_iit()
+            for name in ("p", "q", "r"):
+                iit.add_element(SystemElement(name, state=1.0,
+                                              activation_function="sigmoid"))
+            for src, dst, w in connections:
+                iit.add_connection(Connection(src, dst, weight=w))
+            return iit.calculate_phi({"p", "q", "r"})
+
+        # Sparse: only p↔q connected, r isolated → partition {r}|{p,q} costs nothing
+        phi_sparse = make_system([("p", "q", 2.0), ("q", "p", 2.0)])
+        # Dense: full bidirectional connectivity
+        phi_dense = make_system([
+            ("p", "q", 2.0), ("q", "r", 2.0), ("r", "p", 2.0),
+            ("q", "p", 2.0), ("r", "q", 2.0), ("p", "r", 2.0),
+        ])
+        assert phi_dense >= phi_sparse, \
+            f"Dense ({phi_dense:.6f}) should be ≥ sparse ({phi_sparse:.6f})"
+
+    def test_phi_disconnected_still_zero(self):
+        """Reiteration: two disconnected elements must still have Φ = 0.
+
+        (This is the same scenario as test_phi_known_disconnected_system
+        but using the clean-construction helper.)
+        """
+        iit = self._make_clean_iit()
+        iit.add_element(SystemElement("u", state=0.7))
+        iit.add_element(SystemElement("v", state=0.3))
+        # No connections at all
+        phi = iit.calculate_phi({"u", "v"})
+        assert phi == pytest.approx(0.0, abs=1e-9)
+
+    def test_phi_single_element_still_zero(self):
+        """Single-element subset: Φ = 0 by definition (no bipartition)."""
+        iit = self._make_clean_iit()
+        iit.add_element(SystemElement("solo", state=0.5))
+        phi = iit.calculate_phi({"solo"})
+        assert phi == 0.0
+
+    def test_kl_divergence_identical_distributions(self):
+        """KL divergence of a distribution with itself is 0."""
+        p = np.array([0.25, 0.25, 0.25, 0.25])
+        kl = IntegratedInformationTheory._kl_divergence(p, p)
+        assert kl == pytest.approx(0.0, abs=1e-8)
+
+    def test_kl_divergence_different_distributions(self):
+        """KL divergence is positive for different distributions."""
+        p = np.array([0.9, 0.1])
+        q = np.array([0.5, 0.5])
+        kl = IntegratedInformationTheory._kl_divergence(p, q)
+        assert kl > 0.0
+
+    def test_approximate_phi_large_subset(self):
+        """Spectral approximation returns 0 for disconnected large subset."""
+        iit = self._make_clean_iit(max_partition_size=3)
+        for i in range(5):
+            iit.add_element(SystemElement(f"n{i}", state=0.5))
+        # No connections → Fiedler value = 0 → Φ_approx = 0
+        phi = iit.calculate_phi({f"n{i}" for i in range(5)})
+        assert phi == pytest.approx(0.0, abs=1e-9)
+
+    def test_approximate_phi_connected_large_subset(self):
+        """Spectral approximation returns Φ > 0 for a connected large subset."""
+        iit = self._make_clean_iit(max_partition_size=3)
+        names = [f"n{i}" for i in range(5)]
+        for name in names:
+            iit.add_element(SystemElement(name, state=1.0,
+                                          activation_function="threshold", threshold=0.5))
+        # Create a ring: n0→n1→n2→n3→n4→n0
+        for i in range(5):
+            iit.add_connection(Connection(names[i], names[(i + 1) % 5], weight=0.8))
+        phi = iit.calculate_phi(set(names))
+        assert phi > 0.0, f"Connected ring should have Φ_approx > 0, got {phi}"
+
 
 # =========================================================================
 # Section 6 — Memory Integration

@@ -268,116 +268,264 @@ class IntegratedInformationTheory(BaseConsciousness):
             return phi
 
     def _compute_phi_for_subset(self, subset: Set[str]) -> float:
-        """Compute Φ for a specific subset of elements"""
+        """Compute Φ for a specific subset of elements.
+
+        Uses IIT 3.0 (Oizumi, Albantakis & Tononi 2014): Φ is the minimum
+        information partition (MIP) — the bipartition whose *unidirectional
+        cut* loses the least integrated information.
+
+        For each bipartition (A, B) we try two unidirectional cuts:
+          1. Sever connections from A → B  (keep B → A)
+          2. Sever connections from B → A  (keep A → B)
+
+        The minimum KL divergence across both directions gives the φ for
+        that partition.  The overall Φ is the minimum across all bipartitions.
+        """
         if len(subset) > self.max_partition_size:
-            # Use approximation for large subsets
             return self._approximate_phi(subset)
 
+        sorted_nodes = sorted(subset)
+        n = len(sorted_nodes)
+
+        # Build the whole-system TPM (state-by-node form: 2^n × n)
+        tpm_whole = self._build_tpm(sorted_nodes)
+
+        # Get the current binary state of the subset
+        current_state = self._get_current_binary_state(sorted_nodes)
+
+        # Whole-system effect distribution
+        whole_dist = self._effect_distribution_from_sbn_tpm(tpm_whole, current_state, n)
+
         min_phi = float("inf")
-        best_partition = None
 
-        # Try all possible bipartitions
-        for partition_size in range(1, len(subset)):
-            for subset_a in itertools.combinations(subset, partition_size):
-                subset_a = set(subset_a)
-                subset_b = subset - subset_a
+        node_set_a: Set[str]
+        node_set_b: Set[str]
 
-                if len(subset_b) == 0:
+        # Try all non-trivial bipartitions (each side non-empty).
+        # Only iterate up to half the size to avoid mirrored duplicates.
+        for partition_size in range(1, (n // 2) + 1):
+            for indices_a in itertools.combinations(range(n), partition_size):
+                indices_b = tuple(i for i in range(n) if i not in indices_a)
+
+                # Skip mirrored duplicate when both halves are equal size
+                if len(indices_a) == len(indices_b) and indices_a > indices_b:
                     continue
 
-                # Calculate information loss for this partition
-                phi_partition = self._calculate_partition_phi(subset_a, subset_b)
+                node_set_a = {sorted_nodes[i] for i in indices_a}
+                node_set_b = {sorted_nodes[i] for i in indices_b}
 
-                if phi_partition < min_phi:
-                    min_phi = phi_partition
-                    best_partition = (subset_a, subset_b)
+                # Try both unidirectional cut directions
+                for cut_from, cut_to in [(node_set_a, node_set_b),
+                                         (node_set_b, node_set_a)]:
+                    # Build a TPM with the cut applied (sever cut_from → cut_to)
+                    tpm_cut = self._build_tpm(sorted_nodes,
+                                              cut_from=cut_from, cut_to=cut_to)
+                    cut_dist = self._effect_distribution_from_sbn_tpm(
+                        tpm_cut, current_state, n
+                    )
 
-        return max(0.0, min_phi)
+                    kl = self._kl_divergence(whole_dist, cut_dist)
+                    if kl < min_phi:
+                        min_phi = kl
 
-    def _calculate_partition_phi(self, subset_a: Set[str], subset_b: Set[str]) -> float:
-        """Calculate Φ for a specific partition"""
-        # Find connections that cross the partition
-        cross_connections = []
+        return max(0.0, min_phi) if min_phi < float("inf") else 0.0
+
+    # ------------------------------------------------------------------
+    # TPM construction
+    # ------------------------------------------------------------------
+
+    def _build_tpm(
+        self,
+        sorted_nodes: List[str],
+        cut_from: Optional[Set[str]] = None,
+        cut_to: Optional[Set[str]] = None,
+    ) -> np.ndarray:
+        """Build a state-by-node Transition Probability Matrix.
+
+        For *n* binary elements the TPM has shape ``(2**n, n)``.
+        Row *i* corresponds to input state *i* (little-endian binary), and
+        column *j* gives the probability that node *j* is ON at *t+1*.
+
+        Parameters
+        ----------
+        sorted_nodes : list of str
+            Node names in sorted order.
+        cut_from, cut_to : set of str, optional
+            If both are provided, connections from any node in *cut_from*
+            to any node in *cut_to* are severed (unidirectional cut).
+        """
+        n = len(sorted_nodes)
+        num_states = 1 << n  # 2^n
+        epsilon = 1e-10
+
+        # Pre-compute the connection weights *into* each node in sorted_nodes
+        # from *all* nodes in sorted_nodes (intra-subset connections only),
+        # honouring the optional unidirectional cut.
+        node_set = set(sorted_nodes)
+        weights_into: Dict[str, Dict[str, float]] = {node: {} for node in sorted_nodes}
         for conn in self.connections:
             if not conn.active:
                 continue
-
-            if (conn.from_element in subset_a and conn.to_element in subset_b) or (
-                conn.from_element in subset_b and conn.to_element in subset_a
+            if conn.to_element not in node_set or conn.from_element not in node_set:
+                continue
+            # Apply the unidirectional cut: skip connections from cut_from→cut_to
+            if (
+                cut_from is not None
+                and cut_to is not None
+                and conn.from_element in cut_from
+                and conn.to_element in cut_to
             ):
-                cross_connections.append(conn)
+                continue
+            weights_into[conn.to_element][conn.from_element] = conn.weight
 
-        if not cross_connections:
-            return 0.0
+        tpm = np.zeros((num_states, n), dtype=np.float64)
 
-        # Calculate information before and after cutting connections
-        original_entropy = self._calculate_system_entropy(subset_a | subset_b)
+        for state_idx in range(num_states):
+            # Decode state_idx to binary state (little-endian: node 0 = LSB)
+            bits = tuple((state_idx >> j) & 1 for j in range(n))
 
-        # Temporarily cut cross connections
-        for conn in cross_connections:
-            conn.active = False
+            # Map node names to their binary values for this state
+            state_map = {sorted_nodes[j]: float(bits[j]) for j in range(n)}
 
-        # Calculate entropy with cut connections
-        cut_entropy = self._calculate_system_entropy(subset_a | subset_b)
+            for j, node in enumerate(sorted_nodes):
+                elem = self.elements[node]
 
-        # Restore connections
-        for conn in cross_connections:
-            conn.active = True
+                # Compute total weighted input from within the subset
+                total_input = 0.0
+                for src, w in weights_into[node].items():
+                    total_input += state_map[src] * w
 
-        # Φ is the difference in integrated information
-        phi = original_entropy - cut_entropy
-        return max(0.0, phi)
+                # Apply activation function to get next-state value
+                if elem.activation_function == "sigmoid":
+                    next_val = 1.0 / (1.0 + np.exp(-total_input))
+                elif elem.activation_function == "threshold":
+                    next_val = 1.0 if total_input > elem.threshold else 0.0
+                elif elem.activation_function == "linear":
+                    next_val = max(0.0, min(1.0, total_input))
+                else:
+                    next_val = 1.0 / (1.0 + np.exp(-total_input))
 
-    def _calculate_system_entropy(self, subset: Set[str]) -> float:
-        """Calculate the entropy of a system subset"""
-        if not self.system_state_history:
-            return 0.0
+                # P(node ON at t+1) — clamp away from exact 0/1 for log safety
+                p_on = np.clip(next_val, epsilon, 1.0 - epsilon)
+                tpm[state_idx, j] = p_on
 
-        # Get recent states for subset
-        recent_states = []
-        for state_dict in self.system_state_history[-10:]:  # Last 10 states
-            subset_state = tuple(state_dict.get(elem_id, 0.0) for elem_id in sorted(subset))
-            recent_states.append(subset_state)
+        return tpm
 
-        if not recent_states:
-            return 0.0
+    # ------------------------------------------------------------------
+    # Distribution helpers
+    # ------------------------------------------------------------------
 
-        # Calculate entropy based on state transitions
-        state_counts = defaultdict(int)
-        for state in recent_states:
-            # Discretize continuous states
-            discrete_state = tuple(1 if s > 0.5 else 0 for s in state)
-            state_counts[discrete_state] += 1
+    def _get_current_binary_state(self, sorted_nodes: List[str]) -> Tuple[int, ...]:
+        """Return the current binary state of the given nodes."""
+        return tuple(1 if self.elements[n].state > 0.5 else 0 for n in sorted_nodes)
 
-        total_states = len(recent_states)
-        entropy = 0.0
+    def _effect_distribution_from_sbn_tpm(
+        self, tpm: np.ndarray, state: Tuple[int, ...], n: int
+    ) -> np.ndarray:
+        """Convert a state-by-node TPM row into a full state distribution.
 
-        for count in state_counts.values():
-            probability = count / total_states
-            if probability > 0:
-                entropy -= probability * np.log2(probability)
+        Given the state-by-node TPM and a current state, compute
+        ``P(next_state)`` for every possible next state (2^n entries).
 
-        return entropy
+        Each node is assumed to flip independently (conditional on the
+        current state), so the joint distribution is the product of the
+        marginals.
+        """
+        # Row index from little-endian binary state
+        row_idx = sum(b << i for i, b in enumerate(state))
+        p_on = tpm[row_idx]  # shape (n,)
+
+        num_states = 1 << n
+        dist = np.zeros(num_states, dtype=np.float64)
+
+        for s in range(num_states):
+            prob = 1.0
+            for j in range(n):
+                bit = (s >> j) & 1
+                prob *= p_on[j] if bit else (1.0 - p_on[j])
+            dist[s] = prob
+
+        # Normalise (should already sum to ~1, but ensure)
+        total = dist.sum()
+        if total > 0:
+            dist /= total
+        else:
+            dist[:] = 1.0 / num_states
+
+        return dist
+
+    @staticmethod
+    def _kl_divergence(p: np.ndarray, q: np.ndarray) -> float:
+        """KL divergence D_KL(P || Q) with numerical safeguards.
+
+        Adds a tiny epsilon so we never take log(0).
+        """
+        epsilon = 1e-12
+        p_safe = np.clip(p, epsilon, None)
+        q_safe = np.clip(q, epsilon, None)
+        # Re-normalise after clipping
+        p_safe = p_safe / p_safe.sum()
+        q_safe = q_safe / q_safe.sum()
+        return float(np.sum(p_safe * np.log2(p_safe / q_safe)))
+
+    # ------------------------------------------------------------------
+    # Approximation for large subsets
+    # ------------------------------------------------------------------
 
     def _approximate_phi(self, subset: Set[str]) -> float:
-        """Approximate Φ for large subsets using sampling"""
-        if len(subset) <= 4:
-            return self._compute_phi_for_subset(subset)
+        """Approximate Φ for large subsets using a spectral heuristic.
 
-        # Sample random partitions
-        num_samples = min(50, 2 ** (len(subset) - 1))
-        phi_samples = []
+        For systems larger than ``max_partition_size`` we cannot enumerate
+        all bipartitions.  Instead we use the algebraic connectivity
+        (second-smallest eigenvalue of the Laplacian) of the subset's
+        *connectivity* sub-graph as a proxy for integrated information.
 
-        for _ in range(num_samples):
-            partition_size = np.random.randint(1, len(subset))
-            subset_a = set(np.random.choice(list(subset), partition_size, replace=False))
-            subset_b = subset - subset_a
+        Algebraic connectivity (Fiedler value) measures how well-connected a
+        graph is: it is 0 for disconnected graphs and increases with
+        integration.  This correlates well with Φ in practice (Tononi &
+        Sporns 2003).
 
-            if len(subset_b) > 0:
-                phi = self._calculate_partition_phi(subset_a, subset_b)
-                phi_samples.append(phi)
+        We also scale by the average absolute connection weight so that
+        weak connections yield lower Φ.
+        """
+        sorted_nodes = sorted(subset)
+        n = len(sorted_nodes)
+        node_set = set(sorted_nodes)
+        node_idx = {name: i for i, name in enumerate(sorted_nodes)}
 
-        return min(phi_samples) if phi_samples else 0.0
+        # Build adjacency matrix (undirected: max of both directions)
+        adj = np.zeros((n, n), dtype=np.float64)
+        for conn in self.connections:
+            if (
+                conn.active
+                and conn.from_element in node_set
+                and conn.to_element in node_set
+            ):
+                i = node_idx[conn.from_element]
+                j = node_idx[conn.to_element]
+                w = abs(conn.weight)
+                adj[i, j] = max(adj[i, j], w)
+                adj[j, i] = max(adj[j, i], w)
+
+        # Graph Laplacian: L = D - A
+        degree = adj.sum(axis=1)
+        laplacian = np.diag(degree) - adj
+
+        try:
+            eigenvalues = np.sort(np.real(np.linalg.eigvalsh(laplacian)))
+        except np.linalg.LinAlgError:
+            return 0.0
+
+        # Fiedler value (second-smallest eigenvalue)
+        fiedler = eigenvalues[1] if n >= 2 else 0.0
+        fiedler = max(0.0, fiedler)
+
+        # Scale by mean absolute weight
+        total_weight = adj.sum()
+        num_edges = np.count_nonzero(adj)
+        avg_weight = total_weight / max(num_edges, 1)
+
+        return float(fiedler * avg_weight)
 
     def find_conscious_complexes(self) -> List[IntegratedComplex]:
         """Find all complexes with Φ > threshold"""
