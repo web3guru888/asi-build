@@ -1,0 +1,109 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "asi-build"
+version = "2.0.0"
+description = "Modular AI research framework for consciousness, cognitive architectures, and knowledge graphs"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "ASI:BUILD Contributors" }
+]
+keywords = ["agi", "consciousness", "cognitive-architecture", "knowledge-graph", "ai-research"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "numpy>=1.25",
+]
+
+[project.optional-dependencies]
+consciousness = [
+    "scipy>=1.11",
+    "scikit-learn>=1.3",
+]
+graph = [
+    "networkx>=3.2",
+    "neo4j>=5.13",
+]
+homomorphic = [
+    "numpy>=1.25",  # already in core, but explicit for this group
+]
+vectordb = [
+    "httpx>=0.25",
+]
+quantum = [
+    "qiskit>=0.45",
+]
+ml = [
+    "torch>=2.1",
+    "transformers>=4.35",
+]
+deployment = [
+    "aiohttp>=3.9",
+    "torch>=2.1",
+    "transformers>=4.35",
+]
+dev = [
+    "pytest>=7.4",
+    "pytest-asyncio>=0.21",
+    "black>=23.10",
+    "mypy>=1.7",
+    "isort>=5.12",
+    "coverage>=7.3",
+    "pytest-cov>=4.1",
+]
+all = [
+    "asi-build[consciousness,graph,homomorphic,vectordb,quantum,ml,deployment,dev]",
+]
+
+[project.urls]
+Repository = "https://gitlab.com/asi-build/asi-build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/asi_build"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+addopts = "--tb=short"
+
+[tool.coverage.run]
+source = ["src/asi_build"]
+omit = ["*/tests/*", "*/examples/*"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+strict_optional = true
