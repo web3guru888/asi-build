@@ -1,0 +1,49 @@
+# GitHub Pages / Jekyll configuration for ASI:BUILD
+title: "ASI:BUILD"
+description: "A modular Python research framework for AI consciousness, cognitive architectures, and multi-agent reasoning."
+url: "https://web3guru888.github.io"
+baseurl: "/asi-build"
+
+# Theme
+remote_theme: pages-themes/cayman@v0.2.0
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+
+# Navigation
+header_pages:
+  - README.md
+
+# GitHub info
+github_username: web3guru888
+github_repo: asi-build
+
+# SEO
+author: "ASI:BUILD Contributors"
+show_downloads: true
+google_analytics: false
+
+# Markdown
+markdown: kramdown
+kramdown:
+  syntax_highlighter: rouge
+
+# Exclude from build
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - "*.gemspec"
+  - node_modules
+  - vendor
+  - .bundle
+  - src/
+  - tests/
+  - archive/
+  - asi-code/
+  - branding/
+  - configs/
+  - examples/
+  - pyproject.toml
+  - Makefile
+  - Dockerfile
+  - CLAUDE.md
