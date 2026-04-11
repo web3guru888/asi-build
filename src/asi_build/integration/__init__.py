@@ -47,7 +47,7 @@ Quick Start
     results = bb.get_by_topic("consciousness")
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 # Blackboard
 from .blackboard import CognitiveBlackboard
