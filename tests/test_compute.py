@@ -13,7 +13,7 @@ management, mock heavy async initialization.
 """
 
 import pytest
-pytest.importorskip("asi_build.compute.core.job_scheduler")
+pytest.importorskip("psutil")
 import asyncio
 import time
 import json
