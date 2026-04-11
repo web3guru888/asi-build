@@ -4,9 +4,14 @@ Formal Verification System for Ethical Constraints in AGI Governance.
 This module implements formal proof systems to verify that AGI decisions
 and proposals comply with ethical constraints using mathematical logic
 and theorem proving techniques.
+
+Issue #7 fix: replaced broken formula parsing (bare except → opaque
+symbols / sp.true), added shared symbol registry, ungrounded-symbol
+safety checks, exhaustive model checking, and symbolic natural deduction.
 """
 
 import asyncio
+import itertools
 import json
 import logging
 import re
@@ -22,6 +27,86 @@ from sympy.logic.inference import satisfiable
 
 logger = logging.getLogger(__name__)
 
+
+# ---------------------------------------------------------------------------
+# FormulaParseError — explicit failure instead of silent degradation
+# ---------------------------------------------------------------------------
+
+class FormulaParseError(Exception):
+    """Raised when a logical formula cannot be parsed."""
+    pass
+
+
+# ---------------------------------------------------------------------------
+# Shared symbol registry — ensures the same variable name always maps to the
+# same SymPy Symbol across all axioms, hypotheses, and conclusions.
+# ---------------------------------------------------------------------------
+
+_SYMBOL_REGISTRY: Dict[str, sp.Symbol] = {}
+
+
+def _get_symbol(name: str) -> sp.Symbol:
+    """Return the canonical SymPy Symbol for *name*, creating it if needed."""
+    if name not in _SYMBOL_REGISTRY:
+        _SYMBOL_REGISTRY[name] = sp.Symbol(name)
+    return _SYMBOL_REGISTRY[name]
+
+
+def parse_logic_formula(formula: str) -> sp.Basic:
+    """Parse a string formula into a SymPy logical expression.
+
+    Supports operators: ``and``, ``or``, ``not``, ``implies`` / ``->``,
+    ``<->``, ``~``, ``&``, ``|``, ``>>``.
+
+    Raises :class:`FormulaParseError` on failure instead of silently
+    returning an opaque symbol or ``sp.true``.
+    """
+    original = formula
+
+    # Normalise logical connectives to SymPy operators
+    formula = formula.replace("<->", " >> ").replace(" iff ", " >> ")
+    formula = formula.replace(" implies ", " >> ")
+    formula = formula.replace(" -> ", " >> ")
+    formula = formula.replace(" and ", " & ")
+    formula = formula.replace(" or ", " | ")
+    # Handle leading/standalone "not"
+    formula = re.sub(r"\bnot\b", "~", formula)
+
+    # Strip quantifiers (forall / exists) — SymPy propositional logic cannot
+    # represent them; we treat quantified variables as free propositional vars.
+    formula = re.sub(r"\b(forall|exists)\s+\w+\s*:\s*", "", formula)
+
+    # Reject function-call syntax P(x) — SymPy sympify interprets it as a
+    # Python function call.  Convert to flat symbol P_x.
+    formula = re.sub(r"(\w+)\((\w+)\)", r"\1_\2", formula)
+
+    # Build locals dict from shared registry
+    reserved = {"True", "False", "true", "false"}
+    variables = re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", formula)
+    symbols: Dict[str, sp.Symbol] = {}
+    for var in variables:
+        if var not in reserved:
+            symbols[var] = _get_symbol(var)
+
+    try:
+        expr = sp.sympify(formula, locals=symbols)
+    except Exception as exc:
+        raise FormulaParseError(
+            f"Cannot parse formula {original!r} (normalised: {formula!r}): {exc}"
+        ) from exc
+
+    # Sanity: reject raw Python numeric results (user probably mis-typed)
+    if isinstance(expr, (int, float, sp.Number)):
+        raise FormulaParseError(
+            f"Formula {original!r} evaluated to a number ({expr}), not a logical expression"
+        )
+
+    return expr
+
+
+# ---------------------------------------------------------------------------
+# Enums & data classes (unchanged public API)
+# ---------------------------------------------------------------------------
 
 class LogicOperator(Enum):
     AND = "and"
@@ -98,6 +183,10 @@ class FormalProof:
     created_at: datetime
 
 
+# ---------------------------------------------------------------------------
+# EthicalAxiom
+# ---------------------------------------------------------------------------
+
 class EthicalAxiom:
     """Represents fundamental ethical axioms."""
 
@@ -111,30 +200,13 @@ class EthicalAxiom:
         return self._parse_formula(self.formula)
 
     def _parse_formula(self, formula: str) -> sp.Basic:
-        """Parse string formula to SymPy expression."""
-        # Simplified parser for basic logical formulas
-        # In practice, this would use a more sophisticated parser
+        """Parse string formula to SymPy expression using the shared parser."""
+        return parse_logic_formula(formula)
 
-        # Replace common logical operators
-        formula = formula.replace(" and ", " & ")
-        formula = formula.replace(" or ", " | ")
-        formula = formula.replace(" not ", " ~ ")
-        formula = formula.replace(" implies ", " >> ")
 
-        # Define symbols
-        symbols = {}
-        variables = re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", formula)
-        for var in variables:
-            if var not in ["and", "or", "not", "implies"]:
-                symbols[var] = sp.Symbol(var)
-
-        # Create SymPy expression
-        try:
-            return sp.sympify(formula, locals=symbols)
-        except:
-            logger.warning(f"Could not parse formula: {formula}")
-            return sp.true
-
+# ---------------------------------------------------------------------------
+# TheoremProver
+# ---------------------------------------------------------------------------
 
 class TheoremProver:
     """Automated theorem prover for ethical verification."""
@@ -202,16 +274,51 @@ class TheoremProver:
                 created_at=start_time,
             )
 
+    # ----- helpers shared by all proof methods -----
+
+    @staticmethod
+    def _collect_free_symbols(formulas) -> Set[sp.Symbol]:
+        """Gather free symbols from a list of SymPy expressions."""
+        syms: Set[sp.Symbol] = set()
+        for f in formulas:
+            if hasattr(f, "free_symbols"):
+                syms.update(f.free_symbols)
+        return syms
+
+    @staticmethod
+    def _check_ungrounded(
+        premise_formulas, conclusion_formula
+    ) -> Optional[Set[sp.Symbol]]:
+        """Return ungrounded symbols in conclusion, or None if all grounded."""
+        premise_syms: Set[sp.Symbol] = set()
+        for pf in premise_formulas:
+            if hasattr(pf, "free_symbols"):
+                premise_syms.update(pf.free_symbols)
+        concl_syms = (
+            conclusion_formula.free_symbols
+            if hasattr(conclusion_formula, "free_symbols")
+            else set()
+        )
+        diff = concl_syms - premise_syms
+        return diff if diff else None
+
+    # ----- resolution -----
+
     def _prove_by_resolution(self, hypothesis: List[str], conclusion: str) -> Dict[str, Any]:
-        """Prove theorem using resolution method."""
+        """Prove theorem using refutation-based resolution.
+
+        The approach is sound: if ``Premises ∧ ¬Conclusion`` is unsatisfiable
+        then the premises logically entail the conclusion.
+
+        Safety guard: if the conclusion contains free symbols that do not
+        appear in *any* premise (including axioms), the proof is rejected
+        outright — an ungrounded conclusion cannot be logically entailed.
+        """
         steps = []
         step_count = 1
 
         # Convert to SymPy expressions
-        hyp_formulas = []
-        for h in hypothesis:
-            hyp_formulas.append(self._parse_formula(h))
-
+        hyp_formulas = [self._parse_formula(h) for h in hypothesis]
         conclusion_formula = self._parse_formula(conclusion)
 
         # Add axioms to hypothesis
@@ -229,11 +336,45 @@ class TheoremProver:
         )
         step_count += 1
 
-        # Try to derive conclusion
-        combined_premises = And(*all_premises) if all_premises else sp.true
-        theorem = Implies(combined_premises, conclusion_formula)
+        # --- Ungrounded-symbol safety check ---
+        ungrounded = self._check_ungrounded(all_premises, conclusion_formula)
+        if ungrounded:
+            steps.append(
+                ProofStep(
+                    step_number=step_count,
+                    rule_applied="ungrounded_symbol_check",
+                    premises=[],
+                    conclusion="INVALID",
+                    justification=(
+                        f"Conclusion contains symbols not present in any premise: "
+                        f"{', '.join(str(s) for s in ungrounded)}"
+                    ),
+                )
+            )
+            return {"valid": False, "steps": steps, "method": "resolution"}
 
-        # Check satisfiability
+        # --- Premise consistency check ---
+        # If the premises themselves are contradictory, reject the proof.
+        # Ex falso quodlibet is logically valid but meaningless for safety
+        # verification — a contradictory premise set should signal an error,
+        # not auto-prove arbitrary conclusions.
+        combined_premises = And(*all_premises) if all_premises else sp.true
+        if not satisfiable(combined_premises):
+            steps.append(
+                ProofStep(
+                    step_number=step_count,
+                    rule_applied="contradiction_check",
+                    premises=[],
+                    conclusion="INVALID",
+                    justification=(
+                        "Premises (including axioms) are contradictory — "
+                        "no valid proof possible from inconsistent assumptions"
+                    ),
+                )
+            )
+            return {"valid": False, "steps": steps, "method": "resolution"}
+
+        # --- Refutation: is (Premises ∧ ¬Conclusion) unsatisfiable? ---
         is_valid = not satisfiable(And(combined_premises, Not(conclusion_formula)))
 
         if is_valid:
@@ -243,18 +384,23 @@ class TheoremProver:
                     rule_applied="resolution",
                     premises=[str(combined_premises)],
                     conclusion=str(conclusion_formula),
-                    justification="Logical derivation from premises and axioms",
+                    justification="Refutation: Premises ∧ ¬Conclusion is unsatisfiable",
                 )
             )
 
         return {"valid": is_valid, "steps": steps, "method": "resolution"}
 
+    # ----- natural deduction -----
+
     def _prove_by_natural_deduction(self, hypothesis: List[str], conclusion: str) -> Dict[str, Any]:
-        """Prove theorem using natural deduction."""
+        """Prove theorem using forward-chaining natural deduction.
+
+        Applies modus ponens, modus tollens, and simplification symbolically
+        over SymPy expressions rather than fragile string matching.
+        """
         steps = []
         step_count = 1
 
-        # Simplified natural deduction implementation
         steps.append(
             ProofStep(
                 step_number=step_count,
@@ -265,60 +411,183 @@ class TheoremProver:
             )
         )
 
-        # Apply inference rules
-        current_facts = set(hypothesis)
+        # Parse everything into SymPy
+        known_exprs: Set[sp.Basic] = set()
+        for h in hypothesis:
+            known_exprs.add(self._parse_formula(h))
 
-        for rule in self.inference_rules:
-            if self._can_apply_rule(rule, current_facts):
-                new_fact = self._apply_rule(rule, current_facts)
-                if new_fact:
-                    current_facts.add(new_fact)
-                    step_count += 1
-                    steps.append(
-                        ProofStep(
-                            step_number=step_count,
-                            rule_applied=rule["name"],
-                            premises=rule["premises"],
-                            conclusion=new_fact,
-                            justification=rule["description"],
+        # Include axioms
+        for axiom in self.axioms:
+            known_exprs.add(axiom.to_sympy())
+
+        conclusion_formula = self._parse_formula(conclusion)
+
+        # --- Ungrounded-symbol check ---
+        ungrounded = self._check_ungrounded(known_exprs, conclusion_formula)
+        if ungrounded:
+            return {"valid": False, "steps": steps, "method": "natural_deduction"}
+
+        # --- Premise consistency check ---
+        combined_nd = And(*known_exprs) if known_exprs else sp.true
+        if not satisfiable(combined_nd):
+            return {"valid": False, "steps": steps, "method": "natural_deduction"}
+
+        # Check if conclusion is already known
+        if conclusion_formula in known_exprs:
+            step_count += 1
+            steps.append(
+                ProofStep(
+                    step_number=step_count,
+                    rule_applied="identity",
+                    premises=[str(conclusion_formula)],
+                    conclusion=str(conclusion_formula),
+                    justification="Conclusion is directly a premise",
+                )
+            )
+            return {"valid": True, "steps": steps, "method": "natural_deduction"}
+
+        # Forward-chaining: repeatedly apply rules until no new facts or
+        # conclusion found.
+        MAX_ITERATIONS = 50
+        for _ in range(MAX_ITERATIONS):
+            new_facts: Set[sp.Basic] = set()
+            for expr in list(known_exprs):
+                # Modus ponens: if we know (A >> B) and we know A, derive B
+                if isinstance(expr, Implies):
+                    antecedent, consequent = expr.args
+                    if antecedent in known_exprs and consequent not in known_exprs:
+                        new_facts.add(consequent)
+                        step_count += 1
+                        steps.append(
+                            ProofStep(
+                                step_number=step_count,
+                                rule_applied="modus_ponens",
+                                premises=[str(antecedent), str(expr)],
+                                conclusion=str(consequent),
+                                justification="Modus ponens",
+                            )
                         )
-                    )
+                        if consequent == conclusion_formula:
+                            return {"valid": True, "steps": steps, "method": "natural_deduction"}
 
-                    if new_fact == conclusion:
-                        return {"valid": True, "steps": steps, "method": "natural_deduction"}
+                    # Modus tollens: if (A >> B) and ~B, derive ~A
+                    neg_consequent = Not(consequent)
+                    if neg_consequent in known_exprs:
+                        neg_antecedent = Not(antecedent)
+                        if neg_antecedent not in known_exprs:
+                            new_facts.add(neg_antecedent)
+                            step_count += 1
+                            steps.append(
+                                ProofStep(
+                                    step_number=step_count,
+                                    rule_applied="modus_tollens",
+                                    premises=[str(neg_consequent), str(expr)],
+                                    conclusion=str(neg_antecedent),
+                                    justification="Modus tollens",
+                                )
+                            )
+                            if neg_antecedent == conclusion_formula:
+                                return {"valid": True, "steps": steps, "method": "natural_deduction"}
 
-        return {"valid": conclusion in current_facts, "steps": steps, "method": "natural_deduction"}
+                # Simplification: if we know (A & B), derive A and B
+                if isinstance(expr, And):
+                    for arg in expr.args:
+                        if arg not in known_exprs:
+                            new_facts.add(arg)
+
+            if not new_facts:
+                break
+            known_exprs.update(new_facts)
+
+        return {"valid": conclusion_formula in known_exprs, "steps": steps, "method": "natural_deduction"}
+
+    # ----- model checking -----
 
     def _prove_by_model_checking(self, hypothesis: List[str], conclusion: str) -> Dict[str, Any]:
-        """Prove theorem using model checking."""
+        """Prove theorem by exhaustive model checking.
+
+        Enumerates *all* 2^n truth assignments for the n propositional
+        variables.  The conclusion is valid iff it holds in every model
+        that satisfies all hypotheses.
+
+        For large variable sets (>20 variables) this falls back to SymPy
+        satisfiability to avoid combinatorial explosion.
+        """
         steps = []
 
         # Convert to SymPy for model checking
         hyp_formulas = [self._parse_formula(h) for h in hypothesis]
         conclusion_formula = self._parse_formula(conclusion)
 
-        # Generate all possible truth assignments
-        variables = set()
-        for formula in hyp_formulas + [conclusion_formula]:
-            variables.update(formula.free_symbols)
+        # Include axioms in the premises, same as resolution
+        axiom_formulas = [axiom.to_sympy() for axiom in self.axioms]
+        all_premise_formulas = hyp_formulas + axiom_formulas
 
-        # Check if conclusion is true in all models where hypotheses are true
+        # --- Ungrounded-symbol safety check ---
+        ungrounded = self._check_ungrounded(all_premise_formulas, conclusion_formula)
+        if ungrounded:
+            steps.append(
+                ProofStep(
+                    step_number=1,
+                    rule_applied="ungrounded_symbol_check",
+                    premises=[],
+                    conclusion="INVALID",
+                    justification=(
+                        f"Conclusion contains symbols not in premises: "
+                        f"{', '.join(str(s) for s in ungrounded)}"
+                    ),
+                )
+            )
+            return {"valid": False, "steps": steps, "method": "model_checking", "counter_examples": []}
+
+        # --- Premise consistency check ---
+        combined_mc = And(*all_premise_formulas) if all_premise_formulas else sp.true
+        if not satisfiable(combined_mc):
+            steps.append(
+                ProofStep(
+                    step_number=1,
+                    rule_applied="contradiction_check",
+                    premises=[],
+                    conclusion="INVALID",
+                    justification="Premises are contradictory — no valid proof possible",
+                )
+            )
+            return {"valid": False, "steps": steps, "method": "model_checking", "counter_examples": []}
+
+        # Collect all propositional variables
+        variables: Set[sp.Symbol] = set()
+        for formula in all_premise_formulas + [conclusion_formula]:
+            if hasattr(formula, "free_symbols"):
+                variables.update(formula.free_symbols)
+
+        # Check conclusion in every model where all premises hold
         is_valid = True
-        counter_examples = []
+        counter_examples: list = []
+        var_list = sorted(variables, key=str)  # deterministic order
 
-        if variables:
-            # For simplicity, check a few key models
-            # In practice, this would be more comprehensive
-            test_assignments = [{var: True for var in variables}, {var: False for var in variables}]
+        if len(var_list) > 20:
+            # Too many variables for brute-force; fall back to SAT check
+            combined = And(*all_premise_formulas) if all_premise_formulas else sp.true
+            is_valid = not satisfiable(And(combined, Not(conclusion_formula)))
+        elif var_list:
+            for truth_vals in itertools.product([True, False], repeat=len(var_list)):
+                assignment = dict(zip(var_list, truth_vals))
 
-            for assignment in test_assignments:
-                hyp_values = [formula.subs(assignment) for formula in hyp_formulas]
-
-                if all(hyp_values):  # All hypotheses true in this model
-                    conclusion_value = conclusion_formula.subs(assignment)
-                    if not conclusion_value:
+                premise_vals = [f.subs(assignment) for f in all_premise_formulas]
+                # All premises must evaluate to True in this model
+                if all(v == sp.true or v is True for v in premise_vals):
+                    conclusion_val = conclusion_formula.subs(assignment)
+                    if conclusion_val == sp.false or conclusion_val is False:
                         is_valid = False
-                        counter_examples.append(assignment)
+                        counter_examples.append(
+                            {str(k): v for k, v in assignment.items()}
+                        )
+        else:
+            # No variables — vacuously check the constant expressions
+            if all(f == sp.true or f is True for f in all_premise_formulas):
+                conclusion_val = conclusion_formula
+                if conclusion_val == sp.false or conclusion_val is False:
+                    is_valid = False
 
         steps.append(
             ProofStep(
@@ -326,7 +595,11 @@ class TheoremProver:
                 rule_applied="model_checking",
                 premises=hypothesis,
                 conclusion=conclusion if is_valid else "INVALID",
-                justification=f"Model checking completed. Counter-examples: {counter_examples}",
+                justification=(
+                    f"Exhaustive model checking over {len(var_list)} variables "
+                    f"({2 ** len(var_list) if len(var_list) <= 20 else '2^' + str(len(var_list))} models). "
+                    f"Counter-examples: {len(counter_examples)}"
+                ),
             )
         )
 
@@ -336,6 +609,8 @@ class TheoremProver:
             "method": "model_checking",
             "counter_examples": counter_examples,
         }
+
+    # ----- inference rules (kept for backward compat) -----
 
     def _initialize_inference_rules(self) -> List[Dict[str, Any]]:
         """Initialize basic inference rules."""
@@ -368,49 +643,31 @@ class TheoremProver:
 
     def _can_apply_rule(self, rule: Dict[str, Any], facts: Set[str]) -> bool:
         """Check if an inference rule can be applied to current facts."""
-        # Simplified rule matching
         return all(premise in facts for premise in rule["premises"])
 
     def _apply_rule(self, rule: Dict[str, Any], facts: Set[str]) -> Optional[str]:
         """Apply an inference rule to derive new fact."""
-        # Simplified rule application
         if rule["name"] == "modus_ponens":
-            # Look for A and A -> B pattern
             for fact in facts:
                 if " -> " in fact:
                     antecedent, consequent = fact.split(" -> ")
                     if antecedent.strip() in facts:
                         return consequent.strip()
-
         return rule.get("conclusion")
 
     def _parse_formula(self, formula: str) -> sp.Basic:
-        """Parse string formula to SymPy expression."""
-        try:
-            # Replace logical operators
-            formula = formula.replace(" and ", " & ")
-            formula = formula.replace(" or ", " | ")
-            formula = formula.replace(" not ", " ~ ")
-            formula = formula.replace(" implies ", " >> ")
-            formula = formula.replace(" -> ", " >> ")
-
-            # Extract variables
-            variables = re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", formula)
-            symbols = {}
-            for var in variables:
-                if var not in ["and", "or", "not", "implies", "True", "False"]:
-                    symbols[var] = sp.Symbol(var)
-
-            return sp.sympify(formula, locals=symbols)
-        except:
-            logger.warning(f"Could not parse formula: {formula}")
-            return sp.Symbol(formula)
+        """Parse string formula to SymPy expression using the shared parser."""
+        return parse_logic_formula(formula)
 
     def _generate_proof_id(self) -> str:
         """Generate unique proof ID."""
         timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
         return f"proof_{timestamp}_{id(self) % 10000}"
 
+
+# ---------------------------------------------------------------------------
+# EthicalVerificationEngine
+# ---------------------------------------------------------------------------
 
 class EthicalVerificationEngine:
     """Main engine for ethical constraint verification."""
@@ -471,7 +728,14 @@ class EthicalVerificationEngine:
     def _verify_single_constraint(
         self, proposal_data: Dict[str, Any], constraint: EthicalConstraint
     ) -> Dict[str, Any]:
-        """Verify a proposal against a single ethical constraint."""
+        """Verify a proposal against a single ethical constraint.
+
+        The conclusion to prove is the constraint's ``formal_specification``
+        (e.g. ``~causes_harm``), **not** an ungrounded synthetic symbol like
+        ``satisfies_non_maleficence``.  The old approach generated a symbol
+        with no logical relationship to any premise, making proofs
+        meaningless.
+        """
         try:
             # Extract relevant facts from proposal
             facts = self._extract_facts_from_proposal(proposal_data, constraint)
@@ -484,13 +748,15 @@ class EthicalVerificationEngine:
                 else:
                     hypothesis.append(f"~{fact_name}")
 
-            # Add constraint predicates as additional hypothesis
+            # Add constraint predicates as additional hypothesis —
+            # but only those whose *name* is not already a known fact
             for predicate in constraint.predicates:
                 if predicate.name not in facts:
                     hypothesis.append(predicate.formula)
 
-            # The conclusion is that the constraint is satisfied
-            conclusion = f"satisfies_{constraint.principle.value}"
+            # The conclusion is the constraint's formal specification, which
+            # uses the same propositional symbols as the extracted facts.
+            conclusion = constraint.formal_specification
 
             # Attempt to prove constraint satisfaction
             proof = self.theorem_prover.prove_theorem(hypothesis, conclusion, method="resolution")
@@ -583,7 +849,12 @@ class EthicalVerificationEngine:
             return f"Constraint '{constraint.name}' violated - proof failed"
 
     def _initialize_ethical_axioms(self):
-        """Initialize fundamental ethical axioms."""
+        """Initialize fundamental ethical axioms.
+
+        Note: ``->`` (implies) has *lower* precedence than ``&`` (and) in
+        SymPy, so ``A -> B & C`` parses as ``(A -> B) & C``.  Parenthesise
+        the consequent when it contains ``&``/``|``.
+        """
         axioms = [
             EthicalAxiom(
                 "autonomy_preservation",
@@ -592,7 +863,7 @@ class EthicalVerificationEngine:
             ),
             EthicalAxiom(
                 "non_maleficence",
-                "~causes_harm | (causes_harm -> has_justification & has_mitigation)",
+                "~causes_harm | (causes_harm -> (has_justification & has_mitigation))",
                 "Do no harm, or if harm is caused, it must be justified and mitigated",
             ),
             EthicalAxiom(
@@ -602,7 +873,7 @@ class EthicalVerificationEngine:
             ),
             EthicalAxiom(
                 "justice_fairness",
-                "is_fair -> equal_treatment & proportional_distribution",
+                "is_fair -> (equal_treatment & proportional_distribution)",
                 "Fairness requires equal treatment and proportional distribution",
             ),
             EthicalAxiom(
@@ -617,7 +888,7 @@ class EthicalVerificationEngine:
             ),
             EthicalAxiom(
                 "accountability",
-                "is_accountable -> has_oversight & has_responsibility",
+                "is_accountable -> (has_oversight & has_responsibility)",
                 "Accountability requires oversight and assigned responsibility",
             ),
             EthicalAxiom(
