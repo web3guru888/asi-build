@@ -7,7 +7,7 @@ Handles all platform settings, paths, and environment variables.
 
 import json
 import os
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -169,12 +169,12 @@ class PlatformConfig:
     log_level: str = "INFO"
 
     # Component configurations
-    database: DatabaseConfig = DatabaseConfig()
-    storage: StorageConfig = StorageConfig()
-    containers: ContainerConfig = ContainerConfig()
-    benchmarks: BenchmarkConfig = BenchmarkConfig()
-    integrations: IntegrationConfig = IntegrationConfig()
-    security: SecurityConfig = SecurityConfig()
+    database: DatabaseConfig = field(default_factory=DatabaseConfig)
+    storage: StorageConfig = field(default_factory=StorageConfig)
+    containers: ContainerConfig = field(default_factory=ContainerConfig)
+    benchmarks: BenchmarkConfig = field(default_factory=BenchmarkConfig)
+    integrations: IntegrationConfig = field(default_factory=IntegrationConfig)
+    security: SecurityConfig = field(default_factory=SecurityConfig)
 
     # Platform paths
     base_path: str = "/opt/agi_reproducibility"

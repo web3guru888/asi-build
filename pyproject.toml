@@ -83,6 +83,7 @@ ci = [
     "networkx>=3.2",
     "sympy>=1.12",
     "fastapi>=0.100",
+    "uvicorn>=0.24",
     "httpx>=0.25",
     "aiohttp>=3.9",
     "brotli>=1.0",
