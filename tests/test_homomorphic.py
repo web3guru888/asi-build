@@ -410,17 +410,17 @@ class TestParameters:
 class TestPolynomial:
     @pytest.fixture
     def ring(self):
-        """Small ring for fast tests.
+        """Small ring for fast tests: degree=4, single modulus q=17.
 
-        Using 4 moduli so each coefficient gets properly reduced.
-        (The _reduce_coefficients code reduces coefficients[i] by
-        coefficient_modulus[i], so we need len(moduli) >= degree.)
+        After the Issue #8 fix, _reduce_coefficients correctly reduces ALL
+        n coefficients mod q regardless of how many moduli are listed.  A
+        single-element coefficient_modulus is the canonical case.
         """
-        return PolynomialRing(degree=4, coefficient_modulus=[17, 17, 17, 17])
+        return PolynomialRing(degree=4, coefficient_modulus=[17])
 
     def test_ring_creation(self, ring):
         assert ring.degree == 4
-        assert ring.num_moduli == 4
+        assert ring.num_moduli == 1
 
     def test_ring_non_power_of_2(self):
         with pytest.raises(ValueError, match="power of 2"):
@@ -499,6 +499,89 @@ class TestPolynomial:
         p = Polynomial([3, 4, 0, 0], ring)
         assert p.max_coefficient() == 4
 
+    # -----------------------------------------------------------------
+    # Polynomial multiplication correctness (Issue #8 regression tests)
+    # -----------------------------------------------------------------
+
+    def test_poly_mul_identity(self):
+        """Multiplying by 1 should return the same polynomial."""
+        q = 17
+        ring8 = PolynomialRing(degree=8, coefficient_modulus=[q])
+        a = Polynomial([3, 1, 4, 1, 5, 9, 2, 6], ring8)
+        one = ring8.one_polynomial()
+        prod = a * one
+        assert prod.coefficients == a.coefficients
+
+    def test_poly_mul_negacyclic_simple(self):
+        """(x+1)^2 = x^2 + 2x + 1 in Z[x]/(x^8+1)."""
+        q = 17
+        ring8 = PolynomialRing(degree=8, coefficient_modulus=[q])
+        a = Polynomial([1, 1, 0, 0, 0, 0, 0, 0], ring8)
+        prod = a * a
+        assert prod.coefficients == [1, 2, 1, 0, 0, 0, 0, 0]
+
+    def test_poly_mul_negacyclic_all_coefficients_reduced(self):
+        """All n coefficients must be reduced mod q after multiplication.
+
+        Root-cause fix for Issue #8: _reduce_coefficients previously only
+        reduced coefficients[i] by moduli[i], stopping at len(moduli) == 1
+        for a single-modulus ring — leaving indices 1..n-1 unreduced.
+        """
+        q = 17  # 17 ≡ 1 (mod 16) — satisfies NTT requirement for n=8
+        ring8 = PolynomialRing(degree=8, coefficient_modulus=[q])
+        a = Polynomial([1, 2, 3, 4, 5, 6, 7, 8], ring8)
+        b = Polynomial([8, 7, 6, 5, 4, 3, 2, 1], ring8)
+        prod = a * b
+
+        # Verify all coefficients are in [0, q)
+        for i, c in enumerate(prod.coefficients):
+            assert 0 <= c < q, f"coeff[{i}]={c} not reduced mod {q}"
+
+        # Verify correctness against reference negacyclic convolution
+        raw = [0] * (2 * 8 - 1)
+        a_raw = [1, 2, 3, 4, 5, 6, 7, 8]
+        b_raw = [8, 7, 6, 5, 4, 3, 2, 1]
+        for i, ai in enumerate(a_raw):
+            for j, bj in enumerate(b_raw):
+                raw[i + j] += ai * bj
+        expected = [0] * 8
+        for i in range(8):
+            expected[i] = raw[i]
+        for i in range(8, 15):
+            expected[i - 8] -= raw[i]
+        expected = [c % q for c in expected]
+
+        assert prod.coefficients == expected
+
+    def test_poly_mul_multi_modulus_rns(self):
+        """RNS (multi-modulus) polynomial multiplication correctness.
+
+        With coefficient_modulus=[q1, q2], coefficient i is stored mod
+        moduli[i % 2].  The schoolbook fallback must produce correctly
+        reduced results.
+        """
+        n = 8
+        q1, q2 = 17, 97  # both ≡ 1 (mod 16)
+        ring_rns = PolynomialRing(degree=n, coefficient_modulus=[q1, q2])
+        a = Polynomial([1, 2, 3, 4, 5, 6, 7, 8], ring_rns)
+        b = Polynomial([8, 7, 6, 5, 4, 3, 2, 1], ring_rns)
+        prod = a * b
+
+        # Reference: negacyclic convolution reduced per-coefficient
+        raw = [0] * (2 * n - 1)
+        for i in range(n):
+            for j in range(n):
+                raw[i + j] += (i + 1) * (n - j)
+        final_raw = [0] * n
+        for i in range(n):
+            final_raw[i] = raw[i]
+        for i in range(n, 2 * n - 1):
+            final_raw[i - n] -= raw[i]
+        moduli = [q1, q2]
+        expected = [final_raw[i] % moduli[i % 2] for i in range(n)]
+
+        assert prod.coefficients == expected
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 5. KeyGenerator + key types
@@ -513,14 +596,17 @@ class TestKeyGeneration:
     def test_secret_key_ternary(self, keygen):
         sk = keygen.generate_secret_key()
         assert isinstance(sk, SecretKey)
-        # The raw coefficients should be in {-1, 0, 1} before reduction
-        # After the (buggy) _reduce_coefficients, only coefficients[0]
-        # gets reduced mod 3, but the rest should still be in {-1, 0, 1}.
+        # Secret key is generated with ternary {-1, 0, 1} values, then stored
+        # in the Polynomial which reduces all coefficients mod q.
+        # With coefficient_modulus=[3] (q=3), -1 reduces to 2, so the stored
+        # values are in {0, 1, 2}.  All n coefficients are now correctly
+        # reduced (fix for Issue #8 — _reduce_coefficients bug).
+        q = keygen.parameters.coefficient_modulus[0]
+        valid = {x % q for x in (-1, 0, 1)}
         for i, c in enumerate(sk.polynomial.coefficients):
-            if i == 0:
-                assert c in (0, 1, 2), f"coeff[0]={c} not in {{0,1,2}} (reduced mod 3)"
-            else:
-                assert c in (-1, 0, 1), f"coeff[{i}]={c} not ternary"
+            assert c in valid, (
+                f"coeff[{i}]={c} not in {valid} (expected ternary reduced mod {q})"
+            )
 
     def test_secret_key_metadata(self, keygen):
         sk = keygen.generate_secret_key()

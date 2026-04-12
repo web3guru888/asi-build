@@ -139,3 +139,6 @@ asi-code/out/
 
 # Archive — treated as read-only historical reference
 # (files inside archive/ can be committed, but new files should not be added)
+
+# Benchmark results — timestamped JSON runs (keep .gitkeep)
+benchmarks/results/bench_*.json

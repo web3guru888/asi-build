@@ -67,10 +67,23 @@ class Polynomial:
         return result
 
     def _reduce_coefficients(self):
-        """Reduce coefficients modulo the coefficient modulus."""
-        for i, q in enumerate(self.ring.coefficient_modulus):
-            if i < len(self.coefficients):
-                self.coefficients[i] = self.coefficients[i] % q
+        """Reduce coefficients modulo the coefficient modulus.
+
+        In a standard single-modulus ring (coefficient_modulus = [q]), ALL n
+        coefficients are reduced mod q.
+
+        In an RNS ring (coefficient_modulus = [q0, q1, ...]) with k moduli,
+        coefficient i is stored mod moduli[i % k], so the full coefficient
+        vector has length n and modulus index wraps around.
+
+        Previously this method only iterated over moduli entries (len(moduli)),
+        leaving coefficients at indices ≥ len(moduli) unreduced — the root
+        cause of the wrong-result NTT bug (Issue #8).
+        """
+        num_moduli = len(self.ring.coefficient_modulus)
+        for i in range(len(self.coefficients)):
+            q = self.ring.coefficient_modulus[i % num_moduli]
+            self.coefficients[i] = self.coefficients[i] % q
 
     def __add__(self, other: "Polynomial") -> "Polynomial":
         """Add two polynomials."""
@@ -153,23 +166,101 @@ class Polynomial:
         """
         Multiply polynomials using Number Theoretic Transform (NTT).
 
+        Uses negacyclic NTT (pre-twist / post-twist approach) for correct
+        polynomial multiplication in Z[X]/(X^n + 1).
+
+        When all coefficient moduli are the same prime p ≡ 1 (mod 2n), a
+        single negacyclic NTT pass is used and results are reduced per-
+        coefficient using the corresponding modulus entry.  For other
+        configurations the schoolbook method is used as a safe fallback.
+
         Args:
             other: Polynomial to multiply with
 
         Returns:
             Product polynomial
         """
-        # Convert to NTT form
-        self_ntt = self.ring.to_ntt_form(self.coefficients)
-        other_ntt = self.ring.to_ntt_form(other.coefficients)
+        n = self.degree
+        moduli = self.ring.coefficient_modulus
 
-        # Component-wise multiplication in NTT domain
-        result_ntt = [
-            (a * b) % q for a, b, q in zip(self_ntt, other_ntt, self.ring.coefficient_modulus)
-        ]
+        # Determine the prime to use for NTT.
+        # Common case (and the one exercised by the test suite): all moduli equal.
+        unique_moduli = list(dict.fromkeys(moduli))  # deduplicated, order preserved
+        if len(unique_moduli) != 1:
+            # Multiple distinct moduli: NTT would require a full CRT/RNS treatment.
+            # Fall back to the always-correct schoolbook method.
+            return self._multiply_schoolbook(other)
 
-        # Convert back from NTT form
-        result_coeffs = self.ring.from_ntt_form(result_ntt)
+        q = unique_moduli[0]
+        psi = self.ring.ntt_roots[0]  # primitive 2n-th root of unity mod q
+
+        # Negacyclic NTT helpers (pre-twist / post-twist)
+        # Reference: Longa & Naehrig, "Speeding up the Number Theoretic Transform",
+        # https://eprint.iacr.org/2016/504.pdf
+        def _neg_ntt_forward(a: List[int]) -> List[int]:
+            """Forward negacyclic NTT over Z_q[X]/(X^n+1)."""
+            omega = pow(psi, 2, q)
+            # Pre-twist: multiply a[k] by psi^k
+            twisted = [(a[k] * pow(psi, k, q)) % q for k in range(n)]
+            # Standard Cooley-Tukey NTT for cyclic convolution
+            result = [0] * n
+            for i in range(n):
+                j = self.ring._bit_reverse(i, n)
+                result[j] = twisted[i]
+            length = 2
+            while length <= n:
+                # Correct twiddle: omega^(n/length) is a primitive 'length'-th
+                # root of unity (NOT omega^((q-1)/length) which collapses to 1).
+                w = pow(omega, n // length, q)
+                for i in range(0, n, length):
+                    wn = 1
+                    for j in range(length // 2):
+                        u = result[i + j]
+                        v = (result[i + j + length // 2] * wn) % q
+                        result[i + j] = (u + v) % q
+                        result[i + j + length // 2] = (u - v) % q
+                        wn = (wn * w) % q
+                length *= 2
+            return result
+
+        def _neg_ntt_inverse(a: List[int]) -> List[int]:
+            """Inverse negacyclic NTT over Z_q[X]/(X^n+1)."""
+            inv_psi = self.ring.inv_ntt_roots[0]
+            omega = pow(psi, 2, q)
+            inv_omega = pow(omega, q - 2, q)
+            inv_n = self.ring.inv_degree[0]
+            # Inverse standard NTT (same butterfly with inverse root)
+            result = [0] * n
+            for i in range(n):
+                j = self.ring._bit_reverse(i, n)
+                result[j] = a[i]
+            length = 2
+            while length <= n:
+                w = pow(inv_omega, n // length, q)
+                for i in range(0, n, length):
+                    wn = 1
+                    for j in range(length // 2):
+                        u = result[i + j]
+                        v = (result[i + j + length // 2] * wn) % q
+                        result[i + j] = (u + v) % q
+                        result[i + j + length // 2] = (u - v) % q
+                        wn = (wn * w) % q
+                length *= 2
+            # Scale by 1/n
+            result = [(x * inv_n) % q for x in result]
+            # Post-untwist: multiply result[k] by psi^(-k)
+            result = [(result[k] * pow(inv_psi, k, q)) % q for k in range(n)]
+            return result
+
+        ntt_a = _neg_ntt_forward(self.coefficients)
+        ntt_b = _neg_ntt_forward(other.coefficients)
+        ntt_prod = [(x * y) % q for x, y in zip(ntt_a, ntt_b)]
+        result_coeffs = _neg_ntt_inverse(ntt_prod)
+
+        # Apply per-coefficient modular reduction (honouring the
+        # coefficient_modulus[i] contract used by _reduce_coefficients).
+        for i in range(min(n, len(moduli))):
+            result_coeffs[i] = result_coeffs[i] % moduli[i]
 
         return Polynomial(result_coeffs, self.ring)
 

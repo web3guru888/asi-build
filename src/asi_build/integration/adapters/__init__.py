@@ -38,6 +38,9 @@ Available Adapters
 - ``CognitiveSynergyAdapter``     — CognitiveSynergyEngine, SynergyMetrics
 - ``ReasoningAdapter``            — HybridReasoningEngine
 - ``RingsNetworkAdapter``         — Rings P2P Network, DID, Reputation
+- ``BioInspiredAdapter``          — Evolutionary Optimizer, Homeostatic Regulator, BioCognitiveArchitecture
+- ``KnowledgeManagementAdapter``  — KnowledgeEngine, PredictiveSynthesizer, ContextualLearner
+- ``GraphIntelligenceAdapter``    — CommunityDetection, FastToG, SchemaManager
 
 Utilities
 ~~~~~~~~~
@@ -55,13 +58,19 @@ from .cognitive_synergy_adapter import CognitiveSynergyAdapter
 from .consciousness_adapter import ConsciousnessAdapter
 from .knowledge_graph_adapter import KnowledgeGraphAdapter
 from .reasoning_adapter import ReasoningAdapter
+from .bio_inspired_adapter import BioInspiredAdapter
+from .graph_intelligence_adapter import GraphIntelligenceAdapter
+from .knowledge_management_adapter import KnowledgeManagementAdapter
 from .rings_adapter import RingsNetworkAdapter
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "BioInspiredAdapter",
     "ConsciousnessAdapter",
+    "GraphIntelligenceAdapter",
     "KnowledgeGraphAdapter",
+    "KnowledgeManagementAdapter",
     "CognitiveSynergyAdapter",
     "ReasoningAdapter",
     "RingsNetworkAdapter",
