@@ -130,7 +130,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🔌</td><td><strong>Integration</strong></td><td>24 Blackboard adapters + CognitiveCycle + AsyncAdapterBase</td></tr>
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — 21,062 LOC · 668 tests · 3 Solidity contracts</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>159+ discussions · 75 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>161+ discussions · 77 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -712,7 +712,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 75 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 158+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 161+ threads
 
 </td>
 <td>
@@ -747,6 +747,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - 🧠 [Phase 5 Tick Walkthrough — STDP → Memory → Planning](https://github.com/web3guru888/asi-build/discussions/231)
 - 🔬 [MemoryConsolidator — UNWIND batch writes & SLEEP_PHASE exclusivity](https://github.com/web3guru888/asi-build/discussions/236)
 - 🧬 [Phase 6 Planning — EWC continual learning & Fisher matrix](https://github.com/web3guru888/asi-build/discussions/240)
+- 🧪 [Phase 5 Test Suite — four-layer strategy & Prometheus isolation](https://github.com/web3guru888/asi-build/discussions/242)
+- ❓ [EWC in practice — Fisher estimation, lambda tuning, STDP adaptation](https://github.com/web3guru888/asi-build/discussions/243)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
