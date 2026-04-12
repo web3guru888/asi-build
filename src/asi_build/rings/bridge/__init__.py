@@ -14,8 +14,23 @@ Modules
   with Helios stub and in-memory mock.
 - :mod:`~.merkle_patricia`  — ``MerklePatriciaVerifier``: EIP-1186 proof
   verification for Ethereum state, storage, and receipt tries.
+- :mod:`~.contract_client`  — ``BridgeContractClient``, ``BridgeDeployer``:
+  Python bindings for on-chain bridge contracts.
+- :mod:`~.e2e`              — ``BridgeOrchestrator``: end-to-end deposit →
+  attest → withdraw relay loop.
 """
 
+from .contract_client import (
+    BRIDGE_ABI,
+    TOKEN_ABI,
+    VERIFIER_ABI,
+    BridgeContractClient,
+    BridgeDeployer,
+)
+from .e2e import (
+    BridgeOrchestrator,
+    ProcessedDeposit,
+)
 from .light_client import (
     BeaconHeader,
     EthLightClient,
@@ -41,12 +56,14 @@ from .protocol import (
 )
 
 __all__ = [
+    # Protocol
     "BridgeProtocol",
     "BridgeMessage",
     "BridgeValidator",
     "BridgeState",
     "DepositRecord",
     "WithdrawalRecord",
+    # Light client
     "EthLightClient",
     "HeliosLightClient",
     "MockLightClient",
@@ -54,8 +71,18 @@ __all__ = [
     "SyncCommittee",
     "StateProof",
     "EventProof",
+    # Merkle Patricia
     "MerklePatriciaVerifier",
     "AccountState",
     "TransactionReceipt",
     "RLPDecoder",
+    # Contract client
+    "BridgeContractClient",
+    "BridgeDeployer",
+    "BRIDGE_ABI",
+    "VERIFIER_ABI",
+    "TOKEN_ABI",
+    # Orchestrator
+    "BridgeOrchestrator",
+    "ProcessedDeposit",
 ]
