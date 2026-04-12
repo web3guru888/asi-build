@@ -9,7 +9,7 @@
 ![Status](https://img.shields.io/badge/status-research--alpha-orange)
 [![Discussions](https://img.shields.io/badge/discussions-join%20us-blueviolet)](https://github.com/web3guru888/asi-build/discussions)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build)](https://github.com/web3guru888/asi-build/issues)
-[![Wiki](https://img.shields.io/badge/wiki-58%20pages-blue)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-61%20pages-blue)](https://github.com/web3guru888/asi-build/wiki)
 
 > ⚠️ **Research Software**: ASI:BUILD is an active research framework, not a production system. Module maturity varies — see the [Module Maturity](#module-maturity) section and the per-module `__maturity__` metadata for details.
 
@@ -37,9 +37,9 @@ ASI:BUILD prioritizes correctness and clarity over performance. Published benchm
 | **Test files** | 42 |
 | **Integration adapters** | 24 Blackboard adapters + CognitiveCycle + `AsyncAdapterBase` |
 | **Module maturity** | 1 stable · 7 beta · 13 alpha · 8 experimental |
-| **Discussions** | 100 threads |
-| **Wiki pages** | 58 |
-| **Open issues** | 22 (many labeled `good first issue`) |
+| **Discussions** | 113 threads |
+| **Wiki pages** | 61 |
+| **Open issues** | 26 (many labeled `good first issue`) |
 | **License** | MIT |
 
 ---
@@ -57,10 +57,11 @@ Key threads to start with:
 - 🏗️ **[Why a Cognitive Blackboard?](https://github.com/web3guru888/asi-build/discussions/10)** — Architecture decision deep-dive
 - 🗺️ **[Phase 4 Roadmap](https://github.com/web3guru888/asi-build/discussions/12)** — Help shape the future roadmap
 - ❓ **[FAQ](https://github.com/web3guru888/asi-build/discussions/16)** — Getting started, architecture questions, module usage
+- 🏗️ **[Phase 5 Planning](https://github.com/web3guru888/asi-build/discussions/179)** — Community vote on online learning, emergent coordination, persistent memory
 - 🔗 **[16 Modules Now Wired — Show & Tell](https://github.com/web3guru888/asi-build/discussions/115)** — Latest integration milestone
 
 ### 📖 Wiki
-Comprehensive documentation at **[github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki)** — 58 pages covering:
+Comprehensive documentation at **[github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki)** — 61 pages covering:
 
 - **Getting Started** — Installation, environment setup, first steps
 - **Architecture Guide** — Cognitive Blackboard, layered design, module interaction patterns
@@ -477,8 +478,8 @@ See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 ## Links
 
 - **GitHub**: [https://github.com/web3guru888/asi-build](https://github.com/web3guru888/asi-build)
-- **Discussions**: [https://github.com/web3guru888/asi-build/discussions](https://github.com/web3guru888/asi-build/discussions) (100 threads)
-- **Wiki**: [https://github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki) (58 pages)
+- **Discussions**: [https://github.com/web3guru888/asi-build/discussions](https://github.com/web3guru888/asi-build/discussions) (113 threads)
+- **Wiki**: [https://github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki) (61 pages)
 - **Issues**: [https://github.com/web3guru888/asi-build/issues](https://github.com/web3guru888/asi-build/issues)
 - **CI**: [GitHub Actions](https://github.com/web3guru888/asi-build/actions)
 
