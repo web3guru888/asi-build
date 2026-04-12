@@ -123,9 +123,21 @@ from .ledger import (
 )
 from .relayer import (
     BridgeRelayer,
+    MultiChainRelayer,
     OperationStatus,
     RelayerConfig,
     RelayerDB,
+)
+from .chains import (
+    ChainConfig,
+    CHAINS,
+    GasStrategy,
+    get_chain,
+    get_chain_by_id,
+    get_deployed_chains,
+    get_enabled_chains,
+    chain_rpc_url,
+    update_deployed_addresses,
 )
 
 __all__ = [
@@ -210,4 +222,15 @@ __all__ = [
     "WithdrawalLock",
     "LedgerKeys",
     "LedgerMessage",
+    # Multi-Chain Support (Phase H)
+    "ChainConfig",
+    "CHAINS",
+    "GasStrategy",
+    "get_chain",
+    "get_chain_by_id",
+    "get_deployed_chains",
+    "get_enabled_chains",
+    "chain_rpc_url",
+    "update_deployed_addresses",
+    "MultiChainRelayer",
 ]
