@@ -5,26 +5,42 @@
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 [![CI](https://github.com/web3guru888/asi-build/actions/workflows/ci.yml/badge.svg)](https://github.com/web3guru888/asi-build/actions/workflows/ci.yml)
+![Tests](https://img.shields.io/badge/tests-3%2C018%20passing-brightgreen)
 ![Status](https://img.shields.io/badge/status-research--alpha-orange)
 [![Discussions](https://img.shields.io/badge/discussions-join%20us-blueviolet)](https://github.com/web3guru888/asi-build/discussions)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build)](https://github.com/web3guru888/asi-build/issues)
-[![Wiki](https://img.shields.io/badge/wiki-documentation-blue)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-50%20pages-blue)](https://github.com/web3guru888/asi-build/wiki)
 
-> ⚠️ **Research Software**: ASI:BUILD is an active research framework, not a production system. Module maturity varies significantly — some are well-implemented and tested, others are structural scaffolding awaiting real backends. See the [Modules](#modules) table for per-module status.
+> ⚠️ **Research Software**: ASI:BUILD is an active research framework, not a production system. Module maturity varies — see the [Module Maturity](#module-maturity) section and the per-module `__maturity__` metadata for details.
 
 ---
 
 ## Overview
 
-ASI:BUILD is a Python research framework exploring the computational foundations of artificial general intelligence. Inspired by Dr. Ben Goertzel's cognitive synergy approach to AGI — the idea that intelligence emerges from the interaction of diverse cognitive subsystems — the project provides modular, composable implementations of key AGI building blocks.
+ASI:BUILD is a Python research framework exploring the computational foundations of artificial general intelligence. Inspired by the cognitive synergy approach to AGI — the idea that intelligence emerges from the interaction of diverse cognitive subsystems — the project provides modular, composable implementations of key AGI building blocks.
 
-The framework spans consciousness modeling (Global Workspace Theory, Integrated Information Theory, Attention Schema), information-theoretic synergy metrics, knowledge graph reasoning, homomorphic encryption, quantum-classical hybrid computing, and more. Each module is designed to be used independently or composed with others to study emergent cognitive behaviors. At the core is a **Cognitive Blackboard** integration layer that lets modules communicate through a shared workspace and event bus.
+The framework spans consciousness modeling (Global Workspace Theory, Integrated Information Theory, Attention Schema Theory), information-theoretic synergy metrics, bi-temporal knowledge graphs, homomorphic encryption, quantum-classical hybrid computing, brain-computer interfaces, federated learning, and more. Each module can be used independently or composed with others via the **Cognitive Blackboard** — a shared workspace and event bus that lets all 29 modules communicate and exhibit emergent cross-module behaviors.
 
-The `knowledge_graph` module features a bi-temporal knowledge graph with provenance tracking, A\* pathfinding, and pheromone-based learning, contributed by the [MemPalace-AGI](https://github.com/milla-jovovich/mempalace) project — an integration exploring spatial memory architectures for autonomous scientific discovery.
+ASI:BUILD prioritizes correctness and clarity over performance. Published benchmarks and experimental results live in `docs/research/`. If you want to experiment with the building blocks of AGI, you're in the right place.
 
-ASI:BUILD is research software. We prioritize correctness and clarity over performance. Published benchmarks and experimental results live in `docs/research/`. If you're looking for a production AGI framework, this isn't it — but if you want to experiment with the building blocks, you're in the right place.
+**We welcome contributors from all backgrounds** — neuroscience, ML, distributed systems, formal verification, or just curiosity about AGI. There are open issues for every skill level, from bite-sized documentation tasks to deep open research problems.
 
-**We welcome contributors from all backgrounds** — whether you're into neuroscience, ML, distributed systems, formal verification, or just curious about AGI. There's something here for everyone, from bite-sized documentation tasks to open research problems.
+---
+
+## Current Status
+
+| Metric | Value |
+|--------|-------|
+| **Source files** | 547 files across 29 modules |
+| **Lines of code** | ~192,000 LOC |
+| **Tests** | **3,018 passing · 0 failing · 42 skipped** |
+| **Test files** | 36 |
+| **Integration adapters** | 24 Blackboard adapters + `AsyncAdapterBase` |
+| **Module maturity** | 1 stable · 7 beta · 12 alpha · 5 experimental |
+| **Discussions** | 66 threads |
+| **Wiki pages** | 50 |
+| **Open issues** | 31 (many labeled `good first issue`) |
+| **License** | MIT |
 
 ---
 
@@ -37,36 +53,32 @@ Join the conversation at **[github.com/web3guru888/asi-build/discussions](https:
 
 Key threads to start with:
 - 👋 **[Welcome & Introductions](https://github.com/web3guru888/asi-build/discussions/9)** — Say hello and tell us what you're building
-- 🔬 **[Research Directions](https://github.com/web3guru888/asi-build/discussions/5)** — What should ASI:BUILD tackle next? Open research questions
+- 🔬 **[Research Directions](https://github.com/web3guru888/asi-build/discussions/5)** — Open research questions and where the project goes next
 - 🏗️ **[Why a Cognitive Blackboard?](https://github.com/web3guru888/asi-build/discussions/10)** — Architecture decision deep-dive
-- 🗺️ **[Phase 4 Roadmap](https://github.com/web3guru888/asi-build/discussions/12)** — Help shape where the project goes
+- 🗺️ **[Phase 4 Roadmap](https://github.com/web3guru888/asi-build/discussions/12)** — Help shape the future roadmap
 - ❓ **[FAQ](https://github.com/web3guru888/asi-build/discussions/16)** — Getting started, architecture questions, module usage
+- 🔗 **[16 Modules Now Wired — Show & Tell](https://github.com/web3guru888/asi-build/discussions/115)** — Latest integration milestone
 
 ### 📖 Wiki
-Comprehensive documentation at **[github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki)**
+Comprehensive documentation at **[github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki)** — 50 pages covering:
 
 - **Getting Started** — Installation, environment setup, first steps
 - **Architecture Guide** — Cognitive Blackboard, layered design, module interaction patterns
 - **Module Index** — Per-module guides and API references
-- **Cognitive Blackboard** — Detailed docs for the integration layer
+- **Cognitive Blackboard** — Integration layer docs: EventBus, adapters, lifecycle
+- **Module Maturity Model** — What stable / beta / alpha / experimental mean
 - **Roadmap** — Current phase status and upcoming milestones
 
 ### 🐛 Issues & Good First Issues
 Browse open issues at **[github.com/web3guru888/asi-build/issues](https://github.com/web3guru888/asi-build/issues)**
 
-Looking for a place to start? Check the **[`good first issue`](https://github.com/web3guru888/asi-build/labels/good%20first%20issue)** label — these are carefully scoped tasks suitable for new contributors:
-- Adding type hints to modules
-- Writing documentation for existing APIs
-- Creating example scripts
-- Improving test coverage
+Looking for a place to start? Check the **[`good first issue`](https://github.com/web3guru888/asi-build/labels/good%20first%20issue)** label — carefully scoped tasks for new contributors:
+- Writing unit tests for existing modules
+- Adding type hints and docstrings
+- Creating example scripts and Jupyter notebooks
+- Improving module documentation
 
-There are issues for all skill levels — from documentation and testing to deep research problems tagged [`research`](https://github.com/web3guru888/asi-build/labels/research).
-
-### 📊 Live Dashboard
-A live project status dashboard (test results, module stats, commit timeline) is maintained by the project team and updated automatically.
-
-### 🔬 Research
-Interested in the science? Start with **[Discussion #5: Research Directions](https://github.com/web3guru888/asi-build/discussions/5)** — it covers open problems in IIT Φ computation, consciousness measurement, and module integration that need fresh eyes.
+There are issues for all skill levels — all the way up to deep research problems tagged [`research`](https://github.com/web3guru888/asi-build/labels/research).
 
 ---
 
@@ -75,80 +87,82 @@ Interested in the science? Start with **[Discussion #5: Research Directions](htt
 ```
 asi-build/
 ├── src/
-│   └── asi_build/                  # Main Python package
+│   └── asi_build/                  # Main Python package (547 files, ~192K LOC)
 │       ├── consciousness/          # Multi-theory consciousness modeling
 │       ├── cognitive_synergy/      # Information-theoretic synergy metrics
 │       ├── graph_intelligence/     # KG reasoning + FastToG pipeline
 │       ├── homomorphic/            # Fully Homomorphic Encryption (BGV/BFV/CKKS)
 │       ├── knowledge_graph/        # Bi-temporal KG with provenance + A*
-│       ├── vectordb/               # Unified vector DB client
-│       ├── optimization/           # PyTorch model optimization
-│       ├── quantum/                # Quantum-classical hybrid (Qiskit)
-│       ├── reasoning/              # Hybrid symbolic-neural reasoning
+│       ├── reasoning/              # Hybrid symbolic-neural reasoning engine
 │       ├── safety/                 # Constitutional AI + governance
-│       │   ├── formal_verification.py  # SymPy theorem proving
+│       │   ├── formal_verification.py  # SymPy + Z3 theorem proving
 │       │   └── governance/         # DAO, consensus, smart contracts,
 │       │                           #   Merkle audit, entity rights
-│       ├── integration/            # Cognitive Blackboard + module adapters
+│       ├── integration/            # Cognitive Blackboard + 24 module adapters
+│       │   ├── blackboard.py       # Shared workspace + entry lifecycle
+│       │   ├── events.py           # EventBus + topic routing
+│       │   ├── protocols.py        # Typed communication protocols
+│       │   ├── cognitive_cycle.py  # 9-phase perception-to-action loop
+│       │   └── adapters/           # Per-module Blackboard adapters (24 + base)
 │       ├── integrations/           # External tool adapters
 │       │   ├── langchain-memgraph/ # LangChain ↔ Memgraph adapter
 │       │   ├── mcp-memgraph/       # MCP server for Memgraph
 │       │   └── agents/             # SQL→graph migration agent + HyGM
-│       ├── compute/                # Job scheduling + GPU allocation
-│       ├── bio_inspired/           # Evolutionary + swarm intelligence
-│       ├── deployment/             # Cloud deployment (CUDO + HuggingFace)
-│       ├── memgraph_toolbox/       # Memgraph graph DB tools
-│       ├── bci/                    # Brain-Computer Interface (EEG, CSP, SSVEP)
-│       ├── blockchain/             # Audit trails, IPFS, Web3
-│       ├── distributed_training/   # Federated orchestration, Byzantine tolerance
-│       ├── holographic/            # Volumetric display, spatial audio, MR
+│       ├── rings/                  # Rings Network P2P SDK (DID, reputation, DHT)
+│       ├── bci/                    # Brain-Computer Interface (EEG, CSP, P300, SSVEP)
+│       ├── quantum/                # Quantum-classical hybrid (Qiskit)
+│       ├── vectordb/               # Unified vector DB client (Pinecone, Qdrant, Weaviate)
+│       ├── federated/              # Federated learning + differential privacy
+│       ├── distributed_training/   # 1000-node federated orchestration
 │       ├── neuromorphic/           # Spiking neural networks
 │       ├── pln_accelerator/        # Hardware-accelerated PLN
-│       ├── knowledge_management/   # Omniscience knowledge management
-│       ├── federated/              # Federated learning framework
-│       ├── agi_economics/          # AGI economics: algorithms, DeFi
-│       ├── agi_reproducibility/    # Experiment tracking, PLN validation
-│       ├── agi_communication/      # AGI communication protocols
-│       └── servers/                # MCP + SSE graph servers
-├── tests/                          # Test suite (2,500+ tests)
-├── examples/                       # Runnable examples + MiniMind LLM reference
+│       ├── holographic/            # Volumetric display + spatial audio
+│       ├── blockchain/             # Audit trails, IPFS, EVM
+│       ├── compute/                # Job scheduling + GPU allocation
+│       ├── bio_inspired/           # STDP, circadian rhythms, swarm intelligence
+│       ├── agi_economics/          # Reputation scoring, value alignment, DeFi
+│       ├── agi_reproducibility/    # Experiment tracking, AGSSL, formal provers
+│       ├── agi_communication/      # Game-theoretic negotiation, trust layers
+│       ├── knowledge_management/   # Omniscience network, predictive synthesis
+│       ├── optimization/           # PyTorch quantization, pruning, distillation
+│       ├── deployment/             # FastAPI servers, MCP SSE, CUDO + HuggingFace
+│       ├── memgraph_toolbox/       # Memgraph graph DB tools
+│       └── servers/                # MCP + SSE graph servers (Kenny Graph)
+├── tests/                          # Test suite (3,018 passing, 36 test files)
+├── examples/                       # Runnable examples
 ├── docs/                           # Documentation + research notes
 ├── configs/                        # Configuration templates
 ├── asi-code/                       # TypeScript AI coding IDE (separate product)
 └── archive/                        # Experimental v1 modules (not tested)
 ```
 
-```
-Cognitive Synergy Architecture:
+### Cognitive Blackboard Architecture
 
-  ┌─────────────────────────────────────────────────┐
-  │                  Reasoning Layer                │
-  │  symbolic ──┬── neural ──┬── causal inference  │
-  └─────────────┼────────────┼────────────────────-┘
-                │            │
-  ┌─────────────▼────────────▼────────────────────-┐
-  │               Knowledge Layer                  │
-  │  graph_intelligence ──── knowledge_graph       │
-  │       (FastToG)        (bi-temporal + A*)      │
-  └─────────────────────────────────────────────────┘
-                │            │
-  ┌─────────────▼────────────▼────────────────────-┐
-  │             Consciousness Layer                 │
-  │  GWT ── IIT (Φ) ── AST ── metacognition       │
-  └─────────────────────────────────────────────────┘
-                │
-  ┌─────────────▼───────────────────────────────────┐
-  │              Support Modules                    │
-  │  vectordb · homomorphic · quantum · safety      │
-  │  compute · bio_inspired · optimization          │
-  └─────────────────────────────────────────────────┘
-                │
-  ┌─────────────▼───────────────────────────────────┐
-  │           Cognitive Blackboard                  │
-  │  Shared workspace + EventBus — wires all        │
-  │  modules together for cross-module synergy      │
-  └─────────────────────────────────────────────────┘
+The `integration/` layer is the connective tissue of ASI:BUILD — it wires all 29 modules together through a shared workspace and event bus:
+
 ```
+  ┌────────────────────────────────────────────────────────────┐
+  │                      Module Layer (29 modules)             │
+  │  consciousness · bci · knowledge_graph · reasoning · ...   │
+  └──────────────┬─────────────────────────────────────────────┘
+                 │  adapters (each module gets a typed adapter)
+  ┌──────────────▼─────────────────────────────────────────────┐
+  │               Cognitive Blackboard (integration/)          │
+  │                                                            │
+  │   ┌──────────────────────┐  ┌───────────────────────────┐  │
+  │   │   Shared Workspace   │  │        EventBus           │  │
+  │   │  (typed BB entries)  │  │  (pub/sub topic routing)  │  │
+  │   └──────────────────────┘  └───────────────────────────┘  │
+  │                                                            │
+  │   ┌──────────────────────────────────────────────────────┐ │
+  │   │   CognitiveCycle — 9-phase perception-to-action loop │ │
+  │   │   sense → perceive → context → reason → decide →     │ │
+  │   │   act → learn → consolidate → evaluate               │ │
+  │   └──────────────────────────────────────────────────────┘ │
+  └────────────────────────────────────────────────────────────┘
+```
+
+**24 Blackboard adapters** are implemented — one per module — each bridging its module's domain events (e.g., `ConsciousnessState`, `BCIEvent`, `KnowledgeGraphEntry`) into the shared workspace as typed `BlackboardEntry` objects. An `AsyncAdapterBase` provides a dual sync+async protocol for latency-sensitive modules.
 
 ---
 
@@ -176,109 +190,161 @@ pip install -e ".[all]"               # Everything (includes dev tools)
 ```python
 from asi_build.consciousness import GlobalWorkspaceTheory
 
-# Initialize a Global Workspace
+# Initialize a Global Workspace with 8 cognitive processors
 gwt = GlobalWorkspaceTheory()
-
-# The system starts with 8 cognitive processors
 print(f"Processors: {len(gwt.cognitive_processors)}")
-# Each processor monitors specific content types (visual, linguistic, motor, etc.)
+
+# Each processor monitors specific content types
 for pid, proc in list(gwt.cognitive_processors.items())[:3]:
     print(f"  {pid}: interests={proc.interests}")
+
+# Broadcast a percept into the global workspace
+result = gwt.broadcast({"type": "visual", "content": "motion detected"})
+print(f"Broadcast reached {result.n_reached} processors")
 ```
 
 ### Knowledge Graph with A* Pathfinding
 
 ```python
-from asi_build.knowledge_graph import TemporalKnowledgeGraph
+from asi_build.knowledge_graph import TemporalKnowledgeGraph, KGPathfinder
 
 kg = TemporalKnowledgeGraph(db_path=":memory:")
 
-# Add temporal facts with provenance
-kg.add_triple(
-    subject="ASTR-J1234",
-    predicate="hasProperty",
-    object="high_redshift",
-    confidence=0.92,
-    source="HST-observation-42"
-)
-kg.add_triple(
-    subject="high_redshift",
-    predicate="indicates",
-    object="dark_energy_candidate",
-    confidence=0.85,
-    source="cosmology-model-7"
-)
+# Add bi-temporal facts with provenance tracking
+kg.add_triple("ASTR-J1234", "hasProperty", "high_redshift",
+              confidence=0.92, source="HST-observation-42")
+kg.add_triple("high_redshift", "indicates", "dark_energy_candidate",
+              confidence=0.85, source="cosmology-model-7")
 
-# Find paths between entities using A* pathfinding
-from asi_build.knowledge_graph import KGPathfinder
+# Find paths using A* with pheromone-based learning
 pathfinder = KGPathfinder(kg)
 path = pathfinder.find_path("ASTR-J1234", "dark_energy_candidate")
-print(f"Path found: {path['complete']}")        # True — complete path exists
+print(f"Path found: {path['complete']}")         # True
 print(f"Hops: {path['hops']}, Cost: {path['cost']:.3f}")
 ```
 
-### Cognitive Synergy Metrics
+### IIT Φ Computation (Fixed)
 
 ```python
-from asi_build.cognitive_synergy import SynergyMetrics
-import numpy as np
+from asi_build.consciousness.iit import IntegratedInformationTheory
 
-metrics = SynergyMetrics()
+iit = IntegratedInformationTheory()
+iit.update_activation_history([0.8, 0.6, 0.9, 0.4])  # feed activations
 
-# Feed time series data from two cognitive modules
-data_a = np.random.randn(100)
-data_b = np.random.randn(100)
-for i in range(len(data_a)):
-    metrics.add_time_series_data("consciousness_reasoning", data_a[i], data_b[i])
+phi = iit.compute_phi(mechanism=[0, 1, 2, 3], purview=[0, 1, 2, 3])
+print(f"IIT Φ = {phi:.4f}")   # > 0 for a recurrent integrated network
+```
 
-# Compute synergy profile between modules
-profile = metrics.compute_synergy_profile("consciousness_reasoning")
-print(f"Mutual Information: {profile.mutual_information:.4f}")
-print(f"Transfer Entropy: {profile.transfer_entropy:.4f}")
+### Cognitive Blackboard — Cross-Module Event Flow
+
+```python
+from asi_build.integration import CognitiveBlackboard
+from asi_build.integration.adapters import ConsciousnessBlackboardAdapter
+
+bb = CognitiveBlackboard()
+adapter = ConsciousnessBlackboardAdapter(bb)
+
+# Subscribe to consciousness state updates
+@bb.subscribe("consciousness.state_updated")
+def on_state(entry):
+    print(f"Consciousness state: {entry.data}")
+
+# Other modules can now react to every consciousness update
+adapter.publish_state(gwt_result)
+```
+
+### Rings Network P2P SDK
+
+```python
+from asi_build.rings import RingsClient, DIDManager, ReputationScorer
+
+# Connect to the Rings P2P network with DID authentication
+did = DIDManager().create_did()
+client = RingsClient(did=did)
+await client.connect()
+
+# Score agent reputation based on observed behavior
+scorer = ReputationScorer()
+score = scorer.compute(agent_id="did:rings:abc123", observations=[...])
+print(f"Reputation score: {score:.3f}")
 ```
 
 ---
 
 ## Modules
 
-| Module | Status | Description | LOC |
-|--------|--------|-------------|-----|
-| `consciousness` | 🟢 Implemented | Multi-theory consciousness (GWT, IIT, AST, metacognition) — 15 submodules | ~12,200 |
-| `cognitive_synergy` | 🟢 Implemented | Synergy metrics: mutual info, transfer entropy, phase locking, LZ complexity | ~6,000 |
-| `graph_intelligence` | 🟢 Implemented | KG reasoning with FastToG (arXiv:2501.14300), Memgraph, community detection | ~8,200 |
-| `homomorphic` | 🟢 Implemented | FHE: BGV, BFV, CKKS schemes with polynomial ring arithmetic | ~11,900 |
-| `knowledge_graph` | 🟢 Implemented | Bi-temporal KG, provenance tracking, A\* pathfinding, pheromone learning | ~1,450 |
-| `vectordb` | 🟡 Structural | Unified client for Pinecone, Qdrant, Weaviate (backends not fully wired) | ~8,000 |
-| `optimization` | 🟡 Structural | PyTorch quantization, pruning, knowledge distillation | ~4,200 |
-| `quantum` | 🟡 Structural | Quantum-classical hybrid via Qiskit (circuit templates implemented) | ~5,300 |
-| `reasoning` | 🟡 Structural | Hybrid symbolic-neural reasoning engine (framework scaffolding) | ~880 |
-| `safety` | 🟢 Implemented | Constitutional AI + governance: SymPy formal verification, DAO (quadratic voting, liquid democracy), smart contracts, Merkle audit ledger, entity rights | ~6,200 |
-| `integration` | 🟢 Implemented | Cognitive Blackboard: shared workspace + EventBus for cross-module communication. Adapters wire consciousness, KG, synergy, reasoning. | ~3,800 |
-| `integrations` | 🟢 Implemented | LangChain-Memgraph adapter, MCP-Memgraph server, SQL→graph migration agent, HyGM graph modeling | ~7,300 |
-| `compute` | 🟡 Structural | Job scheduling, resource management, GPU allocation | ~11,500 |
-| `bio_inspired` | 🟡 Structural | Evolutionary optimization, swarm intelligence | ~4,350 |
-| `deployment` | 🟡 Structural | CUDO Compute + HuggingFace Transformers deployment | ~3,350 |
-| `memgraph_toolbox` | 🟡 Structural | Memgraph tools: PageRank, betweenness centrality, Cypher helpers | ~930 |
-| `bci` | 🟢 Implemented | Brain-Computer Interface: EEG processing, CSP, SSVEP detection | ~8,000 |
-| `blockchain` | 🟡 Structural | Audit trails, IPFS storage, Web3 interaction | ~5,950 |
-| `distributed_training` | 🟡 Structural | Federated orchestration, Byzantine tolerance, secure aggregation | ~8,200 |
-| `holographic` | 🟡 Structural | Volumetric display, spatial audio, mixed reality engine | ~8,000 |
-| `neuromorphic` | 🟡 Structural | Spiking neural networks, brain-inspired processors | ~3,700 |
-| `pln_accelerator` | 🟡 Structural | Hardware-accelerated Probabilistic Logic Networks | ~12,500 |
-| `knowledge_management` | 🟡 Structural | Omniscience knowledge management system | ~5,500 |
-| `federated` | 🟡 Structural | Federated learning framework with secure aggregation | ~6,400 |
-| `agi_economics` | 🟡 Structural | AGI economics: algorithms, blockchain, DeFi | ~7,200 |
-| `agi_reproducibility` | 🟡 Structural | Experiment tracking, PLN validation, reproducibility | ~7,500 |
-| `agi_communication` | 🟡 Structural | AGI communication protocols and interfaces | ~2,800 |
-| `servers` | 🟡 Structural | MCP + SSE graph servers | ~1,400 |
+All 29 modules carry a `__maturity__` attribute — see [Module Maturity Model](https://github.com/web3guru888/asi-build/wiki/Module-Maturity-Model).
 
-**Status legend:**
-- 🟢 **Implemented** — Core algorithms present, tested, documented
-- 🟡 **Structural** — Framework and interfaces defined; backends or full implementations pending
-- 🔴 **Experimental** — In development, may be broken
+| Module | Maturity | LOC | Description |
+|--------|----------|-----|-------------|
+| `consciousness` | 🟢 **beta** | ~12,200 | GWT, IIT 3.0 Φ (TPM-based), AST, metacognition — 15 submodules |
+| `cognitive_synergy` | 🟢 **beta** | ~6,000 | Mutual info, transfer entropy, phase locking, LZ76 complexity |
+| `homomorphic` | 🟢 **beta** | ~12,349 | BGV/BFV/CKKS FHE with NTT fixed, polynomial ring arithmetic |
+| `graph_intelligence` | 🟢 **beta** | ~8,200 | FastToG (arXiv:2501.14300), Memgraph, community detection |
+| `integration` | 🟢 **stable** | ~10,907 | Cognitive Blackboard + EventBus + 24 adapters + CognitiveCycle |
+| `bci` | 🟢 **beta** | ~8,000 | EEG pipelines, CSP motor imagery, P300, SSVEP, thought-to-text |
+| `safety` | 🟢 **beta** | ~6,200 | SymPy/Z3 theorem proving, governance DAO, Merkle audit, entity rights |
+| `knowledge_graph` | 🟢 **beta** | ~1,450 | Bi-temporal KG, provenance, A*, pheromone learning |
+| `integrations` | 🟢 **beta** | ~7,300 | LangChain-Memgraph, MCP server, SQL→graph agent, HyGM |
+| `pln_accelerator` | 🟡 **alpha** | ~12,500 | Hardware-accelerated PLN with NL↔logic bridge |
+| `compute` | 🟡 **alpha** | ~11,500 | Job scheduling, resource management, GPU allocation |
+| `agi_economics` | 🟡 **alpha** | ~7,200 | Reputation scoring, value alignment, decentralized incentives |
+| `agi_reproducibility` | 🟡 **alpha** | ~7,500 | AGSSL, experiment tracking, formal provers |
+| `distributed_training` | 🟡 **alpha** | ~8,200 | 1000-node federated, Byzantine tolerance, AGIX rewards |
+| `federated` | 🟡 **alpha** | ~6,400 | Federated learning, differential privacy, secure aggregation |
+| `vectordb` | 🟡 **alpha** | ~8,000 | Unified client for Pinecone, Qdrant, Weaviate |
+| `quantum` | 🟡 **alpha** | ~5,330 | VQE, QAOA, QNN, quantum-classical hybrid via Qiskit |
+| `knowledge_management` | 🟡 **alpha** | ~5,500 | Omniscience network, predictive synthesis, adaptive learning |
+| `bio_inspired` | 🟡 **alpha** | ~4,350 | STDP, circadian rhythms, sleep-wake consolidation |
+| `optimization` | 🟡 **alpha** | ~4,200 | PyTorch quantization, pruning, knowledge distillation |
+| `neuromorphic` | 🟡 **alpha** | ~3,700 | Spiking neural networks, LIF simulation |
+| `deployment` | 🟡 **alpha** | ~3,350 | FastAPI, MCP SSE, CUDO Compute, HuggingFace |
+| `agi_communication` | 🟡 **alpha** | ~2,800 | Game-theoretic negotiation, trust layers, semantic interop |
+| `rings` | 🟡 **alpha** | ~1,951 | P2P SDK: DID identity, reputation scoring, DHT — 196 tests |
+| `servers` | 🟡 **alpha** | ~1,400 | MCP + SSE servers, Kenny Graph (89K nodes, 1.4K agents) |
+| `memgraph_toolbox` | 🟡 **alpha** | ~930 | PageRank, betweenness centrality, Cypher helpers |
+| `reasoning` | 🔵 **alpha** | ~880 | Hybrid symbolic-neural + causal inference (PC/FCI algorithms) |
+| `holographic` | 🔴 **experimental** | ~8,000 | Volumetric display, spatial audio, mixed reality |
+| `blockchain` | 🔴 **experimental** | ~5,950 | Merkle audit trails, IPFS, EVM event logging |
 
-> The `archive/` directory contains experimental/aspirational modules from v1. These are preserved for reference but are not part of the main package and are not tested.
-> The `examples/` directory includes MiniMind, a third-party small LLM reference project (Apache 2.0).
+**Maturity legend:**
+- 🟢 **stable / beta** — Core algorithms present, tested, and documented
+- 🟡 **alpha** — Framework and interfaces defined; implementations vary; further development ongoing
+- 🔴 **experimental** — In early development; APIs may change; use with caution
+
+> The `archive/` directory contains aspirational v1 modules. These are preserved for reference but are not part of the main package and are not tested.
+> The `examples/` directory includes MiniMind, a third-party small LLM reference (Apache 2.0).
+
+---
+
+## Module Maturity
+
+Every module in `src/asi_build/` exposes a `__maturity__` attribute:
+
+```python
+from asi_build.consciousness import __maturity__
+print(__maturity__)   # "beta"
+
+from asi_build.holographic import __maturity__
+print(__maturity__)   # "experimental"
+```
+
+The four levels follow a defined progression — see the **[Module Maturity Model wiki page](https://github.com/web3guru888/asi-build/wiki/Module-Maturity-Model)** for the full definition of each tier, promotion criteria, and which modules are currently seeking upgrade.
+
+---
+
+## Key Technical Highlights
+
+- **Cognitive Blackboard** — Thread-safe shared workspace supporting ~20K writes/sec, <12µs read latency, <1ms subscriber lag. The backbone of cross-module communication.
+- **EventBus** — Typed pub/sub with topic routing (`consciousness.state_updated`, `bci.epoch_ready`, `reasoning.inference_complete`, etc.)
+- **24 Blackboard adapters** — Every module has a typed adapter; an `AsyncAdapterBase` enables async-native pipelines for latency-sensitive modules.
+- **IIT 3.0 Φ (fixed)** — TPM-based computation, correct bipartition enumeration, validated against known network topologies.
+- **Safety gating** — `EthicalVerificationEngine` uses SymPy + Z3 SMT for sound theorem proving; ungrounded-symbol checks prevent vacuous proofs.
+- **LZ76 complexity** — Fixed and validated; suffix-array O(n log n) optimization tracked in [Issue #94](https://github.com/web3guru888/asi-build/issues/94).
+- **Rings Network P2P** — DID-authenticated peer connections, reputation scoring, DHT — 196 passing tests.
+- **9 real data sources** — 27,430+ data points used across test fixtures and benchmarks.
+- **Causal inference** — PC and FCI algorithms implemented in the `reasoning` module.
+- **OODA research cycle** — Observe-Orient-Decide-Act loop implemented in the `agi_reproducibility` module.
 
 ---
 
@@ -313,16 +379,17 @@ make install
 ### Running Tests
 
 ```bash
-# Run full test suite (2,500+ tests)
+# Run the full test suite (3,018 passing)
 pytest tests/ -v
 
-# Quick run (stop on first failure)
+# Quick run — stop on first failure
 pytest tests/ -x -q
 
 # Run specific module tests
 pytest tests/test_consciousness.py -v
 pytest tests/test_knowledge_graph.py -v
-pytest tests/test_graph_intelligence.py -v
+pytest tests/test_cognitive_synergy.py -v
+pytest tests/test_integration.py -v
 
 # Or use Make
 make test
@@ -334,23 +401,20 @@ make test-quick
 This project uses [black](https://github.com/psf/black) for formatting and [mypy](https://mypy.readthedocs.io/) for type checking.
 
 ```bash
-# Format code
-make format          # black src/ tests/
-
-# Check formatting + types
-make lint            # black --check + mypy
+make format     # black src/ tests/
+make lint       # black --check + mypy
 ```
 
 Style requirements:
 - **Line length**: 100 characters
 - **Type hints**: required for all public functions
 - **Docstrings**: Google style, required for all public classes and methods
-- **Target**: Python 3.11+
+- **Python**: 3.11+
 
-### Project Structure
+### Project Layout
 
 ```
-src/asi_build/         # Source package — this is what gets installed
+src/asi_build/         # Source package (what gets installed)
 tests/                 # Pytest tests — one file per module
 examples/              # Runnable demo scripts
 docs/                  # Documentation + research notes
@@ -359,17 +423,50 @@ configs/               # YAML configuration templates
 
 ---
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide. We welcome contributions of all kinds — code, tests, documentation, research, bug reports, and discussion.
+
+### Getting Started as a Contributor
+
+1. **Find something to work on**
+   - [`good first issue`](https://github.com/web3guru888/asi-build/labels/good%20first%20issue) — beginner-friendly, well-scoped tasks
+   - [`help wanted`](https://github.com/web3guru888/asi-build/labels/help%20wanted) — things we need most right now
+   - [`research`](https://github.com/web3guru888/asi-build/labels/research) — open research problems
+   - [`documentation`](https://github.com/web3guru888/asi-build/labels/documentation) — doc improvements and examples
+
+2. **Ask questions first**
+   Join [Discussions](https://github.com/web3guru888/asi-build/discussions) before diving in. The [FAQ](https://github.com/web3guru888/asi-build/discussions/16) covers common questions; for architecture questions, start with the [Cognitive Blackboard discussion](https://github.com/web3guru888/asi-build/discussions/10).
+
+3. **Read the docs**
+   The [Wiki](https://github.com/web3guru888/asi-build/wiki) has architecture guides and per-module documentation. The [Module Maturity Model](https://github.com/web3guru888/asi-build/wiki/Module-Maturity-Model) page explains what "alpha" and "beta" mean for each module.
+
+4. **Submit your PR**
+   Fork → branch → PR. Please include tests and docstrings — CI will check formatting and type hints automatically.
+
+### What We're Looking For
+
+- **Tests for alpha-tier modules** — Many modules are structurally complete but have limited test coverage. Adding pytest coverage is a great first contribution. See [Issue #1](https://github.com/web3guru888/asi-build/issues/1) and [`needs-tests`](https://github.com/web3guru888/asi-build/labels/needs-tests) issues.
+- **Blackboard adapter wiring** — Several modules still need their Blackboard adapters fleshed out. See issues tagged [`enhancement`](https://github.com/web3guru888/asi-build/labels/enhancement).
+- **Documentation & examples** — Wiki pages, Jupyter notebooks ([Issue #32](https://github.com/web3guru888/asi-build/issues/32)), docstrings.
+- **Module backends** — Several alpha modules have framework scaffolding but need real backends (VectorDB client integrations, Quantum circuit backends, etc.).
+- **Research contributions** — Open problems in IIT Φ benchmarking ([Issue #34](https://github.com/web3guru888/asi-build/issues/34)), CognitiveCycle design ([Issue #41](https://github.com/web3guru888/asi-build/issues/41)), multimodal fusion ([Issue #108](https://github.com/web3guru888/asi-build/issues/108)).
+
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing. We're committed to a welcoming, respectful community.
+
+---
+
 ## Project History
 
-ASI:BUILD began in **August 2025** as an ambitious attempt to implement a comprehensive AGI framework — 47 subsystems, 101 wiki pages, consciousness engines, quantum engines, reality engines. It was big, visionary, and much of it was scaffolding.
+ASI:BUILD began in **August 2025** as an ambitious attempt to implement a comprehensive AGI framework — 47 subsystems, consciousness engines, quantum engines, governance modules. It was visionary, and much of it was scaffolding.
 
 In **April 2026**, the project underwent a major restructure:
-- All real, tested code moved to `src/asi_build/`
-- Template-generated and untested scaffolding moved to `archive/`
-- A proper test suite added (now 2,500+ tests)
-- Modern Python packaging (`pyproject.toml`)
-- Import paths standardized
-- Public release on [GitHub](https://github.com/web3guru888/asi-build) (MIT license)
+- All real, tested code moved to `src/asi_build/` with proper packaging
+- Template-generated scaffolding moved to `archive/`
+- A proper test suite built from the ground up — now **3,018 passing tests**
+- The **Cognitive Blackboard** integration layer introduced, wiring all 29 modules together
+- Module maturity (`__maturity__`) added to every module for transparency
+- Public release on GitHub (MIT license)
 
 The goal of the restructure was honesty: clearly separate what works from what's aspirational, and provide a solid foundation for research contributions.
 
@@ -379,44 +476,17 @@ See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
 ## Links
 
-- **GitHub**: [https://github.com/web3guru888/asi-build](https://github.com/web3guru888/asi-build) (public, primary)
-- **GitLab**: [https://gitlab.com/asi-build/asi-build](https://gitlab.com/asi-build/asi-build) (mirror)
-- **Discussions**: [https://github.com/web3guru888/asi-build/discussions](https://github.com/web3guru888/asi-build/discussions)
-- **Wiki**: [https://github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki)
+- **GitHub**: [https://github.com/web3guru888/asi-build](https://github.com/web3guru888/asi-build)
+- **Discussions**: [https://github.com/web3guru888/asi-build/discussions](https://github.com/web3guru888/asi-build/discussions) (66 threads)
+- **Wiki**: [https://github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki) (50 pages)
 - **Issues**: [https://github.com/web3guru888/asi-build/issues](https://github.com/web3guru888/asi-build/issues)
 - **CI**: [GitHub Actions](https://github.com/web3guru888/asi-build/actions)
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide. We welcome contributions of all kinds — code, documentation, research, bug reports, and discussion.
-
-### Getting Started as a Contributor
-
-1. **Find something to work on** — Browse [`good first issue`](https://github.com/web3guru888/asi-build/labels/good%20first%20issue) for beginner-friendly tasks, or [`help wanted`](https://github.com/web3guru888/asi-build/labels/help%20wanted) for things we need most. Research problems are tagged [`research`](https://github.com/web3guru888/asi-build/labels/research).
-
-2. **Ask questions** — Join [Discussions](https://github.com/web3guru888/asi-build/discussions) before diving in. The [FAQ thread](https://github.com/web3guru888/asi-build/discussions/16) covers common questions; for architecture questions, start with the [Cognitive Blackboard discussion](https://github.com/web3guru888/asi-build/discussions/10).
-
-3. **Read the docs** — The [Wiki](https://github.com/web3guru888/asi-build/wiki) has architecture guides and per-module documentation.
-
-4. **Submit your PR** — Fork → branch → PR. Include tests and docstrings; CI will check formatting and type hints automatically.
-
-### What We're Looking For
-
-- **All backgrounds welcome** — neuroscience, ML, distributed systems, formal methods, frontend, DevOps — there's a corner of this project for you
-- **Documentation & examples** — Just as valuable as code; we have several open `good first issue` items here
-- **Bug fixes** — Especially for the known issues in IIT Φ computation ([#6](https://github.com/web3guru888/asi-build/issues/6)), formal verification ([#7](https://github.com/web3guru888/asi-build/issues/7)), and homomorphic NTT ([#8](https://github.com/web3guru888/asi-build/issues/8))
-- **Module implementations** — Several 🟡 Structural modules need real backends
-
-Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing. We're committed to a welcoming, respectful community.
 
 ---
 
 ## Acknowledgments
 
 - **[Dr. Ben Goertzel](https://goertzel.org/)** — whose work on cognitive synergy, OpenCog, and the theory of general intelligence is a foundational inspiration for this project
-- **[MemPalace-AGI](https://github.com/milla-jovovich/mempalace)** — contributed the `knowledge_graph` module (bi-temporal KG, A\* pathfinding, pheromone learning) as part of an integration project exploring spatial memory architectures for autonomous scientific discovery
 - **[FastToG](https://arxiv.org/abs/2501.14300)** — the KG reasoning pipeline implemented in `graph_intelligence`
 - All contributors who have submitted issues, PRs, and research feedback
 
@@ -426,4 +496,4 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing. We're
 
 MIT License — see [LICENSE](LICENSE) for details.
 
-This project is research software. It is provided as-is, without warranty. Use it to learn, experiment, and build — but evaluate critically and test thoroughly before depending on any module in production.
+This project is research software. Provided as-is, without warranty. Evaluate critically and test thoroughly before depending on any module in production.
