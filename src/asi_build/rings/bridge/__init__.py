@@ -12,6 +12,8 @@ Modules
   schema and validator node logic for the bridge Sub-Ring.
 - :mod:`~.light_client`     — ``EthLightClient``: abstract Ethereum light client
   with Helios stub and in-memory mock.
+- :mod:`~.beacon_client`    — ``BeaconAPILightClient``: production Beacon Chain
+  light client connecting to real Beacon API + execution layer endpoints.
 - :mod:`~.merkle_patricia`  — ``MerklePatriciaVerifier``: EIP-1186 proof
   verification for Ethereum state, storage, and receipt tries.
 - :mod:`~.contract_client`  — ``BridgeContractClient``, ``BridgeDeployer``:
@@ -24,8 +26,21 @@ Modules
   anomaly detection, rate-limit monitoring, validator health tracking.
 - :mod:`~.zk`               — ZK proof sub-package: circuits, provers,
   coordinator, BLS12-381 primitives, SSZ encoding.
+- :mod:`~.relayer`          — ``BridgeRelayer``: production daemon that
+  monitors deposits, processes withdrawals, with health endpoints.
+- :mod:`~.consensus`        — ``ValidatorConsensus``: 4/6 threshold
+  multi-validator consensus for withdrawal approvals.
+- :mod:`~.circuit_breaker`  — ``EnhancedSafetyManager``: proof-failure
+  breakers, volume thresholds, per-address rate limits, cooldowns.
+- :mod:`~.audit_log`        — ``AuditLogger``: structured JSON logging
+  with rotation, trace IDs, and audit trail.
 """
 
+from .beacon_client import (
+    BeaconAPIError,
+    BeaconAPILightClient,
+    ExecutionRPCError,
+)
 from .contract_client import (
     BRIDGE_ABI,
     TOKEN_ABI,
@@ -83,7 +98,32 @@ from .zk_prover import (
     vk_to_solidity_args,
 )
 
+from .audit_log import AuditLogger
+from .circuit_breaker import (
+    AddressRateLimiter,
+    CooldownGuard,
+    EnhancedSafetyManager,
+    ProofFailureBreaker,
+    VolumeThresholdBreaker,
+    WithdrawalAnomalyDetector,
+)
+from .consensus import (
+    ProposalStatus,
+    ValidatorConsensus,
+    WithdrawalProposal,
+)
+from .relayer import (
+    BridgeRelayer,
+    OperationStatus,
+    RelayerConfig,
+    RelayerDB,
+)
+
 __all__ = [
+    # Beacon API client
+    "BeaconAPILightClient",
+    "BeaconAPIError",
+    "ExecutionRPCError",
     # Protocol
     "BridgeProtocol",
     "BridgeMessage",
@@ -135,4 +175,22 @@ __all__ = [
     "vk_to_solidity_args",
     # ZK sub-package (Phase 3)
     "zk",
+    # Relayer (Phase E)
+    "BridgeRelayer",
+    "RelayerConfig",
+    "RelayerDB",
+    "OperationStatus",
+    # Consensus (Phase E)
+    "ValidatorConsensus",
+    "WithdrawalProposal",
+    "ProposalStatus",
+    # Enhanced circuit breakers (Phase F)
+    "EnhancedSafetyManager",
+    "ProofFailureBreaker",
+    "VolumeThresholdBreaker",
+    "WithdrawalAnomalyDetector",
+    "AddressRateLimiter",
+    "CooldownGuard",
+    # Audit logging (Phase F)
+    "AuditLogger",
 ]
