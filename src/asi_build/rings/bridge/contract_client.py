@@ -394,6 +394,49 @@ class BridgeContractClient:
             )
             self.cm.contracts[self.CONTRACT_NAME] = ci
 
+    @classmethod
+    def for_chain(
+        cls,
+        chain_name: str,
+        web3_client: Any,
+        contract_manager: Any,
+    ) -> "BridgeContractClient":
+        """Create a client pre-configured for a named chain.
+
+        Parameters
+        ----------
+        chain_name : str
+            Registry key (e.g. ``"bsc_testnet"``).
+        web3_client : Web3Client
+            A connected Web3Client.
+        contract_manager : ContractManager
+            A ContractManager instance.
+
+        Returns
+        -------
+        BridgeContractClient
+
+        Raises
+        ------
+        KeyError
+            If the chain is unknown.
+        ValueError
+            If the bridge contract is not deployed on that chain.
+        """
+        from .chains import get_chain
+
+        cfg = get_chain(chain_name)
+        if not cfg.bridge_address:
+            raise ValueError(
+                f"No bridge contract deployed on {chain_name}. "
+                f"Deploy first with: python scripts/deploy_multichain.py --chain {chain_name}"
+            )
+        return cls(
+            web3_client=web3_client,
+            contract_manager=contract_manager,
+            bridge_address=cfg.bridge_address,
+        )
+
     # ── helpers ──────────────────────────────────────────────────────────
 
     async def _call(self, fn: str, args: Optional[list] = None) -> Any:
@@ -781,6 +824,36 @@ class BridgeDeployer:
         self._bridge_bytecode = bridge_bytecode
         self._token_bytecode = token_bytecode
 
+    @classmethod
+    def for_chain(
+        cls,
+        chain_name: str,
+        web3_client: Any,
+        contract_manager: Any,
+        **kwargs: Any,
+    ) -> "BridgeDeployer":
+        """Create a deployer targeting a specific chain.
+
+        The chain config is stored on the instance for gas strategy and
+        address bookkeeping after deployment.
+
+        Parameters
+        ----------
+        chain_name : str
+            Registry key (e.g. ``"base_sepolia"``).
+        web3_client : Web3Client
+        contract_manager : ContractManager
+        **kwargs
+            Forwarded to the constructor (e.g. custom bytecodes).
+        """
+        from .chains import get_chain
+
+        cfg = get_chain(chain_name)
+        deployer = cls(web3_client, contract_manager, **kwargs)
+        deployer._chain_config = cfg  # type: ignore[attr-defined]
+        deployer._chain_name = chain_name  # type: ignore[attr-defined]
+        return deployer
+
     async def deploy_verifier(
         self,
         vk_alpha: List[int],
@@ -960,6 +1033,17 @@ class BridgeDeployer:
             "bridge": bridge_addr,
             "token": token_addr,
         }
+
+        # Update chain registry if deploying to a specific chain
+        if hasattr(self, "_chain_name"):
+            from .chains import update_deployed_addresses
+            update_deployed_addresses(
+                self._chain_name,
+                verifier=verifier_addr,
+                bridge=bridge_addr,
+                token=token_addr,
+            )
+
         logger.info("Full bridge suite deployed: %s", result)
         return result
 

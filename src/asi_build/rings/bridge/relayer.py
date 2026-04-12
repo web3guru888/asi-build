@@ -133,6 +133,7 @@ class RelayerConfig:
     log_file: str = "relayer.log"
     log_level: str = "INFO"
     node_urls: List[str] = field(default_factory=list)
+    chain_name: str = "ethereum_sepolia"
 
     @classmethod
     def from_env(cls) -> "RelayerConfig":
@@ -181,6 +182,50 @@ class RelayerConfig:
             log_level=os.getenv("RELAYER_LOG_LEVEL", "INFO"),
             node_urls=node_urls,
         )
+
+    @classmethod
+    def from_chain(cls, chain_name: str, **overrides: Any) -> "RelayerConfig":
+        """Load config from a named chain in the chain registry.
+
+        Populates RPC URL, contract addresses, poll interval, and
+        confirmation requirements from the :mod:`~.chains` module.
+        Additional keyword arguments override any loaded value.
+
+        Parameters
+        ----------
+        chain_name : str
+            Chain registry key (e.g. ``"bsc_testnet"``).
+        **overrides
+            Any ``RelayerConfig`` field can be overridden.
+        """
+        from .chains import get_chain
+
+        cfg = get_chain(chain_name)
+
+        # Node URLs from shared directory
+        node_urls: List[str] = []
+        for i in range(6):
+            path = f"/shared/rings-cluster/node-{i}.url"
+            try:
+                with open(path) as f:
+                    url = f.read().strip()
+                    if url:
+                        node_urls.append(url)
+            except FileNotFoundError:
+                pass
+
+        defaults = dict(
+            rpc_url=cfg.rpc_url,
+            bridge_address=cfg.bridge_address or "",
+            token_address=cfg.token_address or "",
+            verifier_address=cfg.verifier_address or "",
+            poll_interval=max(cfg.block_time, 1.0),  # at least 1s
+            confirmations=cfg.finality_blocks,
+            node_urls=node_urls,
+            chain_name=chain_name,
+        )
+        defaults.update(overrides)
+        return cls(**defaults)
 
 
 # ---------------------------------------------------------------------------
@@ -894,10 +939,12 @@ class BridgeRelayer:
                     did=recipient_did,
                     token=token,
                     amount=amount,
+                    source_chain=self.config.chain_name,
                 )
                 logger.info(
-                    "Ledger credited: %s +%d %s (tx=%s)",
-                    recipient_did, amount, token, tx_hash,
+                    "Ledger credited: %s +%d %s from %s (tx=%s)",
+                    recipient_did, amount, token,
+                    self.config.chain_name, tx_hash,
                     extra={
                         "event": "ledger_credit",
                         "tx_hash": tx_hash,
@@ -1419,6 +1466,105 @@ class BridgeRelayer:
             f"running={self._running}, "
             f"deposits={self._metrics['deposits_processed']}, "
             f"withdrawals={self._metrics['withdrawals_processed']})"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Multi-chain relayer
+# ---------------------------------------------------------------------------
+
+
+class MultiChainRelayer:
+    """Manages multiple BridgeRelayer instances across chains.
+
+    Each chain gets its own relayer with a separate database, health port,
+    and event loop task.  Cross-chain withdrawal routing is handled at the
+    ledger level.
+
+    Parameters
+    ----------
+    chain_names : list of str
+        Chain registry keys to monitor (e.g. ``["ethereum_sepolia", "bsc_testnet"]``).
+    ledger : RingsTokenLedger, optional
+        Shared token ledger for cross-chain balance tracking.
+    base_health_port : int
+        Starting port for health servers (incremented per chain).
+    """
+
+    def __init__(
+        self,
+        chain_names: List[str],
+        *,
+        ledger: Any = None,
+        base_health_port: int = 8080,
+    ) -> None:
+        self.relayers: Dict[str, BridgeRelayer] = {}
+        self._shutdown_event = asyncio.Event()
+
+        for i, name in enumerate(chain_names):
+            config = RelayerConfig.from_chain(
+                name,
+                health_port=base_health_port + i,
+                db_path=f"relayer_{name}.db",
+                log_file=f"relayer_{name}.log",
+            )
+            self.relayers[name] = BridgeRelayer(config, ledger=ledger)
+
+        logger.info(
+            "MultiChainRelayer initialized for %d chains: %s",
+            len(self.relayers),
+            ", ".join(self.relayers.keys()),
+        )
+
+    async def start(self) -> None:
+        """Start all chain relayers concurrently."""
+        logger.info("Starting MultiChainRelayer...")
+
+        tasks = []
+        for name, relayer in self.relayers.items():
+            logger.info("Launching relayer for %s", name)
+            tasks.append(
+                asyncio.create_task(relayer.start(), name=f"relayer_{name}")
+            )
+
+        try:
+            await self._shutdown_event.wait()
+        finally:
+            await self.stop()
+
+    async def stop(self) -> None:
+        """Stop all chain relayers."""
+        logger.info("Stopping MultiChainRelayer...")
+        for name, relayer in self.relayers.items():
+            try:
+                await relayer.stop()
+                logger.info("Relayer %s stopped", name)
+            except Exception as exc:
+                logger.error("Error stopping relayer %s: %s", name, exc)
+
+    async def get_health(self) -> Dict[str, Any]:
+        """Aggregate health from all chain relayers."""
+        health: Dict[str, Any] = {
+            "chains": {},
+            "total_chains": len(self.relayers),
+        }
+        healthy_count = 0
+        for name, relayer in self.relayers.items():
+            try:
+                chain_health = await relayer.get_health()
+                health["chains"][name] = chain_health
+                if chain_health.get("status") == "healthy":
+                    healthy_count += 1
+            except Exception as exc:
+                health["chains"][name] = {"status": "error", "error": str(exc)}
+        health["healthy_chains"] = healthy_count
+        health["status"] = "healthy" if healthy_count == len(self.relayers) else "degraded"
+        return health
+
+    def __repr__(self) -> str:
+        return (
+            f"MultiChainRelayer(chains={list(self.relayers.keys())}, "
+            f"running={any(r._running for r in self.relayers.values())})"
         )
 
 

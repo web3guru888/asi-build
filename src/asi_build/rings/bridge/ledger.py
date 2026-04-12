@@ -251,7 +251,7 @@ class TransferReceipt:
 
 @dataclass
 class WithdrawalLock:
-    """Represents tokens locked for a bridge withdrawal back to Ethereum.
+    """Represents tokens locked for a bridge withdrawal back to an EVM chain.
 
     Attributes
     ----------
@@ -263,6 +263,10 @@ class WithdrawalLock:
         Token being withdrawn.
     amount : int
         Amount locked (in smallest unit).
+    target_chain : str
+        Destination chain name (e.g. ``"ethereum_sepolia"``,
+        ``"bsc_testnet"``).  Defaults to ``"ethereum_sepolia"`` for
+        backward compatibility.
     timestamp : float
         When the lock was created.
     released : bool
@@ -274,6 +278,7 @@ class WithdrawalLock:
     did: str
     token: str
     amount: int
+    target_chain: str = "ethereum_sepolia"
     timestamp: float = field(default_factory=time.time)
     released: bool = False
 
@@ -283,6 +288,7 @@ class WithdrawalLock:
             "did": self.did,
             "token": self.token,
             "amount": self.amount,
+            "target_chain": self.target_chain,
             "timestamp": self.timestamp,
             "released": self.released,
         }
@@ -294,6 +300,7 @@ class WithdrawalLock:
             did=data["did"],
             token=data["token"],
             amount=data["amount"],
+            target_chain=data.get("target_chain", "ethereum_sepolia"),
             timestamp=data.get("timestamp", time.time()),
             released=data.get("released", False),
         )
@@ -824,11 +831,14 @@ class RingsTokenLedger:
         token: str,
         amount: int,
         deposit_proof: Any = None,
+        source_chain: str = "ethereum_sepolia",
     ) -> None:
         """Credit a DID after a verified bridge deposit.
 
-        Called by the relayer after an Ethereum deposit has been
-        verified and finalized (threshold attestations met).
+        Called by the relayer after a deposit on any supported EVM chain
+        has been verified and finalized (threshold attestations met).
+        Balances on Rings are **chain-agnostic** — 100 USDC is 100 USDC
+        regardless of which chain it was deposited from.
 
         Parameters
         ----------
@@ -840,6 +850,10 @@ class RingsTokenLedger:
             Amount to credit in the token's smallest unit.
         deposit_proof : DepositRecord, optional
             The verified deposit record (for audit trail).
+        source_chain : str
+            The chain the deposit originated from (e.g.
+            ``"bsc_testnet"``).  Used for provenance tracking
+            but does NOT affect the credited balance amount.
 
         Raises
         ------
@@ -863,8 +877,8 @@ class RingsTokenLedger:
             self._stats["credits"] += 1
 
         logger.info(
-            "Bridge credit: %s +%d %s (new balance: %d)",
-            did[:30], amount, token, new_balance,
+            "Bridge credit: %s +%d %s from %s (new balance: %d)",
+            did[:30], amount, token, source_chain, new_balance,
         )
 
         # Broadcast notification
@@ -872,6 +886,7 @@ class RingsTokenLedger:
             LedgerMessage.BALANCE_CREDITED,
             {"did": did, "token": token, "amount": amount,
              "new_balance": new_balance,
+             "source_chain": source_chain,
              "deposit_tx": (
                  deposit_proof.tx_hash if deposit_proof
                  and hasattr(deposit_proof, "tx_hash") else None
@@ -883,11 +898,14 @@ class RingsTokenLedger:
         did: str,
         token: str,
         amount: int,
+        target_chain: str = "ethereum_sepolia",
     ) -> WithdrawalLock:
-        """Lock tokens for a bridge withdrawal back to Ethereum.
+        """Lock tokens for a bridge withdrawal to any supported EVM chain.
 
         Creates a :class:`WithdrawalLock` that holds the tokens until
-        the on-chain withdrawal completes (or is cancelled).
+        the on-chain withdrawal completes (or is cancelled).  The
+        ``target_chain`` parameter enables cross-chain routing: a user
+        can deposit on BSC and withdraw on Base.
 
         Parameters
         ----------
@@ -897,11 +915,16 @@ class RingsTokenLedger:
             Token identifier.
         amount : int
             Amount to lock for withdrawal.
+        target_chain : str
+            Destination chain name from the chain registry
+            (e.g. ``"bsc_testnet"``, ``"base_sepolia"``).  Defaults to
+            ``"ethereum_sepolia"`` for backward compatibility.
 
         Returns
         -------
         WithdrawalLock
-            The lock record (pass to the bridge for on-chain execution).
+            The lock record (pass to the chain-specific bridge relayer
+            for on-chain execution).
 
         Raises
         ------
@@ -930,6 +953,7 @@ class RingsTokenLedger:
                 did=did,
                 token=token,
                 amount=amount,
+                target_chain=target_chain,
             )
 
             # Lock the funds
@@ -944,15 +968,15 @@ class RingsTokenLedger:
             self._stats["debits"] += 1
 
         logger.info(
-            "Withdrawal lock: %s locked %d %s (lock_id=%s)",
-            did[:30], amount, token, lock_id,
+            "Withdrawal lock: %s locked %d %s → %s (lock_id=%s)",
+            did[:30], amount, token, target_chain, lock_id,
         )
 
         # Broadcast notification
         await self._broadcast_ledger_message(
             LedgerMessage.BALANCE_DEBITED,
             {"did": did, "token": token, "amount": amount,
-             "lock_id": lock_id},
+             "lock_id": lock_id, "target_chain": target_chain},
         )
 
         return lock
