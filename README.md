@@ -874,6 +874,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - 🔬 [DecisionTracer architecture — attribution strategies, CognitiveCycle integration, Prometheus](https://github.com/web3guru888/asi-build/discussions/277)
 - ❓ [DecisionTracer config — strategy selection, Shapley cost, async_flush, PromQL monitoring](https://github.com/web3guru888/asi-build/discussions/278)
 - 💡 [Phase 8 directions — CausalGraph, ExplainAPI, Docker/Helm, Sepolia CI](https://github.com/web3guru888/asi-build/discussions/279)
+- 🔬 [CausalGraph architecture — DAG-based causal reasoning, cycle detection, critical path](https://github.com/web3guru888/asi-build/discussions/281)
+- ❓ [CausalGraph config — max_nodes, window_ms, min_weight, eviction, cycle handling](https://github.com/web3guru888/asi-build/discussions/282)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
