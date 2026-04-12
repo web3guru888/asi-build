@@ -15,6 +15,9 @@ for trustless bridge operations.  The package contains:
 - :mod:`.bls`         — BLS12-381 primitives for sync committee verification.
 - :mod:`.ssz`         — SSZ (Simple Serialize) encoding/decoding/Merkleization
   for beacon chain types.
+- :mod:`.snarkjs_prover` — Real Groth16 proofs via circom/snarkjs:
+  ``SnarkJSProver`` engine, ``WithdrawalWitness`` builder, and Poseidon
+  hash helpers for withdrawal proof generation.
 """
 
 from .bls import (
@@ -23,6 +26,12 @@ from .bls import (
     BLSPublicKey,
     BLSSignature,
     SyncCommitteeBLS,
+)
+from .real_bls import (
+    RealBLS12381,
+    RealBLSKeyPair,
+    RealSyncCommitteeBLS,
+    get_bls_backend,
 )
 from .circuits import (
     ALL_CIRCUITS,
@@ -47,6 +56,12 @@ from .prover import (
     SP1ProverInterface,
     ZKProof,
     ZKProofEngine,
+)
+from .snarkjs_prover import (
+    SnarkJSProver,
+    WithdrawalWitness,
+    compute_withdrawal_witness,
+    poseidon_hash,
 )
 from .ssz import (
     SSZ,
@@ -83,6 +98,16 @@ __all__ = [
     "BLSPublicKey",
     "BLSSignature",
     "SyncCommitteeBLS",
+    # Real BLS (py_ecc backed)
+    "RealBLS12381",
+    "RealBLSKeyPair",
+    "RealSyncCommitteeBLS",
+    "get_bls_backend",
+    # SnarkJS (real Groth16)
+    "SnarkJSProver",
+    "WithdrawalWitness",
+    "compute_withdrawal_witness",
+    "poseidon_hash",
     # SSZ
     "SSZ",
     "SSZBeaconBlockHeader",
