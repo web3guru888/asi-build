@@ -1,0 +1,53 @@
+============================================================
+  Rings↔Ethereum Bridge — Sepolia Deployment Report
+============================================================
+
+  Date:           2026-04-12 12:59:40 UTC
+  Network:        Sepolia (chain 11155111)
+  RPC:            https://ethereum-sepolia-rpc.publicnode.com
+  Method:         python
+  Dry Run:        True
+
+── Deployer ──────────────────────────────────────────────
+  Address:        0x7784d6118Bea1334c62E4AFd49d7BD8131b3deAE
+  Balance:        0.000000 ETH
+  Nonce:          0
+  Gas Price:      0.02 gwei
+
+── Cost Estimate ─────────────────────────────────────────
+  Gas (verifier): ~1,200,000
+  Gas (bridge):   ~2,800,000
+  Gas (token):    ~1,500,000
+  Total gas:      ~5,500,000
+  Est. cost:      ~0.000124 ETH
+  Sufficient:     ❌ NO
+
+── Configuration ─────────────────────────────────────────
+  Guardian:       0x7784d6118Bea1334c62E4AFd49d7BD8131b3deAE
+  Daily Limit:    100.0 ETH (100000000000000000000 wei)
+  Per-tx Limit:   10.0 ETH (10000000000000000000 wei)
+  Token:          Bridged ASI (bASI)
+
+── Artifacts ─────────────────────────────────────────────
+  Groth16Verifier      ✅
+  RingsBridge          ✅
+  BridgedToken         ✅
+
+  Forge available:  ✅
+
+── Deployed Contracts ────────────────────────────────────
+  verifier             not deployed
+  bridge               not deployed
+  token                not deployed
+
+── Action Required ───────────────────────────────────────
+  Send at least 0.0001 ETH
+  to 0x7784d6118Bea1334c62E4AFd49d7BD8131b3deAE
+  on Sepolia testnet.
+
+  Faucets:
+    • https://sepoliafaucet.com
+    • https://faucet.sepolia.dev
+    • https://sepolia-faucet.pk910.de (PoW mining faucet)
+
+============================================================
