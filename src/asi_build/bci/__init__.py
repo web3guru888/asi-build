@@ -17,6 +17,7 @@ Core config is always available:
 """
 
 __version__ = "1.0.0"
+__maturity__ = "experimental"
 
 
 def __getattr__(name):

@@ -19,6 +19,7 @@ the temporal dynamics and energy efficiency of biological neural systems.
 
 __version__ = "1.0.0"
 __author__ = "Kenny AI - Neuromorphic Computing Specialist NC1"
+__maturity__ = "experimental"
 
 
 def _try_import(module_path, names):

@@ -48,6 +48,7 @@ Quick Start
 """
 
 __version__ = "1.1.0"
+__maturity__ = "beta"
 
 # Blackboard
 from .blackboard import CognitiveBlackboard

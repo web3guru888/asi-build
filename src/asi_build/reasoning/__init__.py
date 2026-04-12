@@ -8,6 +8,8 @@ This module implements Dr. Ben Goertzel's vision of cognitive synergy
 through integrated reasoning architectures.
 """
 
+__maturity__ = "alpha"
+
 try:
     from .hybrid_reasoning import HybridReasoningEngine, ReasoningMode
 except (ImportError, ModuleNotFoundError, SyntaxError):

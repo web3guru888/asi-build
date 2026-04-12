@@ -29,6 +29,7 @@ except ImportError:
 
 __version__ = "1.0.0"
 __author__ = "Kenny AGI Team"
+__maturity__ = "alpha"
 
 __all__ = [
     "ComputePoolManager",

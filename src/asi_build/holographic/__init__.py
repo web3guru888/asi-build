@@ -11,6 +11,7 @@ Note: Some submodules require optional dependencies (cv2, torch).
 """
 
 __version__ = "1.0.0"
+__maturity__ = "experimental"
 
 
 def __getattr__(name):

@@ -8,6 +8,8 @@ Subpackages:
     governance  – DAO, smart contracts, Merkle audit ledger, consensus, overrides, rights
 """
 
+__maturity__ = "beta"
+
 try:
     from .framework import ConstitutionalAI
 except (ImportError, ModuleNotFoundError, SyntaxError):

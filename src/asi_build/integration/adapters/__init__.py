@@ -33,14 +33,29 @@ Quick Start
 Available Adapters
 ~~~~~~~~~~~~~~~~~~
 
+Core:
 - ``ConsciousnessAdapter``        — GWT, IIT, BaseConsciousness
 - ``KnowledgeGraphAdapter``       — TemporalKG, KGPathfinder
 - ``CognitiveSynergyAdapter``     — CognitiveSynergyEngine, SynergyMetrics
 - ``ReasoningAdapter``            — HybridReasoningEngine
-- ``RingsNetworkAdapter``         — Rings P2P Network, DID, Reputation
-- ``BioInspiredAdapter``          — Evolutionary Optimizer, Homeostatic Regulator, BioCognitiveArchitecture
-- ``KnowledgeManagementAdapter``  — KnowledgeEngine, PredictiveSynthesizer, ContextualLearner
-- ``GraphIntelligenceAdapter``    — CommunityDetection, FastToG, SchemaManager
+
+Infrastructure:
+- ``ComputeBlackboardAdapter``    — JobScheduler, ResourceAllocator, MetricsCollector
+- ``DistributedTrainingAdapter``  — FederatedOrchestrator, ByzantineTolerantAggregator
+- ``VectorDBBlackboardAdapter``   — EmbeddingPipeline, SemanticSearchEngine, VectorDBConfig
+- ``BlockchainBlackboardAdapter`` — HashManager, MerkleTree, HashChain, SignatureManager
+
+Research & Optimization:
+- ``ReproducibilityBlackboardAdapter`` — ExperimentTracker, VersionManager, PlatformConfig
+- ``VLABlackboardAdapter``             — VLAPlusPlus, VLATrainer, VLAOptimizationPipeline
+
+Integration & Streaming:
+- ``RingsNetworkAdapter``              — Rings P2P Network, DID, Reputation
+- ``BioInspiredAdapter``               — Evolutionary Optimizer, Homeostatic Regulator
+- ``KnowledgeManagementAdapter``       — KnowledgeEngine, PredictiveSynthesizer, ContextualLearner
+- ``GraphIntelligenceAdapter``         — CommunityDetection, FastToG, SchemaManager
+- ``KennyGraphBlackboardAdapter``      — SSE streaming for graph intelligence results
+- ``IntegrationsBlackboardBridge``     — LangChain-Memgraph, SQL-to-Graph, HyGM, MCP-Memgraph
 
 Utilities
 ~~~~~~~~~
@@ -62,18 +77,42 @@ from .bio_inspired_adapter import BioInspiredAdapter
 from .graph_intelligence_adapter import GraphIntelligenceAdapter
 from .knowledge_management_adapter import KnowledgeManagementAdapter
 from .rings_adapter import RingsNetworkAdapter
+from .compute_adapter import ComputeBlackboardAdapter
+from .distributed_training_adapter import DistributedTrainingAdapter
+from .vectordb_adapter import VectorDBBlackboardAdapter
+from .blockchain_adapter import BlockchainBlackboardAdapter
+from .reproducibility_adapter import ReproducibilityBlackboardAdapter
+from .vla_adapter import VLABlackboardAdapter
+from .kenny_graph_adapter import KennyGraphBlackboardAdapter
+from .integrations_bridge_adapter import IntegrationsBlackboardBridge
+from .async_adapter_base import AsyncAdapterBase
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "BioInspiredAdapter",
+    # Core adapters
     "ConsciousnessAdapter",
-    "GraphIntelligenceAdapter",
     "KnowledgeGraphAdapter",
-    "KnowledgeManagementAdapter",
     "CognitiveSynergyAdapter",
     "ReasoningAdapter",
+    # Infrastructure adapters
+    "ComputeBlackboardAdapter",
+    "DistributedTrainingAdapter",
+    "VectorDBBlackboardAdapter",
+    "BlockchainBlackboardAdapter",
+    # Research & optimization adapters
+    "ReproducibilityBlackboardAdapter",
+    "VLABlackboardAdapter",
+    # Integration & streaming adapters
     "RingsNetworkAdapter",
+    "BioInspiredAdapter",
+    "KnowledgeManagementAdapter",
+    "GraphIntelligenceAdapter",
+    "KennyGraphBlackboardAdapter",
+    "IntegrationsBlackboardBridge",
+    # Base classes
+    "AsyncAdapterBase",
+    # Utilities
     "wire_all",
     "production_sweep",
 ]

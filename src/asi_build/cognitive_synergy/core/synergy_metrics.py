@@ -432,11 +432,129 @@ class SynergyMetrics:
         except Exception:
             return 0.0
 
+    @staticmethod
+    def _build_suffix_array(s: str) -> list:
+        """Build a suffix array in O(n log² n) using prefix-doubling.
+
+        Returns a list *sa* where sa[i] is the starting index of the
+        i-th smallest suffix in lexicographic order.
+        """
+        n = len(s)
+        if n == 0:
+            return []
+        # Initial ranks from character ordinals
+        rank = [ord(c) for c in s]
+        sa = list(range(n))
+        tmp = [0] * n
+        k = 1
+        while k < n:
+            # Sort by (rank[i], rank[i+k])
+            def sort_key(i, _k=k, _r=rank, _n=n):
+                return (_r[i], _r[i + _k] if i + _k < _n else -1)
+
+            sa.sort(key=sort_key)
+            # Recompute ranks
+            tmp[sa[0]] = 0
+            for i in range(1, n):
+                tmp[sa[i]] = tmp[sa[i - 1]]
+                if sort_key(sa[i]) != sort_key(sa[i - 1]):
+                    tmp[sa[i]] += 1
+            rank = tmp[:]
+            if rank[sa[-1]] == n - 1:
+                break  # all ranks distinct — done
+            k *= 2
+        return sa
+
+    @staticmethod
+    def _build_lcp_array(s: str, sa: list) -> list:
+        """Build the LCP (Longest Common Prefix) array using Kasai's O(n) algorithm.
+
+        lcp[i] = length of the longest common prefix between sa[i-1] and sa[i].
+        lcp[0] is defined as 0.
+        """
+        n = len(s)
+        if n == 0:
+            return []
+        rank = [0] * n
+        for i in range(n):
+            rank[sa[i]] = i
+        lcp = [0] * n
+        h = 0
+        for i in range(n):
+            if rank[i] > 0:
+                j = sa[rank[i] - 1]
+                while i + h < n and j + h < n and s[i + h] == s[j + h]:
+                    h += 1
+                lcp[rank[i]] = h
+                if h > 0:
+                    h -= 1
+            else:
+                h = 0
+        return lcp
+
+    @staticmethod
+    def _longest_previous_match(s: str, sa: list, rank: list, lcp: list, pos: int) -> int:
+        """Find the length of the longest match of s[pos:] that starts before *pos*.
+
+        Uses the suffix array + LCP array.  From rank[pos], scan up and down
+        in the suffix array; the LCP values bound the match length.  Because
+        LCP values decrease monotonically as we move away from rank[pos],
+        the scan is effectively O(log n) amortized across the full LZ76 parse.
+
+        Returns the longest *L* such that s[pos:pos+L] occurs starting at
+        some index < pos.  Returns 0 if no match exists.
+        """
+        n = len(s)
+        r = rank[pos]
+        best = 0
+
+        # Scan upward (lower ranks)
+        min_lcp = n + 1
+        i = r
+        while i > 0:
+            min_lcp = min(min_lcp, lcp[i])
+            if min_lcp <= best:
+                break  # can't improve
+            if sa[i - 1] < pos:
+                best = max(best, min_lcp)
+                break  # first hit is the best due to LCP monotonicity
+            i -= 1
+
+        # Scan downward (higher ranks)
+        min_lcp = n + 1
+        i = r
+        while i < n - 1:
+            min_lcp = min(min_lcp, lcp[i + 1])
+            if min_lcp <= best:
+                break
+            if sa[i + 1] < pos:
+                best = max(best, min_lcp)
+                break
+            i += 1
+
+        return best
+
+    # Threshold below which the simple O(n²) scan is faster than the
+    # suffix-array approach due to constant-factor overhead.  Python's
+    # built-in ``in`` operator uses optimised C, so the crossover is
+    # around n ≈ 10 000.
+    _LZ76_SA_THRESHOLD = 10_000
+
     def _lempel_ziv_complexity(self, sequence: np.ndarray) -> float:
         """Compute Lempel-Ziv complexity (LZ76).
 
-        Scans the sequence left-to-right, counting the number of new patterns.
-        Normalized by n/log2(n) to give a value in [0, 1] range.
+        For short sequences (n < 10 000) the simple O(n²) scan is used
+        (fast in practice because Python's ``in`` is C-optimised).  For
+        longer sequences an O(n log² n) suffix-array approach takes over.
+
+        Complexity
+        ----------
+        - Small *n*: O(n²) worst-case via direct substring search.
+        - Large *n*: O(n log² n) via prefix-doubling suffix array +
+          Kasai LCP + LZ76 factorisation with O(log n) lookups.
+
+        The return value is normalised by ``n / log₂(n)`` so that the
+        theoretical maximum for a random binary string is ≈ 1.0.
         """
         try:
             if len(sequence) < 2:
@@ -445,22 +563,13 @@ class SynergyMetrics:
             s = "".join(map(str, sequence.astype(int)))
             n = len(s)
 
-            # LZ76 algorithm: count distinct new patterns
-            complexity = 1  # first symbol is always new
-            i = 0  # start of current pattern
-            k = 1  # length of current extension
+            if n < 2:
+                return 0.0
 
-            while i + k <= n:
-                # Check if s[i:i+k] has been seen in s[0:i+k-1]
-                substring = s[i:i + k]
-                prefix = s[:i + k - 1]  # everything before current position
-
-                if substring in prefix:
-                    k += 1  # extend current pattern
-                else:
-                    complexity += 1  # new pattern found
-                    i += k  # advance past current pattern
-                    k = 1  # reset extension length
+            if n < self._LZ76_SA_THRESHOLD:
+                complexity = self._lz76_simple(s, n)
+            else:
+                complexity = self._lz76_suffix_array(s, n)
 
             # Normalize: theoretical max for binary string is n/log2(n)
             import math
@@ -471,6 +580,54 @@ class SynergyMetrics:
 
         except Exception:
             return 0.0
+
+    @staticmethod
+    def _lz76_simple(s: str, n: int) -> int:
+        """LZ76 factorisation using direct substring search — O(n²)."""
+        complexity = 1
+        i = 0
+        k = 1
+        while i + k <= n:
+            substring = s[i:i + k]
+            prefix = s[:i + k - 1]
+            if substring in prefix:
+                k += 1
+            else:
+                complexity += 1
+                i += k
+                k = 1
+        return complexity
+
+    def _lz76_suffix_array(self, s: str, n: int) -> int:
+        """LZ76 factorisation using suffix array + LCP — O(n log² n).
+
+        For each factor at position *i*, ``_longest_previous_match``
+        returns the longest prefix of ``s[i:]`` that occurs starting
+        before *i*.  If this covers the entire remaining tail, no new
+        factor is emitted; otherwise the factor is ``match_len + 1``
+        characters (the copy plus one novel character).
+        """
+        sa = self._build_suffix_array(s)
+        rank = [0] * n
+        for i, v in enumerate(sa):
+            rank[v] = i
+        lcp = self._build_lcp_array(s, sa)
+
+        # Start with 2: the first symbol always produces a new factor
+        # (nothing precedes it), mirroring the simple algorithm's
+        # init-to-1-then-immediate-increment behaviour.
+        complexity = 2
+        i = 1
+
+        while i < n:
+            match_len = self._longest_previous_match(s, sa, rank, lcp, i)
+            remaining = n - i
+            if match_len >= remaining:
+                break  # entire tail is a copy — no new factor
+            complexity += 1
+            i += match_len + 1 if match_len > 0 else 1
+
+        return complexity
 
     def get_synergy_strength(self, pair_name: str) -> float:
         """Get overall synergy strength for a process pair"""

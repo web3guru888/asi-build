@@ -16,6 +16,8 @@ Key features:
 - Semantic A* pathfinding between entities
 """
 
+__maturity__ = "stable"
+
 try:
     from .temporal_kg import TemporalKnowledgeGraph
 except (ImportError, ModuleNotFoundError, SyntaxError):

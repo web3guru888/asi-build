@@ -15,6 +15,8 @@ so that missing optional dependencies raise clear errors only when the specific 
 is actually used, rather than at package-import time.
 """
 
+__maturity__ = "alpha"
+
 __all__ = [
     "agents",
     "langchain_memgraph",

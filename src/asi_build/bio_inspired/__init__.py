@@ -61,6 +61,7 @@ globals().update(_imports)
 
 __version__ = "1.0.0"
 __author__ = "Kenny AGI Team"
+__maturity__ = "beta"
 __description__ = "Bio-Inspired Cognitive Architecture for Ben Goertzel's AGI Research"
 
 __all__ = [

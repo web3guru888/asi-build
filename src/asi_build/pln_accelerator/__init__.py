@@ -7,3 +7,5 @@ Hardware-accelerated Probabilistic Logic Networks:
 - Hardware abstraction layer
 - Distributed PLN system
 """
+
+__maturity__ = "alpha"

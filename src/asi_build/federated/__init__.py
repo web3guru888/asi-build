@@ -71,6 +71,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 
 __version__ = "1.0.0"
 __author__ = "Kenny AI Systems"
+__maturity__ = "alpha"
 
 # Main framework exports
 __all__ = [

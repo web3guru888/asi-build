@@ -26,4 +26,5 @@ for module_name in python_files:
         pass
 
 __version__ = "1.0.0-consolidated"
+__maturity__ = "experimental"
 __consolidation_date__ = "Tue Aug 19 06:40:01 +08 2025"

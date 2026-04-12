@@ -107,3 +107,4 @@ __all__ = [
 
 __version__ = "1.0.0"
 __author__ = "Kenny AI Research Team"
+__maturity__ = "beta"

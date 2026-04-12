@@ -51,6 +51,7 @@ except (ImportError, ModuleNotFoundError, SyntaxError):
 
 __version__ = "1.0.0"
 __author__ = "Kenny HE1 - Homomorphic Encryption Specialist"
+__maturity__ = "alpha"
 
 __all__ = [
     # Core modules
