@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-102_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-103_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>228+ discussions · 102+ wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>231+ discussions · 103+ wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -824,7 +824,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 102 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 228+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 231+ threads
 
 </td>
 <td>
@@ -908,6 +908,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - 🔬 [Show & Tell: Phase 10.5 — ReplanningEngine (closed-loop replanning, strategy cycling, stall recovery)](https://github.com/web3guru888/asi-build/discussions/334)
 - ❓ [Q&A: Phase 10.5 ReplanningEngine — max_retries tuning, custom strategies, federation coordination](https://github.com/web3guru888/asi-build/discussions/335)
 - 💡 [Ideas: Phase 11 — Self-Improvement Loop, Safety/Alignment, Observability Console, or Distributed Goals?](https://github.com/web3guru888/asi-build/discussions/336)
+- 🛡️ [Show & Tell: Phase 11.1 — SafetyFilter (constitutional ruleset, BLOCK/CRITICAL verdicts, autonomy loop pause)](https://github.com/web3guru888/asi-build/discussions/338)
+- ❓ [Q&A: Phase 11.1 SafetyFilter — tuning SafetyConfig, custom rules, pause recovery, and federation integration](https://github.com/web3guru888/asi-build/discussions/339)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
