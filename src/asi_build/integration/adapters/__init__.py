@@ -49,6 +49,26 @@ Research & Optimization:
 - ``ReproducibilityBlackboardAdapter`` — ExperimentTracker, VersionManager, PlatformConfig
 - ``VLABlackboardAdapter``             — VLAPlusPlus, VLATrainer, VLAOptimizationPipeline
 
+Quantum:
+- ``QuantumBlackboardAdapter``         — QuantumSimulator, HybridMLProcessor, QAOA, VQE, KennyQuantumIntegration
+
+Holographic:
+- ``HolographicBlackboardAdapter``     — HolographicEngine, LightFieldProcessor, VolumetricDisplay
+
+Neuromorphic & BCI:
+- ``NeuromorphicBlackboardAdapter``    — NeuromorphicManager, EventProcessor, SpikeMonitor, STDPLearning
+- ``BCIBlackboardAdapter``             — BCIManager, SignalProcessor, NeuralDecoder
+
+AGI Communication & Economics:
+- ``AGICommunicationBlackboardAdapter`` — AGICommunicationProtocol, GoalNegotiation, CollaborativeProblemSolver
+- ``AGIEconomicsBlackboardAdapter``     — TokenEconomics, BondingCurves, Reputation, GameTheory, Marketplace
+
+Federated Learning:
+- ``FederatedLearningBlackboardAdapter`` — FederatedManager, FederatedServer, FedAvgAggregator, Metrics
+
+Safety (CRITICAL):
+- ``SafetyBlackboardAdapter``           — ConstitutionalAI, EthicalVerification, TheoremProver, Governance
+
 Integration & Streaming:
 - ``RingsNetworkAdapter``              — Rings P2P Network, DID, Reputation
 - ``BioInspiredAdapter``               — Evolutionary Optimizer, Homeostatic Regulator
@@ -76,6 +96,10 @@ from .reasoning_adapter import ReasoningAdapter
 from .bio_inspired_adapter import BioInspiredAdapter
 from .graph_intelligence_adapter import GraphIntelligenceAdapter
 from .knowledge_management_adapter import KnowledgeManagementAdapter
+from .quantum_adapter import QuantumBlackboardAdapter
+from .holographic_adapter import HolographicBlackboardAdapter
+from .neuromorphic_adapter import NeuromorphicBlackboardAdapter
+from .bci_adapter import BCIBlackboardAdapter
 from .rings_adapter import RingsNetworkAdapter
 from .compute_adapter import ComputeBlackboardAdapter
 from .distributed_training_adapter import DistributedTrainingAdapter
@@ -85,6 +109,10 @@ from .reproducibility_adapter import ReproducibilityBlackboardAdapter
 from .vla_adapter import VLABlackboardAdapter
 from .kenny_graph_adapter import KennyGraphBlackboardAdapter
 from .integrations_bridge_adapter import IntegrationsBlackboardBridge
+from .agi_communication_adapter import AGICommunicationBlackboardAdapter
+from .agi_economics_adapter import AGIEconomicsBlackboardAdapter
+from .federated_adapter import FederatedLearningBlackboardAdapter
+from .safety_adapter import SafetyBlackboardAdapter
 from .async_adapter_base import AsyncAdapterBase
 
 logger = logging.getLogger(__name__)
@@ -103,6 +131,20 @@ __all__ = [
     # Research & optimization adapters
     "ReproducibilityBlackboardAdapter",
     "VLABlackboardAdapter",
+    # Quantum adapters
+    "QuantumBlackboardAdapter",
+    # Holographic adapters
+    "HolographicBlackboardAdapter",
+    # Neuromorphic & BCI adapters
+    "NeuromorphicBlackboardAdapter",
+    "BCIBlackboardAdapter",
+    # AGI Communication & Economics adapters
+    "AGICommunicationBlackboardAdapter",
+    "AGIEconomicsBlackboardAdapter",
+    # Federated Learning adapters
+    "FederatedLearningBlackboardAdapter",
+    # Safety adapters (CRITICAL)
+    "SafetyBlackboardAdapter",
     # Integration & streaming adapters
     "RingsNetworkAdapter",
     "BioInspiredAdapter",

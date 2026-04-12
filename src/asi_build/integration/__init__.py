@@ -47,11 +47,21 @@ Quick Start
     results = bb.get_by_topic("consciousness")
 """
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __maturity__ = "beta"
 
 # Blackboard
 from .blackboard import CognitiveBlackboard
+
+# Cognitive Cycle
+from .cognitive_cycle import (
+    AdapterRole,
+    CognitiveCycle,
+    CycleMetrics,
+    CyclePhase,
+    CycleState,
+    TickResult,
+)
 
 # Event bus
 from .events import DeadLetter, EventBus, Subscription
@@ -81,6 +91,12 @@ from .protocols import (
 __all__ = [
     # Core
     "CognitiveBlackboard",
+    "CognitiveCycle",
+    "CyclePhase",
+    "CycleState",
+    "CycleMetrics",
+    "TickResult",
+    "AdapterRole",
     "EventBus",
     # Data types
     "BlackboardEntry",
