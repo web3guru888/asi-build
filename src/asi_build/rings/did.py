@@ -37,7 +37,6 @@ Used for: DHT storage, mailboxes, sub-ring membership, service endpoints.
 from __future__ import annotations
 
 import hashlib
-import hmac
 import json
 import logging
 import time
@@ -45,6 +44,11 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
+
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec, ed25519, utils
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +81,117 @@ class VerificationType(Enum):
 
 
 # ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+
+def _derive_seed_bytes(seed: str) -> bytes:
+    """Deterministically derive 32 bytes from a seed string using HKDF."""
+    return HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=b"rings-did-keygen",
+        info=b"deterministic-seed",
+    ).derive(seed.encode())
+
+
+def _generate_secp256k1(seed_bytes: Optional[bytes] = None) -> Tuple[ec.EllipticCurvePrivateKey, ec.EllipticCurvePublicKey]:
+    """Generate or derive a secp256k1 key pair."""
+    if seed_bytes is not None:
+        # Derive private key from seed bytes (interpret as big-endian integer)
+        scalar = int.from_bytes(seed_bytes, "big")
+        # Ensure scalar is within the valid range for secp256k1
+        # Order of secp256k1: n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+        n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+        scalar = (scalar % (n - 1)) + 1  # [1, n-1]
+        private_key = ec.derive_private_key(scalar, ec.SECP256K1())
+    else:
+        private_key = ec.generate_private_key(ec.SECP256K1())
+    return private_key, private_key.public_key()
+
+
+def _generate_ed25519(seed_bytes: Optional[bytes] = None) -> Tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]:
+    """Generate or derive an Ed25519 key pair."""
+    if seed_bytes is not None:
+        private_key = ed25519.Ed25519PrivateKey.from_private_bytes(seed_bytes)
+    else:
+        private_key = ed25519.Ed25519PrivateKey.generate()
+    return private_key, private_key.public_key()
+
+
+def _private_key_to_hex(key: Any, curve: KeyCurve) -> str:
+    """Serialize a private key to hex.
+
+    - secp256k1: 32-byte big-endian integer (64 hex chars)
+    - ed25519: 32-byte seed (64 hex chars)
+    """
+    if curve == KeyCurve.SECP256K1:
+        numbers = key.private_numbers()
+        return numbers.private_value.to_bytes(32, "big").hex()
+    else:
+        # Ed25519: extract the raw 32-byte private seed
+        raw = key.private_bytes(
+            encoding=serialization.Encoding.Raw,
+            format=serialization.PrivateFormat.Raw,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        return raw.hex()
+
+
+def _public_key_to_hex(key: Any, curve: KeyCurve) -> str:
+    """Serialize a public key to hex.
+
+    - secp256k1: uncompressed point (65 bytes → 130 hex chars)
+    - ed25519: raw 32 bytes (→ 64 hex chars)
+    """
+    if curve == KeyCurve.SECP256K1:
+        raw = key.public_bytes(
+            encoding=serialization.Encoding.X962,
+            format=serialization.PublicFormat.UncompressedPoint,
+        )
+        return raw.hex()
+    else:
+        raw = key.public_bytes(
+            encoding=serialization.Encoding.Raw,
+            format=serialization.PublicFormat.Raw,
+        )
+        return raw.hex()
+
+
+def _public_key_from_hex(hex_str: str, curve: KeyCurve) -> Any:
+    """Reconstruct a public key object from hex.
+
+    Returns the cryptography key object, or ``None`` on failure.
+    """
+    try:
+        raw = bytes.fromhex(hex_str)
+        if curve == KeyCurve.SECP256K1:
+            return ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), raw)
+        else:
+            return ed25519.Ed25519PublicKey.from_public_bytes(raw)
+    except Exception:
+        logger.debug("Failed to reconstruct public key from hex", exc_info=True)
+        return None
+
+
+def _private_key_from_hex(hex_str: str, curve: KeyCurve) -> Any:
+    """Reconstruct a private key object from hex.
+
+    Returns the cryptography key object, or ``None`` on failure.
+    """
+    try:
+        raw = bytes.fromhex(hex_str)
+        if curve == KeyCurve.SECP256K1:
+            scalar = int.from_bytes(raw, "big")
+            return ec.derive_private_key(scalar, ec.SECP256K1())
+        else:
+            return ed25519.Ed25519PrivateKey.from_private_bytes(raw)
+    except Exception:
+        logger.debug("Failed to reconstruct private key from hex", exc_info=True)
+        return None
+
+
+# ---------------------------------------------------------------------------
 # Data types
 # ---------------------------------------------------------------------------
 
@@ -85,17 +200,24 @@ class VerificationType(Enum):
 class DIDKeyPair:
     """A key pair used in a DID.
 
-    .. note::
-
-        In production, ``private_key`` would be an actual ECDSA/EdDSA
-        private key from the ``cryptography`` library.  For this SDK
-        wrapper, we use a deterministic mock based on HMAC-SHA256.
+    Uses real ``secp256k1`` (ECDSA) or ``ed25519`` (EdDSA) keys from the
+    ``cryptography`` library.  Deterministic derivation from a seed is
+    supported via HKDF-SHA256 for reproducible testing.
     """
 
     curve: KeyCurve
     public_key_hex: str
-    private_key_hex: str  # Would be actual private key in production
+    private_key_hex: str
     key_id: str = ""
+    _private_key_obj: Any = field(default=None, repr=False, compare=False)
+    _public_key_obj: Any = field(default=None, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        """Reconstruct key objects from hex if not already set."""
+        if self._private_key_obj is None and self.private_key_hex:
+            self._private_key_obj = _private_key_from_hex(self.private_key_hex, self.curve)
+        if self._public_key_obj is None and self.public_key_hex:
+            self._public_key_obj = _public_key_from_hex(self.public_key_hex, self.curve)
 
     @staticmethod
     def generate(curve: KeyCurve = KeyCurve.SECP256K1, seed: Optional[str] = None) -> "DIDKeyPair":
@@ -108,19 +230,26 @@ class DIDKeyPair:
         seed : str, optional
             Deterministic seed for testing.  Random UUID if omitted.
         """
-        seed_bytes = (seed or uuid.uuid4().hex).encode()
+        seed_bytes: Optional[bytes] = None
+        if seed is not None:
+            seed_bytes = _derive_seed_bytes(seed)
+        # Otherwise random key generation
 
-        # Deterministic key derivation (mock — not cryptographically secure
-        # for production use; a real implementation would use the
-        # ``cryptography`` library's ECDSA / Ed25519 key gen).
-        private_key = hashlib.sha256(seed_bytes).hexdigest()
-        public_key = hashlib.sha256(private_key.encode()).hexdigest()
+        if curve == KeyCurve.SECP256K1:
+            priv, pub = _generate_secp256k1(seed_bytes)
+        else:
+            priv, pub = _generate_ed25519(seed_bytes)
+
+        public_hex = _public_key_to_hex(pub, curve)
+        private_hex = _private_key_to_hex(priv, curve)
 
         return DIDKeyPair(
             curve=curve,
-            public_key_hex=public_key,
-            private_key_hex=private_key,
-            key_id=f"key-{hashlib.sha1(public_key.encode()).hexdigest()[:8]}",
+            public_key_hex=public_hex,
+            private_key_hex=private_hex,
+            key_id=f"key-{hashlib.sha1(public_hex.encode()).hexdigest()[:8]}",
+            _private_key_obj=priv,
+            _public_key_obj=pub,
         )
 
 
@@ -352,9 +481,8 @@ class RingsDID:
     ) -> DIDProof:
         """Generate a cryptographic proof of control for a DID.
 
-        The proof is an HMAC signature over the challenge + DID using
-        the private key.  (In production, this would be a proper
-        ECDSA/EdDSA signature.)
+        Signs the message ``challenge:did:domain`` with the DID's private
+        key using ECDSA-SHA256 (secp256k1) or Ed25519.
 
         Parameters
         ----------
@@ -381,13 +509,25 @@ class RingsDID:
         doc = self._local_docs.get(did)
         vm_id = doc.verification_methods[0]["id"] if doc and doc.verification_methods else ""
 
-        # Sign: HMAC(private_key, challenge + did + domain)
+        # Build the message to sign
         message = f"{challenge}:{did}:{domain}".encode()
-        signature = hmac.new(
-            key_pair.private_key_hex.encode(),
-            message,
-            hashlib.sha256,
-        ).hexdigest()
+
+        # Sign with real cryptography
+        if key_pair.curve == KeyCurve.SECP256K1:
+            priv_key = key_pair._private_key_obj
+            if priv_key is None:
+                priv_key = _private_key_from_hex(key_pair.private_key_hex, KeyCurve.SECP256K1)
+            sig_bytes = priv_key.sign(
+                message,
+                ec.ECDSA(hashes.SHA256()),
+            )
+            signature = sig_bytes.hex()
+        else:
+            priv_key = key_pair._private_key_obj
+            if priv_key is None:
+                priv_key = _private_key_from_hex(key_pair.private_key_hex, KeyCurve.ED25519)
+            sig_bytes = priv_key.sign(message)
+            signature = sig_bytes.hex()
 
         proof_type = (
             "EcdsaSecp256k1Signature2019"
@@ -413,6 +553,9 @@ class RingsDID:
     ) -> bool:
         """Verify a DID proof.
 
+        Verifies the cryptographic signature against the public key using
+        ECDSA-SHA256 (secp256k1) or Ed25519.
+
         Parameters
         ----------
         did : str
@@ -428,7 +571,7 @@ class RingsDID:
         bool
             ``True`` if the proof is valid.
         """
-        # Get public key
+        # Get public key hex
         if public_key_hex is None:
             doc = self._local_docs.get(did)
             if doc is None or not doc.verification_methods:
@@ -439,34 +582,55 @@ class RingsDID:
         if not public_key_hex:
             return False
 
-        # Derive the expected private key from the public key
-        # This only works for our mock keys (hash-chain derivation).
-        # A real implementation would verify the ECDSA/EdDSA signature
-        # using only the public key.
-        #
-        # For the mock, we know: public = sha256(private), so we can't
-        # invert it. Instead, if the DID is locally known we can verify;
-        # otherwise, we attempt to verify by re-signing with the
-        # known key pair.
+        # Detect curve from DID string or proof type
+        curve = self._detect_curve(did, proof)
 
-        key_pair = self._local_keys.get(did)
-        if key_pair is not None:
-            # Re-sign and compare
-            message = f"{proof.challenge}:{did}:{proof.domain}".encode()
-            expected = hmac.new(
-                key_pair.private_key_hex.encode(),
-                message,
-                hashlib.sha256,
-            ).hexdigest()
-            return hmac.compare_digest(expected, proof.signature)
+        # Reconstruct public key object
+        # First try from local key store (has object cached)
+        pub_key_obj = None
+        local_kp = self._local_keys.get(did)
+        if local_kp is not None and local_kp._public_key_obj is not None:
+            pub_key_obj = local_kp._public_key_obj
+        else:
+            pub_key_obj = _public_key_from_hex(public_key_hex, curve)
 
-        # For remote DIDs: in production, we'd verify the ECDSA signature
-        # using only the public key. In mock mode, we can't invert the
-        # hash, so we accept any non-empty, well-formed signature.
-        if proof.signature and len(proof.signature) == 64:
+        if pub_key_obj is None:
+            logger.debug("Cannot reconstruct public key for %s", did)
+            return False
+
+        # Build the message that was signed
+        message = f"{proof.challenge}:{did}:{proof.domain}".encode()
+
+        # Verify signature
+        try:
+            sig_bytes = bytes.fromhex(proof.signature)
+        except (ValueError, TypeError):
+            logger.debug("Invalid signature hex for %s", did)
+            return False
+
+        try:
+            if curve == KeyCurve.SECP256K1:
+                pub_key_obj.verify(sig_bytes, message, ec.ECDSA(hashes.SHA256()))
+            else:
+                pub_key_obj.verify(sig_bytes, message)
             return True
+        except InvalidSignature:
+            return False
+        except Exception:
+            logger.debug("Signature verification error for %s", did, exc_info=True)
+            return False
 
-        return False
+    @staticmethod
+    def _detect_curve(did: str, proof: DIDProof) -> KeyCurve:
+        """Detect the key curve from DID string or proof type."""
+        if "ed25519" in did.lower():
+            return KeyCurve.ED25519
+        if "secp256k1" in did.lower():
+            return KeyCurve.SECP256K1
+        # Fallback: check proof type
+        if "Ed25519" in proof.proof_type:
+            return KeyCurve.ED25519
+        return KeyCurve.SECP256K1  # default
 
     # ── Virtual DID (VID) Computation ─────────────────────────────────────
 

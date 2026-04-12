@@ -142,3 +142,4 @@ asi-code/out/
 
 # Benchmark results — timestamped JSON runs (keep .gitkeep)
 benchmarks/results/bench_*.json
+asi-build/
