@@ -99,7 +99,7 @@
 ![LOC](https://img.shields.io/badge/LOC-215K%2B-3b82f6?style=flat-square)
 ![Bridge](https://img.shields.io/badge/bridge-ZK_verified-f97316?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-74_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-75_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -130,7 +130,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🔌</td><td><strong>Integration</strong></td><td>24 Blackboard adapters + CognitiveCycle + AsyncAdapterBase</td></tr>
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — 21,062 LOC · 668 tests · 3 Solidity contracts</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>156+ discussions · 74 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>158+ discussions · 75 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -710,9 +710,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 74 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 75 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 156+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 158+ threads
 
 </td>
 <td>
@@ -745,6 +745,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - 🗺️ [Phase 4 Roadmap](https://github.com/web3guru888/asi-build/discussions/12)
 - 🏗️ [Phase 5 Planning](https://github.com/web3guru888/asi-build/discussions/179)
 - 🧠 [Phase 5 Tick Walkthrough — STDP → Memory → Planning](https://github.com/web3guru888/asi-build/discussions/231)
+- 🔬 [MemoryConsolidator — UNWIND batch writes & SLEEP_PHASE exclusivity](https://github.com/web3guru888/asi-build/discussions/236)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
