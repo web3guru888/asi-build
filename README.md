@@ -130,7 +130,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🔌</td><td><strong>Integration</strong></td><td>24 Blackboard adapters + CognitiveCycle + AsyncAdapterBase</td></tr>
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — 21,062 LOC · 668 tests · 3 Solidity contracts</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>154+ discussions · 74 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>156+ discussions · 74 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -655,7 +655,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 74 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 154+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 156+ threads
 
 </td>
 <td>
@@ -687,6 +687,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - 🔬 [Research Directions](https://github.com/web3guru888/asi-build/discussions/5)
 - 🗺️ [Phase 4 Roadmap](https://github.com/web3guru888/asi-build/discussions/12)
 - 🏗️ [Phase 5 Planning](https://github.com/web3guru888/asi-build/discussions/179)
+- 🧠 [Phase 5 Tick Walkthrough — STDP → Memory → Planning](https://github.com/web3guru888/asi-build/discussions/231)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
