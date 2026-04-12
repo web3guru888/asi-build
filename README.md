@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-94_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-95_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>205+ discussions · 94+ wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>208+ discussions · 95+ wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -887,9 +887,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - 💡 [Ideas: Phase 9 — Multi-Agent Federation vs Safety Hardening vs Observability Console](https://github.com/web3guru888/asi-build/discussions/298)
 - 🔬 [Show & Tell: Phase 9.1 — FederationGateway architecture (mTLS peer registry, gossip membership, broadcast fan-out)](https://github.com/web3guru888/asi-build/discussions/300)
 - ❓ [Q&A: Phase 9.1 FederationGateway — configuration, DID keys, TTL, capabilities, and Grafana monitoring](https://github.com/web3guru888/asi-build/discussions/301)
-- 🔬 [Show & Tell: Phase 9.2 — FederatedBlackboard (CRDT event log, Lamport ordering, delta-sync)](https://github.com/web3guru888/asi-build/discussions/303)
+- 🔬 [Show & Tell: Phase 9.2 — FederatedBlackboard architecture (CRDT event log, Lamport ordering, delta-sync)](https://github.com/web3guru888/asi-build/discussions/303)
 - ❓ [Q&A: Phase 9.2 FederatedBlackboard — Lamport clocks, delta-sync, TTL, and Grafana monitoring](https://github.com/web3guru888/asi-build/discussions/304)
-- 💡 [Ideas: Phase 9.3 — FederatedTaskRouter design (capability-first vs consistent-hash vs auction)](https://github.com/web3guru888/asi-build/discussions/305)
+- 🔬 [Show & Tell: Phase 9.3 — FederatedTaskRouter (capability-first routing, consistent-hash affinity, auction bidding)](https://github.com/web3guru888/asi-build/discussions/307)
+- ❓ [Q&A: Phase 9.3 FederatedTaskRouter — routing strategies, load_score, stale_cap_ms, and Grafana monitoring](https://github.com/web3guru888/asi-build/discussions/308)
+- 💡 [Ideas: Phase 9.4 — FederatedConsensus design (Raft-lite, threshold signatures, CRDT voting)](https://github.com/web3guru888/asi-build/discussions/309)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
