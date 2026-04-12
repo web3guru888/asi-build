@@ -504,7 +504,7 @@ class BridgeRelayer:
         If ``None``, loads from environment variables.
     """
 
-    def __init__(self, config: Optional[RelayerConfig] = None) -> None:
+    def __init__(self, config: Optional[RelayerConfig] = None, *, ledger: Any = None) -> None:
         self.config = config or RelayerConfig.from_env()
         self.db = RelayerDB(self.config.db_path)
 
@@ -515,6 +515,9 @@ class BridgeRelayer:
         self._web3: Any = None
         self._account: Any = None
         self._bridge_contract: Any = None
+
+        # Rings-side token ledger (optional — when set, credits depositors)
+        self._ledger: Any = ledger
 
         # HTTP health server
         self._app: Optional[web.Application] = None
@@ -865,19 +868,46 @@ class BridgeRelayer:
     ) -> None:
         """Broadcast a confirmed deposit to the Rings DHT.
 
-        In production this would send a ``DEPOSIT_OBSERVED`` message to
-        every node in the bridge Sub-Ring.  For now, it logs the
-        broadcast intent.
+        When a :class:`~.ledger.RingsTokenLedger` is attached, credits
+        the recipient's Rings-side balance automatically.  Also logs
+        the broadcast intent and (future) sends a ``DEPOSIT_OBSERVED``
+        message to every node in the bridge Sub-Ring.
         """
+        args = event.get("args", {})
+        recipient_did = args.get("ringsDid", "")
+        amount = args.get("amount", 0)
+
         logger.info(
             "Broadcasting deposit %s to %d Rings nodes",
             tx_hash,
             len(self.config.node_urls),
             extra={"event": "deposit_broadcast", "tx_hash": tx_hash},
         )
-        # TODO: integrate with RingsClient.broadcast()
-        # for url in self.config.node_urls:
-        #     await self._rings_broadcast(url, tx_hash, event)
+
+        # Credit the user's Rings-side account via the token ledger
+        if self._ledger is not None and recipient_did and amount > 0:
+            try:
+                # Token defaults to ETH for native deposits.
+                # ERC-20 deposits would include a token address in the event.
+                token = args.get("token", "ETH")
+                await self._ledger.credit_from_bridge(
+                    did=recipient_did,
+                    token=token,
+                    amount=amount,
+                )
+                logger.info(
+                    "Ledger credited: %s +%d %s (tx=%s)",
+                    recipient_did, amount, token, tx_hash,
+                    extra={
+                        "event": "ledger_credit",
+                        "tx_hash": tx_hash,
+                    },
+                )
+            except Exception as exc:
+                logger.error(
+                    "Failed to credit ledger for deposit %s: %s",
+                    tx_hash, exc, exc_info=True,
+                )
 
     # ── Withdrawal processor ────────────────────────────────────────────
 
