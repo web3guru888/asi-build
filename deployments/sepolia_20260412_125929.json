@@ -1,0 +1,21 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployer": "0x7784d6118Bea1334c62E4AFd49d7BD8131b3deAE",
+  "guardian": "0x7784d6118Bea1334c62E4AFd49d7BD8131b3deAE",
+  "rpcUrl": "https://ethereum-sepolia-rpc.publicnode.com",
+  "contracts": {
+    "verifier": "0xFB0673afd21aa626DE88F114e842BA6980f61763",
+    "bridge": "0x81399F002a9cFa245aB520487135032BA99AC6A6",
+    "token": "0xd178429503D8Ecf11E9Fa15fFa4bAb77a2fD0Af2"
+  },
+  "config": {
+    "dailyLimit": "100000000000000000000",
+    "perTxLimit": "10000000000000000000",
+    "tokenName": "Bridged ASI",
+    "tokenSymbol": "bASI"
+  },
+  "deployedAt": "2026-04-12T12:59:29.039862+00:00",
+  "method": "forge",
+  "dryRun": true
+}

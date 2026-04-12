@@ -1,0 +1,34 @@
+{
+    "network": "sepolia",
+    "chainId": 11155111,
+    "deployer": "0x35C3770470F57560beBd1C6C74366b0297110Bc2",
+    "rpcUrl": "https://ethereum-sepolia-rpc.publicnode.com",
+    "fallbackRpcUrl": "https://sepolia.drpc.org",
+    "contracts": {
+        "verifier": "0x9186fc5e27c15aEDbA2512687F2eF2E5aC7C0e59",
+        "bridge": "0xE034d479EDc2530d9917dDa4547b59bF0964A2Ca",
+        "token": "0x257dDA1fa34eb847060EcB743E808B65099FB497"
+    },
+    "config": {
+        "dailyLimit": "100000000000000000000",
+        "perTxLimit": "10000000000000000000",
+        "guardian": "0x35C3770470F57560beBd1C6C74366b0297110Bc2",
+        "tokenName": "Bridged ASI",
+        "tokenSymbol": "bASI"
+    },
+    "deployedAt": "2026-04-12T14:26:12Z",
+    "deployTxHashes": {
+        "verifier": "0xa39301492ed46db8ec796be78990dd5447c11ef5ee0507c2da0ca3ea5fcd16a7",
+        "bridge": "0x8780f8efb625523471431a649279ca1fbfffdca20dc31ae75fc2d75e642adc37",
+        "token": "0xac6e5fba3fbaea6d78889811901139cecfa130efbeed12d9c87517763c9e4a4a"
+    },
+    "firstDeposit": {
+        "tx": "0x32c6a708b2077537b1ef7c765134f6169d1de686e32ac411cd0c92a5fbf81a77",
+        "block": 10644600,
+        "amount": "0.001 ETH",
+        "ringsDID": "0x00000000000000000000000035C3770470F57560beBd1C6C74366b0297110Bc2"
+    },
+    "status": "deployed_and_tested",
+    "totalGasSpent": "0.001069 ETH",
+    "notes": "All 3 contracts deployed and verified. First deposit confirmed on block 10644600."
+}
