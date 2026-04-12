@@ -433,23 +433,41 @@ class SynergyMetrics:
             return 0.0
 
     def _lempel_ziv_complexity(self, sequence: np.ndarray) -> float:
-        """Compute approximate Lempel-Ziv complexity"""
+        """Compute Lempel-Ziv complexity (LZ76).
+
+        Scans the sequence left-to-right, counting the number of new patterns.
+        Normalized by n/log2(n) to give a value in [0, 1] range.
+        """
         try:
-            if len(sequence) == 0:
+            if len(sequence) < 2:
                 return 0.0
 
-            # Convert to string
-            s = "".join(map(str, sequence))
+            s = "".join(map(str, sequence.astype(int)))
+            n = len(s)
 
-            # Simple LZ complexity approximation
-            substrings = set()
-            for i in range(len(s)):
-                for j in range(i + 1, len(s) + 1):
-                    substrings.add(s[i:j])
+            # LZ76 algorithm: count distinct new patterns
+            complexity = 1  # first symbol is always new
+            i = 0  # start of current pattern
+            k = 1  # length of current extension
 
-            complexity = len(substrings) / len(s) if len(s) > 0 else 0.0
+            while i + k <= n:
+                # Check if s[i:i+k] has been seen in s[0:i+k-1]
+                substring = s[i:i + k]
+                prefix = s[:i + k - 1]  # everything before current position
 
-            return min(1.0, complexity)
+                if substring in prefix:
+                    k += 1  # extend current pattern
+                else:
+                    complexity += 1  # new pattern found
+                    i += k  # advance past current pattern
+                    k = 1  # reset extension length
+
+            # Normalize: theoretical max for binary string is n/log2(n)
+            import math
+            if n > 1:
+                normalizer = n / math.log2(n)
+                return min(1.0, complexity / normalizer)
+            return 0.0
 
         except Exception:
             return 0.0
