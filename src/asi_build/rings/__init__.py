@@ -4,21 +4,23 @@ Rings Network Python SDK
 
 Async client library for the `Rings Network <https://ringsnetwork.io>`_ —
 a Chord-based, DID-authenticated peer-to-peer overlay network with
-cryptoeconomic reputation.
+cryptoeconomic reputation and Ethereum bridge support.
 
 Modules
 ~~~~~~~
 
 - :mod:`~.client`     — ``RingsClient``: DHT, Chord ring, Sub-Rings, sessions
-- :mod:`~.did`        — ``RingsDID``: DID creation, resolution, proof, VIDs
+- :mod:`~.did`        — ``RingsDID``: DID creation (real secp256k1/Ed25519), resolution, proof, VIDs
+- :mod:`~.eth_bridge` — ``RingsEthIdentity``: Unified Rings DID + Ethereum address from one key
 - :mod:`~.reputation` — ``ReputationClient``: local/global scoring, trust checks
+- :mod:`~.bridge`     — Bridge Sub-Ring protocol, Ethereum light client, Merkle-Patricia verification
 
 Quick Start
 ~~~~~~~~~~~
 
 ::
 
-    from asi_build.rings import RingsClient, RingsDID, ReputationClient
+    from asi_build.rings import RingsClient, RingsDID, ReputationClient, RingsEthIdentity
 
     async def main():
         async with RingsClient("ws://localhost:50000") as client:
@@ -26,9 +28,14 @@ Quick Start
             await client.dht_put("my-key", {"data": 42})
             value = await client.dht_get("my-key")
 
-            # DID identity
+            # DID identity (real secp256k1)
             did_mgr = RingsDID(client)
             did, doc = did_mgr.create_did()
+
+            # Unified Rings + Ethereum identity
+            identity = RingsEthIdentity.generate()
+            print(identity.ethereum_address)  # 0x...
+            print(identity.rings_did)         # did:rings:secp256k1:...
 
             # Reputation
             rep = ReputationClient(client, local_did=did)
@@ -70,6 +77,7 @@ from .did import (
     RingsDID,
     VerificationType,
 )
+from .eth_bridge import RingsEthIdentity
 from .reputation import (
     BehaviourType,
     GlobalRankRecord,
@@ -98,6 +106,8 @@ __all__ = [
     "DIDProof",
     "KeyCurve",
     "VerificationType",
+    # Ethereum Bridge Identity
+    "RingsEthIdentity",
     # Reputation
     "ReputationClient",
     "BehaviourType",
@@ -108,5 +118,5 @@ __all__ = [
     "SlashReport",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __maturity__ = "beta"

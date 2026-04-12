@@ -408,7 +408,9 @@ class TestDIDKeyPair:
     def test_generate_secp256k1(self):
         kp = DIDKeyPair.generate(KeyCurve.SECP256K1)
         assert kp.curve == KeyCurve.SECP256K1
-        assert len(kp.public_key_hex) == 64
+        # secp256k1: uncompressed public key = 65 bytes → 130 hex chars
+        assert len(kp.public_key_hex) == 130
+        # secp256k1: private key scalar = 32 bytes → 64 hex chars
         assert len(kp.private_key_hex) == 64
         assert kp.key_id.startswith("key-")
 
@@ -487,7 +489,8 @@ class TestRingsDIDProof:
         proof = mgr.create_proof(did, challenge="nonce-123")
         assert proof.challenge == "nonce-123"
         assert proof.signature != ""
-        assert len(proof.signature) == 64
+        # ECDSA DER signature is variable length (typically 138–144 hex chars)
+        assert len(proof.signature) >= 128
         assert proof.verification_method != ""
 
     def test_verify_proof_succeeds(self):
