@@ -589,7 +589,7 @@ class CognitiveSynergyEngine:
 
     def get_synergy_strength(self, pair_name: str) -> float:
         """Get synergy strength for a specific pair"""
-        return self.synergy_pairs.get(pair_name, SynergyPair("", "")).synergy_strength
+        return self.synergy_pairs.get(pair_name, SynergyPair("", "", 0.0)).synergy_strength
 
     def get_emergence_indicators(self) -> List[Dict[str, Any]]:
         """Get current emergence indicators across all pairs"""

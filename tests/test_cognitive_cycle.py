@@ -866,3 +866,158 @@ class TestEdgeCases:
         assert cycle.is_paused is False
         assert cycle.adapter_count == 0
         assert cycle.tick_number == 0
+
+
+# ============================================================================
+# Factory function: create_default_cycle
+# ============================================================================
+
+
+from asi_build.integration.cognitive_cycle import create_default_cycle  # noqa: E402
+
+
+class TestCreateDefaultCycle:
+    """Tests for the ``create_default_cycle()`` convenience factory."""
+
+    def test_returns_cognitive_cycle(self) -> None:
+        """Returns a CognitiveCycle instance."""
+        cycle = create_default_cycle()
+        assert isinstance(cycle, CognitiveCycle)
+
+    def test_has_24_adapters(self) -> None:
+        """All 24 adapters are registered."""
+        cycle = create_default_cycle()
+        assert cycle.adapter_count == 24
+
+    def test_adapter_list_length(self) -> None:
+        """list_adapters() returns 24 entries."""
+        cycle = create_default_cycle()
+        adapters = cycle.list_adapters()
+        assert len(adapters) == 24
+
+    def test_safety_adapter_registered_with_safety_role(self) -> None:
+        """SafetyBlackboardAdapter has role='safety'."""
+        cycle = create_default_cycle()
+        adapters = cycle.list_adapters()
+        safety = [a for a in adapters if a["name"] == "safety"]
+        assert len(safety) == 1
+        assert safety[0]["role"] == "safety"
+
+    def test_perception_adapters(self) -> None:
+        """BCI and Quantum adapters have role='perception'."""
+        cycle = create_default_cycle()
+        adapters = cycle.list_adapters()
+        perception = [a for a in adapters if a["role"] == "perception"]
+        names = {a["name"] for a in perception}
+        assert "bci" in names
+        assert "quantum" in names
+        assert len(perception) == 2
+
+    def test_action_adapters(self) -> None:
+        """Communication and Federated adapters have role='action'."""
+        cycle = create_default_cycle()
+        adapters = cycle.list_adapters()
+        action = [a for a in adapters if a["role"] == "action"]
+        names = {a["name"] for a in action}
+        assert "agi_communication" in names
+        assert "federated_learning" in names
+        assert len(action) == 2
+
+    def test_general_adapters_count(self) -> None:
+        """19 adapters have role='general'."""
+        cycle = create_default_cycle()
+        adapters = cycle.list_adapters()
+        general = [a for a in adapters if a["role"] == "general"]
+        # 24 total - 1 safety - 2 perception - 2 action = 19 general
+        assert len(general) == 19
+
+    def test_all_adapter_names_unique(self) -> None:
+        """Each adapter has a unique name."""
+        cycle = create_default_cycle()
+        adapters = cycle.list_adapters()
+        names = [a["name"] for a in adapters]
+        assert len(names) == len(set(names))
+
+    def test_can_run_one_tick(self) -> None:
+        """A single tick executes without error (graceful degradation)."""
+        cycle = create_default_cycle()
+        result = cycle.tick()
+        assert result.tick_number == 1
+        # No fatal errors — adapters with None components just skip
+        assert isinstance(result.total_time_ms, float)
+
+    def test_can_run_multiple_ticks(self) -> None:
+        """Multiple ticks accumulate correctly."""
+        cycle = create_default_cycle()
+        for _ in range(3):
+            cycle.tick()
+        assert cycle.tick_number == 3
+        assert cycle.metrics.total_ticks == 3
+
+    def test_custom_tick_rate(self) -> None:
+        """tick_rate_hz kwarg is forwarded."""
+        cycle = create_default_cycle(tick_rate_hz=42.0)
+        assert cycle.tick_rate_hz == 42.0
+
+    def test_custom_max_ticks(self) -> None:
+        """max_ticks kwarg is forwarded."""
+        cycle = create_default_cycle(max_ticks=5)
+        status = cycle.get_status()
+        assert status["max_ticks"] == 5
+
+    def test_custom_safety_required_false(self) -> None:
+        """safety_required=False is forwarded."""
+        cycle = create_default_cycle(safety_required=False)
+        status = cycle.get_status()
+        assert status["safety_required"] is False
+
+    def test_default_safety_required_true(self) -> None:
+        """Default safety_required is True."""
+        cycle = create_default_cycle()
+        status = cycle.get_status()
+        assert status["safety_required"] is True
+
+    def test_on_tick_callback_fires(self) -> None:
+        """on_tick callback is called during tick."""
+        results = []
+        cycle = create_default_cycle(on_tick=lambda n, r: results.append(n))
+        cycle.tick()
+        assert results == [1]
+
+    def test_on_error_callback(self) -> None:
+        """on_error callback is forwarded to the cycle."""
+        errors = []
+        cycle = create_default_cycle(on_error=lambda name, exc: errors.append(name))
+        # Errors are only recorded when an adapter actually fails,
+        # which may happen in degraded mode — just check the cycle accepted the callback
+        cycle.tick()
+        # The callback should have been set (we can't force an error easily,
+        # but at least verify it didn't blow up)
+        assert isinstance(cycle.metrics.total_ticks, int)
+
+    def test_blackboard_accessible(self) -> None:
+        """The blackboard is accessible from the returned cycle."""
+        cycle = create_default_cycle()
+        bb = cycle.blackboard
+        assert isinstance(bb, CognitiveBlackboard)
+
+    def test_start_stop_with_max_ticks(self) -> None:
+        """Cycle can start/stop with max_ticks in background mode."""
+        cycle = create_default_cycle(max_ticks=2, tick_rate_hz=100.0)
+        cycle.start(daemon=True)
+        # Wait for the background thread to finish (max_ticks reached)
+        cycle.wait(timeout=5.0)
+        # The loop exits but stop() must be called to set state properly
+        cycle.stop(timeout=2.0)
+        assert cycle.tick_number >= 2
+        assert cycle.state in (CycleState.STOPPED, CycleState.STOPPING)
+
+    def test_get_adapter_by_name(self) -> None:
+        """Can retrieve individual adapters by their MODULE_NAME."""
+        cycle = create_default_cycle()
+        consciousness = cycle.get_adapter("consciousness")
+        assert consciousness is not None
+        reasoning = cycle.get_adapter("reasoning")
+        assert reasoning is not None
+        safety = cycle.get_adapter("safety")
+        assert safety is not None

@@ -61,6 +61,7 @@ from .cognitive_cycle import (
     CyclePhase,
     CycleState,
     TickResult,
+    create_default_cycle,
 )
 
 # Event bus
@@ -97,6 +98,7 @@ __all__ = [
     "CycleMetrics",
     "TickResult",
     "AdapterRole",
+    "create_default_cycle",
     "EventBus",
     # Data types
     "BlackboardEntry",

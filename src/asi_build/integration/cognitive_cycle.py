@@ -99,6 +99,7 @@ __all__ = [
     "CycleMetrics",
     "TickResult",
     "AdapterRole",
+    "create_default_cycle",
 ]
 
 
@@ -935,3 +936,133 @@ class CognitiveCycle:
             f"adapters={len(self._adapters)} "
             f"rate={self._tick_rate_hz}Hz>"
         )
+
+
+# ---------------------------------------------------------------------------
+# Factory function
+# ---------------------------------------------------------------------------
+
+
+def create_default_cycle(
+    *,
+    tick_rate_hz: float = 10.0,
+    max_ticks: Optional[int] = None,
+    safety_required: bool = True,
+    auto_wire: bool = True,
+    on_tick: Optional[Callable] = None,
+    on_error: Optional[Callable] = None,
+) -> CognitiveCycle:
+    """Create a :class:`CognitiveCycle` pre-loaded with all 24 adapters.
+
+    Every adapter is instantiated in **graceful-degradation mode** (all
+    wrapped components set to ``None`` or a stub ``object()`` where the
+    adapter constructor demands a non-``None`` value).
+
+    Adapter → role mapping:
+
+    ============================================  ===========
+    Adapter class                                 Role
+    ============================================  ===========
+    SafetyBlackboardAdapter                       safety
+    BCIBlackboardAdapter                          perception
+    QuantumBlackboardAdapter                      perception
+    AGICommunicationBlackboardAdapter             action
+    FederatedLearningBlackboardAdapter            action
+    *(all 19 remaining adapters)*                 general
+    ============================================  ===========
+
+    Parameters
+    ----------
+    tick_rate_hz, max_ticks, safety_required, auto_wire, on_tick, on_error
+        Forwarded verbatim to :class:`CognitiveCycle`.
+
+    Returns
+    -------
+    CognitiveCycle
+        A fully-wired cycle ready to ``start()``.
+    """
+    from .adapters import (  # noqa: E501  — local import to avoid circular deps
+        AGICommunicationBlackboardAdapter,
+        AGIEconomicsBlackboardAdapter,
+        BCIBlackboardAdapter,
+        BioInspiredAdapter,
+        BlockchainBlackboardAdapter,
+        CognitiveSynergyAdapter,
+        ComputeBlackboardAdapter,
+        ConsciousnessAdapter,
+        DistributedTrainingAdapter,
+        FederatedLearningBlackboardAdapter,
+        GraphIntelligenceAdapter,
+        HolographicBlackboardAdapter,
+        IntegrationsBlackboardBridge,
+        KennyGraphBlackboardAdapter,
+        KnowledgeGraphAdapter,
+        KnowledgeManagementAdapter,
+        NeuromorphicBlackboardAdapter,
+        QuantumBlackboardAdapter,
+        ReasoningAdapter,
+        ReproducibilityBlackboardAdapter,
+        RingsNetworkAdapter,
+        SafetyBlackboardAdapter,
+        VLABlackboardAdapter,
+        VectorDBBlackboardAdapter,
+    )
+
+    bb = CognitiveBlackboard()
+    cycle = CognitiveCycle(
+        blackboard=bb,
+        tick_rate_hz=tick_rate_hz,
+        max_ticks=max_ticks,
+        safety_required=safety_required,
+        auto_wire=auto_wire,
+        on_tick=on_tick,
+        on_error=on_error,
+    )
+
+    # (adapter_instance, role_string)
+    # KnowledgeGraphAdapter and ReasoningAdapter require non-None first arg.
+    _stub = object()
+
+    adapters_with_roles = [
+        # Core (GENERAL)
+        (ConsciousnessAdapter(), "general"),
+        (KnowledgeGraphAdapter(kg=_stub), "general"),
+        (CognitiveSynergyAdapter(), "general"),
+        (ReasoningAdapter(engine=_stub), "general"),
+        # Infrastructure (GENERAL)
+        (ComputeBlackboardAdapter(), "general"),
+        (DistributedTrainingAdapter(), "general"),
+        (VectorDBBlackboardAdapter(), "general"),
+        (BlockchainBlackboardAdapter(), "general"),
+        # Research & optimisation (GENERAL)
+        (ReproducibilityBlackboardAdapter(), "general"),
+        (VLABlackboardAdapter(), "general"),
+        # Quantum (PERCEPTION)
+        (QuantumBlackboardAdapter(), "perception"),
+        # Holographic (GENERAL)
+        (HolographicBlackboardAdapter(), "general"),
+        # Neuromorphic (GENERAL)
+        (NeuromorphicBlackboardAdapter(), "general"),
+        # BCI (PERCEPTION)
+        (BCIBlackboardAdapter(), "perception"),
+        # AGI Communication (ACTION)
+        (AGICommunicationBlackboardAdapter(), "action"),
+        # AGI Economics (GENERAL)
+        (AGIEconomicsBlackboardAdapter(), "general"),
+        # Federated Learning (ACTION)
+        (FederatedLearningBlackboardAdapter(), "action"),
+        # Safety (SAFETY — CRITICAL)
+        (SafetyBlackboardAdapter(), "safety"),
+        # Integration & streaming (GENERAL)
+        (RingsNetworkAdapter(), "general"),
+        (BioInspiredAdapter(), "general"),
+        (KnowledgeManagementAdapter(), "general"),
+        (GraphIntelligenceAdapter(), "general"),
+        (KennyGraphBlackboardAdapter(), "general"),
+        (IntegrationsBlackboardBridge(), "general"),
+    ]
+
+    for adapter, role in adapters_with_roles:
+        cycle.register_adapter(adapter, role=role)
+
+    return cycle

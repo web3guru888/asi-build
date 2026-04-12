@@ -55,6 +55,9 @@ _imports.update(
 _imports.update(
     _safe_import(".energy_efficiency", ["EnergyMetrics", "BiologicalEfficiencyComparator"])
 )
+_imports.update(
+    _safe_import(".kg_bridge", ["CognitiveStateKGBridge", "enable_kg_logging"])
+)
 
 # Promote to module namespace
 globals().update(_imports)
@@ -91,4 +94,6 @@ __all__ = [
     "BiologicalLearning",
     "EnergyMetrics",
     "BiologicalEfficiencyComparator",
+    "CognitiveStateKGBridge",
+    "enable_kg_logging",
 ]

@@ -142,6 +142,9 @@ class KGPathfinder:
         self.kg = kg
         # Cache embeddings to avoid redundant calls
         self._embedding_cache: Dict[str, Optional[List[float]]] = {}
+        # Temporal filter — set per find_path() call
+        self._valid_at: Optional[str] = None
+        self._embedding_fn: Optional[Callable] = None
 
     # ── Public API ─────────────────────────────────────────────────────
 
@@ -151,6 +154,7 @@ class KGPathfinder:
         goal: str,
         max_hops: int = 5,
         embedding_fn: Optional[Callable[[str], Optional[List[float]]]] = None,
+        valid_at: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Find the lowest-cost path between two entities using A*.
 
@@ -169,6 +173,13 @@ class KGPathfinder:
             convergence. The vector can be a list of floats or any
             sequence. If ``None``, falls back to a graph-distance
             heuristic.
+        valid_at : str or None
+            Optional ISO-8601 timestamp for temporal edge filtering.
+            When provided, only triples whose temporal range includes
+            this point in time are traversed (``valid_at <= t`` and
+            ``invalid_at IS NULL OR invalid_at > t``).  When ``None``
+            (default), only the standard ``invalid_at IS NULL`` filter
+            is applied, preserving backward-compatible behaviour.
 
         Returns
         -------
@@ -179,6 +190,7 @@ class KGPathfinder:
         """
         self._embedding_cache.clear()
         self._embedding_fn = embedding_fn
+        self._valid_at = valid_at
 
         start_id = _normalise(start)
         goal_id = _normalise(goal)
@@ -284,13 +296,23 @@ class KGPathfinder:
         """Get all entities connected to *entity* via active triples.
 
         Bidirectional: checks both subject and object columns.
+        Respects ``self._valid_at`` temporal filter when set.
         """
-        rows = self.kg._conn.execute(
-            """SELECT subject, object FROM triples
-               WHERE (subject = ? OR object = ?)
-                 AND invalid_at IS NULL""",
-            (entity, entity),
-        ).fetchall()
+        if self._valid_at is not None:
+            rows = self.kg._conn.execute(
+                """SELECT subject, object FROM triples
+                   WHERE (subject = ? OR object = ?)
+                     AND (valid_at IS NULL OR valid_at <= ?)
+                     AND (invalid_at IS NULL OR invalid_at > ?)""",
+                (entity, entity, self._valid_at, self._valid_at),
+            ).fetchall()
+        else:
+            rows = self.kg._conn.execute(
+                """SELECT subject, object FROM triples
+                   WHERE (subject = ? OR object = ?)
+                     AND invalid_at IS NULL""",
+                (entity, entity),
+            ).fetchall()
 
         neighbours: Set[str] = set()
         for row in rows:
@@ -306,15 +328,29 @@ class KGPathfinder:
         source: str,
         target: str,
     ) -> Optional[Dict[str, Any]]:
-        """Get the best (highest-confidence) edge between source and target."""
-        row = self.kg._conn.execute(
-            """SELECT id, predicate, confidence FROM triples
-               WHERE ((subject = ? AND object = ?) OR (subject = ? AND object = ?))
-                 AND invalid_at IS NULL
-               ORDER BY confidence DESC
-               LIMIT 1""",
-            (source, target, target, source),
-        ).fetchone()
+        """Get the best (highest-confidence) edge between source and target.
+
+        Respects ``self._valid_at`` temporal filter when set.
+        """
+        if self._valid_at is not None:
+            row = self.kg._conn.execute(
+                """SELECT id, predicate, confidence FROM triples
+                   WHERE ((subject = ? AND object = ?) OR (subject = ? AND object = ?))
+                     AND (valid_at IS NULL OR valid_at <= ?)
+                     AND (invalid_at IS NULL OR invalid_at > ?)
+                   ORDER BY confidence DESC
+                   LIMIT 1""",
+                (source, target, target, source, self._valid_at, self._valid_at),
+            ).fetchone()
+        else:
+            row = self.kg._conn.execute(
+                """SELECT id, predicate, confidence FROM triples
+                   WHERE ((subject = ? AND object = ?) OR (subject = ? AND object = ?))
+                     AND invalid_at IS NULL
+                   ORDER BY confidence DESC
+                   LIMIT 1""",
+                (source, target, target, source),
+            ).fetchone()
 
         if row is None:
             return None
@@ -345,13 +381,27 @@ class KGPathfinder:
         return cost
 
     def _entity_exists(self, entity: str) -> bool:
-        """Check if an entity exists in the KG (as subject or object)."""
-        row = self.kg._conn.execute(
-            """SELECT 1 FROM triples
-               WHERE (subject = ? OR object = ?)
-               LIMIT 1""",
-            (entity, entity),
-        ).fetchone()
+        """Check if an entity exists in the KG (as subject or object).
+
+        Respects ``self._valid_at`` temporal filter when set — an entity
+        only "exists" if at least one of its triples is temporally valid.
+        """
+        if self._valid_at is not None:
+            row = self.kg._conn.execute(
+                """SELECT 1 FROM triples
+                   WHERE (subject = ? OR object = ?)
+                     AND (valid_at IS NULL OR valid_at <= ?)
+                     AND (invalid_at IS NULL OR invalid_at > ?)
+                   LIMIT 1""",
+                (entity, entity, self._valid_at, self._valid_at),
+            ).fetchone()
+        else:
+            row = self.kg._conn.execute(
+                """SELECT 1 FROM triples
+                   WHERE (subject = ? OR object = ?)
+                   LIMIT 1""",
+                (entity, entity),
+            ).fetchone()
         return row is not None
 
     # ── Heuristic ──────────────────────────────────────────────────────
