@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>168+ discussions · 80+ wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>170+ discussions · 81+ wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -824,7 +824,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 80 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 168+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 170+ threads
 
 </td>
 <td>
@@ -861,6 +861,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - 🧬 [Phase 6 Planning — EWC continual learning & Fisher matrix](https://github.com/web3guru888/asi-build/discussions/240)
 - 🔬 [EWC penalty math & parameter importance maps](https://github.com/web3guru888/asi-build/discussions/250)
 - ❓ [EWCRegulariser tuning, debugging, and edge cases](https://github.com/web3guru888/asi-build/discussions/251)
+- 🔬 [Online Fisher estimation via EMA — math, trade-offs, surrogate gradients](https://github.com/web3guru888/asi-build/discussions/253)
+- ❓ [FisherAccumulator — alpha, snapshot intervals, multi-agent sharing](https://github.com/web3guru888/asi-build/discussions/254)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
