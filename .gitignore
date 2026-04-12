@@ -143,3 +143,18 @@ asi-code/out/
 # Benchmark results — timestamped JSON runs (keep .gitkeep)
 benchmarks/results/bench_*.json
 asi-build/
+# Ignore build artifacts
+src/asi_build/blockchain/contracts/.certora_internal/
+src/asi_build/blockchain/contracts/cache/
+src/asi_build/blockchain/contracts/out/
+circuits/node_modules/
+circuits/build/
+circuits/pot13_*.ptau
+circuits/withdrawal_*.zkey
+circuits/withdrawal.r1cs
+circuits/withdrawal.sym
+circuits/witness.wtns
+circuits/proof.json
+circuits/public.json
+circuits/package-lock.json
+

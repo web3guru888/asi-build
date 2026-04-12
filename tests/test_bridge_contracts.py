@@ -856,9 +856,14 @@ class TestDeployer:
         bridge_deploy = next(
             d for d in mock_cm.deployed if d["name"] == "RingsBridge"
         )
-        assert bridge_deploy["constructor_args"] == [
-            50 * ONE_ETH, 5 * ONE_ETH, "0xG", "0xV",
-        ]
+        args = bridge_deploy["constructor_args"]
+        # Constructor: (initialAdmin, guardian, dailyLimit, perTxLimit, verifier)
+        assert len(args) == 5
+        # args[0] is the auto-resolved admin (MagicMock in tests)
+        assert args[1] == "0xG"          # guardian
+        assert args[2] == 50 * ONE_ETH   # daily limit
+        assert args[3] == 5 * ONE_ETH    # per-tx limit
+        assert args[4] == "0xV"          # verifier
 
     @pytest.mark.asyncio
     async def test_role_granting(self, deployer, mock_cm):

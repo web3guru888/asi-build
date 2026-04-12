@@ -52,7 +52,12 @@ contract AuditFactory is Ownable {
      * @dev Constructor
      * @param initialOwner The address to be granted owner role
      */
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    constructor(address initialOwner) {
+        // OZ v4.9.6: Ownable sets msg.sender as owner; transfer if different
+        if (initialOwner != msg.sender) {
+            transferOwnership(initialOwner);
+        }
+    }
     
     /**
      * @dev Create a new audit trail contract
