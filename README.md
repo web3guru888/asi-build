@@ -36,7 +36,7 @@ ASI:BUILD prioritizes correctness and clarity over performance. Published benchm
 | **Tests** | **3,209 passing · 0 failing · 42 skipped** |
 | **Test files** | 38 |
 | **Integration adapters** | 24 Blackboard adapters + CognitiveCycle + `AsyncAdapterBase` |
-| **Module maturity** | 1 stable · 7 beta · 12 alpha · 5 experimental |
+| **Module maturity** | 1 stable · 7 beta · 13 alpha · 8 experimental |
 | **Discussions** | 66 threads |
 | **Wiki pages** | 50 |
 | **Open issues** | 19 (many labeled `good first issue`) |
