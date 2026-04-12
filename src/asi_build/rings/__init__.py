@@ -78,6 +78,12 @@ from .did import (
     VerificationType,
 )
 from .eth_bridge import RingsEthIdentity
+from .transport import (
+    HTTPTransport,
+    MultiNodeTransport,
+    WebSocketTransport,
+    create_transport,
+)
 from .reputation import (
     BehaviourType,
     GlobalRankRecord,
@@ -108,6 +114,11 @@ __all__ = [
     "VerificationType",
     # Ethereum Bridge Identity
     "RingsEthIdentity",
+    # Transport
+    "WebSocketTransport",
+    "HTTPTransport",
+    "MultiNodeTransport",
+    "create_transport",
     # Reputation
     "ReputationClient",
     "BehaviourType",

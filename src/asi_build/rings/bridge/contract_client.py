@@ -722,12 +722,26 @@ class BridgeContractClient:
 # BridgeDeployer
 # ---------------------------------------------------------------------------
 
-# Placeholder bytecodes — in production these would be compiled from
-# Solidity sources.  We use deterministic hex stubs so that the deployer
-# class can be tested end-to-end without a Solidity compiler.
-_VERIFIER_BYTECODE_STUB = "0x60806040523480156100105760"  # truncated
-_BRIDGE_BYTECODE_STUB = "0x60806040523480156100105761"
-_TOKEN_BYTECODE_STUB = "0x60806040523480156100105762"
+# Load compiled bytecodes from Foundry build artifacts.
+# Falls back to minimal stubs only if artifacts are unavailable (e.g.
+# running tests in a stripped environment without the ``out/`` directory).
+try:
+    from .artifacts import load_artifact as _load_artifact
+
+    _, _VERIFIER_BYTECODE = _load_artifact("Groth16Verifier")
+    _, _BRIDGE_BYTECODE = _load_artifact("RingsBridge")
+    _, _TOKEN_BYTECODE = _load_artifact("BridgedToken")
+    _COMPILED_ABI_VERIFIER, _ = _load_artifact("Groth16Verifier")
+    _COMPILED_ABI_BRIDGE, _ = _load_artifact("RingsBridge")
+    _COMPILED_ABI_TOKEN, _ = _load_artifact("BridgedToken")
+except Exception:
+    # Fallback stubs — deployment will fail but import / unit tests work.
+    _VERIFIER_BYTECODE = "0x"
+    _BRIDGE_BYTECODE = "0x"
+    _TOKEN_BYTECODE = "0x"
+    _COMPILED_ABI_VERIFIER = None
+    _COMPILED_ABI_BRIDGE = None
+    _COMPILED_ABI_TOKEN = None
 
 
 class BridgeDeployer:
@@ -757,9 +771,9 @@ class BridgeDeployer:
         web3_client: Any,
         contract_manager: Any,
         *,
-        verifier_bytecode: str = _VERIFIER_BYTECODE_STUB,
-        bridge_bytecode: str = _BRIDGE_BYTECODE_STUB,
-        token_bytecode: str = _TOKEN_BYTECODE_STUB,
+        verifier_bytecode: str = _VERIFIER_BYTECODE,
+        bridge_bytecode: str = _BRIDGE_BYTECODE,
+        token_bytecode: str = _TOKEN_BYTECODE,
     ) -> None:
         self.web3 = web3_client
         self.cm = contract_manager
@@ -790,7 +804,7 @@ class BridgeDeployer:
         logger.info("Deploying Groth16Verifier...")
         ci = await self.cm.deploy_contract(
             contract_name="Groth16Verifier",
-            abi=VERIFIER_ABI,
+            abi=_COMPILED_ABI_VERIFIER or VERIFIER_ABI,
             bytecode=self._verifier_bytecode,
             constructor_args=[vk_alpha, vk_beta, vk_gamma, vk_delta, vk_ic],
         )
@@ -803,6 +817,7 @@ class BridgeDeployer:
         per_tx_limit: int,
         guardian: str,
         verifier_address: str,
+        initial_admin: Optional[str] = None,
     ) -> str:
         """Deploy the ``RingsBridge`` contract.
 
@@ -816,19 +831,24 @@ class BridgeDeployer:
             Address of the guardian (can pause the bridge).
         verifier_address : str
             Address of the deployed ``Groth16Verifier``.
+        initial_admin : str, optional
+            Address receiving ``DEFAULT_ADMIN_ROLE``.  Defaults to the
+            deployer address (``web3.get_account_address()``).
 
         Returns
         -------
         str
             Deployed contract address.
         """
-        logger.info("Deploying RingsBridge (guardian=%s, verifier=%s)...",
-                     guardian, verifier_address)
+        admin = initial_admin or self.web3.get_account_address()
+        logger.info("Deploying RingsBridge (admin=%s, guardian=%s, verifier=%s)...",
+                     admin, guardian, verifier_address)
+        # Constructor: (initialAdmin, guardian, dailyLimit_, perTxLimit_, verifierAddress)
         ci = await self.cm.deploy_contract(
             contract_name="RingsBridge",
-            abi=BRIDGE_ABI,
+            abi=_COMPILED_ABI_BRIDGE or BRIDGE_ABI,
             bytecode=self._bridge_bytecode,
-            constructor_args=[daily_limit, per_tx_limit, guardian, verifier_address],
+            constructor_args=[admin, guardian, daily_limit, per_tx_limit, verifier_address],
         )
         logger.info("RingsBridge deployed at %s", ci.address)
         return ci.address
@@ -858,7 +878,7 @@ class BridgeDeployer:
         logger.info("Deploying BridgedToken(%s, %s)...", name, symbol)
         ci = await self.cm.deploy_contract(
             contract_name=f"BridgedToken_{symbol}",
-            abi=TOKEN_ABI,
+            abi=_COMPILED_ABI_TOKEN or TOKEN_ABI,
             bytecode=self._token_bytecode,
             constructor_args=[name, symbol],
         )

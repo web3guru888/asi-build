@@ -378,6 +378,52 @@ class RingsClient:
         self._position: int = 0
         self._sub_rings: Dict[str, SubRingInfo] = {}
 
+    # ── Class methods ────────────────────────────────────────────────────
+
+    @classmethod
+    async def from_url(
+        cls,
+        url: str,
+        *,
+        timeout: float = DEFAULT_RPC_TIMEOUT,
+        auto_reconnect: bool = True,
+        **transport_kwargs: Any,
+    ) -> "RingsClient":
+        """Create a RingsClient connected to a real Rings node.
+
+        Parameters
+        ----------
+        url : str
+            Connection string.  Supported schemes:
+
+            - ``"ws://rings-node:50000/jsonrpc"`` → WebSocket
+            - ``"http://rings-node:50000"`` → HTTP
+            - ``"ws://node1:50000,ws://node2:50000"`` → multi-node
+            - ``"memory://"`` → in-memory (testing)
+        timeout : float
+            Default RPC timeout in seconds.
+        auto_reconnect : bool
+            Whether to attempt auto-reconnection on failure.
+        transport_kwargs
+            Forwarded to the transport constructor.
+
+        Returns
+        -------
+        RingsClient
+            A client whose transport is already connected.
+        """
+        from .transport import create_transport
+
+        transport = create_transport(url, **transport_kwargs)
+        client = cls(
+            endpoint=url,
+            transport=transport,
+            timeout=timeout,
+            auto_reconnect=auto_reconnect,
+        )
+        await client.connect()
+        return client
+
     # ── Properties ────────────────────────────────────────────────────────
 
     @property
