@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 [![CI](https://github.com/web3guru888/asi-build/actions/workflows/ci.yml/badge.svg)](https://github.com/web3guru888/asi-build/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-3%2C018%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-3%2C209%20passing-brightgreen)
 ![Status](https://img.shields.io/badge/status-research--alpha-orange)
 [![Discussions](https://img.shields.io/badge/discussions-join%20us-blueviolet)](https://github.com/web3guru888/asi-build/discussions)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build)](https://github.com/web3guru888/asi-build/issues)
@@ -31,15 +31,15 @@ ASI:BUILD prioritizes correctness and clarity over performance. Published benchm
 
 | Metric | Value |
 |--------|-------|
-| **Source files** | 547 files across 29 modules |
-| **Lines of code** | ~192,000 LOC |
-| **Tests** | **3,018 passing · 0 failing · 42 skipped** |
-| **Test files** | 36 |
-| **Integration adapters** | 24 Blackboard adapters + `AsyncAdapterBase` |
+| **Source files** | 555 files across 29 modules |
+| **Lines of code** | ~200,000 LOC |
+| **Tests** | **3,209 passing · 0 failing · 42 skipped** |
+| **Test files** | 38 |
+| **Integration adapters** | 24 Blackboard adapters + CognitiveCycle + `AsyncAdapterBase` |
 | **Module maturity** | 1 stable · 7 beta · 12 alpha · 5 experimental |
 | **Discussions** | 66 threads |
 | **Wiki pages** | 50 |
-| **Open issues** | 31 (many labeled `good first issue`) |
+| **Open issues** | 19 (many labeled `good first issue`) |
 | **License** | MIT |
 
 ---
