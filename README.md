@@ -94,23 +94,24 @@
 <!-- Badge Row -->
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776ab?style=flat-square&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-4%2C355%2B_passing-16a34a?style=flat-square&logo=pytest&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-4%2C936%2B_passing-16a34a?style=flat-square&logo=pytest&logoColor=white)
 ![Modules](https://img.shields.io/badge/modules-29-8b5cf6?style=flat-square)
-![LOC](https://img.shields.io/badge/LOC-215K%2B-3b82f6?style=flat-square)
-![Bridge](https://img.shields.io/badge/bridge-ZK_verified-f97316?style=flat-square)
+![LOC](https://img.shields.io/badge/LOC-222K%2B-3b82f6?style=flat-square)
+![Bridge](https://img.shields.io/badge/bridge-Sepolia_LIVE-f97316?style=flat-square)
+![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
 [![Wiki](https://img.shields.io/badge/wiki-75_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
 
-**29 cognitive modules · 24 Blackboard adapters · ZK-verified bridge · CognitiveCycle engine**
+**29 cognitive modules · 24 Blackboard adapters · ZK bridge live on Sepolia · Agent-to-agent payments · CognitiveCycle engine**
 <br />
-A modular Python research framework for exploring AI consciousness, cognitive architectures, knowledge graphs, decentralized identity, and multi-agent reasoning.
+A modular Python research framework for exploring AI consciousness, cognitive architectures, knowledge graphs, decentralized identity, and multi-agent reasoning — with a trustless ZK-verified bridge and on-network token ledger enabling autonomous agent economics.
 
 <br />
 
-[Get Started](#-quick-start) · [Architecture](#-architecture) · [Modules](#-modules) · [Bridge](#-ringsethereum-bridge) · [Contribute](#-contributing) · [Wiki](https://github.com/web3guru888/asi-build/wiki)
+[Get Started](#-quick-start) · [Architecture](#-architecture) · [Modules](#-modules) · [Bridge](#-ringsethereum-bridge) · [Agent Payments](#-agent-to-agent-payments) · [Contribute](#-contributing) · [Wiki](https://github.com/web3guru888/asi-build/wiki)
 
 </div>
 
@@ -125,12 +126,13 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 
 <table>
 <tr><td>🧠</td><td><strong>Modules</strong></td><td>29 cognitive modules spanning consciousness, reasoning, perception, safety, and infrastructure</td></tr>
-<tr><td>🧪</td><td><strong>Tests</strong></td><td><strong>4,355+</strong> passing · 0 failing</td></tr>
-<tr><td>📏</td><td><strong>Source</strong></td><td>585+ files · 215K+ lines of code</td></tr>
+<tr><td>🧪</td><td><strong>Tests</strong></td><td><strong>4,936+</strong> passing · 0 failing</td></tr>
+<tr><td>📏</td><td><strong>Source</strong></td><td>585+ files · 222K+ lines of code</td></tr>
 <tr><td>🔌</td><td><strong>Integration</strong></td><td>24 Blackboard adapters + CognitiveCycle + AsyncAdapterBase</td></tr>
-<tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — 21,062 LOC · 668 tests · 3 Solidity contracts</td></tr>
-<tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>161+ discussions · 77 wiki pages · Good First Issues available</td></tr>
+<tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
+<tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
+<tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>161+ discussions · 77+ wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -368,11 +370,11 @@ print(f"Phase: {result.current_phase}")
 
 ## 🌉 Rings↔Ethereum Bridge
 
-**Status: LIVE ON SEPOLIA TESTNET** &nbsp; 🟢
+**Status: LIVE ON SEPOLIA TESTNET** &nbsp; 🟢 &nbsp; **+ Agent-to-Agent Payments** &nbsp; 💰
 
-The first trustless bridge between Rings Network and Ethereum, using ZK proofs and an embedded light client. No multisigs, no oracles, no trusted intermediaries.
+The first trustless bridge between Rings Network and Ethereum, using ZK proofs and an embedded light client. No multisigs, no oracles, no trusted intermediaries. Includes a **Rings-side token ledger** enabling agents to pay each other directly with bridged ETH, USDC, or any ERC-20 — without going back through Ethereum.
 
-> **[🔗 Live Bridge Dashboard →](https://bridge.asi-build.org)** &nbsp;|&nbsp; **[📊 View on Etherscan →](https://sepolia.etherscan.io/address/0xE034d479EDc2530d9917dDa4547b59bF0964A2Ca)**
+> **[🔗 Live Bridge Dashboard →](https://bridge.asi-build.org)** &nbsp;|&nbsp; **[📊 View on Etherscan →](https://sepolia.etherscan.io/address/0xE034d479EDc2530d9917dDa4547b59bF0964A2Ca)** &nbsp;|&nbsp; **[🌐 asi-build.org →](https://asi-build.org)**
 
 <div align="center">
 
@@ -441,7 +443,7 @@ The first trustless bridge between Rings Network and Ethereum, using ZK proofs a
   <text x="665" y="200" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="10" fill="#fde68a">E2E Orchestrator</text>
   <text x="665" y="218" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="10" fill="#fde68a">PQC-Ready</text>
   <!-- Stats bar -->
-  <text x="400" y="258" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="11" fill="#64748b" letter-spacing="1">21,062 LOC · 668 TESTS · 3 SOLIDITY CONTRACTS · TRUSTLESS · DECENTRALIZED · ZK-VERIFIED</text>
+  <text x="400" y="258" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="11" fill="#64748b" letter-spacing="1">22,700+ LOC · 799+ TESTS · 3 CONTRACTS · AGENT PAYMENTS · MULTI-CHAIN · ZK-VERIFIED</text>
   <!-- Domain label -->
   <text x="400" y="273" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="10" fill="#4a5078" letter-spacing="1">bridge.asi-build.org</text>
 </svg>
@@ -464,8 +466,23 @@ The first trustless bridge between Rings Network and Ethereum, using ZK proofs a
 - **Proof System**: Groth16 on BN254 pairing — 131-byte proof, ~220K gas verification on-chain
 - **P2P Layer**: Rings Chord DHT with Portal-inspired Sub-Ring topology
 - **Consensus**: 4/6 BFT threshold (6 validator nodes: `node0-5.rings.asi-build.org`)
+- **Token Ledger**: DHT-backed balances, validator consensus transfers, nonce replay protection
 - **Security**: Certora formal verification (843 LOC spec), ReentrancyGuard, Pausable, rate-limited
 - **PQC-Ready**: Hybrid ECDH + ML-KEM path prepared for post-quantum migration
+
+### Multi-Chain Support
+
+The bridge contracts are EVM-compatible and deploy to any EVM chain. Target networks:
+
+| Chain | Type | Status | Why |
+|-------|------|--------|-----|
+| **Ethereum Sepolia** | L1 testnet | 🟢 **LIVE** | Primary testnet — contracts deployed |
+| **BSC (BNB Smart Chain)** | L1 | 🟡 Planned | High throughput, low fees, large DeFi ecosystem |
+| **Base** | L2 (Optimism) | 🟡 Planned | Coinbase ecosystem, growing fast, low fees |
+| **Arc Network** | L1 (Circle) | 🟡 Planned | Native USDC gas, stable fees, institutional-grade, AI agent support (ERC-8183) |
+| **Ethereum Mainnet** | L1 | 🔴 Phase 4 | Production deployment after audit |
+
+> **Why Arc?** Circle's purpose-built L1 uses USDC as native gas token with predictable fees, Tendermint BFT with sub-second finality (~350ms), opt-in privacy for institutional users, built-in FX engine, and first-class AI agent support. Ideal for agent-to-agent stablecoin settlement.
 
 ### Quick Start
 
@@ -484,25 +501,31 @@ cast send 0xE034d479EDc2530d9917dDa4547b59bF0964A2Ca \
   --value 0.1ether \
   --rpc-url https://ethereum-sepolia-rpc.publicnode.com
 
+# Agent-to-agent transfer on Rings
+from asi_build.rings.bridge.ledger import RingsTokenLedger
+ledger = RingsTokenLedger(client, validators)
+await ledger.transfer(from_did, to_did, "USDC", 100_000000, signature)
+
 # Start the bridge relayer
 python scripts/bridge_cli.py relayer start --network sepolia
 
-# Run bridge test suite (668 tests)
-pytest tests/test_bridge/ tests/test_zk/ -v
+# Run bridge test suite (799+ tests)
+pytest tests/test_bridge/ tests/test_zk/ tests/test_rings_ledger.py -v
 ```
 
 ### Bridge Dashboard
 
-**[→ bridge.asi-build.org](https://bridge.asi-build.org)** — Live contract stats, cluster status, transaction history
+**[→ bridge.asi-build.org](https://bridge.asi-build.org)** — Live contract stats, cluster status, agent payments, transaction history
 
 <details>
-<summary><strong>Bridge components (35+ files across 3 phases)</strong></summary>
+<summary><strong>Bridge components (36+ files across 3 phases + token ledger)</strong></summary>
 
 | Phase | Components | LOC | Tests |
 |-------|-----------|-----|-------|
 | **Phase 1** | DID identity, ETH wallet unification, bridge protocol, MPT verifier | 6,445 | 188 |
 | **Phase 2** | RingsBridge.sol, Groth16Verifier.sol, BridgedToken.sol, Python client, E2E orchestrator, Certora specs (843 LOC) | 5,882 | 157 |
 | **Phase 3** | ZK circuits (BLS, MPT, Withdrawal, CommitteeRotation), proof engines (Simulated, SP1, Nova), proof coordinator, BLS12-381, SSZ encode/decode/merkleize | 8,735 | 323 |
+| **Token Ledger** | DHT-backed balances, validator consensus transfers, bridge integration, nonce replay protection, double-spend prevention | 1,709 | 131 |
 
 **Key ZK components:**
 - `zk/circuits.py` — 4 circuit types: BLS signature, MPT inclusion, withdrawal, committee rotation (986 LOC)
@@ -511,9 +534,87 @@ pytest tests/test_bridge/ tests/test_zk/ -v
 - `zk/bls.py` — BLS12-381 keygen, aggregate signatures, sync committee verification (591 LOC)
 - `zk/ssz.py` — Simple Serialize encode/decode/merkleize with BeaconBlockHeader support (555 LOC)
 
-**Remaining:** Phase 4 (production hardening, PQC hybrid, audits) · Phase 5 (multi-chain, browser-native, ERC-4337)
+**Remaining:** Phase 4 (production hardening, PQC hybrid, audits) · Phase 5 (multi-chain deployment, browser-native, ERC-4337)
 
 </details>
+
+---
+
+## 💰 Agent-to-Agent Payments
+
+Agents on the Rings network can pay each other directly with bridged tokens — no round-trip through Ethereum required.
+
+```
+Agent A (Ethereum)          Bridge              Rings Network           Agent B
+     │                        │                      │                    │
+     │ ── deposit(USDC) ────→ │                      │                    │
+     │                        │ ── credit(A) ──────→ │                    │
+     │                        │                      │                    │
+     │                        │    A: transfer(B, 100 USDC, signature)    │
+     │                        │              │                            │
+     │                        │    4/6 validators attest ✓                │
+     │                        │              │                            │
+     │                        │    A: 400 USDC    B: 100 USDC ─────────→ │
+     │                        │                      │                    │
+     │                        │ ←── debit(B) ─────── │  B: withdraw(ETH)  │
+     │ ←── ZK proof + ETH ── │                      │                    │
+```
+
+### How It Works
+
+1. **Bridge in**: Deposit ETH or any ERC-20 (USDC, USDT, etc.) from Ethereum → Rings via bridge contract
+2. **Balances tracked**: DHT-backed ledger tracks per-DID, per-token balances across the Rings network
+3. **Transfer**: Agent A signs a transfer to Agent B → 4/6 validators verify balance and attest → balances update atomically
+4. **Double-spend protection**: Pending transfers lock the amount; `available_balance()` reflects locks
+5. **Bridge out**: Withdraw back to Ethereum anytime with a ZK proof
+
+### Transfer Lifecycle
+
+| State | Description |
+|-------|-------------|
+| `PROPOSED` | Sender signs transfer intent with secp256k1 key |
+| `ATTESTING` | Validators verify sender balance, sign attestations |
+| `FINALIZED` | 4/6 threshold reached — balances updated atomically |
+| `FAILED` | Insufficient balance, timeout, or validator rejection |
+
+### Supported Tokens
+
+Any ERC-20 token can be bridged and transferred between agents:
+
+| Token | Identifier | Use Case |
+|-------|-----------|----------|
+| **ETH** | `0x0000...0000` | Native value transfer |
+| **USDC** | Contract address | Stable payments, agent services |
+| **USDT** | Contract address | Alternative stablecoin |
+| **bASI** | `0x257d...B497` | Native bridged ASI token |
+| **Any ERC-20** | Contract address | Extensible to any token |
+
+### Code
+
+```python
+from asi_build.rings.bridge.ledger import RingsTokenLedger
+
+# Initialize with Rings client and validators
+ledger = RingsTokenLedger(rings_client, validators, threshold=4)
+
+# Check balance
+balance = await ledger.balance("did:rings:alice", "USDC")
+
+# Transfer 100 USDC from Alice to Bob
+receipt = await ledger.transfer(
+    from_did="did:rings:alice",
+    to_did="did:rings:bob",
+    token="USDC",
+    amount=100_000000,  # 100 USDC (6 decimals)
+    signature=alice_signature
+)
+
+# Check transfer status
+print(receipt.status)  # TransferStatus.FINALIZED
+
+# View history
+history = await ledger.transfer_history("did:rings:alice", limit=20)
+```
 
 ---
 
@@ -712,7 +813,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 75 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 161+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 158+ threads
 
 </td>
 <td>
@@ -747,8 +848,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - 🧠 [Phase 5 Tick Walkthrough — STDP → Memory → Planning](https://github.com/web3guru888/asi-build/discussions/231)
 - 🔬 [MemoryConsolidator — UNWIND batch writes & SLEEP_PHASE exclusivity](https://github.com/web3guru888/asi-build/discussions/236)
 - 🧬 [Phase 6 Planning — EWC continual learning & Fisher matrix](https://github.com/web3guru888/asi-build/discussions/240)
-- 🧪 [Phase 5 Test Suite — four-layer strategy & Prometheus isolation](https://github.com/web3guru888/asi-build/discussions/242)
-- ❓ [EWC in practice — Fisher estimation, lambda tuning, STDP adaptation](https://github.com/web3guru888/asi-build/discussions/243)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
@@ -806,9 +905,11 @@ ASI:BUILD began in **August 2025** as an ambitious attempt to implement a compre
 
 - All real, tested code moved to `src/asi_build/` with proper packaging
 - Template scaffolding archived to `archive/`
-- Test suite built from the ground up — now **4,355+ passing**
+- Test suite built from the ground up — now **4,936+ passing**
 - **Cognitive Blackboard** integration layer introduced, wiring all 29 modules
-- **Rings↔Ethereum ZK Bridge** added (21,062 LOC across 3 phases)
+- **Rings↔Ethereum ZK Bridge** deployed to Sepolia (22,700+ LOC, 799+ tests, 3 Solidity contracts)
+- **Agent-to-agent payments** — DHT-backed token ledger with 4/6 validator consensus
+- **Multi-chain roadmap** — Sepolia live, BSC + Base + Arc Network planned
 - `__maturity__` metadata added to every module for transparency
 - Public release on GitHub under MIT license
 
@@ -820,7 +921,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
 ## 🔗 Links
 
-[**GitHub**](https://github.com/web3guru888/asi-build) · [**Discussions**](https://github.com/web3guru888/asi-build/discussions) · [**Wiki**](https://github.com/web3guru888/asi-build/wiki) · [**Issues**](https://github.com/web3guru888/asi-build/issues) · [**CI**](https://github.com/web3guru888/asi-build/actions)
+[**Website**](https://asi-build.org) · [**Bridge**](https://bridge.asi-build.org) · [**GitHub**](https://github.com/web3guru888/asi-build) · [**Discussions**](https://github.com/web3guru888/asi-build/discussions) · [**Wiki**](https://github.com/web3guru888/asi-build/wiki) · [**Issues**](https://github.com/web3guru888/asi-build/issues) · [**Etherscan**](https://sepolia.etherscan.io/address/0xE034d479EDc2530d9917dDa4547b59bF0964A2Ca)
 
 ---
 
