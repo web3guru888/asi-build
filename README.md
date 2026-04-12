@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>208+ discussions · 95+ wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>211+ discussions · 96+ wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -892,6 +892,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - 🔬 [Show & Tell: Phase 9.3 — FederatedTaskRouter (capability-first routing, consistent-hash affinity, auction bidding)](https://github.com/web3guru888/asi-build/discussions/307)
 - ❓ [Q&A: Phase 9.3 FederatedTaskRouter — routing strategies, load_score, stale_cap_ms, and Grafana monitoring](https://github.com/web3guru888/asi-build/discussions/308)
 - 💡 [Ideas: Phase 9.4 — FederatedConsensus design (Raft-lite, threshold signatures, CRDT voting)](https://github.com/web3guru888/asi-build/discussions/309)
+- 🔬 [Show & Tell: Phase 9.4 — FederatedConsensus (Raft-lite election, threshold-sig quorum proofs, ordered commit log)](https://github.com/web3guru888/asi-build/discussions/312)
+- ❓ [Q&A: Phase 9.4 FederatedConsensus — election timeouts, quorum sizing, BLS upgrade, split-brain prevention](https://github.com/web3guru888/asi-build/discussions/313)
+- 💡 [Ideas: Phase 9.5 — FederationHealthMonitor design (unified score, SSE streaming, circuit breaker, Sepolia export)](https://github.com/web3guru888/asi-build/discussions/314)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
