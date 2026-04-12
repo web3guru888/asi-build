@@ -506,11 +506,10 @@ class TestCognitiveSynergyEngine:
         # Access known pair directly (avoid buggy .get default)
         assert e.synergy_pairs["perception_action"].synergy_strength == 0.77
 
-    def test_get_synergy_strength_unknown_raises(self):
-        """Pre-existing bug: SynergyPair('', '') missing positional arg."""
+    def test_get_synergy_strength_unknown_returns_zero(self):
+        """Unknown pair returns 0.0 (bug fixed: SynergyPair now gets default strength)."""
         e = self._make_engine()
-        with pytest.raises(TypeError):
-            e.get_synergy_strength("nonexistent")
+        assert e.get_synergy_strength("nonexistent") == 0.0
 
     def test_get_emergence_indicators(self):
         e = self._make_engine()
