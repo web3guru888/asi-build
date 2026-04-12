@@ -111,9 +111,15 @@ class InMemoryTransport:
         if operator == "Extend" and key in self._store:
             existing = self._store[key]
             if isinstance(existing, list):
-                existing.append(value)
+                if isinstance(value, list):
+                    existing.extend(value)
+                else:
+                    existing.append(value)
             else:
-                self._store[key] = [existing, value]
+                if isinstance(value, list):
+                    self._store[key] = [existing] + value
+                else:
+                    self._store[key] = [existing, value]
         else:
             self._store[key] = value
         return {"ok": True, "key": key}
