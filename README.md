@@ -9,7 +9,7 @@
 ![Status](https://img.shields.io/badge/status-research--alpha-orange)
 [![Discussions](https://img.shields.io/badge/discussions-join%20us-blueviolet)](https://github.com/web3guru888/asi-build/discussions)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build)](https://github.com/web3guru888/asi-build/issues)
-[![Wiki](https://img.shields.io/badge/wiki-52%20pages-blue)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-55%20pages-blue)](https://github.com/web3guru888/asi-build/wiki)
 
 > ⚠️ **Research Software**: ASI:BUILD is an active research framework, not a production system. Module maturity varies — see the [Module Maturity](#module-maturity) section and the per-module `__maturity__` metadata for details.
 
@@ -37,7 +37,7 @@ ASI:BUILD prioritizes correctness and clarity over performance. Published benchm
 | **Test files** | 42 |
 | **Integration adapters** | 24 Blackboard adapters + CognitiveCycle + `AsyncAdapterBase` |
 | **Module maturity** | 1 stable · 7 beta · 13 alpha · 8 experimental |
-| **Discussions** | 79 threads |
+| **Discussions** | 89 threads |
 | **Wiki pages** | 52 |
 | **Open issues** | 15 (many labeled `good first issue`) |
 | **License** | MIT |
@@ -60,7 +60,7 @@ Key threads to start with:
 - 🔗 **[16 Modules Now Wired — Show & Tell](https://github.com/web3guru888/asi-build/discussions/115)** — Latest integration milestone
 
 ### 📖 Wiki
-Comprehensive documentation at **[github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki)** — 52 pages covering:
+Comprehensive documentation at **[github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki)** — 55 pages covering:
 
 - **Getting Started** — Installation, environment setup, first steps
 - **Architecture Guide** — Cognitive Blackboard, layered design, module interaction patterns
@@ -477,8 +477,8 @@ See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 ## Links
 
 - **GitHub**: [https://github.com/web3guru888/asi-build](https://github.com/web3guru888/asi-build)
-- **Discussions**: [https://github.com/web3guru888/asi-build/discussions](https://github.com/web3guru888/asi-build/discussions) (79 threads)
-- **Wiki**: [https://github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki) (52 pages)
+- **Discussions**: [https://github.com/web3guru888/asi-build/discussions](https://github.com/web3guru888/asi-build/discussions) (89 threads)
+- **Wiki**: [https://github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki) (55 pages)
 - **Issues**: [https://github.com/web3guru888/asi-build/issues](https://github.com/web3guru888/asi-build/issues)
 - **CI**: [GitHub Actions](https://github.com/web3guru888/asi-build/actions)
 
