@@ -94,10 +94,11 @@
 <!-- Badge Row -->
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776ab?style=flat-square&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-4%2C936%2B_passing-16a34a?style=flat-square&logo=pytest&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-5%2C049%2B_passing-16a34a?style=flat-square&logo=pytest&logoColor=white)
 ![Modules](https://img.shields.io/badge/modules-29-8b5cf6?style=flat-square)
-![LOC](https://img.shields.io/badge/LOC-222K%2B-3b82f6?style=flat-square)
+![LOC](https://img.shields.io/badge/LOC-223K%2B-3b82f6?style=flat-square)
 ![Bridge](https://img.shields.io/badge/bridge-Sepolia_LIVE-f97316?style=flat-square)
+![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
 [![Wiki](https://img.shields.io/badge/wiki-79_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
@@ -126,8 +127,8 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 
 <table>
 <tr><td>🧠</td><td><strong>Modules</strong></td><td>29 cognitive modules spanning consciousness, reasoning, perception, safety, and infrastructure</td></tr>
-<tr><td>🧪</td><td><strong>Tests</strong></td><td><strong>4,936+</strong> passing · 0 failing</td></tr>
-<tr><td>📏</td><td><strong>Source</strong></td><td>585+ files · 222K+ lines of code</td></tr>
+<tr><td>🧪</td><td><strong>Tests</strong></td><td><strong>5,049+</strong> passing · 0 failing</td></tr>
+<tr><td>📏</td><td><strong>Source</strong></td><td>590+ files · 223K+ lines of code</td></tr>
 <tr><td>🔌</td><td><strong>Integration</strong></td><td>24 Blackboard adapters + CognitiveCycle + AsyncAdapterBase</td></tr>
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
@@ -474,15 +475,25 @@ The first trustless bridge between Rings Network and Ethereum, using ZK proofs a
 
 The bridge contracts are EVM-compatible and deploy to any EVM chain. Target networks:
 
-| Chain | Type | Status | Why |
-|-------|------|--------|-----|
-| **Ethereum Sepolia** | L1 testnet | 🟢 **LIVE** | Primary testnet — contracts deployed |
-| **BSC (BNB Smart Chain)** | L1 | 🟡 Planned | High throughput, low fees, large DeFi ecosystem |
-| **Base** | L2 (Optimism) | 🟡 Planned | Coinbase ecosystem, growing fast, low fees |
-| **Arc Network** | L1 (Circle) | 🟡 Planned | Native USDC gas, stable fees, institutional-grade, AI agent support (ERC-8183) |
-| **Ethereum Mainnet** | L1 | 🔴 Phase 4 | Production deployment after audit |
+| Chain | Chain ID | Type | Status | Why |
+|-------|----------|------|--------|-----|
+| **Ethereum Sepolia** | 11155111 | L1 testnet | 🟢 **LIVE** | Primary testnet — contracts deployed |
+| **BSC Testnet** | 97 | L1 testnet | 🟢 **Ready** | High throughput, low fees, large DeFi ecosystem |
+| **Base Sepolia** | 84532 | L2 testnet | 🟢 **Ready** | Coinbase ecosystem, growing fast, low fees |
+| **Arc Testnet** | 5042002 | L1 testnet | 🟢 **Ready** | Native USDC gas, stable fees, AI agent support (ERC-8183) |
+| **Ethereum Mainnet** | 1 | L1 | 🔴 Phase 4 | Production deployment after audit |
 
-> **Why Arc?** Circle's purpose-built L1 uses USDC as native gas token with predictable fees, Tendermint BFT with sub-second finality (~350ms), opt-in privacy for institutional users, built-in FX engine, and first-class AI agent support. Ideal for agent-to-agent stablecoin settlement.
+> **Cross-chain routing**: Deposit USDC on BSC → transfer to another agent on Rings → withdraw on Base. Balances are chain-agnostic — tokens are fungible across all supported chains.
+
+> **Why Arc?** Circle's purpose-built L1 uses USDC as native gas token with predictable fees, Tendermint BFT with sub-second finality (~350ms), opt-in privacy for institutional users, built-in FX engine, and first-class AI agent support (ERC-8183 agentic commerce + ERC-8004 AI identity). Ideal for agent-to-agent stablecoin settlement.
+
+```bash
+# Deploy to any supported chain
+python scripts/deploy_multichain.py --chain bsc_testnet --method forge
+python scripts/deploy_multichain.py --chain base_sepolia --method forge
+python scripts/deploy_multichain.py --chain arc_testnet --method forge
+python scripts/deploy_multichain.py --chain all --dry-run  # preview all
+```
 
 ### Quick Start
 
