@@ -18,6 +18,12 @@ Modules
   Python bindings for on-chain bridge contracts.
 - :mod:`~.e2e`              — ``BridgeOrchestrator``: end-to-end deposit →
   attest → withdraw relay loop.
+- :mod:`~.zk_prover`        — ``Groth16Prover``, ``Groth16Verifier``:
+  real BN254 pairing-based ZK proof system for bridge operations.
+- :mod:`~.safety`           — ``BridgeSafetyManager``: circuit breakers,
+  anomaly detection, rate-limit monitoring, validator health tracking.
+- :mod:`~.zk`               — ZK proof sub-package: circuits, provers,
+  coordinator, BLS12-381 primitives, SSZ encoding.
 """
 
 from .contract_client import (
@@ -54,6 +60,28 @@ from .protocol import (
     DepositRecord,
     WithdrawalRecord,
 )
+from .safety import (
+    AlertSeverity,
+    AnomalyDetector,
+    BridgeSafetyManager,
+    CircuitBreaker,
+    RateLimitMonitor,
+    SafetyAlert,
+    ValidatorHealthMonitor,
+)
+from .zk_prover import (
+    BridgeWithdrawalCircuit,
+    Groth16Proof,
+    Groth16Prover,
+    Groth16Verifier,
+    ProvingKey,
+    SyncCommitteeCircuit,
+    TrustedSetup,
+    VerificationKey,
+    g1_to_uint256,
+    g2_to_uint256,
+    vk_to_solidity_args,
+)
 
 __all__ = [
     # Protocol
@@ -85,4 +113,26 @@ __all__ = [
     # Orchestrator
     "BridgeOrchestrator",
     "ProcessedDeposit",
+    # Safety
+    "AlertSeverity",
+    "SafetyAlert",
+    "CircuitBreaker",
+    "AnomalyDetector",
+    "RateLimitMonitor",
+    "ValidatorHealthMonitor",
+    "BridgeSafetyManager",
+    # ZK Prover
+    "TrustedSetup",
+    "ProvingKey",
+    "VerificationKey",
+    "Groth16Proof",
+    "Groth16Prover",
+    "Groth16Verifier",
+    "BridgeWithdrawalCircuit",
+    "SyncCommitteeCircuit",
+    "g1_to_uint256",
+    "g2_to_uint256",
+    "vk_to_solidity_args",
+    # ZK sub-package (Phase 3)
+    "zk",
 ]
