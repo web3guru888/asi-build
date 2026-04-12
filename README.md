@@ -9,7 +9,7 @@
 ![Status](https://img.shields.io/badge/status-research--alpha-orange)
 [![Discussions](https://img.shields.io/badge/discussions-join%20us-blueviolet)](https://github.com/web3guru888/asi-build/discussions)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build)](https://github.com/web3guru888/asi-build/issues)
-[![Wiki](https://img.shields.io/badge/wiki-57%20pages-blue)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-58%20pages-blue)](https://github.com/web3guru888/asi-build/wiki)
 
 > ⚠️ **Research Software**: ASI:BUILD is an active research framework, not a production system. Module maturity varies — see the [Module Maturity](#module-maturity) section and the per-module `__maturity__` metadata for details.
 
@@ -37,9 +37,9 @@ ASI:BUILD prioritizes correctness and clarity over performance. Published benchm
 | **Test files** | 42 |
 | **Integration adapters** | 24 Blackboard adapters + CognitiveCycle + `AsyncAdapterBase` |
 | **Module maturity** | 1 stable · 7 beta · 13 alpha · 8 experimental |
-| **Discussions** | 95 threads |
-| **Wiki pages** | 57 |
-| **Open issues** | 21 (many labeled `good first issue`) |
+| **Discussions** | 103 threads |
+| **Wiki pages** | 58 |
+| **Open issues** | 23 (many labeled `good first issue`) |
 | **License** | MIT |
 
 ---
@@ -60,7 +60,7 @@ Key threads to start with:
 - 🔗 **[16 Modules Now Wired — Show & Tell](https://github.com/web3guru888/asi-build/discussions/115)** — Latest integration milestone
 
 ### 📖 Wiki
-Comprehensive documentation at **[github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki)** — 55 pages covering:
+Comprehensive documentation at **[github.com/web3guru888/asi-build/wiki](https://github.com/web3guru888/asi-build/wiki)** — 58 pages covering:
 
 - **Getting Started** — Installation, environment setup, first steps
 - **Architecture Guide** — Cognitive Blackboard, layered design, module interaction patterns
