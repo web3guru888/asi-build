@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-217_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-222_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>480+ discussions · 217 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>490+ discussions · 222 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 217 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 222 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 480+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 490+ threads
 
 </td>
 <td>
@@ -1145,6 +1145,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 33.4 — CurriculumScheduler design questions](https://github.com/web3guru888/asi-build/discussions/703)
 - 🔬 [Show & Tell: Phase 33.5 — ContinualOrchestrator unified pipeline (PHASE 33 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/704)
 - ❓ [Q&A: Phase 33.5 — ContinualOrchestrator design questions](https://github.com/web3guru888/asi-build/discussions/705)
+- 📋 [Phase 34 Planning — Neuromorphic Computing & Spiking Neural Network Integration](https://github.com/web3guru888/asi-build/discussions/709)
+- 🔬 [Show & Tell: Phase 34.1 — SpikingNeuronModel biologically-inspired spiking neurons](https://github.com/web3guru888/asi-build/discussions/714)
+- ❓ [Q&A: Phase 34.1 — SpikingNeuronModel design questions](https://github.com/web3guru888/asi-build/discussions/717)
+- 🔬 [Show & Tell: Phase 34.2 — EventDrivenProcessor asynchronous neuromorphic computation](https://github.com/web3guru888/asi-build/discussions/712)
+- ❓ [Q&A: Phase 34.2 — EventDrivenProcessor design questions](https://github.com/web3guru888/asi-build/discussions/713)
+- 🔬 [Show & Tell: Phase 34.3 — SynapticPlasticityEngine dynamic synaptic learning](https://github.com/web3guru888/asi-build/discussions/715)
+- ❓ [Q&A: Phase 34.3 — SynapticPlasticityEngine design questions](https://github.com/web3guru888/asi-build/discussions/716)
+- 🔬 [Show & Tell: Phase 34.4 — NeuromorphicEncoder neural coding schemes](https://github.com/web3guru888/asi-build/discussions/718)
+- ❓ [Q&A: Phase 34.4 — NeuromorphicEncoder design questions](https://github.com/web3guru888/asi-build/discussions/720)
+- 🔬 [Show & Tell: Phase 34.5 — NeuromorphicOrchestrator unified pipeline (PHASE 34 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/719)
+- ❓ [Q&A: Phase 34.5 — NeuromorphicOrchestrator design questions](https://github.com/web3guru888/asi-build/discussions/721)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
