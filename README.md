@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-161_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-166_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>357+ discussions · 161 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>372+ discussions · 166 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 161 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 166 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 357+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 372+ threads
 
 </td>
 <td>
@@ -1024,6 +1024,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 22.4 — AestheticEvaluator scoring dimensions, profiles & emotional resonance](https://github.com/web3guru888/asi-build/discussions/526)
 - 🎨 [Show & Tell: Phase 22.5 — CreativeOrchestrator unified pipeline (PHASE 22 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/527)
 - ❓ [Q&A: Phase 22.5 — CreativeOrchestrator Boden's taxonomy & pipeline design](https://github.com/web3guru888/asi-build/discussions/528)
+- 🎯 [Phase 23 Planning — Decision Intelligence & Uncertainty Management](https://github.com/web3guru888/asi-build/discussions/529)
+- 🎲 [Show & Tell: Phase 23.1 — ProbabilisticReasoner Bayesian inference & belief networks](https://github.com/web3guru888/asi-build/discussions/535)
+- ❓ [Q&A: Phase 23.1 — ProbabilisticReasoner BayesNet, variable elimination & evidence propagation](https://github.com/web3guru888/asi-build/discussions/536)
+- 🌳 [Show & Tell: Phase 23.2 — DecisionTreeEngine multi-criteria decision analysis](https://github.com/web3guru888/asi-build/discussions/537)
+- ❓ [Q&A: Phase 23.2 — DecisionTreeEngine MAUT scoring, sensitivity analysis & pruning](https://github.com/web3guru888/asi-build/discussions/538)
+- 📊 [Show & Tell: Phase 23.3 — RiskAssessor quantitative risk modeling & Monte Carlo](https://github.com/web3guru888/asi-build/discussions/539)
+- ❓ [Q&A: Phase 23.3 — RiskAssessor risk matrices, VaR/CVaR & mitigation strategies](https://github.com/web3guru888/asi-build/discussions/540)
+- 🔄 [Show & Tell: Phase 23.4 — AdaptiveStrategySelector reinforcement-driven strategy selection](https://github.com/web3guru888/asi-build/discussions/541)
+- ❓ [Q&A: Phase 23.4 — AdaptiveStrategySelector UCB1, Thompson sampling & regime detection](https://github.com/web3guru888/asi-build/discussions/542)
+- 🎯 [Show & Tell: Phase 23.5 — DecisionOrchestrator unified pipeline (PHASE 23 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/543)
+- ❓ [Q&A: Phase 23.5 — DecisionOrchestrator pipeline integration & Phase 23 retrospective](https://github.com/web3guru888/asi-build/discussions/544)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
