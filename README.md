@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-146_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-156_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>324+ discussions · 146 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>346+ discussions · 156 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 146 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 156 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 324+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 346+ threads
 
 </td>
 <td>
@@ -1002,6 +1002,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q- ❓ [Q&A: Phase 11.2 AlignmentMonitor — sample intervals, alert thresholds, dimension normalisation, and Grafana monitoring](https://github.com/web3guru888/asi-build/discussions/342)A: Phase 11.2 AlignmentMonitor — sample intervals, alert thresholds, dimension normalisation, and Grafana monitoring](https://github.com/web3guru888/asi-build/discussions/342)
 - 🧠 [Show & Tell: Phase 11.3 — ValueLearner (gradient descent reward model, FeedbackSignal types, comparative ranking loss)](https://github.com/web3guru888/asi-build/discussions/344)
 - ❓ [Q&A: Phase 11.3 ValueLearner — learning rate tuning, cold-start, comparative signals, federation feedback, and Grafana monitoring](https://github.com/web3guru888/asi-build/discussions/345)
+- 🧠 [Phase 21 Planning — Emotional Intelligence & Affective Computing](https://github.com/web3guru888/asi-build/discussions/497)
+- ❤️ [Show & Tell: Phase 21.1 — EmotionModel PAD-based affective state representation](https://github.com/web3guru888/asi-build/discussions/503)
+- ❓ [Q&A: Phase 21.1 — EmotionModel PAD dimensions, decay dynamics & discrete mapping](https://github.com/web3guru888/asi-build/discussions/506)
+- 📊 [Show & Tell: Phase 21.2 — AffectDetector multi-modal sentiment analysis](https://github.com/web3guru888/asi-build/discussions/507)
+- ❓ [Q&A: Phase 21.2 — AffectDetector lexicon design, negation handling & multimodal fusion](https://github.com/web3guru888/asi-build/discussions/510)
+- 🤝 [Show & Tell: Phase 21.3 — EmpathyEngine theory-of-mind emotional modeling](https://github.com/web3guru888/asi-build/discussions/504)
+- ❓ [Q&A: Phase 21.3 — EmpathyEngine Bayesian profiles, mirror strength & compassion](https://github.com/web3guru888/asi-build/discussions/505)
+- 🧘 [Show & Tell: Phase 21.4 — MoodRegulator homeostatic emotional resilience](https://github.com/web3guru888/asi-build/discussions/508)
+- ❓ [Q&A: Phase 21.4 — MoodRegulator homeostasis, burnout prevention & strategy effectiveness](https://github.com/web3guru888/asi-build/discussions/511)
+- ✨ [Show & Tell: Phase 21.5 — AffectiveOrchestrator unified emotional cognition pipeline (PHASE 21 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/509)
+- ❓ [Q&A: Phase 21.5 — AffectiveOrchestrator cognitive modulation & Phase 21 retrospective](https://github.com/web3guru888/asi-build/discussions/512)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
