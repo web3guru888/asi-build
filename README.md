@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-139_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-140_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>351+ discussions · 139+ wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>355+ discussions · 140+ wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 139 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 140 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 351+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 355+ threads
 
 </td>
 <td>
@@ -921,6 +921,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [EventSequencer Q&A — heapq vs PriorityQueue, causal_parent_id, buffer overflow, tumbling windows (Phase 17.2)](https://github.com/web3guru888/asi-build/discussions/439)
 - 🗓️ [SchedulerCortex — EDF priority queue, preemption & prediction-driven pre-scheduling (Phase 17.4)](https://github.com/web3guru888/asi-build/discussions/444)
 - ❓ [SchedulerCortex Q&A — EDF rationale, preemption in asyncio, tick_ms tuning, GoalRegistry wiring (Phase 17.4)](https://github.com/web3guru888/asi-build/discussions/445)
+- 🎛️ [Show & Tell: TemporalOrchestrator — unified 7-phase control plane, full Phase 17 pipeline, cross-phase integration map (Phase 17.5 + PHASE 17 COMPLETE 🎉)](https://github.com/web3guru888/asi-build/discussions/447)
+- ❓ [TemporalOrchestrator Q&A — composition vs inheritance, partial failure handling, stop safety, Grafana state panel (Phase 17.5)](https://github.com/web3guru888/asi-build/discussions/448)
 - 🖥️ [AlignmentDashboard — SSE operator console, Phase 11 complete](https://github.com/web3guru888/asi-build/discussions/350)
 - ❓ [AlignmentDashboard config — EventSource setup, overrides, Grafana](https://github.com/web3guru888/asi-build/discussions/351)
 - 🌐 [Show & Tell: AgentRegistry — distributed identity & capability registry (Phase 12.1)](https://github.com/web3guru888/asi-build/discussions/353)
