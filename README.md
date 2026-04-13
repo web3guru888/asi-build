@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-145_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-146_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>375+ discussions · 145+ wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>324+ discussions · 146 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 145 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 146 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 375+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 324+ threads
 
 </td>
 <td>
@@ -934,6 +934,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [CausalMemoryIndex Q&A — IndexMode queries, SortedList bisect, exponential decay, rebuild loop (Phase 18.4)](https://github.com/web3guru888/asi-build/discussions/463)
 - 🎉 [Show & Tell: TemporalCoherenceArbiter — weighted median clock fusion, drift zones, PHASE 18 COMPLETE (Phase 18.5)](https://github.com/web3guru888/asi-build/discussions/461)
 - ❓ [TemporalCoherenceArbiter Q&A — weighted median, drift zones, confidence decay, Phase 18 retrospective (Phase 18.5)](https://github.com/web3guru888/asi-build/discussions/464)
+- 🗺️ [Phase 19 Planning — Natural Language Understanding & Communication](https://github.com/web3guru888/asi-build/discussions/465)
+- 🗣️ [Show & Tell: SemanticParser — regex intent recognition, slot extraction, coverage-based confidence (Phase 19.1)](https://github.com/web3guru888/asi-build/discussions/471)
+- ❓ [SemanticParser Q&A — intent patterns, slot extraction, edge cases (Phase 19.1)](https://github.com/web3guru888/asi-build/discussions/473)
+- 💬 [Show & Tell: DialogueManager — multi-turn state tracking, slot carry-over, context windows (Phase 19.2)](https://github.com/web3guru888/asi-build/discussions/472)
+- ❓ [DialogueManager Q&A — session state, slot carry-over, context windows (Phase 19.2)](https://github.com/web3guru888/asi-build/discussions/476)
+- 📝 [Show & Tell: ResponseGenerator — template-free NLG with style & tone control (Phase 19.3)](https://github.com/web3guru888/asi-build/discussions/474)
+- ❓ [ResponseGenerator Q&A — style control, phrasing pools, NLG edge cases (Phase 19.3)](https://github.com/web3guru888/asi-build/discussions/478)
+- 🖼️ [Show & Tell: MultiModalEncoder — unified embedding space & cross-modal fusion (Phase 19.4)](https://github.com/web3guru888/asi-build/discussions/475)
+- ❓ [MultiModalEncoder Q&A — embedding dimensions, fusion strategies, modality backends (Phase 19.4)](https://github.com/web3guru888/asi-build/discussions/479)
+- 🎉 [Show & Tell: CommunicationOrchestrator — end-to-end NLU pipeline, PHASE 19 COMPLETE (Phase 19.5)](https://github.com/web3guru888/asi-build/discussions/477)
+- ❓ [CommunicationOrchestrator Q&A — pipeline coordination, timeouts, Phase 19 retrospective (Phase 19.5)](https://github.com/web3guru888/asi-build/discussions/480)
 - 🖥️ [AlignmentDashboard — SSE operator console, Phase 11 complete](https://github.com/web3guru888/asi-build/discussions/350)
 - ❓ [AlignmentDashboard config — EventSource setup, overrides, Grafana](https://github.com/web3guru888/asi-build/discussions/351)
 - 🌐 [Show & Tell: AgentRegistry — distributed identity & capability registry (Phase 12.1)](https://github.com/web3guru888/asi-build/discussions/353)
