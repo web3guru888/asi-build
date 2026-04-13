@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-272_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-287_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>600+ discussions · 272 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>630+ discussions · 287 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,7 +822,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 272 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 287 pages of documentation
 <br />
 💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 600+ threads
 
@@ -1196,6 +1196,19 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 44.4 — GraphPoolingManager](https://github.com/web3guru888/asi-build/discussions/885)
 - 🔬 [Show & Tell: Phase 44.5 — GraphIntelligenceOrchestrator](https://github.com/web3guru888/asi-build/discussions/886)
 - ❓ [Q&A: Phase 44.5 — GraphIntelligenceOrchestrator](https://github.com/web3guru888/asi-build/discussions/887)
+- 📋 [Phase 45 Planning — Knowledge Distillation & Model Compression](https://github.com/web3guru888/asi-build/discussions/888)
+- 📋 [Phase 46 Planning — Self-Supervised Learning & Contrastive Representations](https://github.com/web3guru888/asi-build/discussions/904)
+- 📋 [Phase 47 Planning — Symbolic AI & Neurosymbolic Integration](https://github.com/web3guru888/asi-build/discussions/920)
+- 🔬 [Show & Tell: Phase 47.1 — LogicEngine](https://github.com/web3guru888/asi-build/discussions/926)
+- ❓ [Q&A: Phase 47.1 — LogicEngine](https://github.com/web3guru888/asi-build/discussions/927)
+- 🔬 [Show & Tell: Phase 47.2 — TheoremProver](https://github.com/web3guru888/asi-build/discussions/928)
+- ❓ [Q&A: Phase 47.2 — TheoremProver](https://github.com/web3guru888/asi-build/discussions/929)
+- 🔬 [Show & Tell: Phase 47.3 — SymbolicReasoner](https://github.com/web3guru888/asi-build/discussions/930)
+- ❓ [Q&A: Phase 47.3 — SymbolicReasoner](https://github.com/web3guru888/asi-build/discussions/931)
+- 🔬 [Show & Tell: Phase 47.4 — NeuralSymbolicBridge](https://github.com/web3guru888/asi-build/discussions/932)
+- ❓ [Q&A: Phase 47.4 — NeuralSymbolicBridge](https://github.com/web3guru888/asi-build/discussions/933)
+- 🔬 [Show & Tell: Phase 47.5 — NeurosymbolicOrchestrator](https://github.com/web3guru888/asi-build/discussions/934)
+- ❓ [Q&A: Phase 47.5 — NeurosymbolicOrchestrator](https://github.com/web3guru888/asi-build/discussions/935)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
