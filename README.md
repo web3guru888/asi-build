@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-166_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-171_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>372+ discussions · 166 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>382+ discussions · 171 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 166 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 171 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 372+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 382+ threads
 
 </td>
 <td>
@@ -1035,6 +1035,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 23.4 — AdaptiveStrategySelector UCB1, Thompson sampling & regime detection](https://github.com/web3guru888/asi-build/discussions/542)
 - 🎯 [Show & Tell: Phase 23.5 — DecisionOrchestrator unified pipeline (PHASE 23 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/543)
 - ❓ [Q&A: Phase 23.5 — DecisionOrchestrator pipeline integration & Phase 23 retrospective](https://github.com/web3guru888/asi-build/discussions/544)
+- 🧠 [Phase 24 Planning — Social Intelligence & Theory of Mind](https://github.com/web3guru888/asi-build/discussions/545)
+- 🔬 [Show & Tell: Phase 24.1 — BeliefTracker Bayesian epistemic modeling](https://github.com/web3guru888/asi-build/discussions/551)
+- ❓ [Q&A: Phase 24.1 — BeliefTracker log-odds, AGM revision & common knowledge](https://github.com/web3guru888/asi-build/discussions/552)
+- 🎯 [Show & Tell: Phase 24.2 — IntentionRecognizer plan recognition & BDI inference](https://github.com/web3guru888/asi-build/discussions/553)
+- ❓ [Q&A: Phase 24.2 — IntentionRecognizer Bayesian inverse planning & goal status](https://github.com/web3guru888/asi-build/discussions/554)
+- 🔄 [Show & Tell: Phase 24.3 — PerspectiveTaker Level-k recursive simulation](https://github.com/web3guru888/asi-build/discussions/555)
+- ❓ [Q&A: Phase 24.3 — PerspectiveTaker Sally-Anne, cognitive hierarchy & caching](https://github.com/web3guru888/asi-build/discussions/556)
+- 🤝 [Show & Tell: Phase 24.4 — SocialPredictor trust networks & coalition dynamics](https://github.com/web3guru888/asi-build/discussions/557)
+- ❓ [Q&A: Phase 24.4 — SocialPredictor Shapley values, replicator dynamics & trust propagation](https://github.com/web3guru888/asi-build/discussions/558)
+- 🧠 [Show & Tell: Phase 24.5 — SocialOrchestrator unified ToM pipeline (PHASE 24 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/559)
+- ❓ [Q&A: Phase 24.5 — SocialOrchestrator social strategy selection & degraded mode](https://github.com/web3guru888/asi-build/discussions/560)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
