@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-252_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-257_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>560+ discussions · 252 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>570+ discussions · 257 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -824,7 +824,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 242 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 530+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 570+ threads
 
 </td>
 <td>
@@ -1326,3 +1326,16 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 40.4 — CausalInferenceOptimizer statistical estimation methods](https://github.com/web3guru888/asi-build/discussions/821)
 - 🔬 [Show & Tell: Phase 40.5 — CausalOrchestrator unified causal pipeline & XAI integration (PHASE 40 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/822)
 - ❓ [Q&A: Phase 40.5 — CausalOrchestrator pipeline & registry questions](https://github.com/web3guru888/asi-build/discussions/823)
+
+#### Phase 41 — Adversarial Robustness & Security Intelligence
+- 📋 [Phase 41 Planning — Adversarial Robustness & Security Intelligence](https://github.com/web3guru888/asi-build/discussions/824)
+- 🔬 [Show & Tell: Phase 41.1 — AdversarialAttackSimulator FGSM, PGD, C&W, AutoAttack](https://github.com/web3guru888/asi-build/discussions/830)
+- ❓ [Q&A: Phase 41.1 — AdversarialAttackSimulator attack methods](https://github.com/web3guru888/asi-build/discussions/831)
+- 🔬 [Show & Tell: Phase 41.2 — RobustnessVerifier certified robustness & formal verification](https://github.com/web3guru888/asi-build/discussions/832)
+- ❓ [Q&A: Phase 41.2 — RobustnessVerifier certification methods](https://github.com/web3guru888/asi-build/discussions/833)
+- 🔬 [Show & Tell: Phase 41.3 — AdversarialTrainer PGD-AT, TRADES, AWP](https://github.com/web3guru888/asi-build/discussions/834)
+- ❓ [Q&A: Phase 41.3 — AdversarialTrainer adversarial training](https://github.com/web3guru888/asi-build/discussions/835)
+- 🔬 [Show & Tell: Phase 41.4 — InputSanitizer feature squeezing & denoising defense](https://github.com/web3guru888/asi-build/discussions/836)
+- ❓ [Q&A: Phase 41.4 — InputSanitizer input-level defense](https://github.com/web3guru888/asi-build/discussions/837)
+- 🔬 [Show & Tell: Phase 41.5 — SecurityOrchestrator unified defense pipeline & threat intelligence (PHASE 41 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/838)
+- ❓ [Q&A: Phase 41.5 — SecurityOrchestrator security operations](https://github.com/web3guru888/asi-build/discussions/839)
