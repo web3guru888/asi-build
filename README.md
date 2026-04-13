@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-232_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-272_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>510+ discussions · 232 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>600+ discussions · 272 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 232 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 272 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 510+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 600+ threads
 
 </td>
 <td>
@@ -1178,6 +1178,24 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 36.4 — PopulationManager configuration](https://github.com/web3guru888/asi-build/discussions/751)
 - 🔬 [Show & Tell: Phase 36.5 — EvolutionaryOrchestrator generation lifecycle (PHASE 36 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/752)
 - ❓ [Q&A: Phase 36.5 — EvolutionaryOrchestrator pipeline questions](https://github.com/web3guru888/asi-build/discussions/753)
+- 📋 [Phase 37 Planning — Swarm Intelligence & Bio-Inspired Optimization](https://github.com/web3guru888/asi-build/discussions/754)
+- 📋 [Phase 38 Planning — Federated Learning & Privacy-Preserving AI](https://github.com/web3guru888/asi-build/discussions/771)
+- 📋 [Phase 39 Planning — Explainable AI & Interpretability](https://github.com/web3guru888/asi-build/discussions/787)
+- 📋 [Phase 40 Planning — Causal Reasoning & Interventional Intelligence](https://github.com/web3guru888/asi-build/discussions/808)
+- 📋 [Phase 41 Planning — Adversarial Robustness & Security Intelligence](https://github.com/web3guru888/asi-build/discussions/824)
+- 📋 [Phase 42 Planning — Distributed Systems & Fault-Tolerant AI Infrastructure](https://github.com/web3guru888/asi-build/discussions/840)
+- 📋 [Phase 43 Planning — AutoML & Neural Architecture Search](https://github.com/web3guru888/asi-build/discussions/856)
+- 📋 [Phase 44 Planning — Graph Neural Networks & Relational Reasoning](https://github.com/web3guru888/asi-build/discussions/872)
+- 🔬 [Show & Tell: Phase 44.1 — GraphConvolutionEngine](https://github.com/web3guru888/asi-build/discussions/878)
+- ❓ [Q&A: Phase 44.1 — GraphConvolutionEngine](https://github.com/web3guru888/asi-build/discussions/879)
+- 🔬 [Show & Tell: Phase 44.2 — RelationalReasoner](https://github.com/web3guru888/asi-build/discussions/880)
+- ❓ [Q&A: Phase 44.2 — RelationalReasoner](https://github.com/web3guru888/asi-build/discussions/881)
+- 🔬 [Show & Tell: Phase 44.3 — GraphTransformer](https://github.com/web3guru888/asi-build/discussions/882)
+- ❓ [Q&A: Phase 44.3 — GraphTransformer](https://github.com/web3guru888/asi-build/discussions/883)
+- 🔬 [Show & Tell: Phase 44.4 — GraphPoolingManager](https://github.com/web3guru888/asi-build/discussions/884)
+- ❓ [Q&A: Phase 44.4 — GraphPoolingManager](https://github.com/web3guru888/asi-build/discussions/885)
+- 🔬 [Show & Tell: Phase 44.5 — GraphIntelligenceOrchestrator](https://github.com/web3guru888/asi-build/discussions/886)
+- ❓ [Q&A: Phase 44.5 — GraphIntelligenceOrchestrator](https://github.com/web3guru888/asi-build/discussions/887)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
