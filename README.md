@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-262_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-267_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>580+ discussions · 262 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>590+ discussions · 267 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -824,7 +824,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 262 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 580+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 590+ threads
 
 </td>
 <td>
@@ -1352,3 +1352,16 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 42.4 — CheckpointManager Chandy-Lamport & recovery](https://github.com/web3guru888/asi-build/discussions/853)
 - 🔬 [Show & Tell: Phase 42.5 — InfrastructureOrchestrator auto-scaling & service mesh (PHASE 42 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/854)
 - ❓ [Q&A: Phase 42.5 — InfrastructureOrchestrator scheduling & scaling](https://github.com/web3guru888/asi-build/discussions/855)
+
+#### Phase 43 — Automated Machine Learning (AutoML) & Neural Architecture Search
+- 📋 [Phase 43 Planning — Automated Machine Learning (AutoML) & Neural Architecture Search](https://github.com/web3guru888/asi-build/discussions/856)
+- 🔬 [Show & Tell: Phase 43.1 — SearchSpaceDesigner operation sets & cell-based search](https://github.com/web3guru888/asi-build/discussions/862)
+- ❓ [Q&A: Phase 43.1 — SearchSpaceDesigner architecture search spaces](https://github.com/web3guru888/asi-build/discussions/863)
+- 🔬 [Show & Tell: Phase 43.2 — NASController DARTS, ENAS & ProxylessNAS](https://github.com/web3guru888/asi-build/discussions/864)
+- ❓ [Q&A: Phase 43.2 — NASController neural architecture search algorithms](https://github.com/web3guru888/asi-build/discussions/865)
+- 🔬 [Show & Tell: Phase 43.3 — HyperparameterTuner Bayesian optimization & BOHB](https://github.com/web3guru888/asi-build/discussions/866)
+- ❓ [Q&A: Phase 43.3 — HyperparameterTuner multi-fidelity HPO](https://github.com/web3guru888/asi-build/discussions/867)
+- 🔬 [Show & Tell: Phase 43.4 — PipelineAssembler automated ML pipelines](https://github.com/web3guru888/asi-build/discussions/868)
+- ❓ [Q&A: Phase 43.4 — PipelineAssembler feature engineering & model selection](https://github.com/web3guru888/asi-build/discussions/869)
+- 🔬 [Show & Tell: Phase 43.5 — AutoMLOrchestrator unified AutoML & meta-learning (PHASE 43 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/870)
+- ❓ [Q&A: Phase 43.5 — AutoMLOrchestrator meta-learning & resource scheduling](https://github.com/web3guru888/asi-build/discussions/871)
