@@ -910,6 +910,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [ImprovementPlanner Q&A — parameters tuple, priority formula, safety gate, lock scope (Phase 16.3)](https://github.com/web3guru888/asi-build/discussions/425)
 - 🔧 [SelfOptimiser — dispatcher (ActionKind→subsystem), rate-limit gate, HOT_SWAP cap, dry-run mode (Phase 16.4)](https://github.com/web3guru888/asi-build/discussions/427)
 - ❓ [SelfOptimiser Q&A — rate-limit, dry-run, orchestrator wiring, CognitiveCycle mock (Phase 16.4)](https://github.com/web3guru888/asi-build/discussions/428)
+- 🔄 [ReflectionCycle — closed-loop orchestration, state machine, human approval gate, asyncio task lifecycle (Phase 16.5 COMPLETE!)](https://github.com/web3guru888/asi-build/discussions/431)
+- ❓ [ReflectionCycle Q&A — cycle interval, approval gate, error recovery, Prometheus integration (Phase 16.5)](https://github.com/web3guru888/asi-build/discussions/432)
 - 🔄 [ReflectionCycle — closed-loop orchestration, CycleState machine, approval gate, Phase 16 COMPLETE (Phase 16.5)](https://github.com/web3guru888/asi-build/discussions/431)
 - ❓ [ReflectionCycle Q&A — cycle loop, approval gate, stop() safety, dry_run, Grafana dashboard (Phase 16.5)](https://github.com/web3guru888/asi-build/discussions/432)
 - 🖥️ [AlignmentDashboard — SSE operator console, Phase 11 complete](https://github.com/web3guru888/asi-build/discussions/350)
