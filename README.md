@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-257_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-262_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>570+ discussions · 257 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>580+ discussions · 262 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 242 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 262 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 570+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 580+ threads
 
 </td>
 <td>
@@ -1339,3 +1339,16 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 41.4 — InputSanitizer input-level defense](https://github.com/web3guru888/asi-build/discussions/837)
 - 🔬 [Show & Tell: Phase 41.5 — SecurityOrchestrator unified defense pipeline & threat intelligence (PHASE 41 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/838)
 - ❓ [Q&A: Phase 41.5 — SecurityOrchestrator security operations](https://github.com/web3guru888/asi-build/discussions/839)
+
+#### Phase 42 — Distributed Systems & Fault-Tolerant AI Infrastructure
+- 📋 [Phase 42 Planning — Distributed Systems & Fault-Tolerant AI Infrastructure](https://github.com/web3guru888/asi-build/discussions/840)
+- 🔬 [Show & Tell: Phase 42.1 — ConsensusEngine Raft/Paxos & Byzantine Fault Tolerance](https://github.com/web3guru888/asi-build/discussions/846)
+- ❓ [Q&A: Phase 42.1 — ConsensusEngine consensus protocols](https://github.com/web3guru888/asi-build/discussions/847)
+- 🔬 [Show & Tell: Phase 42.2 — ShardManager data/model sharding & ZeRO](https://github.com/web3guru888/asi-build/discussions/848)
+- ❓ [Q&A: Phase 42.2 — ShardManager partitioning & load balancing](https://github.com/web3guru888/asi-build/discussions/849)
+- 🔬 [Show & Tell: Phase 42.3 — FaultDetector φ-accrual & health monitoring](https://github.com/web3guru888/asi-build/discussions/850)
+- ❓ [Q&A: Phase 42.3 — FaultDetector failure detection & root cause analysis](https://github.com/web3guru888/asi-build/discussions/851)
+- 🔬 [Show & Tell: Phase 42.4 — CheckpointManager distributed snapshots & WAL](https://github.com/web3guru888/asi-build/discussions/852)
+- ❓ [Q&A: Phase 42.4 — CheckpointManager Chandy-Lamport & recovery](https://github.com/web3guru888/asi-build/discussions/853)
+- 🔬 [Show & Tell: Phase 42.5 — InfrastructureOrchestrator auto-scaling & service mesh (PHASE 42 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/854)
+- ❓ [Q&A: Phase 42.5 — InfrastructureOrchestrator scheduling & scaling](https://github.com/web3guru888/asi-build/discussions/855)
