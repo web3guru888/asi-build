@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-222_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-227_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>490+ discussions · 222 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>500+ discussions · 227 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,7 +822,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 222 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 227 pages of documentation
 <br />
 💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 490+ threads
 
@@ -1156,6 +1156,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 34.4 — NeuromorphicEncoder design questions](https://github.com/web3guru888/asi-build/discussions/720)
 - 🔬 [Show & Tell: Phase 34.5 — NeuromorphicOrchestrator unified pipeline (PHASE 34 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/719)
 - ❓ [Q&A: Phase 34.5 — NeuromorphicOrchestrator design questions](https://github.com/web3guru888/asi-build/discussions/721)
+- 📋 [Phase 35 Planning — Quantum-Classical Hybrid Computing & Variational Algorithms](https://github.com/web3guru888/asi-build/discussions/723)
+- 🔬 [Show & Tell: Phase 35.1 — QuantumCircuitBuilder programmable quantum circuits](https://github.com/web3guru888/asi-build/discussions/724)
+- ❓ [Q&A: Phase 35.1 — QuantumCircuitBuilder design questions](https://github.com/web3guru888/asi-build/discussions/726)
+- 🔬 [Show & Tell: Phase 35.2 — VariationalOptimizer classical-quantum optimization](https://github.com/web3guru888/asi-build/discussions/727)
+- ❓ [Q&A: Phase 35.2 — VariationalOptimizer design questions](https://github.com/web3guru888/asi-build/discussions/728)
+- 🔬 [Show & Tell: Phase 35.3 — QuantumFeatureMap quantum kernel methods](https://github.com/web3guru888/asi-build/discussions/730)
+- ❓ [Q&A: Phase 35.3 — QuantumFeatureMap design questions](https://github.com/web3guru888/asi-build/discussions/731)
+- 🔬 [Show & Tell: Phase 35.4 — EntanglementManager entanglement resources](https://github.com/web3guru888/asi-build/discussions/733)
+- ❓ [Q&A: Phase 35.4 — EntanglementManager design questions](https://github.com/web3guru888/asi-build/discussions/735)
+- 🔬 [Show & Tell: Phase 35.5 — QuantumClassicalOrchestrator hybrid pipeline (PHASE 35 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/736)
+- ❓ [Q&A: Phase 35.5 — QuantumClassicalOrchestrator design questions](https://github.com/web3guru888/asi-build/discussions/737)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
