@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 131 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 134 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 328+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 332+ threads
 
 </td>
 <td>
@@ -910,6 +910,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [ImprovementPlanner Q&A — parameters tuple, priority formula, safety gate, lock scope (Phase 16.3)](https://github.com/web3guru888/asi-build/discussions/425)
 - 🔧 [SelfOptimiser — dispatcher (ActionKind→subsystem), rate-limit gate, HOT_SWAP cap, dry-run mode (Phase 16.4)](https://github.com/web3guru888/asi-build/discussions/427)
 - ❓ [SelfOptimiser Q&A — rate-limit, dry-run, orchestrator wiring, CognitiveCycle mock (Phase 16.4)](https://github.com/web3guru888/asi-build/discussions/428)
+- 🔄 [ReflectionCycle — closed-loop orchestration, CycleState machine, approval gate, Phase 16 COMPLETE (Phase 16.5)](https://github.com/web3guru888/asi-build/discussions/431)
+- ❓ [ReflectionCycle Q&A — cycle loop, approval gate, stop() safety, dry_run, Grafana dashboard (Phase 16.5)](https://github.com/web3guru888/asi-build/discussions/432)
 - 🖥️ [AlignmentDashboard — SSE operator console, Phase 11 complete](https://github.com/web3guru888/asi-build/discussions/350)
 - ❓ [AlignmentDashboard config — EventSource setup, overrides, Grafana](https://github.com/web3guru888/asi-build/discussions/351)
 - 🌐 [Show & Tell: AgentRegistry — distributed identity & capability registry (Phase 12.1)](https://github.com/web3guru888/asi-build/discussions/353)
