@@ -24,4 +24,4 @@
 
 ### Phase 15 — Runtime Self-Modification
 - [Module Registry](Phase-15-Module-Registry)
-
+- [Hot Swapper](Phase-15-Hot-Swapper)
