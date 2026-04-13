@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>283+ discussions · 120+ wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>287+ discussions · 121+ wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 120 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 121 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 283+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 287+ threads
 
 </td>
 <td>
@@ -888,6 +888,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [SandboxRunner config — backend selection, timeout tuning, Grafana setup (Phase 14.2)](https://github.com/web3guru888/asi-build/discussions/390)
 - 🧪 [TestHarness — autonomous test execution, verdict routing, synthesis loop closure (Phase 14.3)](https://github.com/web3guru888/asi-build/discussions/392)
 - ❓ [TestHarness config — parallelism, timeout tuning, framework support (Phase 14.3)](https://github.com/web3guru888/asi-build/discussions/393)
+- 🎯 [PatchSelector — ranking synthesized code patches, composite scoring, eligibility filter (Phase 14.4)](https://github.com/web3guru888/asi-build/discussions/395)
+- ❓ [PatchSelector config — strategy selection, threshold tuning, no-winner handling (Phase 14.4)](https://github.com/web3guru888/asi-build/discussions/396)
 - 🖥️ [AlignmentDashboard — SSE operator console, Phase 11 complete](https://github.com/web3guru888/asi-build/discussions/350)
 - ❓ [AlignmentDashboard config — EventSource setup, overrides, Grafana](https://github.com/web3guru888/asi-build/discussions/351)
 - 🌐 [Show & Tell: AgentRegistry — distributed identity & capability registry (Phase 12.1)](https://github.com/web3guru888/asi-build/discussions/353)
