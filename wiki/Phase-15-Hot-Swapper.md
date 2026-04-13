@@ -1,61 +1,48 @@
-# Phase 15.2 — HotSwapper: Zero-Downtime Live Module Replacement
+# Phase 15.2 — `HotSwapper`: zero-downtime live module replacement
 
-**Phase 15** — Runtime Self-Modification | **Sub-phase 15.2**
+**Issue**: #402 | **Phase**: 15 — Runtime Self-Modification & Hot-Reload Architecture
 
 ---
 
 ## Overview
 
-`HotSwapper` performs **live, zero-downtime replacement** of cognitive modules within a running `CognitiveCycle`. It consumes `ModuleRegistry` (Phase 15.1) to discover staged versions, acquires per-module locks to serialise concurrent swaps of the same module while allowing parallel swaps of different modules, executes the swap atomically, and rolls back automatically on failure.
-
-HotSwapper is the execution engine that makes self-modification operational: `ModuleRegistry` tracks *what* is available; `HotSwapper` decides *when* and *how* to apply it with safety guarantees.
+`HotSwapper` is the Phase 15.2 component that performs live, zero-downtime replacement of cognitive modules within a running `CognitiveCycle`. It consumes `ModuleRegistry` (Phase 15.1) to discover staged versions and executes each swap atomically — committing on successful validation or reverting on failure — without interrupting ongoing cognition.
 
 ---
 
-## Data Model
+## Enumerations
 
 ```python
-from __future__ import annotations
-from dataclasses import dataclass, field
 import enum
-from typing import Any
 
-class SwapPhase(enum.Enum):
-    """Lifecycle stages of a single swap attempt."""
-    PENDING     = "pending"
-    VALIDATING  = "validating"
-    SWAPPING    = "swapping"
-    VERIFYING   = "verifying"
-    COMMITTED   = "committed"
-    ROLLED_BACK = "rolled_back"
-    FAILED      = "failed"
+class SwapResult(enum.Enum):
+    SUCCESS  = "success"   # module replaced and validated
+    ROLLBACK = "rollback"  # swap attempted, validation failed, reverted
+    SKIPPED  = "skipped"   # no staged version available
+    ERROR    = "error"     # unexpected exception or timeout during swap
+```
 
-@dataclass(frozen=True)
-class SwapRequest:
-    """Caller-supplied intent to swap a module to a target version."""
-    module_name:    str
-    target_version: int                     # must exist in ModuleRegistry
-    initiator:      str = "CognitiveCycle"  # who triggered the swap
-    timeout_s:      float = 10.0            # max seconds for the full swap
+---
 
-@dataclass(frozen=True)
-class SwapResult:
-    """Outcome record produced after each swap attempt."""
-    module_name:      str
-    from_version:     int
-    to_version:       int
-    phase:            SwapPhase             # terminal phase only
-    duration_s:       float
-    error:            str | None = None     # set on ROLLED_BACK / FAILED
+## Frozen Dataclasses
 
-@dataclass(frozen=True)
-class SwapperConfig:
-    """Static configuration for HotSwapper."""
-    max_concurrent_modules: int   = 8      # parallel swaps of *different* modules
-    validation_timeout_s:   float = 2.0    # per-module pre-swap validation budget
-    verification_timeout_s: float = 3.0    # post-swap health-check budget
-    rollback_on_verify_fail: bool = True   # auto-rollback when verify fails
-    emit_audit_events:       bool = True   # push swap lifecycle to SynthesisAudit
+```python
+import dataclasses
+
+@dataclasses.dataclass(frozen=True)
+class SwapEvent:
+    module_name:  str
+    from_version: int          # 0 if no prior ACTIVE version
+    to_version:   int          # 0 if SKIPPED
+    result:       SwapResult
+    duration_ms:  float
+    error:        str | None = None
+
+@dataclasses.dataclass(frozen=True)
+class SwapConfig:
+    validation_timeout_s:  float = 5.0   # max seconds for validator
+    max_rollback_attempts: int   = 3     # retry rollback if registry write fails
+    emit_audit_event:      bool  = True  # forward SwapEvent to SynthesisAudit
 ```
 
 ---
@@ -63,194 +50,189 @@ class SwapperConfig:
 ## Protocol
 
 ```python
-from typing import Protocol, runtime_checkable
+from typing import Any, Callable, Protocol, runtime_checkable
 
 @runtime_checkable
 class HotSwapper(Protocol):
-    """Zero-downtime module replacement contract."""
-
-    async def swap(self, request: SwapRequest) -> SwapResult:
-        """
-        Execute a single module swap end-to-end.
-
-        Lifecycle:
-          PENDING -> VALIDATING -> SWAPPING -> VERIFYING -> COMMITTED
-                                                         \-> ROLLED_BACK (on verify failure)
-        Any unhandled exception -> FAILED (no rollback possible).
-        """
+    async def swap(
+        self,
+        module_name: str,
+        loader:    Callable[[int], Any],
+        validator: Callable[[Any], bool],
+    ) -> SwapEvent:
+        """Atomically replace the live module with its staged version."""
         ...
 
-    async def swap_batch(
-        self, requests: list[SwapRequest]
-    ) -> list[SwapResult]:
-        """
-        Swap multiple modules concurrently (different modules in parallel,
-        same module serialised).  Partial failure is acceptable.
-        """
+    async def swap_all_staged(
+        self,
+        loader:    Callable[[str, int], Any],
+        validator: Callable[[str, Any], bool],
+    ) -> list[SwapEvent]:
+        """Iterate over all STAGED modules and attempt a swap for each."""
         ...
 
-    def stats(self) -> dict[str, Any]:
-        """Return cumulative counters: attempted / committed / rolled_back / failed."""
-        ...
-
-    def reset(self) -> None:
-        """Clear all counters and per-module locks (test helper)."""
-        ...
+    def last_event(self, module_name: str) -> SwapEvent | None: ...
+    def stats(self) -> dict[str, int]: ...
 ```
 
 ---
 
-## Reference Implementation — `AsyncHotSwapper`
+## Reference Implementation: `LiveHotSwapper`
 
 ```python
-import asyncio, time, logging
-from collections import defaultdict
-from typing import Any
+import asyncio
+import logging
+import time
+from collections import Counter
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
-class AsyncHotSwapper:
-    """
-    Production HotSwapper implementation.
 
-    Thread-safety model
-    -------------------
-    * One asyncio.Lock per module name  ->  serialises concurrent swaps of the same module.
-    * A shared asyncio.Semaphore(max_concurrent_modules)  ->  caps total parallel swaps.
-    """
+class LiveHotSwapper:
+    """Thread-safe, asyncio-native hot-swapper backed by ModuleRegistry."""
 
-    def __init__(self, registry, cycle, config=None):
+    def __init__(self, registry: ModuleRegistry, config: SwapConfig | None = None) -> None:
         self._registry = registry
-        self._cycle    = cycle
-        self._cfg      = config or SwapperConfig()
-        self._locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
-        self._sem   = asyncio.Semaphore(self._cfg.max_concurrent_modules)
-        self._counters = {"attempted": 0, "committed": 0, "rolled_back": 0, "failed": 0}
+        self._cfg      = config or SwapConfig()
+        self._locks:   dict[str, asyncio.Lock] = {}
+        self._history: dict[str, SwapEvent]    = {}
+        self._swaps_total   = _counter("asi_hotswapper_swaps_total",   ["module", "result"])
+        self._swap_duration = _histogram("asi_hotswapper_swap_duration_seconds", ["module"])
+        self._rollbacks     = _counter("asi_hotswapper_rollbacks_total", ["module"])
 
-    async def swap(self, request: SwapRequest) -> SwapResult:
-        self._counters["attempted"] += 1
-        t0 = time.monotonic()
-        async with self._locks[request.module_name]:
+    def _lock_for(self, name: str) -> asyncio.Lock:
+        if name not in self._locks:
+            self._locks[name] = asyncio.Lock()
+        return self._locks[name]
+
+    async def swap(
+        self,
+        module_name: str,
+        loader:    Callable[[int], Any],
+        validator: Callable[[Any], bool],
+    ) -> SwapEvent:
+        async with self._lock_for(module_name):
+            staged = self._registry.latest_staged(module_name)
+            if staged is None:
+                event = SwapEvent(
+                    module_name=module_name, from_version=0,
+                    to_version=0, result=SwapResult.SKIPPED, duration_ms=0.0,
+                )
+                self._history[module_name] = event
+                return event
+
+            from_ver = self._registry.latest_version(module_name, status=ModuleStatus.ACTIVE)
+            t0 = time.monotonic()
             try:
-                result = await asyncio.wait_for(
-                    self._do_swap(request, t0), timeout=request.timeout_s
+                new_obj = loader(staged.version)
+                valid = await asyncio.wait_for(
+                    asyncio.get_running_loop().run_in_executor(None, validator, new_obj),
+                    timeout=self._cfg.validation_timeout_s,
                 )
-            except asyncio.TimeoutError:
-                self._counters["failed"] += 1
-                return SwapResult(
-                    module_name=request.module_name, from_version=-1,
-                    to_version=request.target_version, phase=SwapPhase.FAILED,
-                    duration_s=time.monotonic()-t0,
-                    error=f"Swap timed out after {request.timeout_s}s",
-                )
+                if valid:
+                    self._registry.set_status(module_name, staged.version, ModuleStatus.ACTIVE)
+                    if from_ver:
+                        self._registry.set_status(module_name, from_ver, ModuleStatus.ARCHIVED)
+                    result, error = SwapResult.SUCCESS, None
+                else:
+                    self._registry.set_status(module_name, staged.version, ModuleStatus.REVERTED)
+                    result, error = SwapResult.ROLLBACK, "validator returned False"
+                    self._rollbacks.labels(module=module_name).inc()
             except Exception as exc:
-                self._counters["failed"] += 1
-                return SwapResult(
-                    module_name=request.module_name, from_version=-1,
-                    to_version=request.target_version, phase=SwapPhase.FAILED,
-                    duration_s=time.monotonic()-t0, error=str(exc),
-                )
-        if result.phase == SwapPhase.COMMITTED:
-            self._counters["committed"] += 1
-        elif result.phase == SwapPhase.ROLLED_BACK:
-            self._counters["rolled_back"] += 1
-        else:
-            self._counters["failed"] += 1
-        return result
+                self._registry.set_status(module_name, staged.version, ModuleStatus.REVERTED)
+                result, error = SwapResult.ERROR, str(exc)
+                logger.exception("HotSwapper error on %s v%d", module_name, staged.version)
 
-    async def swap_batch(self, requests):
-        async def _guarded(req):
-            async with self._sem:
-                return await self.swap(req)
-        return list(await asyncio.gather(*(_guarded(r) for r in requests)))
+            duration_ms = (time.monotonic() - t0) * 1000
+            event = SwapEvent(
+                module_name=module_name, from_version=from_ver or 0,
+                to_version=staged.version, result=result,
+                duration_ms=duration_ms, error=error,
+            )
+            self._history[module_name] = event
+            self._swaps_total.labels(module=module_name, result=result.value).inc()
+            self._swap_duration.labels(module=module_name).observe(duration_ms / 1000)
+            return event
 
-    def stats(self): return dict(self._counters)
-    def reset(self):
-        self._counters = {k: 0 for k in self._counters}
-        self._locks.clear()
+    async def swap_all_staged(
+        self,
+        loader:    Callable[[str, int], Any],
+        validator: Callable[[str, Any], bool],
+    ) -> list[SwapEvent]:
+        staged_modules = self._registry.list_staged_modules()
+        tasks = [
+            self.swap(
+                name,
+                lambda v, n=name: loader(n, v),
+                lambda obj, n=name: validator(n, obj),
+            )
+            for name in staged_modules
+        ]
+        return list(await asyncio.gather(*tasks))
 
-    async def _do_swap(self, request, t0):
-        name, target_ver = request.module_name, request.target_version
-        active   = self._registry.get_active(name)
-        from_ver = active.version if active else 0
+    def last_event(self, module_name: str) -> SwapEvent | None:
+        return self._history.get(module_name)
 
-        # VALIDATING
-        await asyncio.wait_for(self._validate(name, target_ver),
-                               timeout=self._cfg.validation_timeout_s)
-
-        # SWAPPING
-        old_impl = self._cycle.get_module(name)
-        new_ver  = self._registry.get_version(name, target_ver)
-        self._cycle.set_module(name, new_ver.implementation)
-
-        # VERIFYING
-        try:
-            await asyncio.wait_for(self._verify(name, new_ver.implementation),
-                                   timeout=self._cfg.verification_timeout_s)
-        except Exception as err:
-            if self._cfg.rollback_on_verify_fail:
-                self._cycle.set_module(name, old_impl)
-                self._registry.set_status(name, target_ver, "REVERTED")
-                return SwapResult(module_name=name, from_version=from_ver,
-                                  to_version=target_ver, phase=SwapPhase.ROLLED_BACK,
-                                  duration_s=time.monotonic()-t0, error=str(err))
-            raise
-
-        # COMMITTED
-        self._registry.set_status(name, target_ver, "ACTIVE")
-        if from_ver:
-            self._registry.set_status(name, from_ver, "ARCHIVED")
-        return SwapResult(module_name=name, from_version=from_ver,
-                          to_version=target_ver, phase=SwapPhase.COMMITTED,
-                          duration_s=time.monotonic()-t0)
-
-    async def _validate(self, name, target_ver):
-        ver = self._registry.get_version(name, target_ver)
-        if ver is None:
-            raise ValueError(f"Module {name!r} v{target_ver} not found in registry")
-        if ver.status.value != "STAGED":
-            raise ValueError(f"Module {name!r} v{target_ver} has status {ver.status!r}; "
-                             "only STAGED versions may be swapped in")
-
-    async def _verify(self, name, impl):
-        if hasattr(impl, "health_check") and asyncio.iscoroutinefunction(impl.health_check):
-            await impl.health_check()
+    def stats(self) -> dict[str, int]:
+        c: Counter[str] = Counter()
+        for ev in self._history.values():
+            c[ev.result.value] += 1
+        return dict(c)
 ```
 
 ---
 
-## CognitiveCycle Integration
+## `ModuleRegistry` Extensions (15.1 → 15.2)
+
+`HotSwapper` requires two additional methods on `ModuleRegistry`:
+
+```python
+def latest_staged(self, module_name: str) -> ModuleVersion | None:
+    """Return the highest-version STAGED entry, or None."""
+    staged = self.list_versions(module_name, status=ModuleStatus.STAGED)
+    return staged[-1] if staged else None
+
+def list_staged_modules(self) -> list[str]:
+    """Return names of all modules that have at least one STAGED version."""
+    return [
+        name for name, versions in self._store.items()
+        if any(v.status == ModuleStatus.STAGED for v in versions.values())
+    ]
+```
+
+---
+
+## `CognitiveCycle` Integration
 
 ```python
 class CognitiveCycle:
     def __init__(self, ..., swapper: HotSwapper | None = None) -> None:
         ...
-        self._swapper = swapper or AsyncHotSwapper(self._registry, self)
-
-    def get_module(self, name: str):
-        return self._modules[name]
-
-    def set_module(self, name: str, impl) -> None:
-        """Atomic reference replacement — GIL sufficient for dict write."""
-        self._modules[name] = impl
+        self._swapper = swapper
 
     async def _synthesis_step(self) -> None:
-        # ... CodeSynthesiser -> SandboxRunner -> TestHarness -> PatchSelector ...
-        patch = self._selector.select(candidates)
-        if patch:
-            version = self._registry.register(
-                module_name=patch.module_name,
-                implementation=patch.implementation,
-                metadata={"source": "synthesis"},
+        # Phase 14: synthesise → sandbox → harness → selector → audit
+        # Phase 15.1: registry.register(status=STAGED)
+        if self._swapper:
+            events = await self._swapper.swap_all_staged(
+                loader=self._load_module,
+                validator=self._validate_module,
             )
-            result = await self._swapper.swap(
-                SwapRequest(module_name=patch.module_name,
-                            target_version=version.version)
-            )
-            if result.phase == SwapPhase.COMMITTED:
-                self._audit.append(AuditRecord(event_type=AuditEventType.PATCH_APPLIED, ...))
-            elif result.phase == SwapPhase.ROLLED_BACK:
-                logger.warning("Swap rolled back: %s", result.error)
+            for ev in events:
+                logger.info(
+                    "HotSwap %s v%d→v%d: %s",
+                    ev.module_name, ev.from_version, ev.to_version, ev.result.value,
+                )
+
+    def _load_module(self, module_name: str, version: int) -> Any:
+        """Load compiled module artifact for the given version."""
+        # Implementation: importlib.import_module / pickle / torch.load / etc.
+        ...
+
+    def _validate_module(self, module_name: str, module_obj: Any) -> bool:
+        """Run a fast smoke test against the loaded module."""
+        ...
 ```
 
 ---
@@ -258,151 +240,173 @@ class CognitiveCycle:
 ## Data-Flow Diagram
 
 ```
-CognitiveCycle._synthesis_step()
-          |
-          v
-   ModuleRegistry.register()  -->  STAGED version
-          |
-          v
-   HotSwapper.swap(SwapRequest)
-          |
-    +-----+------------------+
-    |  per-module Lock        |
-    |  + global Semaphore     |
-    +-----+------------------+
-          |
-    +-----v-----+
-    | VALIDATING|  registry.get_version -> must be STAGED
-    +-----+-----+
-          | OK
-    +-----v-----+
-    |  SWAPPING |  cycle.set_module(name, new_impl)
-    +-----+-----+
-          |
-    +-----v------+
-    | VERIFYING  |  impl.health_check() [if exists]
-    +-----+------+
-         / \
-       OK   FAIL
-       |      |
-       |   rollback: cycle.set_module(old_impl)
-       |         registry.set_status -> REVERTED
-       |
-    +--v------+
-    |COMMITTED|  registry.set_status -> ACTIVE
-    +---------+  old version -> ARCHIVED
+SynthesisAudit (Phase 14.5)
+        │  PATCH_APPLIED event
+        ▼
+ModuleRegistry.register(status=STAGED)   ◄── Phase 15.1
+        │
+        │  list_staged_modules()
+        ▼
+HotSwapper.swap_all_staged()             ◄── Phase 15.2
+        │
+        ├── loader(name, version)  →  new_obj
+        ├── asyncio.wait_for(validator(new_obj), timeout)
+        │
+        ├─[valid]──► set_status(ACTIVE)  /  old→ARCHIVED
+        └─[invalid]─► set_status(REVERTED)
+```
+
+---
+
+## SwapResult Decision Tree
+
+```
+latest_staged() → None?
+    YES → SwapResult.SKIPPED
+
+loader() raises?
+    YES → REVERTED + SwapResult.ERROR
+
+validator times out?
+    YES → REVERTED + SwapResult.ERROR
+
+validator() → False?
+    YES → REVERTED + SwapResult.ROLLBACK
+
+validator() → True
+    → ACTIVE + old→ARCHIVED + SwapResult.SUCCESS
 ```
 
 ---
 
 ## Prometheus Metrics
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `asi_hot_swapper_swaps_total` | Counter | `module`, `phase` | Swap attempts by terminal phase |
-| `asi_hot_swapper_duration_seconds` | Histogram | `module` | End-to-end swap latency |
-| `asi_hot_swapper_rollbacks_total` | Counter | `module` | Rolled-back swaps (verify failures) |
-| `asi_hot_swapper_concurrent` | Gauge | — | Active concurrent swaps right now |
-| `asi_hot_swapper_timeout_total` | Counter | `module` | Swaps aborted by timeout |
+| Metric | Type | Labels |
+|--------|------|--------|
+| `asi_hotswapper_swaps_total` | Counter | `module`, `result` |
+| `asi_hotswapper_swap_duration_seconds` | Histogram | `module` |
+| `asi_hotswapper_active_modules` | Gauge | `module` |
+| `asi_hotswapper_staged_queue_depth` | Gauge | — |
+| `asi_hotswapper_rollbacks_total` | Counter | `module` |
 
-### PromQL Alerts
+### Example PromQL
+
+```promql
+# Success rate (5 min window)
+rate(asi_hotswapper_swaps_total{result="success"}[5m])
+  / rate(asi_hotswapper_swaps_total[5m])
+
+# P95 swap latency
+histogram_quantile(0.95, rate(asi_hotswapper_swap_duration_seconds_bucket[5m]))
+```
+
+### Grafana Alert
 
 ```yaml
-# Rollback rate > 10% over 5 min
-- alert: HighSwapRollbackRate
+- alert: HotSwapHighRollbackRate
   expr: |
-    rate(asi_hot_swapper_swaps_total{phase="rolled_back"}[5m])
-    / rate(asi_hot_swapper_swaps_total[5m]) > 0.10
-  for: 2m
-  labels: { severity: warning }
-  annotations:
-    summary: "HotSwapper rollback rate {{ $value | humanizePercentage }}"
-
-# p99 swap latency > 8s
-- alert: SlowSwapLatency
-  expr: histogram_quantile(0.99, rate(asi_hot_swapper_duration_seconds_bucket[5m])) > 8
+    rate(asi_hotswapper_rollbacks_total[10m])
+    / rate(asi_hotswapper_swaps_total[10m]) > 0.3
   for: 5m
   labels: { severity: warning }
   annotations:
-    summary: "HotSwapper p99 latency {{ $value }}s"
+    summary: "Hot-swap rollback rate > 30%"
+    description: "Module {{ $labels.module }} is failing validation frequently."
 ```
 
 ---
 
-## Static-Analysis Contract (mypy strict)
+## Validation Timeout Guide
 
-| Symbol | Return | Notes |
-|--------|--------|-------|
-| `AsyncHotSwapper.swap` | `Coroutine[Any, Any, SwapResult]` | `await`-able |
-| `AsyncHotSwapper.swap_batch` | `Coroutine[Any, Any, list[SwapResult]]` | parallel gather |
-| `AsyncHotSwapper.stats` | `dict[str, Any]` | counters only |
-| `SwapRequest` | frozen dataclass | `eq=True, frozen=True` |
-| `SwapResult` | frozen dataclass | `error: str \| None` |
-| `SwapperConfig` | frozen dataclass | all fields typed |
-| `SwapPhase` | `enum.Enum` | 7 lifecycle values |
+| Workload type | Recommended `validation_timeout_s` |
+|---------------|--------------------------------------|
+| Unit smoke test | 2–5 s |
+| Integration test (DB) | 10–30 s |
+| Full benchmark suite | 60–120 s |
 
 ---
 
-## Test Targets
+## Type-Safety Table
 
+| Symbol | mypy annotation | `isinstance` check |
+|--------|-----------------|---------------------|
+| `HotSwapper` | `Protocol` | ✅ (runtime_checkable) |
+| `SwapConfig` | `frozen dataclass` | ✅ |
+| `SwapEvent` | `frozen dataclass` | ✅ |
+| `SwapResult` | `str Enum` | ✅ |
+| `loader` | `Callable[[int], Any]` | — |
+| `validator` | `Callable[[Any], bool]` | — |
+
+---
+
+## Test Targets (12)
+
+1. `test_swap_success` — loader+validator both succeed → ACTIVE, old → ARCHIVED
+2. `test_swap_rollback` — validator returns False → REVERTED, SwapResult.ROLLBACK
+3. `test_swap_error` — loader raises → REVERTED, SwapResult.ERROR
+4. `test_swap_skipped` — no STAGED version → SwapResult.SKIPPED
+5. `test_swap_timeout` — validator times out → SwapResult.ERROR
+6. `test_swap_all_staged` — multiple staged modules → correct events list
+7. `test_concurrent_swap_serialised` — asyncio.gather on same module → serialised via lock
+8. `test_last_event_history` — history populated correctly per module
+9. `test_stats_counter` — stats() reflects outcome distribution
+10. `test_registry_integration_e2e` — register STAGED → swap → ACTIVE (real registry)
+11. `test_no_swapper_noop` — swapper=None in CognitiveCycle is a no-op
+12. `test_prometheus_labels` — metrics emitted with correct module+result labels
+
+### Test Skeleton — concurrent swap serialisation
+
+```python
+import asyncio, pytest
+
+@pytest.mark.asyncio
+async def test_concurrent_swap_serialised():
+    registry = InMemoryModuleRegistry()
+    registry.register(ModuleVersion("planner", 1, b"x" * 32, ModuleStatus.STAGED))
+
+    swapper = LiveHotSwapper(registry)
+    # Launch 5 concurrent swaps for the same module
+    events = await asyncio.gather(*[
+        swapper.swap("planner", lambda v: object(), lambda _: True)
+        for _ in range(5)
+    ])
+    successes = [e for e in events if e.result == SwapResult.SUCCESS]
+    skipped   = [e for e in events if e.result == SwapResult.SKIPPED]
+    assert len(successes) == 1
+    assert len(skipped)   == 4
 ```
-tests/phase15/test_hot_swapper.py
-├── test_swap_committed_happy_path          # STAGED -> COMMITTED, registry updates
-├── test_swap_rolled_back_on_verify_fail    # verify raises -> ROLLED_BACK, old impl restored
-├── test_swap_failed_on_timeout             # asyncio.wait_for times out -> FAILED
-├── test_swap_failed_non_staged_version     # ACTIVE version rejected in VALIDATING
-├── test_swap_batch_concurrent_different    # 4 different modules swap concurrently
-├── test_swap_batch_serialised_same_module  # 2 swaps of same module run sequentially
-├── test_semaphore_max_concurrency          # semaphore caps parallel swaps
-├── test_rollback_restores_old_impl         # cycle.get_module() returns old after rollback
-├── test_stats_counters_increment           # attempted/committed/rolled_back/failed track correctly
-├── test_reset_clears_counters              # reset() zeroes counters + clears locks
-├── test_health_check_called_when_present   # _verify calls impl.health_check()
-├── test_health_check_skipped_when_absent   # _verify safe when health_check not defined
-```
 
 ---
 
-## Implementation Order
+## Implementation Order (14 steps)
 
-1. Add `SwapPhase`, `SwapRequest`, `SwapResult`, `SwapperConfig` frozen dataclasses
-2. Define `HotSwapper` Protocol (`@runtime_checkable`)
-3. Stub `AsyncHotSwapper.__init__` with `defaultdict(asyncio.Lock)` + `Semaphore`
-4. Implement `_validate` (registry STAGED check)
-5. Implement `_do_swap` SWAPPING step (cycle reference swap)
-6. Implement `_verify` (duck-type health_check)
-7. Wire rollback path in `_do_swap`
-8. Implement `swap` with `asyncio.wait_for` + timeout handling
-9. Implement `swap_batch` using `asyncio.gather` + semaphore guard
-10. Add Prometheus metrics (`Counter`, `Histogram`, `Gauge`)
-11. Add `stats()` and `reset()` helpers
-12. Wire into `CognitiveCycle._synthesis_step()`
-13. Write 12 test targets
-14. `mypy --strict` — zero errors
-
----
-
-## Phase 15 Sub-phase Tracker
-
-| Sub-phase | Component | Issue | Status |
-|-----------|-----------|-------|--------|
-| 15.1 | ModuleRegistry | #401 | In Progress |
-| 15.2 | HotSwapper | #402 | In Progress |
-| 15.3 | RollbackManager | — | Planned |
-| 15.4 | VersionDiffer | — | Planned |
-| 15.5 | SelfModAudit | — | Planned |
+1. Add `latest_staged()` and `list_staged_modules()` to `InMemoryModuleRegistry` (Phase 15.1 extension)
+2. Define `SwapResult` enum
+3. Define `SwapEvent` frozen dataclass
+4. Define `SwapConfig` frozen dataclass
+5. Define `HotSwapper` Protocol (`@runtime_checkable`)
+6. Implement `LiveHotSwapper.__init__()` — lock dict + Prometheus helpers
+7. Implement `LiveHotSwapper._lock_for()` — lazy per-module lock creation
+8. Implement `LiveHotSwapper.swap()` — lock acquire → staged lookup → load → validate → commit/revert
+9. Implement `LiveHotSwapper.swap_all_staged()` — gather over staged modules
+10. Implement `last_event()` and `stats()` accessors
+11. Wire `HotSwapper` into `CognitiveCycle._synthesis_step()`
+12. Add `_load_module()` and `_validate_module()` stub hooks to `CognitiveCycle`
+13. Register Prometheus metrics (Counter + Histogram + Gauge)
+14. Write unit tests (mock registry + mock loader/validator)
 
 ---
 
-## Phase 14 -> 15 Integration
+## Phase 15 Sub-Phase Tracker
 
-| Phase 14 Component | Feeds into Phase 15 |
-|--------------------|---------------------|
-| PatchSelector (14.4) | SwapRequest.module_name / target_version |
-| SynthesisAudit (14.5) | PATCH_APPLIED / SWAP_ROLLED_BACK events |
-| ModuleRegistry (15.1) | Version discovery + status transitions |
-| HotSwapper (15.2) | Live replacement + rollback |
+| Sub-phase | Component | Issue | Wiki | Status |
+|-----------|-----------|-------|------|--------|
+| 15.1 | ModuleRegistry | #401 | [Phase-15-Module-Registry](Phase-15-Module-Registry) | 🟡 open |
+| 15.2 | HotSwapper | #402 | [this page](Phase-15-Hot-Swapper) | 🟡 open |
+| 15.3 | RollbackCoordinator | — | — | ⏳ |
+| 15.4 | CapabilityIndex | — | — | ⏳ |
+| 15.5 | SelfModificationAudit | — | — | ⏳ |
 
 ---
 
-*Part of the ASI-Build wiki - Phase 15: Runtime Self-Modification*
+*Part of the Phase 15 — Runtime Self-Modification & Hot-Reload Architecture track.*

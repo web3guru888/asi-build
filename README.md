@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-182_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-187_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>403+ discussions · 182 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>414+ discussions · 187 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 182 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 187 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 403+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 414+ threads
 
 </td>
 <td>
@@ -1068,6 +1068,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 26.4 — CommonSenseEngine knowledge sources & inference limits](https://github.com/web3guru888/asi-build/discussions/590)
 - 🔬 [Show & Tell: Phase 26.5 — KnowledgeOrchestrator unified knowledge pipeline (PHASE 26 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/591)
 - ❓ [Q&A: Phase 26.5 — KnowledgeOrchestrator lifecycle & cross-orchestrator integration](https://github.com/web3guru888/asi-build/discussions/592)
+- 📋 [Phase 27 Planning — Transfer Learning & Cross-Domain Generalization](https://github.com/web3guru888/asi-build/discussions/593)
+- 🔬 [Show & Tell: Phase 27.1 — DomainMapper structure mapping for cross-domain transfer](https://github.com/web3guru888/asi-build/discussions/599)
+- ❓ [Q&A: Phase 27.1 — DomainMapper progressive alignment & systematicity](https://github.com/web3guru888/asi-build/discussions/600)
+- 🔬 [Show & Tell: Phase 27.2 — AbstractionEngine hierarchical abstraction & schema induction](https://github.com/web3guru888/asi-build/discussions/601)
+- ❓ [Q&A: Phase 27.2 — AbstractionEngine anti-unification & MDL level selection](https://github.com/web3guru888/asi-build/discussions/602)
+- 🔬 [Show & Tell: Phase 27.3 — FewShotAdapter meta-learning for rapid adaptation](https://github.com/web3guru888/asi-build/discussions/603)
+- ❓ [Q&A: Phase 27.3 — FewShotAdapter gradient-free fast weights & prototype retrieval](https://github.com/web3guru888/asi-build/discussions/604)
+- 🔬 [Show & Tell: Phase 27.4 — CurriculumDesigner adaptive learning curricula](https://github.com/web3guru888/asi-build/discussions/605)
+- ❓ [Q&A: Phase 27.4 — CurriculumDesigner ZPD targeting & prerequisite DAG](https://github.com/web3guru888/asi-build/discussions/606)
+- 🔬 [Show & Tell: Phase 27.5 — GeneralizationOrchestrator unified transfer pipeline (PHASE 27 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/607)
+- ❓ [Q&A: Phase 27.5 — GeneralizationOrchestrator negative transfer detection & pipeline stages](https://github.com/web3guru888/asi-build/discussions/608)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---

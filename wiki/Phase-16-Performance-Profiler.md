@@ -1,262 +1,395 @@
 # Phase 16.1 — PerformanceProfiler
 
-> Part of **Phase 16: Cognitive Reflection & Self-Improvement** | Issue: [#417](https://github.com/web3guru888/asi-build/issues/417) | Discussions: [S&T #418](https://github.com/web3guru888/asi-build/discussions/418) · [Q&A #419](https://github.com/web3guru888/asi-build/discussions/419)
+**Phase**: 16 — Cognitive Reflection & Self-Improvement
+**Issue**: [#417](https://github.com/web3guru888/asi-build/issues/417)
+**Show & Tell**: [#418](https://github.com/web3guru888/asi-build/discussions/418)
+**Q&A**: [#419](https://github.com/web3guru888/asi-build/discussions/419)
+
+---
 
 ## Overview
 
-The `PerformanceProfiler` is the observability foundation of Phase 16. It instruments every module call within the `CognitiveCycle`, collecting per-module latency samples in a sliding time-window and exposing percentile statistics (p50/p95/p99), throughput (rps), and error counts that feed the `WeaknessDetector` (Phase 16.2).
+`PerformanceProfiler` is the **observability backbone** of Phase 16. It transparently instruments every cognitive module through `CognitiveCycle._run_module()`, maintaining per-module sliding-window statistics that drive the self-improvement pipeline.
 
-## Data Structures
+**Responsibility**: Record per-call latency, throughput, and error rates for each cognitive module; expose `ModuleProfile` snapshots consumed by `WeaknessDetector` (Phase 16.2).
 
-### `ProfilerGranularity` enum
+---
+
+## Enums
+
+### `ProfilerGranularity`
 
 ```python
-class ProfilerGranularity(enum.Enum):
-    MODULE   = "module"    # one profile per module (default)
-    METHOD   = "method"    # one profile per method within a module
-    PIPELINE = "pipeline"  # aggregate across all modules
+class ProfilerGranularity(Enum):
+    MODULE   = auto()   # one sample per module invocation (default)
+    METHOD   = auto()   # one sample per async def call
+    PIPELINE = auto()   # aggregate across full CognitiveCycle pass
 ```
 
-### `LatencyBucket` frozen dataclass
+| Value | Scope | Use case |
+|---|---|---|
+| `MODULE` | Per module invocation | Coarse-grained health monitoring |
+| `METHOD` | Per `async def` | Hotspot detection within modules |
+| `PIPELINE` | Full CognitiveCycle pass | End-to-end latency budgeting |
+
+---
+
+## Frozen Dataclasses
+
+### `LatencyBucket`
 
 ```python
 @dataclass(frozen=True)
 class LatencyBucket:
-    latency_ms: float
-    timestamp:  float   # time.monotonic()
-    error:      bool = False
+    p50_ms: float
+    p95_ms: float
+    p99_ms: float
+    max_ms: float
 ```
 
-### `ModuleProfile` frozen dataclass
+### `ModuleProfile`
 
 ```python
 @dataclass(frozen=True)
 class ModuleProfile:
-    module_name:    str
-    sample_count:   int
-    p50_ms:         float
-    p95_ms:         float
-    p99_ms:         float
-    error_count:    int
+    module_id: str
+    window_start: float          # time.monotonic() of earliest sample in window
+    window_end: float            # time.monotonic() of latest sample in window
+    call_count: int
+    error_count: int
     throughput_rps: float
-    window_start:   float
-    window_end:     float
+    latency: LatencyBucket
+    tags: frozenset[str] = field(default_factory=frozenset)
 ```
 
-### `ProfilerConfig` frozen dataclass
+### `ProfilerConfig`
 
 ```python
 @dataclass(frozen=True)
 class ProfilerConfig:
-    window_seconds:    float = 300.0    # 5-minute sliding window
-    max_samples:       int   = 10_000   # per-module deque maxlen
-    flush_interval_s:  float = 60.0     # stale-eviction period
-    granularity:       ProfilerGranularity = ProfilerGranularity.MODULE
-    enabled_modules:   frozenset[str] | None = None  # None = all
+    granularity: ProfilerGranularity = ProfilerGranularity.MODULE
+    window_seconds: float = 60.0   # sliding window duration
+    max_samples: int = 10_000      # per-module deque cap
+    export_prometheus: bool = True
+
+    def __post_init__(self) -> None:
+        if self.window_seconds <= 0:
+            raise ValueError("window_seconds must be positive")
+        if self.max_samples < 1:
+            raise ValueError("max_samples must be >= 1")
 ```
+
+---
 
 ## Protocol
 
 ```python
 @runtime_checkable
 class PerformanceProfiler(Protocol):
-    def record(self, module_name: str, latency_ms: float, *, error: bool = False) -> None: ...
-    def profile(self, module_name: str) -> ModuleProfile | None: ...
-    def stats(self) -> dict[str, ModuleProfile]: ...
-    def flush(self) -> None: ...
-    def reset(self, module_name: str | None = None) -> None: ...
+    async def record(
+        self,
+        module_id: str,
+        duration_ms: float,
+        *,
+        error: bool = False,
+        tags: frozenset[str] = frozenset(),
+    ) -> None: ...
+
+    async def get_profile(self, module_id: str) -> ModuleProfile | None: ...
+    async def list_profiles(self) -> Sequence[ModuleProfile]: ...
+    async def flush(self) -> None: ...
+    async def reset(self, module_id: str | None = None) -> None: ...
+    def stats(self) -> dict[str, int]: ...
 ```
 
-## Reference Implementation — `SlidingWindowProfiler`
+---
+
+## Reference Implementation: `SlidingWindowProfiler`
 
 ```python
+import asyncio, collections, math, time
+from collections import defaultdict
+
 class SlidingWindowProfiler:
-    def __init__(self, config: ProfilerConfig) -> None:
-        self._cfg = config
-        self._buckets: defaultdict[str, deque[LatencyBucket]] = defaultdict(
-            lambda: deque(maxlen=config.max_samples)
-        )
-        self._locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
+    """
+    Per-module sliding-window latency profiler.
 
-    def record(self, module_name: str, latency_ms: float, *, error: bool = False) -> None:
-        self._buckets[module_name].append(
-            LatencyBucket(latency_ms=latency_ms, timestamp=time.monotonic(), error=error)
-        )
+    Storage:   deque(maxlen=max_samples) of (monotonic_ts, duration_ms)
+    Locking:   per-module asyncio.Lock — no global contention
+    Percentile: nearest-rank method over sorted window samples
+    """
 
-    def profile(self, module_name: str) -> ModuleProfile | None:
-        buckets = self._buckets.get(module_name)
-        if not buckets:
+    def __init__(self, config: ProfilerConfig | None = None) -> None:
+        self._cfg = config or ProfilerConfig()
+        self._locks:  defaultdict[str, asyncio.Lock]  = defaultdict(asyncio.Lock)
+        self._samples: defaultdict[str, collections.deque] = \
+            defaultdict(lambda: collections.deque(maxlen=self._cfg.max_samples))
+        self._errors:       defaultdict[str, int] = defaultdict(int)
+        self._total_calls:  defaultdict[str, int] = defaultdict(int)
+
+    # ------------------------------------------------------------------ record
+
+    async def record(
+        self,
+        module_id: str,
+        duration_ms: float,
+        *,
+        error: bool = False,
+        tags: frozenset[str] = frozenset(),
+    ) -> None:
+        async with self._locks[module_id]:
+            self._samples[module_id].append((time.monotonic(), duration_ms))
+            self._total_calls[module_id] += 1
+            if error:
+                self._errors[module_id] += 1
+
+    # --------------------------------------------------------------- get/list
+
+    async def get_profile(self, module_id: str) -> ModuleProfile | None:
+        async with self._locks[module_id]:
+            return self._compute_profile(module_id)
+
+    async def list_profiles(self) -> list[ModuleProfile]:
+        profiles: list[ModuleProfile] = []
+        for mid in list(self._samples):
+            async with self._locks[mid]:
+                p = self._compute_profile(mid)
+                if p is not None:
+                    profiles.append(p)
+        return profiles
+
+    # -------------------------------------------------------- _compute_profile
+
+    def _compute_profile(self, module_id: str) -> ModuleProfile | None:
+        """Called under self._locks[module_id] — sync, no await."""
+        raw = list(self._samples[module_id])
+        if not raw:
             return None
-        return self._compute_profile(module_name, list(buckets))
+        cutoff = time.monotonic() - self._cfg.window_seconds
+        window = [(t, d) for t, d in raw if t >= cutoff]
+        if not window:
+            return None
+        durations = sorted(d for _, d in window)
+        n = len(durations)
 
-    def _compute_profile(self, module_name: str, buckets: list[LatencyBucket]) -> ModuleProfile:
-        now   = time.monotonic()
-        cutoff = now - self._cfg.window_seconds
-        recent = [b for b in buckets if b.timestamp >= cutoff]
-        if not recent:
-            recent = buckets   # fall back to all if window empty
-        latencies = sorted(b.latency_ms for b in recent)
-        n = len(latencies)
+        def pct(p: float) -> float:
+            idx = max(0, min(n - 1, math.ceil(p / 100 * n) - 1))
+            return durations[idx]
 
-        def percentile(p: float) -> float:
-            # nearest-rank
-            idx = max(0, int(math.ceil(p / 100 * n)) - 1)
-            return latencies[idx]
-
-        elapsed = (recent[-1].timestamp - recent[0].timestamp) or 1e-6
+        span = window[-1][0] - window[0][0]
         return ModuleProfile(
-            module_name    = module_name,
-            sample_count   = n,
-            p50_ms         = percentile(50),
-            p95_ms         = percentile(95),
-            p99_ms         = percentile(99),
-            error_count    = sum(1 for b in recent if b.error),
-            throughput_rps = n / elapsed if elapsed > 0 else 0.0,
-            window_start   = recent[0].timestamp,
-            window_end     = recent[-1].timestamp,
+            module_id=module_id,
+            window_start=window[0][0],
+            window_end=window[-1][0],
+            call_count=n,
+            error_count=self._errors[module_id],
+            throughput_rps=n / max(span, 1e-9),
+            latency=LatencyBucket(
+                p50_ms=pct(50), p95_ms=pct(95),
+                p99_ms=pct(99), max_ms=max(durations),
+            ),
         )
 
-    def stats(self) -> dict[str, ModuleProfile]:
-        return {name: self._compute_profile(name, list(bkts))
-                for name, bkts in self._buckets.items() if bkts}
+    # ------------------------------------------------------------------ flush
 
-    def flush(self) -> None:
-        cutoff = time.monotonic() - self._cfg.window_seconds
-        for bkts in self._buckets.values():
-            while bkts and bkts[0].timestamp < cutoff:
-                bkts.popleft()
+    async def flush(self) -> None:
+        """Physically evict samples older than window_seconds."""
+        for mid in list(self._samples):
+            async with self._locks[mid]:
+                cutoff = time.monotonic() - self._cfg.window_seconds
+                dq = self._samples[mid]
+                while dq and dq[0][0] < cutoff:
+                    dq.popleft()
 
-    def reset(self, module_name: str | None = None) -> None:
-        if module_name is None:
-            self._buckets.clear()
-        else:
-            self._buckets.pop(module_name, None)
+    # ------------------------------------------------------------------ reset
+
+    async def reset(self, module_id: str | None = None) -> None:
+        mids = [module_id] if module_id else list(self._samples)
+        for mid in mids:
+            async with self._locks[mid]:
+                self._samples[mid].clear()
+                self._errors[mid] = 0
+                self._total_calls[mid] = 0
+
+    # ------------------------------------------------------------------ stats
+
+    def stats(self) -> dict[str, int]:
+        return {
+            "tracked_modules": len(self._samples),
+            "total_samples":   sum(len(v) for v in self._samples.values()),
+            "total_errors":    sum(self._errors.values()),
+        }
+
+
+def make_profiler(config: ProfilerConfig | None = None) -> PerformanceProfiler:
+    return SlidingWindowProfiler(config)
 ```
 
-## `NullProfiler` (testing)
+---
+
+## `NullProfiler` (for unit tests)
 
 ```python
 class NullProfiler:
-    def record(self, module_name, latency_ms, *, error=False): pass
-    def profile(self, module_name): return None
+    """Drop-in no-op profiler for tests that don't care about profiling."""
+    async def record(self, *a, **kw): pass
+    async def get_profile(self, _): return None
+    async def list_profiles(self): return []
+    async def flush(self): pass
+    async def reset(self, *a): pass
     def stats(self): return {}
-    def flush(self): pass
-    def reset(self, module_name=None): pass
 ```
+
+---
 
 ## Data Flow
 
 ```
-CognitiveCycle._run_module("memory", ...)
-        │
-        │  finally block (always runs)
-        ▼
-SlidingWindowProfiler.record("memory", latency_ms)
-        │
-        │  deque(maxlen=10_000) — O(1) append, auto-evicts oldest
-        ▼
-_compute_profile("memory")
-        │
-        │  nearest-rank percentiles on sorted latencies
-        ▼
-ModuleProfile(p50=..., p95=..., p99=..., throughput_rps=...)
-        │
-        ▼
-WeaknessDetector (Phase 16.2) ──► ImprovementPlanner (16.3) ──► ...
+CognitiveCycle._run_module(module_id, ...)
+  │
+  ├── start = time.monotonic()
+  ├── await self.get_module(module_id).run(...)
+  └── [finally]
+       └── profiler.record(module_id, duration_ms, error=error)
+                    │
+                    ▼
+         SlidingWindowProfiler
+           ├── deque(maxlen=10_000)  — per module_id, O(1) append
+           ├── asyncio.Lock          — per module_id, no global lock
+           └── _compute_profile()
+                 ├── filter: t >= (now - window_seconds)
+                 ├── sort durations
+                 └── LatencyBucket(p50, p95, p99, max)
 ```
+
+---
 
 ## CognitiveCycle Integration
 
 ```python
-class CognitiveCycle:
-    def __init__(self, ..., profiler: PerformanceProfiler) -> None:
-        self._profiler = profiler
+# In CognitiveCycle._run_module():
+import time
 
-    async def _run_module(self, name: str, fn: Callable) -> Any:
-        t0 = time.monotonic()
-        error = False
-        try:
-            return await fn()
-        except Exception:
-            error = True
-            raise
-        finally:
-            elapsed_ms = (time.monotonic() - t0) * 1_000
-            self._profiler.record(name, elapsed_ms, error=error)
+async def _run_module(self, module_id: str, *args, **kwargs):
+    start = time.monotonic()
+    error = False
+    try:
+        result = await self.get_module(module_id).run(*args, **kwargs)
+        return result
+    except Exception:
+        error = True
+        raise
+    finally:
+        duration_ms = (time.monotonic() - start) * 1000
+        await self._profiler.record(module_id, duration_ms, error=error)
 ```
 
-## Prometheus Metrics
+```python
+# Background flush loop (add to CognitiveCycle.__init__):
+self._flush_task = asyncio.create_task(self._flush_loop())
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `asi_profiler_record_total` | Counter | `module`, `error` | Total latency samples recorded |
-| `asi_profiler_p95_ms` | Gauge | `module` | Latest p95 latency (ms) |
-| `asi_profiler_p99_ms` | Gauge | `module` | Latest p99 latency (ms) |
-| `asi_profiler_throughput_rps` | Gauge | `module` | Latest throughput (req/s) |
-| `asi_profiler_window_samples` | Gauge | `module` | Samples in current window |
-
-### PromQL examples
-
-```promql
-# Modules breaching 500 ms p95 SLA
-asi_profiler_p95_ms{job="asi-build"} > 500
-
-# p95/p50 latency spread ratio
-asi_profiler_p95_ms / on(module) asi_profiler_p50_ms > 3
+async def _flush_loop(self) -> None:
+    while True:
+        await asyncio.sleep(self._profiler._cfg.window_seconds / 2)
+        await self._profiler.flush()
 ```
-
-## mypy Type-Check Table
-
-| Symbol | Type annotation | Notes |
-|--------|----------------|-------|
-| `record()` return | `None` | side-effect only |
-| `profile()` return | `ModuleProfile \| None` | callers must guard |
-| `stats()` return | `dict[str, ModuleProfile]` | copy, not live view |
-| `_buckets` | `defaultdict[str, deque[LatencyBucket]]` | thread-local via asyncio |
-| `config.enabled_modules` | `frozenset[str] \| None` | None = all |
-
-## Test Targets
-
-1. `test_record_and_profile_returns_profile` — single record → profile() returns ModuleProfile
-2. `test_percentiles_correct` — known latency set → p50/p95/p99 match nearest-rank formula
-3. `test_window_eviction` — records older than window_seconds excluded from profile
-4. `test_deque_maxlen_evicts_oldest` — maxlen exceeded → oldest sample dropped
-5. `test_error_count_tracked` — record with error=True → error_count incremented
-6. `test_throughput_rps_calculation` — n samples over t seconds → n/t rps
-7. `test_flush_removes_stale` — flush() clears entries outside window
-8. `test_reset_single_module` — reset("x") clears only module x
-9. `test_reset_all_modules` — reset() clears everything
-10. `test_stats_returns_all_modules` — stats() includes all recorded modules
-11. `test_concurrent_record` — asyncio.gather 100 concurrent records → no data corruption
-12. `test_null_profiler_noop` — NullProfiler methods return None / {} without side effects
-
-## Implementation Order (14 steps)
-
-1. Add `ProfilerGranularity`, `LatencyBucket`, `ModuleProfile`, `ProfilerConfig` to `core/types.py`
-2. Define `PerformanceProfiler` Protocol in `core/protocols.py`
-3. Implement `SlidingWindowProfiler` in `profiling/sliding_window.py`
-4. Implement `NullProfiler` in `profiling/null.py`
-5. Add `make_profiler()` factory in `profiling/__init__.py`
-6. Integrate `_run_module()` finally-block in `CognitiveCycle`
-7. Add `_flush_loop` background task to `CognitiveCycle.__init__()`
-8. Register all 5 Prometheus metrics in `profiling/metrics.py`
-9. Update `metrics.py` export in `__init__.py`
-10. Write unit tests (targets 1–10)
-11. Write concurrency test (target 11)
-12. Write NullProfiler test (target 12)
-13. Run `mypy --strict profiling/` — fix any errors
-14. Update `CognitiveCycle` type stubs in `*.pyi` if present
-
-## Phase 16 Sub-Phase Tracker
-
-| Sub-Phase | Component | Issue | Status |
-|-----------|-----------|-------|--------|
-| 16.1 | PerformanceProfiler | #417 | Open |
-| 16.2 | WeaknessDetector | #420 | Open |
-| 16.3 | ImprovementPlanner | #423 | Open |
-| 16.4 | SelfOptimiser | #426 | Open |
-| 16.5 | ReflectionCycle | #430 | Open |
 
 ---
 
-*Next: [Phase 16.2 — WeaknessDetector](Phase-16-Weakness-Detector)*
+## Prometheus Metrics
+
+| Metric | Type | Labels |
+|---|---|---|
+| `asi_profiler_call_total` | Counter | `module_id`, `error` |
+| `asi_profiler_latency_ms` | Histogram | `module_id` |
+| `asi_profiler_throughput_rps` | Gauge | `module_id` |
+| `asi_profiler_window_samples` | Gauge | `module_id` |
+| `asi_profiler_tracked_modules` | Gauge | — |
+
+### PromQL Queries
+
+```promql
+# P99 latency per module (alert threshold: 500ms)
+asi_profiler_latency_ms{quantile="0.99"}
+
+# Module throughput
+sum by (module_id) (rate(asi_profiler_call_total[1m]))
+
+# Error rate per module
+rate(asi_profiler_call_total{error="true"}[5m])
+  / rate(asi_profiler_call_total[5m])
+```
+
+### Grafana Alert
+
+```yaml
+- alert: ModuleLatencyHigh
+  expr: asi_profiler_latency_ms{quantile="0.99"} > 500
+  for: 2m
+  labels: { severity: warning }
+  annotations:
+    summary: "Module {{ $labels.module_id }} p99 > 500ms"
+```
+
+---
+
+## mypy Compatibility
+
+| Expression | Inferred type | Notes |
+|---|---|---|
+| `self._samples[mid]` | `deque[tuple[float, float]]` | Annotate explicitly if mypy complains |
+| `pct(50)` | `float` | ✓ from sorted list index |
+| `make_profiler()` return | `PerformanceProfiler` | Protocol structural match ✓ |
+| `reset(module_id=None)` | `None` | Both branches return None ✓ |
+
+---
+
+## Test Targets (12)
+
+| # | Test | Assertion |
+|---|---|---|
+| 1 | `test_record_single` | One record → `call_count == 1` |
+| 2 | `test_latency_percentiles` | Known durations [1..100] → p50≈50, p95≈95, p99≈99 |
+| 3 | `test_error_count` | `record(..., error=True)` → `error_count == 1` |
+| 4 | `test_throughput_calculation` | Known span → `throughput_rps ≈ n/span` |
+| 5 | `test_window_eviction` | Old samples filtered → `call_count == recent_only` |
+| 6 | `test_flush_removes_stale` | `flush()` shrinks deque |
+| 7 | `test_reset_single_module` | `reset("a")` doesn't affect `"b"` |
+| 8 | `test_reset_all` | `reset(None)` clears all modules |
+| 9 | `test_list_profiles_multi` | 3 modules → `len(list_profiles()) == 3` |
+| 10 | `test_concurrent_record` | `asyncio.gather(200 records)` → no race, count == 200 |
+| 11 | `test_max_samples_cap` | Insert `max_samples + 1` → `len(deque) == max_samples` |
+| 12 | `test_get_profile_none` | No records → `get_profile()` returns `None` |
+
+---
+
+## Implementation Order (14 steps)
+
+1. `ProfilerGranularity` enum
+2. `LatencyBucket` frozen dataclass
+3. `ModuleProfile` frozen dataclass
+4. `ProfilerConfig` frozen dataclass + `__post_init__` validation
+5. `PerformanceProfiler` Protocol (`@runtime_checkable`)
+6. `SlidingWindowProfiler.__init__` — `defaultdict` locks + deques
+7. `record()` async method
+8. `_compute_profile()` — percentile math (nearest-rank)
+9. `get_profile()` + `list_profiles()`
+10. `flush()` — stale-eviction loop
+11. `reset()` — single + all
+12. `stats()` — summary dict
+13. `make_profiler()` factory
+14. `NullProfiler` no-op + 12 pytest test targets
+
+---
+
+## Phase 16 Sub-Phase Tracker
+
+| Sub-phase | Component | Issue | Status |
+|---|---|---|---|
+| 16.1 | `PerformanceProfiler` | [#417](https://github.com/web3guru888/asi-build/issues/417) | 🟡 Spec filed |
+| 16.2 | `WeaknessDetector` | TBD | ⏳ Upcoming |
+| 16.3 | `ImprovementPlanner` | TBD | ⏳ Upcoming |
+| 16.4 | `SelfOptimiser` | TBD | ⏳ Upcoming |
+| 16.5 | `ReflectionCycle` | TBD | ⏳ Upcoming |
+
+← [Phase 15: Live Module Orchestrator](Phase-15-Live-Module-Orchestrator) | [Phase 16 Planning Discussion #416](https://github.com/web3guru888/asi-build/discussions/416)

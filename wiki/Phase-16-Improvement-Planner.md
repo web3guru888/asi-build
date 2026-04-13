@@ -1,93 +1,35 @@
-# Phase 16.3 — `ImprovementPlanner`
+# Phase 16.3 — ImprovementPlanner
 
-**Phase**: 16 — Cognitive Reflection & Self-Improvement
-**Component**: `ImprovementPlanner`
-**Depends on**: Phase 16.2 [`WeaknessDetector`](Phase-16-Weakness-Detector) (#420)
-**Feeds into**: Phase 16.4 `SelfOptimiser`
+**Part of Phase 16: Cognitive Reflection & Self-Improvement**
 **Issue**: #423 | **Show & Tell**: #424 | **Q&A**: #425
+**Depends on**: Phase 16.2 `WeaknessDetector` | **Feeds into**: Phase 16.4 `SelfOptimiser`
 
 ---
 
 ## Overview
 
-`ImprovementPlanner` bridges diagnostic signal and executable change. It consumes ranked `WeaknessReport` objects from `WeaknessDetector` and emits priority-sorted, safety-gated `ImprovementAction` records that the `SelfOptimiser` can schedule for execution.
+`ImprovementPlanner` bridges diagnostic signal and executable change. It consumes priority-ranked `WeaknessReport` objects from `WeaknessDetector` and produces priority-sorted `ImprovementAction` lists that `SelfOptimiser` can enact.
 
 ---
 
-## Enumerations
-
-### `ActionKind`
+## Data Model
 
 ```python
+from __future__ import annotations
+from dataclasses import dataclass
 from enum import Enum, auto
+from typing import Sequence
 
 class ActionKind(Enum):
-    TUNE_THRESHOLD   = auto()   # adjust a detector/profiler parameter
-    HOT_SWAP_MODULE  = auto()   # replace module via Phase 15 HotSwapper
-    INCREASE_BUDGET  = auto()   # raise time/memory budget for a module
-    REDUCE_LOAD      = auto()   # shed non-critical tasks from overloaded module
-    FLAG_FOR_REVIEW  = auto()   # escalate to human operator (safety gate)
-    NO_OP            = auto()   # weakness acknowledged but no safe action exists
-```
+    TUNE_THRESHOLD   = auto()   # tighten/relax a detector/profiler param
+    INCREASE_BUDGET  = auto()   # expand time or memory budget for the module
+    REDUCE_LOAD      = auto()   # shed non-critical tasks to ease pressure
+    HOT_SWAP_MODULE  = auto()   # replace underperforming module via Phase 15
+    FLAG_FOR_REVIEW  = auto()   # safety-gated or composite: escalate to operator
+    NO_OP            = auto()   # weakness acknowledged, no safe action available
 
----
-
-## Frozen Dataclasses
-
-### `ImprovementAction`
-
-```python
-@dataclass(frozen=True)
-class ImprovementAction:
-    module_name:   str
-    action_kind:   ActionKind
-    priority:      float                          # 0.0 – 1.0 (higher = more urgent)
-    cost_estimate: float                          # 0.0 – 1.0 (normalised resource overhead)
-    rationale:     str
-    parameters:    Tuple[Tuple[str, str], ...] = ()
-```
-
-`parameters` uses a tuple of 2-tuples (not dict) so the dataclass remains hashable.
-Convert to dict when reading: `dict(action.parameters)`.
-
-### `PlannerConfig`
-
-```python
-@dataclass(frozen=True)
-class PlannerConfig:
-    max_actions_per_report: int   = 3
-    safety_check_enabled:   bool  = True
-    min_priority_threshold: float = 0.2   # discard actions below this
-    cost_weight:            float = 0.3   # priority = urgency - cost_weight × cost
-```
-
----
-
-## Protocol
-
-```python
-from typing import Protocol, Sequence, runtime_checkable
-
-@runtime_checkable
-class ImprovementPlanner(Protocol):
-    async def plan(
-        self,
-        reports: Sequence[WeaknessReport],
-    ) -> Sequence[ImprovementAction]: ...
-
-    async def reset(self) -> None: ...
-    def stats(self) -> dict[str, int]: ...
-```
-
----
-
-## `RuleBasedPlanner` — Canonical Implementation
-
-```python
-import asyncio
-from collections import defaultdict
-
-_COST_TABLE: dict[ActionKind, float] = {
+# Cost estimates (higher = more disruptive)
+_COSTS: dict[ActionKind, float] = {
     ActionKind.TUNE_THRESHOLD:  0.05,
     ActionKind.INCREASE_BUDGET: 0.30,
     ActionKind.REDUCE_LOAD:     0.20,
@@ -96,127 +38,41 @@ _COST_TABLE: dict[ActionKind, float] = {
     ActionKind.NO_OP:           0.00,
 }
 
-class RuleBasedPlanner:
-    _RULES: dict[WeaknessKind, list[ActionKind]] = {
-        WeaknessKind.HIGH_LATENCY:    [ActionKind.HOT_SWAP_MODULE, ActionKind.INCREASE_BUDGET],
-        WeaknessKind.HIGH_ERROR_RATE: [ActionKind.HOT_SWAP_MODULE, ActionKind.FLAG_FOR_REVIEW],
-        WeaknessKind.LOW_THROUGHPUT:  [ActionKind.REDUCE_LOAD,      ActionKind.TUNE_THRESHOLD],
-        WeaknessKind.LATENCY_SPIKE:   [ActionKind.INCREASE_BUDGET,  ActionKind.TUNE_THRESHOLD],
-        WeaknessKind.DEGRADED:        [ActionKind.FLAG_FOR_REVIEW,  ActionKind.HOT_SWAP_MODULE],
-    }
+@dataclass(frozen=True)
+class ImprovementAction:
+    """A single, hashable improvement directive."""
+    module_name:  str
+    action_kind:  ActionKind
+    priority:     float                        # [0.0, 1.0]  higher = more urgent
+    rationale:    str
+    parameters:   tuple[tuple[str, str], ...]  # key-value pairs; use dict() to read
 
-    def __init__(self, config: PlannerConfig | None = None, safety_filter=None) -> None:
-        self._cfg      = config or PlannerConfig()
-        self._safety   = safety_filter          # optional Phase 11 SafetyFilter
-        self._lock     = asyncio.Lock()
-        self._counters: dict[str, int] = defaultdict(int)
-
-    async def plan(self, reports: Sequence[WeaknessReport]) -> Sequence[ImprovementAction]:
-        actions: list[ImprovementAction] = []
-        cap = self._cfg.max_actions_per_report * len(reports)
-        async with self._lock:
-            for report in reports:
-                for kind in report.kinds:
-                    for action_kind in self._RULES.get(kind, [ActionKind.NO_OP]):
-                        urgency  = report.severity * report.confidence
-                        cost     = _COST_TABLE.get(action_kind, 0.5)
-                        priority = urgency - self._cfg.cost_weight * cost
-                        priority = round(min(1.0, max(0.0, priority)), 4)
-                        if priority < self._cfg.min_priority_threshold:
-                            continue
-                        action = ImprovementAction(
-                            module_name   = report.module_name,
-                            action_kind   = action_kind,
-                            priority      = priority,
-                            cost_estimate = cost,
-                            rationale     = _rationale(report, action_kind),
-                            parameters    = _params(report, action_kind),
-                        )
-                        if self._cfg.safety_check_enabled and self._safety:
-                            if not await self._safety.is_safe(action):
-                                action = _downgrade(action)
-                        actions.append(action)
-                        self._counters["planned"] += 1
-                        if len(actions) >= cap:
-                            break
-
-        actions.sort(key=lambda a: a.priority, reverse=True)
-        return actions
-
-    async def reset(self) -> None:
-        async with self._lock:
-            self._counters.clear()
-
-    def stats(self) -> dict[str, int]:
-        return dict(self._counters)
+@dataclass(frozen=True)
+class PlannerConfig:
+    cost_weight:            float = 0.3    # weight of cost in priority formula
+    min_priority_threshold: float = 0.2   # discard actions below this priority
+    max_actions_per_report: int   = 3     # global cap = this × len(reports)
+    enable_safety_gate:     bool  = True
 ```
 
 ---
 
-## `NullPlanner` (testing / safe-mode stub)
+## Protocol
 
 ```python
-class NullPlanner:
-    async def plan(self, reports): return []
-    async def reset(self): pass
-    def stats(self): return {}
-```
+from typing import Protocol, runtime_checkable
 
----
+@runtime_checkable
+class ImprovementPlanner(Protocol):
+    async def plan(
+        self,
+        reports: Sequence[WeaknessReport],
+        *,
+        config: PlannerConfig | None = None,
+    ) -> list[ImprovementAction]: ...
 
-## Helper Functions
-
-```python
-def _rationale(report: WeaknessReport, kind: ActionKind) -> str:
-    return (
-        f"{report.module_name} shows {', '.join(k.name for k in report.kinds)} "
-        f"(severity={report.severity:.2f}, confidence={report.confidence:.2f}); "
-        f"proposed action: {kind.name}"
-    )
-
-def _params(report: WeaknessReport, kind: ActionKind) -> tuple:
-    if kind == ActionKind.TUNE_THRESHOLD:
-        return (("target_module", report.module_name), ("metric", "p95_latency_ms"))
-    if kind == ActionKind.HOT_SWAP_MODULE:
-        return (("target_module", report.module_name),)
-    return ()
-
-def _downgrade(action: ImprovementAction) -> ImprovementAction:
-    return ImprovementAction(
-        module_name   = action.module_name,
-        action_kind   = ActionKind.FLAG_FOR_REVIEW,
-        priority      = action.priority,
-        cost_estimate = 0.01,
-        rationale     = f"[safety-gated] original={action.action_kind.name}; " + action.rationale,
-        parameters    = action.parameters,
-    )
-```
-
----
-
-## Data Flow
-
-```
-PerformanceProfiler
-       |  ModuleProfile stream (p50/p95/p99 latency, error_rate, throughput_rps)
-       v
-WeaknessDetector ─────────────────────────────────> WeaknessReport[]
-  (EMA baseline + threshold + spike detection)          severity, confidence, kinds
-                                                              |
-                                              ImprovementPlanner._lock acquired
-                                                              |
-                                              for report in reports:
-                                                for kind in report.kinds:
-                                                  for action_kind in _RULES[kind]:
-                                                    compute urgency = sev × conf
-                                                    compute priority = urgency - cost_weight × cost
-                                                    if priority < min_priority_threshold: skip
-                                                    if safety_filter.is_safe(): emit
-                                                    else: _downgrade() → FLAG_FOR_REVIEW
-                                                              |
-                                              actions.sort(priority DESC)
-                                                              |
-                                              ImprovementAction[] ──────────> SelfOptimiser (Phase 16.4)
+    async def stats(self) -> dict[str, int]: ...
+    async def reset(self) -> None: ...
 ```
 
 ---
@@ -224,30 +80,186 @@ WeaknessDetector ─────────────────────
 ## Priority Formula
 
 ```
-urgency  = severity × confidence      # both ∈ [0, 1]
-priority = urgency − cost_weight × cost_estimate
-priority = clamp(priority, 0.0, 1.0)
+urgency  = severity × confidence           # both ∈ [0, 1]
+priority = urgency − cost_weight × cost    # clamp to [0.0, 1.0]
 ```
 
-| severity | confidence | ActionKind | cost | priority |
-|----------|-----------|------------|------|----------|
-| 0.90 | 0.95 | TUNE_THRESHOLD | 0.05 | **0.840** |
-| 0.90 | 0.95 | REDUCE_LOAD | 0.20 | **0.795** |
-| 0.90 | 0.95 | HOT_SWAP_MODULE | 0.70 | **0.645** |
-| 0.50 | 0.60 | INCREASE_BUDGET | 0.30 | **0.210** |
+### Worked Example (severity=0.9, confidence=0.95, urgency=0.855)
+
+| ActionKind | Cost | Priority |
+|---|---|---|
+| `TUNE_THRESHOLD` | 0.05 | **0.840** |
+| `REDUCE_LOAD` | 0.20 | **0.795** |
+| `INCREASE_BUDGET` | 0.30 | **0.765** |
+| `HOT_SWAP_MODULE` | 0.70 | **0.645** |
+
+Low-cost actions float to the top — the planner prefers cheap fixes unless urgency is extreme.
 
 ---
 
-## Safety Gate
+## Rule Table: WeaknessKind → ActionKind
+
+```python
+_RULES: dict[WeaknessKind, list[ActionKind]] = {
+    WeaknessKind.HIGH_LATENCY:    [ActionKind.HOT_SWAP_MODULE, ActionKind.INCREASE_BUDGET],
+    WeaknessKind.HIGH_ERROR_RATE: [ActionKind.HOT_SWAP_MODULE, ActionKind.FLAG_FOR_REVIEW],
+    WeaknessKind.LOW_THROUGHPUT:  [ActionKind.REDUCE_LOAD,     ActionKind.TUNE_THRESHOLD],
+    WeaknessKind.LATENCY_SPIKE:   [ActionKind.INCREASE_BUDGET, ActionKind.TUNE_THRESHOLD],
+    WeaknessKind.DEGRADED:        [ActionKind.FLAG_FOR_REVIEW, ActionKind.HOT_SWAP_MODULE],
+}
+```
+
+---
+
+## `RuleBasedPlanner` Implementation
+
+```python
+import asyncio
+from collections import defaultdict
+
+class RuleBasedPlanner:
+    def __init__(
+        self,
+        config: PlannerConfig | None = None,
+        safety_filter=None,          # duck-typed: async def is_safe(action) -> bool
+    ) -> None:
+        self._cfg   = config or PlannerConfig()
+        self._safety = safety_filter
+        self._lock  = asyncio.Lock()
+        self._stats: dict[str, int] = defaultdict(int)
+
+    async def plan(
+        self,
+        reports: Sequence[WeaknessReport],
+        *,
+        config: PlannerConfig | None = None,
+    ) -> list[ImprovementAction]:
+        cfg = config or self._cfg
+        actions: list[ImprovementAction] = []
+        cap = cfg.max_actions_per_report * len(reports)
+
+        async with self._lock:
+            for report in reports:
+                if len(actions) >= cap:
+                    break
+                for kind in report.kinds:
+                    if kind not in _RULES:
+                        continue
+                    for action_kind in _RULES[kind]:
+                        cost     = _COSTS[action_kind]
+                        urgency  = report.severity * getattr(report, "confidence", 1.0)
+                        priority = urgency - cfg.cost_weight * cost
+                        priority = min(1.0, max(0.0, priority))
+                        if priority < cfg.min_priority_threshold:
+                            self._stats["actions_below_threshold"] += 1
+                            continue
+
+                        action = ImprovementAction(
+                            module_name = report.module_name,
+                            action_kind = action_kind,
+                            priority    = priority,
+                            rationale   = (
+                                f"{kind.name} detected; severity={report.severity:.2f}; "
+                                f"confidence={getattr(report, 'confidence', 1.0):.2f}"
+                            ),
+                            parameters  = self._params(action_kind, report),
+                        )
+
+                        if cfg.enable_safety_gate and self._safety is not None:
+                            if not await self._safety.is_safe(action):
+                                action = self._downgrade(action)
+                                self._stats["actions_gated"] += 1
+
+                        actions.append(action)
+                        self._stats["actions_planned"] += 1
+                        if len(actions) >= cap:
+                            break
+                    if len(actions) >= cap:
+                        break
+
+            actions.sort(key=lambda a: a.priority, reverse=True)
+            self._stats["plan_calls"] += 1
+        return actions
+
+    def _params(self, kind: ActionKind, report) -> tuple[tuple[str, str], ...]:
+        base = (("module_name", report.module_name),)
+        if kind == ActionKind.TUNE_THRESHOLD:
+            return base + (("suggested_delta", "0.1"),)
+        if kind == ActionKind.INCREASE_BUDGET:
+            return base + (("budget_factor", "1.5"),)
+        return base
+
+    def _downgrade(self, action: ImprovementAction) -> ImprovementAction:
+        return ImprovementAction(
+            module_name = action.module_name,
+            action_kind = ActionKind.FLAG_FOR_REVIEW,
+            priority    = action.priority,
+            rationale   = f"[safety-gated] original={action.action_kind.name}; " + action.rationale,
+            parameters  = action.parameters,
+        )
+
+    async def stats(self) -> dict[str, int]:
+        return dict(self._stats)
+
+    async def reset(self) -> None:
+        async with self._lock:
+            self._stats.clear()
+```
+
+---
+
+## `NullPlanner`
+
+```python
+class NullPlanner:
+    """No-op planner — for testing or disabled-planning mode."""
+    async def plan(self, reports, *, config=None) -> list[ImprovementAction]:
+        return []
+    async def stats(self) -> dict[str, int]:
+        return {}
+    async def reset(self) -> None:
+        pass
+```
+
+---
+
+## Data Flow ASCII
 
 ```
-HOT_SWAP_MODULE ─[safety blocks]─> FLAG_FOR_REVIEW
-  priority=0.645                     priority=0.645
-  cost=0.70                          cost=0.01
-  rationale: "[safety-gated] original=HOT_SWAP_MODULE; ..."
+WeaknessDetector
+      │ Sequence[WeaknessReport]  (sorted CRITICAL-first)
+      ▼
+RuleBasedPlanner.plan()
+      │
+      ├── for each report.kinds → _RULES lookup
+      │       └── for each ActionKind → compute priority
+      │               └── priority formula: urgency − cost_weight × cost
+      │               └── safety gate → _downgrade() if blocked
+      │
+      ├── sort by priority DESC
+      └── return list[ImprovementAction] (capped)
+              │
+              ▼
+      SelfOptimiser.enact()   (Phase 16.4)
 ```
 
-The safety gate is **non-lossy**: the operator sees the original intent, escalated not dropped.
+---
+
+## Safety Gate Flow
+
+```
+Action produced
+      │
+      ▼
+safety_filter.is_safe(action)?
+      │
+      ├── True  → action kept as-is
+      └── False → _downgrade(action)
+                     │
+                     └── action_kind = FLAG_FOR_REVIEW
+                         rationale = "[safety-gated] original=..." + original
+                         priority = unchanged (priority preserved for ordering)
+```
 
 ---
 
@@ -255,122 +267,103 @@ The safety gate is **non-lossy**: the operator sees the original intent, escalat
 
 ```python
 # In CognitiveCycle._reflection_step():
-async def _reflection_step(self) -> None:
-    reports = await self._weakness_detector.analyse(self._profiler)
-    actions = await self._improvement_planner.plan(reports)
-    if actions:
-        await self._self_optimiser.enqueue(actions)   # Phase 16.4
+profiles  = await self._profiler.stats()
+reports   = await self._weakness_detector.analyse(list(profiles.values()))
+actions   = await self._improvement_planner.plan(reports)
+# actions are priority-sorted; SelfOptimiser (16.4) enacts them
+records   = await self._self_optimiser.enact(actions)
 ```
 
 ---
 
 ## Prometheus Metrics
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `asi_planner_actions_planned_total` | Counter | `module`, `action_kind` | Actions emitted |
-| `asi_planner_actions_gated_total` | Counter | `module`, `action_kind` | Actions downgraded by safety gate |
-| `asi_planner_plan_duration_seconds` | Histogram | — | End-to-end `plan()` latency |
-| `asi_planner_priority_score` | Gauge | `module`, `action_kind` | Latest priority for each action |
-| `asi_planner_no_op_total` | Counter | `module` | Reports mapped to NO_OP |
-
-### PromQL Alerts
+| Metric | Type | Labels |
+|---|---|---|
+| `asi_planner_plan_calls_total` | Counter | `module` |
+| `asi_planner_actions_planned_total` | Counter | `module`, `action_kind` |
+| `asi_planner_actions_gated_total` | Counter | `module`, `action_kind` |
+| `asi_planner_actions_below_threshold_total` | Counter | `module` |
+| `asi_planner_plan_duration_seconds` | Histogram | `module` |
 
 ```promql
-# Safety gate ratio too high
+# Alert: high safety-gate rate
 rate(asi_planner_actions_gated_total[5m])
   / rate(asi_planner_actions_planned_total[5m]) > 0.5
 
-# Plan duration p99 > 100ms
+# Alert: slow planning
 histogram_quantile(0.99, rate(asi_planner_plan_duration_seconds_bucket[5m])) > 0.1
 ```
 
-### Grafana Panel (4-panel layout)
-
 ```yaml
-panels:
-  - title: "Actions Planned/Gated per minute"
-    type: timeseries
-    targets:
-      - expr: rate(asi_planner_actions_planned_total[1m])
-        legendFormat: "planned {{ module }}/{{ action_kind }}"
-      - expr: rate(asi_planner_actions_gated_total[1m])
-        legendFormat: "gated {{ module }}/{{ action_kind }}"
-  - title: "Safety Gate Ratio"
-    type: gauge
-    targets:
-      - expr: |
-          rate(asi_planner_actions_gated_total[5m])
-          / rate(asi_planner_actions_planned_total[5m])
-    fieldConfig:
-      thresholds:
-        steps: [{value: 0, color: green}, {value: 0.3, color: yellow}, {value: 0.5, color: red}]
-  - title: "Plan Duration p99"
-    type: stat
-    targets:
-      - expr: histogram_quantile(0.99, rate(asi_planner_plan_duration_seconds_bucket[5m]))
-  - title: "Priority Score by Module"
-    type: heatmap
-    targets:
-      - expr: asi_planner_priority_score
-        legendFormat: "{{ module }}/{{ action_kind }}"
+# Grafana alert
+- alert: PlannerHighGateRate
+  expr: >
+    rate(asi_planner_actions_gated_total[5m])
+    / rate(asi_planner_actions_planned_total[5m]) > 0.5
+  for: 3m
+  labels: { severity: warning }
+  annotations:
+    summary: "ImprovementPlanner safety-gate rate > 50%"
 ```
 
 ---
 
-## `mypy --strict` Table
+## mypy Strict Compatibility
 
-| Symbol | Type |
-|--------|------|
-| `ImprovementAction.parameters` | `Tuple[Tuple[str, str], ...]` |
-| `RuleBasedPlanner._RULES` | `dict[WeaknessKind, list[ActionKind]]` |
-| `RuleBasedPlanner.plan` return | `Sequence[ImprovementAction]` |
-| `safety_filter.is_safe` | `Callable[[ImprovementAction], Awaitable[bool]]` |
+| Symbol | Notes |
+|---|---|
+| `ImprovementAction` | `frozen=True`; `parameters: tuple[tuple[str,str],...]` — fully hashable |
+| `PlannerConfig` | `frozen=True`; all fields typed |
+| `ImprovementPlanner` | `@runtime_checkable` Protocol |
+| `_downgrade()` | returns `ImprovementAction`, no `None` path |
+| `_params()` | return type `tuple[tuple[str,str],...]` — matches field type |
+| `asyncio.Lock` | held only in async context; no implicit `None` |
 
 ---
 
-## Test Targets (12 minimum)
+## Test Targets (12)
 
-1. `test_plan_single_high_latency` — HIGH_LATENCY report → HOT_SWAP_MODULE + INCREASE_BUDGET
-2. `test_plan_priority_ordering` — multiple reports → sorted descending by priority
-3. `test_priority_formula` — urgency - cost_weight × cost formula correctness
-4. `test_min_priority_threshold_filters` — actions below threshold discarded
-5. `test_safety_gate_downgrades` — HOT_SWAP_MODULE gated → FLAG_FOR_REVIEW
-6. `test_null_planner` — empty return, no exceptions
-7. `test_plan_degraded_report` — DEGRADED kind → FLAG_FOR_REVIEW + HOT_SWAP_MODULE
-8. `test_max_actions_per_report` — cap respected under multi-report batch
-9. `test_concurrent_plan_calls` — asyncio.gather(plan, plan) → no race
-10. `test_reset_clears_counters` — stats() zero after reset()
-11. `test_rationale_string_format` — rationale contains module_name + kind names
-12. `test_no_op_emitted_for_unknown_kind` — unknown WeaknessKind → NO_OP
+1. `test_high_latency_produces_hot_swap` — HIGH_LATENCY → HOT_SWAP_MODULE + INCREASE_BUDGET
+2. `test_priority_formula_ordering` — TUNE_THRESHOLD beats HOT_SWAP_MODULE at equal urgency
+3. `test_safety_gate_downgrades_hot_swap` — blocked HOT_SWAP → FLAG_FOR_REVIEW with gated rationale
+4. `test_min_priority_threshold_filters` — low-severity reports produce no actions
+5. `test_max_actions_cap_respected` — cap = max_actions_per_report × len(reports)
+6. `test_null_planner_returns_empty` — NullPlanner → []
+7. `test_concurrent_plan_calls` — asyncio.gather 3× plan, no exceptions, all non-empty
+8. `test_stats_increment` — plan_calls / actions_planned / actions_gated counters
+9. `test_reset_clears_stats` — reset() → stats() returns empty
+10. `test_no_op_for_unknown_kind` — WeaknessKind not in _RULES → action skipped
+11. `test_parameters_hashable` — ImprovementAction can be added to a set
+12. `test_protocol_compliance` — `isinstance(RuleBasedPlanner(), ImprovementPlanner)`
 
 ---
 
 ## Implementation Order (14 steps)
 
-1. Add `ActionKind` enum to `asi_build/reflection/improvement_planner.py`
-2. Add `ImprovementAction` frozen dataclass (tuple parameters)
-3. Add `PlannerConfig` frozen dataclass
-4. Add `ImprovementPlanner` Protocol (`@runtime_checkable`)
-5. Implement `_COST_TABLE`, `_rationale()`, `_params()`, `_downgrade()` helpers
-6. Implement `RuleBasedPlanner.__init__` (config + safety_filter + lock + counters)
-7. Implement `RuleBasedPlanner.plan()` rule loop + priority formula + safety gate
-8. Implement sort-by-priority + max_actions cap
-9. Add `NullPlanner`
-10. Add `make_planner()` factory
-11. Wire `CognitiveCycle._reflection_step()` planner call
-12. Add 5 Prometheus metrics
-13. Write 12+ tests
-14. Update `__init__.py` exports
+1. `ActionKind` enum + `_COSTS` dict
+2. `ImprovementAction` frozen dataclass
+3. `PlannerConfig` frozen dataclass
+4. `ImprovementPlanner` Protocol (`@runtime_checkable`)
+5. `NullPlanner` no-op
+6. `RuleBasedPlanner.__init__` (Lock + stats defaultdict)
+7. `_params()` helper
+8. `_downgrade()` helper
+9. `RuleBasedPlanner.plan()` — rule loop + priority formula + cap
+10. Safety gate integration (`is_safe` + `_downgrade`)
+11. Prometheus metrics (wrap `plan()` with histogram timer)
+12. `stats()` + `reset()`
+13. `CognitiveCycle._reflection_step()` integration
+14. All 12 tests green
 
 ---
 
 ## Phase 16 Sub-Phase Tracker
 
-| Sub-phase | Component | Issue | Discussions | Status |
-|-----------|-----------|-------|-------------|--------|
-| 16.1 | PerformanceProfiler | #417 | #418 · #419 | 🟡 spec'd |
-| 16.2 | WeaknessDetector | #420 | #421 · #422 | 🟡 spec'd |
-| 16.3 | ImprovementPlanner | #423 | #424 · #425 | 🟡 spec'd |
-| 16.4 | SelfOptimiser | — | — | ⏳ |
-| 16.5 | ReflectionCycle | — | — | ⏳ |
+| Sub-phase | Component | Issue | Status |
+|---|---|---|---|
+| 16.1 | `PerformanceProfiler` | #417 | 🟡 Spec filed |
+| 16.2 | `WeaknessDetector` | #420 | 🟡 Spec filed |
+| **16.3** | **`ImprovementPlanner`** | **#423** | 🟡 **Spec filed** |
+| 16.4 | `SelfOptimiser` | #426 | 🟡 Spec filed |
+| 16.5 | `ReflectionCycle` | — | ⏳ Upcoming |
