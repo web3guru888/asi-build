@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>307+ discussions · 127+ wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>311+ discussions · 128+ wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -901,6 +901,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [VersionManager Q&A — rollback targeting, compatibility levels, approval workflows (Phase 15.4)](https://github.com/web3guru888/asi-build/discussions/412)
 - 🎉 [LiveModuleOrchestrator — unified control-plane: dep gate→compat gate→registry→swap (Phase 15.5 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/414)
 - ❓ [LiveModuleOrchestrator Q&A — semaphore concurrency, REJECTED approval flow, shutdown drain (Phase 15.5)](https://github.com/web3guru888/asi-build/discussions/415)
+- 🔁 [Phase 16 Planning — Cognitive Reflection & Self-Improvement: PerformanceProfiler→WeaknessDetector→ReflectionCycle](https://github.com/web3guru888/asi-build/discussions/416)
+- 📊 [PerformanceProfiler — sliding-window per-module metrics, percentiles, CognitiveCycle integration (Phase 16.1)](https://github.com/web3guru888/asi-build/discussions/418)
+- ❓ [PerformanceProfiler Q&A — deque vs list, window eviction, concurrent record, NullProfiler (Phase 16.1)](https://github.com/web3guru888/asi-build/discussions/419)
 - 🖥️ [AlignmentDashboard — SSE operator console, Phase 11 complete](https://github.com/web3guru888/asi-build/discussions/350)
 - ❓ [AlignmentDashboard config — EventSource setup, overrides, Grafana](https://github.com/web3guru888/asi-build/discussions/351)
 - 🌐 [Show & Tell: AgentRegistry — distributed identity & capability registry (Phase 12.1)](https://github.com/web3guru888/asi-build/discussions/353)
