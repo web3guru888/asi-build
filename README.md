@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-247_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-252_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>545+ discussions · 247 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>560+ discussions · 252 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -1313,3 +1313,16 @@ All contributors who have submitted issues, PRs, and research feedback
 
 ---SHA---
 f864616f02dddef4fd59e9daf802cd6a5b0da1b3
+
+#### Phase 40 — Causal Reasoning & Interventional Intelligence
+- 📋 [Phase 40 Planning — Causal Reasoning & Interventional Intelligence](https://github.com/web3guru888/asi-build/discussions/808)
+- 🔬 [Show & Tell: Phase 40.1 — CausalGraphBuilder PC, FCI & GES causal discovery](https://github.com/web3guru888/asi-build/discussions/814)
+- ❓ [Q&A: Phase 40.1 — CausalGraphBuilder causal discovery questions](https://github.com/web3guru888/asi-build/discussions/815)
+- 🔬 [Show & Tell: Phase 40.2 — InterventionEngine do-calculus & causal effect estimation](https://github.com/web3guru888/asi-build/discussions/816)
+- ❓ [Q&A: Phase 40.2 — InterventionEngine do-calculus & treatment effects](https://github.com/web3guru888/asi-build/discussions/817)
+- 🔬 [Show & Tell: Phase 40.3 — CounterfactualReasoner twin networks & causal fairness](https://github.com/web3guru888/asi-build/discussions/818)
+- ❓ [Q&A: Phase 40.3 — CounterfactualReasoner structural counterfactuals](https://github.com/web3guru888/asi-build/discussions/819)
+- 🔬 [Show & Tell: Phase 40.4 — CausalInferenceOptimizer DML, matching & quasi-experimental methods](https://github.com/web3guru888/asi-build/discussions/820)
+- ❓ [Q&A: Phase 40.4 — CausalInferenceOptimizer statistical estimation methods](https://github.com/web3guru888/asi-build/discussions/821)
+- 🔬 [Show & Tell: Phase 40.5 — CausalOrchestrator unified causal pipeline & XAI integration (PHASE 40 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/822)
+- ❓ [Q&A: Phase 40.5 — CausalOrchestrator pipeline & registry questions](https://github.com/web3guru888/asi-build/discussions/823)
