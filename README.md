@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>610+ discussions · 277 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>620+ discussions · 282 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -1391,3 +1391,16 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 45.4 — CompressionAnalyzer budget allocation & sensitivity](https://github.com/web3guru888/asi-build/discussions/901)
 - 🔬 [Show & Tell: Phase 45.5 — ModelCompressionOrchestrator unified pipeline & deployment](https://github.com/web3guru888/asi-build/discussions/902)
 - ❓ [Q&A: Phase 45.5 — ModelCompressionOrchestrator policy search & export](https://github.com/web3guru888/asi-build/discussions/903)
+
+#### Phase 46 — Self-Supervised Learning & Contrastive Representations
+- 📋 [Phase 46 Planning — Self-Supervised Learning & Contrastive Representations](https://github.com/web3guru888/asi-build/discussions/904)
+- 🔬 [Show & Tell: Phase 46.1 — ContrastiveLearner SimCLR, MoCo, BYOL, Barlow Twins, VICReg](https://github.com/web3guru888/asi-build/discussions/910)
+- ❓ [Q&A: Phase 46.1 — ContrastiveLearner implementation questions](https://github.com/web3guru888/asi-build/discussions/911)
+- 🔬 [Show & Tell: Phase 46.2 — MaskedPredictor MLM, MAE, BEiT](https://github.com/web3guru888/asi-build/discussions/912)
+- ❓ [Q&A: Phase 46.2 — MaskedPredictor implementation questions](https://github.com/web3guru888/asi-build/discussions/913)
+- 🔬 [Show & Tell: Phase 46.3 — AugmentationEngine data augmentation for SSL](https://github.com/web3guru888/asi-build/discussions/914)
+- ❓ [Q&A: Phase 46.3 — AugmentationEngine implementation questions](https://github.com/web3guru888/asi-build/discussions/915)
+- 🔬 [Show & Tell: Phase 46.4 — RepresentationEvaluator quality assessment](https://github.com/web3guru888/asi-build/discussions/916)
+- ❓ [Q&A: Phase 46.4 — RepresentationEvaluator implementation questions](https://github.com/web3guru888/asi-build/discussions/917)
+- 🔬 [Show & Tell: Phase 46.5 — SelfSupervisedOrchestrator unified SSL pipeline](https://github.com/web3guru888/asi-build/discussions/918)
+- ❓ [Q&A: Phase 46.5 — SelfSupervisedOrchestrator implementation questions](https://github.com/web3guru888/asi-build/discussions/919)
