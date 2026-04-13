@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-227_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-232_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>500+ discussions · 227 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>510+ discussions · 232 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 227 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 232 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 490+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 510+ threads
 
 </td>
 <td>
@@ -1167,6 +1167,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 35.4 — EntanglementManager design questions](https://github.com/web3guru888/asi-build/discussions/735)
 - 🔬 [Show & Tell: Phase 35.5 — QuantumClassicalOrchestrator hybrid pipeline (PHASE 35 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/736)
 - ❓ [Q&A: Phase 35.5 — QuantumClassicalOrchestrator design questions](https://github.com/web3guru888/asi-build/discussions/737)
+- 📋 [Phase 36 Planning — Evolutionary & Neuroevolution Algorithms](https://github.com/web3guru888/asi-build/discussions/738)
+- 🔬 [Show & Tell: Phase 36.1 — GeneticOperator selection, crossover & mutation](https://github.com/web3guru888/asi-build/discussions/744)
+- ❓ [Q&A: Phase 36.1 — GeneticOperator parameter tuning](https://github.com/web3guru888/asi-build/discussions/745)
+- 🔬 [Show & Tell: Phase 36.2 — FitnessEvaluator NSGA-II & novelty search](https://github.com/web3guru888/asi-build/discussions/746)
+- ❓ [Q&A: Phase 36.2 — FitnessEvaluator multi-objective questions](https://github.com/web3guru888/asi-build/discussions/747)
+- 🔬 [Show & Tell: Phase 36.3 — NeuroevolutionEngine NEAT & HyperNEAT](https://github.com/web3guru888/asi-build/discussions/748)
+- ❓ [Q&A: Phase 36.3 — NeuroevolutionEngine topology questions](https://github.com/web3guru888/asi-build/discussions/749)
+- 🔬 [Show & Tell: Phase 36.4 — PopulationManager speciation & island model](https://github.com/web3guru888/asi-build/discussions/750)
+- ❓ [Q&A: Phase 36.4 — PopulationManager configuration](https://github.com/web3guru888/asi-build/discussions/751)
+- 🔬 [Show & Tell: Phase 36.5 — EvolutionaryOrchestrator generation lifecycle (PHASE 36 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/752)
+- ❓ [Q&A: Phase 36.5 — EvolutionaryOrchestrator pipeline questions](https://github.com/web3guru888/asi-build/discussions/753)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
