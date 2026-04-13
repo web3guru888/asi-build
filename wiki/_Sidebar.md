@@ -19,3 +19,9 @@
 - [Code Synthesiser](Phase-14-Code-Synthesiser)
 - [Sandbox Runner](Phase-14-Sandbox-Runner)
 - [Test Harness](Phase-14-Test-Harness)
+- [Patch Selector](Phase-14-Patch-Selector)
+- [Synthesis Audit](Phase-14-Synthesis-Audit)
+
+### Phase 15 — Runtime Self-Modification
+- [Module Registry](Phase-15-Module-Registry)
+
