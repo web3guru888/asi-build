@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>630+ discussions · 287 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>650+ discussions · 292 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -1209,6 +1209,19 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 47.4 — NeuralSymbolicBridge](https://github.com/web3guru888/asi-build/discussions/933)
 - 🔬 [Show & Tell: Phase 47.5 — NeurosymbolicOrchestrator](https://github.com/web3guru888/asi-build/discussions/934)
 - ❓ [Q&A: Phase 47.5 — NeurosymbolicOrchestrator](https://github.com/web3guru888/asi-build/discussions/935)
+
+### Phase 48: Continual Learning & Catastrophic Forgetting Prevention
+- 📋 [Phase 48 Planning — Continual Learning & Catastrophic Forgetting Prevention](https://github.com/web3guru888/asi-build/discussions/937)
+- 🔬 [Show & Tell: Phase 48.1 — ElasticWeightConsolidator](https://github.com/web3guru888/asi-build/discussions/943)
+- ❓ [Q&A: Phase 48.1 — ElasticWeightConsolidator](https://github.com/web3guru888/asi-build/discussions/944)
+- 🔬 [Show & Tell: Phase 48.2 — ProgressiveNetworkExpander](https://github.com/web3guru888/asi-build/discussions/945)
+- ❓ [Q&A: Phase 48.2 — ProgressiveNetworkExpander](https://github.com/web3guru888/asi-build/discussions/946)
+- 🔬 [Show & Tell: Phase 48.3 — ExperienceReplayBuffer](https://github.com/web3guru888/asi-build/discussions/947)
+- ❓ [Q&A: Phase 48.3 — ExperienceReplayBuffer](https://github.com/web3guru888/asi-build/discussions/948)
+- 🔬 [Show & Tell: Phase 48.4 — TaskDetector](https://github.com/web3guru888/asi-build/discussions/949)
+- ❓ [Q&A: Phase 48.4 — TaskDetector](https://github.com/web3guru888/asi-build/discussions/950)
+- 🔬 [Show & Tell: Phase 48.5 — ContinualLearningOrchestrator](https://github.com/web3guru888/asi-build/discussions/951)
+- ❓ [Q&A: Phase 48.5 — ContinualLearningOrchestrator](https://github.com/web3guru888/asi-build/discussions/952)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
