@@ -3,7 +3,7 @@ Bridge Contract Client & Deployer — Python Simulation Tests
 =============================================================
 
 Tests :class:`BridgeContractClient` and :class:`BridgeDeployer` by
-simulating the on-chain bridge contract state entirely in Python.
+simulating the onchain bridge contract state entirely in Python.
 
 Since we can't compile Solidity here, ``MockContractManager`` maintains
 deposit/withdrawal state, rate limits, pause state, and sync-committee
@@ -53,6 +53,7 @@ from asi_build.rings.bridge.contract_client import (  # noqa: E402
     BRIDGE_ABI,
     VERIFIER_ABI,
     TOKEN_ABI,
+    did_to_bytes32,
 )
 
 
@@ -64,8 +65,11 @@ from asi_build.rings.bridge.contract_client import (  # noqa: E402
 @dataclass
 class DepositRecord:
     sender: str
-    rings_did: str
+    rings_did: bytes
     amount: int
+    token: str
+    timestamp: int
+    nonce: int
     block_num: int
     processed: bool = False
 
@@ -73,7 +77,11 @@ class DepositRecord:
 @dataclass
 class WithdrawalRecord:
     recipient: str
+    rings_did: bytes
     amount: int
+    token: str
+    timestamp: int
+    nonce: int
     executed: bool = False
 
 
@@ -162,7 +170,7 @@ class MockContractManager:
             return self.withdrawal_nonce
         if fn == "paused":
             return self.paused
-        if fn == "remainingDailyLimit":
+        if fn == "getRemainingDailyLimit":
             self._maybe_reset_daily()
             return max(0, self.daily_limit - self.daily_volume)
         if fn == "latestVerifiedSlot":
@@ -173,14 +181,14 @@ class MockContractManager:
             nonce = args[0]
             d = self.deposits.get(nonce)
             if d is None:
-                return ("", "", 0, 0, False)
-            return (d.sender, d.rings_did, d.amount, d.block_num, d.processed)
+                return ("", b"\x00" * 32, 0, "", 0, 0)
+            return (d.sender, d.rings_did, d.amount, d.token, d.timestamp, d.nonce)
         if fn == "getWithdrawalInfo":
             nonce = args[0]
             w = self.withdrawals.get(nonce)
             if w is None:
-                return ("", 0, False)
-            return (w.recipient, w.amount, w.executed)
+                return ("", b"\x00" * 32, 0, "", 0, 0)
+            return (w.recipient, w.rings_did, w.amount, w.token, w.timestamp, w.nonce)
         raise ValueError(f"Unknown view function: {fn}")
 
     # ── send_contract_transaction (state-changing) ──────────────────
@@ -215,14 +223,17 @@ class MockContractManager:
                 sender=self.caller,
                 rings_did=rings_did,
                 amount=amount,
+                token="0x0000000000000000000000000000000000000000",
+                timestamp=self.block_number,
+                nonce=nonce,
                 block_num=self.block_number,
             )
             self.daily_volume += amount
             self.deposit_nonce += 1
             self._emit("Deposited", {
                 "nonce": nonce,
-                "sender": self.caller,
-                "ringsDid": rings_did,
+                "depositor": self.caller,
+                "ringsDID": rings_did,
                 "amount": amount,
             })
             return tx_hash
@@ -230,7 +241,7 @@ class MockContractManager:
         # ── depositToken (ERC-20) ────────────────────────────────
         if fn == "depositToken":
             self._require_not_paused()
-            _token, amount, rings_did = args[0], args[1], args[2]
+            token_addr, amount, rings_did = args[0], args[1], args[2]
             if amount <= 0:
                 raise RuntimeError("Zero amount deposit")
             self._check_rate_limit(amount)
@@ -239,14 +250,17 @@ class MockContractManager:
                 sender=self.caller,
                 rings_did=rings_did,
                 amount=amount,
+                token=token_addr,
+                timestamp=self.block_number,
+                nonce=nonce,
                 block_num=self.block_number,
             )
             self.daily_volume += amount
             self.deposit_nonce += 1
             self._emit("Deposited", {
                 "nonce": nonce,
-                "sender": self.caller,
-                "ringsDid": rings_did,
+                "depositor": self.caller,
+                "ringsDID": rings_did,
                 "amount": amount,
             })
             return tx_hash
@@ -254,8 +268,8 @@ class MockContractManager:
         # ── withdraw (native ETH) ────────────────────────────────
         if fn == "withdraw":
             self._require_not_paused()
-            recipient, amount, nonce, proof, public_inputs = (
-                args[0], args[1], args[2], args[3], args[4],
+            recipient, rings_did, amount, nonce, proof, public_inputs = (
+                args[0], args[1], args[2], args[3], args[4], args[5],
             )
             if amount <= 0:
                 raise RuntimeError("Zero amount withdrawal")
@@ -265,7 +279,13 @@ class MockContractManager:
                 raise RuntimeError("Proof required")
             self._check_rate_limit(amount)
             self.withdrawals[nonce] = WithdrawalRecord(
-                recipient=recipient, amount=amount, executed=True,
+                recipient=recipient,
+                rings_did=rings_did,
+                amount=amount,
+                token="0x0000000000000000000000000000000000000000",
+                timestamp=self.block_number,
+                nonce=nonce,
+                executed=True,
             )
             self.processed_withdrawals.add(nonce)
             self.daily_volume += amount
@@ -280,8 +300,8 @@ class MockContractManager:
         # ── withdrawToken (ERC-20) ───────────────────────────────
         if fn == "withdrawToken":
             self._require_not_paused()
-            _token, recipient, amount, nonce, proof, public_inputs = (
-                args[0], args[1], args[2], args[3], args[4], args[5],
+            token_addr, recipient, rings_did, amount, nonce, proof, public_inputs = (
+                args[0], args[1], args[2], args[3], args[4], args[5], args[6],
             )
             if amount <= 0:
                 raise RuntimeError("Zero amount withdrawal")
@@ -291,7 +311,13 @@ class MockContractManager:
                 raise RuntimeError("Proof required")
             self._check_rate_limit(amount)
             self.withdrawals[nonce] = WithdrawalRecord(
-                recipient=recipient, amount=amount, executed=True,
+                recipient=recipient,
+                rings_did=rings_did,
+                amount=amount,
+                token=token_addr,
+                timestamp=self.block_number,
+                nonce=nonce,
+                executed=True,
             )
             self.processed_withdrawals.add(nonce)
             self.daily_volume += amount
@@ -324,12 +350,12 @@ class MockContractManager:
             })
             return tx_hash
 
-        # ── pause / unpause ──────────────────────────────────────
-        if fn == "pause":
+        # ── emergencyPause / unpause ─────────────────────────────
+        if fn == "emergencyPause":
             if self.caller != self.guardian and self.caller != self.admin:
                 raise RuntimeError("Only guardian can pause")
             self.paused = True
-            self._emit("Paused", {"account": self.caller})
+            self._emit("EmergencyPaused", {"guardian": self.caller})
             return tx_hash
 
         if fn == "unpause":
@@ -339,10 +365,14 @@ class MockContractManager:
             self._emit("Unpaused", {"account": self.caller})
             return tx_hash
 
-        # ── setRateLimit ─────────────────────────────────────────
-        if fn == "setRateLimit":
+        # ── updateRateLimits ─────────────────────────────────────
+        if fn == "updateRateLimits":
             self.daily_limit = args[0]
             self.per_tx_limit = args[1]
+            self._emit("RateLimitUpdated", {
+                "newDailyLimit": args[0],
+                "newPerTxLimit": args[1],
+            })
             return tx_hash
 
         # ── grantRole (for deployer token tests) ────────────────
@@ -423,6 +453,7 @@ VALID_PROOF = b"\x01" * 256
 VALID_INPUTS = [1, 2, 3]
 RECIPIENT = "0xRecipient0001"
 DID = "did:rings:ed25519:abc"
+DID_BYTES = did_to_bytes32(DID)
 TOKEN_ADDR = "0xToken0001"
 ONE_ETH = 10**18
 
@@ -444,7 +475,7 @@ class TestDeposits:
         tx = await client.deposit_token(TOKEN_ADDR, ONE_ETH, DID)
         assert tx.startswith("0xtx")
         assert mock_cm.deposit_nonce == 1
-        assert mock_cm.deposits[0].rings_did == DID
+        assert mock_cm.deposits[0].rings_did == DID_BYTES
 
     @pytest.mark.asyncio
     async def test_nonce_increment(self, client, mock_cm):
@@ -459,7 +490,7 @@ class TestDeposits:
         evts = await client.get_deposit_events(from_block=0)
         assert len(evts) == 1
         assert evts[0]["event"] == "Deposited"
-        assert evts[0]["ringsDid"] == DID
+        assert evts[0]["ringsDID"] == DID_BYTES
         assert evts[0]["amount"] == ONE_ETH
 
     @pytest.mark.asyncio
@@ -477,9 +508,9 @@ class TestDeposits:
     async def test_deposit_info_retrieval(self, client, mock_cm):
         await client.deposit(DID, 5 * ONE_ETH)
         info = await client.get_deposit_info(0)
-        assert info["ringsDid"] == DID
+        assert info["ringsDID"] == DID_BYTES
         assert info["amount"] == 5 * ONE_ETH
-        assert info["processed"] is False
+        assert info["nonce"] == 0
 
     @pytest.mark.asyncio
     async def test_multiple_deposits(self, client, mock_cm):
@@ -488,7 +519,7 @@ class TestDeposits:
         assert mock_cm.deposit_nonce == 5
         for i in range(5):
             info = await client.get_deposit_info(i)
-            assert info["ringsDid"] == f"did:rings:{i}"
+            assert info["ringsDID"] == did_to_bytes32(f"did:rings:{i}")
 
     @pytest.mark.asyncio
     async def test_paused_deposit_rejected(self, client, mock_cm):
@@ -511,78 +542,78 @@ class TestDeposits:
 class TestWithdrawals:
     @pytest.mark.asyncio
     async def test_valid_withdrawal(self, client, mock_cm):
-        tx = await client.withdraw(RECIPIENT, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
+        tx = await client.withdraw(RECIPIENT, DID_BYTES, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
         assert tx.startswith("0xtx")
         assert 0 in mock_cm.processed_withdrawals
 
     @pytest.mark.asyncio
     async def test_replay_protection(self, client, mock_cm):
-        await client.withdraw(RECIPIENT, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
+        await client.withdraw(RECIPIENT, DID_BYTES, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
         with pytest.raises(RuntimeError, match="Replay"):
-            await client.withdraw(RECIPIENT, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
+            await client.withdraw(RECIPIENT, DID_BYTES, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
 
     @pytest.mark.asyncio
     async def test_rate_limit_enforcement(self, client, mock_cm):
         mock_cm.daily_limit = 2 * ONE_ETH
-        await client.withdraw(RECIPIENT, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
-        await client.withdraw(RECIPIENT, ONE_ETH, 1, VALID_PROOF, VALID_INPUTS)
+        await client.withdraw(RECIPIENT, DID_BYTES, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
+        await client.withdraw(RECIPIENT, DID_BYTES, ONE_ETH, 1, VALID_PROOF, VALID_INPUTS)
         with pytest.raises(RuntimeError, match="daily limit"):
-            await client.withdraw(RECIPIENT, ONE_ETH, 2, VALID_PROOF, VALID_INPUTS)
+            await client.withdraw(RECIPIENT, DID_BYTES, ONE_ETH, 2, VALID_PROOF, VALID_INPUTS)
 
     @pytest.mark.asyncio
     async def test_per_tx_limit(self, client, mock_cm):
         mock_cm.per_tx_limit = ONE_ETH
         with pytest.raises(RuntimeError, match="per-tx limit"):
             await client.withdraw(
-                RECIPIENT, 2 * ONE_ETH, 0, VALID_PROOF, VALID_INPUTS,
+                RECIPIENT, DID_BYTES, 2 * ONE_ETH, 0, VALID_PROOF, VALID_INPUTS,
             )
 
     @pytest.mark.asyncio
     async def test_daily_reset_after_24h(self, client, mock_cm):
         mock_cm.daily_limit = 2 * ONE_ETH
-        await client.withdraw(RECIPIENT, 2 * ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
+        await client.withdraw(RECIPIENT, DID_BYTES, 2 * ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
         # Simulate time passing beyond 24h
         mock_cm.last_reset_ts -= mock_cm.DAY_SECONDS + 1
         # Should succeed after daily reset
-        tx = await client.withdraw(RECIPIENT, 2 * ONE_ETH, 1, VALID_PROOF, VALID_INPUTS)
+        tx = await client.withdraw(RECIPIENT, DID_BYTES, 2 * ONE_ETH, 1, VALID_PROOF, VALID_INPUTS)
         assert tx.startswith("0xtx")
 
     @pytest.mark.asyncio
     async def test_proof_required(self, client):
         with pytest.raises(RuntimeError, match="Proof required"):
-            await client.withdraw(RECIPIENT, ONE_ETH, 0, b"", VALID_INPUTS)
+            await client.withdraw(RECIPIENT, DID_BYTES, ONE_ETH, 0, b"", VALID_INPUTS)
 
     @pytest.mark.asyncio
     async def test_invalid_proof_rejected(self, client):
         """Empty proof is rejected."""
         with pytest.raises(RuntimeError, match="Proof required"):
-            await client.withdraw(RECIPIENT, ONE_ETH, 0, b"", [])
+            await client.withdraw(RECIPIENT, DID_BYTES, ONE_ETH, 0, b"", [])
 
     @pytest.mark.asyncio
     async def test_zero_amount_withdrawal(self, client):
         with pytest.raises(RuntimeError, match="Zero amount"):
-            await client.withdraw(RECIPIENT, 0, 0, VALID_PROOF, VALID_INPUTS)
+            await client.withdraw(RECIPIENT, DID_BYTES, 0, 0, VALID_PROOF, VALID_INPUTS)
 
     @pytest.mark.asyncio
     async def test_nonce_tracking(self, client, mock_cm):
-        await client.withdraw(RECIPIENT, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
-        await client.withdraw(RECIPIENT, ONE_ETH, 1, VALID_PROOF, VALID_INPUTS)
+        await client.withdraw(RECIPIENT, DID_BYTES, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
+        await client.withdraw(RECIPIENT, DID_BYTES, ONE_ETH, 1, VALID_PROOF, VALID_INPUTS)
         assert mock_cm.withdrawal_nonce >= 2
         assert 0 in mock_cm.processed_withdrawals
         assert 1 in mock_cm.processed_withdrawals
 
     @pytest.mark.asyncio
     async def test_withdrawal_info_retrieval(self, client, mock_cm):
-        await client.withdraw(RECIPIENT, 3 * ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
+        await client.withdraw(RECIPIENT, DID_BYTES, 3 * ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
         info = await client.get_withdrawal_info(0)
         assert info["recipient"] == RECIPIENT
         assert info["amount"] == 3 * ONE_ETH
-        assert info["executed"] is True
+        assert info["ringsDID"] == DID_BYTES
 
     @pytest.mark.asyncio
     async def test_erc20_withdrawal(self, client, mock_cm):
         tx = await client.withdraw_token(
-            TOKEN_ADDR, RECIPIENT, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS,
+            TOKEN_ADDR, RECIPIENT, DID_BYTES, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS,
         )
         assert tx.startswith("0xtx")
         assert 0 in mock_cm.processed_withdrawals
@@ -591,7 +622,7 @@ class TestWithdrawals:
     async def test_multiple_withdrawals(self, client, mock_cm):
         for i in range(5):
             await client.withdraw(
-                f"0xRecip{i}", ONE_ETH, i, VALID_PROOF, VALID_INPUTS,
+                f"0xRecip{i}", DID_BYTES, ONE_ETH, i, VALID_PROOF, VALID_INPUTS,
             )
         assert len(mock_cm.processed_withdrawals) == 5
         evts = await client.get_withdrawal_events(from_block=0)
@@ -731,7 +762,7 @@ class TestSafety:
     async def test_pause_blocks_withdrawals(self, client, mock_cm):
         mock_cm.paused = True
         with pytest.raises(RuntimeError, match="paused"):
-            await client.withdraw(RECIPIENT, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
+            await client.withdraw(RECIPIENT, DID_BYTES, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
 
     @pytest.mark.asyncio
     async def test_guardian_can_pause(self, client, mock_cm):
@@ -769,7 +800,7 @@ class TestSafety:
         with pytest.raises(RuntimeError, match="paused"):
             await client.deposit(DID, ONE_ETH)
         with pytest.raises(RuntimeError, match="paused"):
-            await client.withdraw(RECIPIENT, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
+            await client.withdraw(RECIPIENT, DID_BYTES, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS)
 
     @pytest.mark.asyncio
     async def test_pause_unpause_cycle(self, client, mock_cm):
@@ -914,10 +945,11 @@ class TestABI:
         fn_names = {e["name"] for e in BRIDGE_ABI if e["type"] == "function"}
         expected = {
             "deposit", "depositToken", "withdraw", "withdrawToken",
-            "updateSyncCommittee", "pause", "unpause", "setRateLimit",
-            "getDepositInfo", "getWithdrawalInfo", "remainingDailyLimit",
-            "latestVerifiedSlot", "syncCommitteeRoot", "paused",
-            "depositNonce", "withdrawalNonce",
+            "updateSyncCommittee", "emergencyPause", "unpause",
+            "updateRateLimits", "getDepositInfo", "getWithdrawalInfo",
+            "getRemainingDailyLimit", "latestVerifiedSlot",
+            "syncCommitteeRoot", "paused", "depositNonce",
+            "withdrawalNonce",
         }
         assert expected.issubset(fn_names)
 
@@ -926,7 +958,7 @@ class TestABI:
         evt_names = {e["name"] for e in BRIDGE_ABI if e["type"] == "event"}
         expected = {
             "Deposited", "Withdrawn", "SyncCommitteeUpdated",
-            "Paused", "Unpaused",
+            "Paused", "Unpaused", "EmergencyPaused", "RateLimitUpdated",
         }
         assert expected == evt_names
 
