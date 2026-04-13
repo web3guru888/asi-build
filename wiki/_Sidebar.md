@@ -25,3 +25,11 @@
 ### Phase 15 — Runtime Self-Modification
 - [Module Registry](Phase-15-Module-Registry)
 - [Hot Swapper](Phase-15-Hot-Swapper)
+- [Dependency Resolver](Phase-15-Dependency-Resolver)
+- [Version Manager](Phase-15-Version-Manager)
+- [Live Module Orchestrator](Phase-15-Live-Module-Orchestrator)
+
+### Phase 16 — Cognitive Reflection & Self-Improvement
+- [Performance Profiler](Phase-16-Performance-Profiler)
+- [Weakness Detector](Phase-16-Weakness-Detector)
+- [Improvement Planner](Phase-16-Improvement-Planner)
