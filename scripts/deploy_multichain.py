@@ -545,6 +545,11 @@ class MultiChainDeployer:
         # Chain-specific gas flags
         if chain.gas_strategy == GasStrategy.LEGACY:
             cmd.append("--legacy")
+        elif chain.gas_strategy == GasStrategy.FIXED:
+            # USDC-native chains (Arc): EIP-1559-like base fee is present,
+            # but the gas price is stable.  Let forge use EIP-1559 defaults;
+            # add --slow for extra reliability on fast-finality chains.
+            cmd.append("--slow")
         elif chain.gas_strategy == GasStrategy.EIP1559:
             # forge defaults to EIP-1559, no extra flag needed
             pass
