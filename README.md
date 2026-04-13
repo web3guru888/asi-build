@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-187_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-192_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>414+ discussions · 187 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>425+ discussions · 192 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 187 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 192 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 414+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 425+ threads
 
 </td>
 <td>
@@ -1079,6 +1079,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 27.4 — CurriculumDesigner ZPD targeting & prerequisite DAG](https://github.com/web3guru888/asi-build/discussions/606)
 - 🔬 [Show & Tell: Phase 27.5 — GeneralizationOrchestrator unified transfer pipeline (PHASE 27 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/607)
 - ❓ [Q&A: Phase 27.5 — GeneralizationOrchestrator negative transfer detection & pipeline stages](https://github.com/web3guru888/asi-build/discussions/608)
+- 📋 [Phase 28 Planning — Attention & Cognitive Resource Management](https://github.com/web3guru888/asi-build/discussions/609)
+- 🔬 [Show & Tell: Phase 28.1 — AttentionFilter selective attention & saliency pipeline](https://github.com/web3guru888/asi-build/discussions/615)
+- ❓ [Q&A: Phase 28.1 — AttentionFilter inhibition of return & mode switching](https://github.com/web3guru888/asi-build/discussions/616)
+- 🔬 [Show & Tell: Phase 28.2 — WorkingMemoryGate capacity-limited gating mechanism](https://github.com/web3guru888/asi-build/discussions/617)
+- ❓ [Q&A: Phase 28.2 — WorkingMemoryGate activation decay & rehearsal loop](https://github.com/web3guru888/asi-build/discussions/618)
+- 🔬 [Show & Tell: Phase 28.3 — CognitiveLoadBalancer adaptive load theory & shedding](https://github.com/web3guru888/asi-build/discussions/619)
+- ❓ [Q&A: Phase 28.3 — CognitiveLoadBalancer hysteresis & graceful degradation](https://github.com/web3guru888/asi-build/discussions/620)
+- 🔬 [Show & Tell: Phase 28.4 — ExecutiveController cognitive control architecture](https://github.com/web3guru888/asi-build/discussions/621)
+- ❓ [Q&A: Phase 28.4 — ExecutiveController task switching cost & proactive control](https://github.com/web3guru888/asi-build/discussions/622)
+- 🔬 [Show & Tell: Phase 28.5 — AttentionOrchestrator unified attention pipeline (PHASE 28 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/623)
+- ❓ [Q&A: Phase 28.5 — AttentionOrchestrator biased competition & resource budget](https://github.com/web3guru888/asi-build/discussions/624)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
