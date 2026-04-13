@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-242_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-247_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>530+ discussions · 242 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>545+ discussions · 247 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -1202,6 +1202,19 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 38.4 — DataPartitioner partition strategies & client selection](https://github.com/web3guru888/asi-build/discussions/784)
 - 🔬 [Show & Tell: Phase 38.5 — FederatedOrchestrator complete pipeline & privacy-utility tradeoffs (PHASE 38 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/785)
 - ❓ [Q&A: Phase 38.5 — FederatedOrchestrator pipeline configuration & integration](https://github.com/web3guru888/asi-build/discussions/786)
+
+#### Phase 39 — Explainable AI & Interpretability
+- 📋 [Phase 39 Planning — Explainable AI & Interpretability](https://github.com/web3guru888/asi-build/discussions/787)
+- 🔬 [Show & Tell: Phase 39.1 — FeatureAttributor SHAP, LIME & Integrated Gradients](https://github.com/web3guru888/asi-build/discussions/793)
+- ❓ [Q&A: Phase 39.1 — FeatureAttributor configuration & edge cases](https://github.com/web3guru888/asi-build/discussions/794)
+- 🔬 [Show & Tell: Phase 39.2 — ConceptExplainer TCAV, concept bottleneck & network dissection](https://github.com/web3guru888/asi-build/discussions/795)
+- ❓ [Q&A: Phase 39.2 — ConceptExplainer concept design & CAV training](https://github.com/web3guru888/asi-build/discussions/796)
+- 🔬 [Show & Tell: Phase 39.3 — CounterfactualGenerator DiCE, Wachter & actionable recourse](https://github.com/web3guru888/asi-build/discussions/800)
+- ❓ [Q&A: Phase 39.3 — CounterfactualGenerator constraints & feasibility](https://github.com/web3guru888/asi-build/discussions/799)
+- 🔬 [Show & Tell: Phase 39.4 — AttentionVisualizer rollout, GradCAM & LRP](https://github.com/web3guru888/asi-build/discussions/803)
+- ❓ [Q&A: Phase 39.4 — AttentionVisualizer LRP rules & conservation](https://github.com/web3guru888/asi-build/discussions/804)
+- 🔬 [Show & Tell: Phase 39.5 — ExplainabilityOrchestrator unified XAI pipeline & fidelity scoring (PHASE 39 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/806)
+- ❓ [Q&A: Phase 39.5 — ExplainabilityOrchestrator budgets, caching & federated XAI](https://github.com/web3guru888/asi-build/discussions/807)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
@@ -1300,4 +1313,3 @@ All contributors who have submitted issues, PRs, and research feedback
 
 ---SHA---
 f864616f02dddef4fd59e9daf802cd6a5b0da1b3
-
