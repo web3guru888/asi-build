@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-192_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-197_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>425+ discussions · 192 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>436+ discussions · 197 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 192 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 197 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 425+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 436+ threads
 
 </td>
 <td>
@@ -1090,6 +1090,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 28.4 — ExecutiveController task switching cost & proactive control](https://github.com/web3guru888/asi-build/discussions/622)
 - 🔬 [Show & Tell: Phase 28.5 — AttentionOrchestrator unified attention pipeline (PHASE 28 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/623)
 - ❓ [Q&A: Phase 28.5 — AttentionOrchestrator biased competition & resource budget](https://github.com/web3guru888/asi-build/discussions/624)
+- 📋 [Phase 29 Planning — Self-Awareness & Introspective Self-Modeling](https://github.com/web3guru888/asi-build/discussions/626)
+- 🔬 [Show & Tell: Phase 29.1 — SelfModel internal self-representation architecture](https://github.com/web3guru888/asi-build/discussions/632)
+- ❓ [Q&A: Phase 29.1 — SelfModel capability profiling & architecture mapping](https://github.com/web3guru888/asi-build/discussions/633)
+- 🔬 [Show & Tell: Phase 29.2 — IntrospectionEngine thought tracing & decision audit](https://github.com/web3guru888/asi-build/discussions/634)
+- ❓ [Q&A: Phase 29.2 — IntrospectionEngine circular buffer & chain traversal](https://github.com/web3guru888/asi-build/discussions/635)
+- 🔬 [Show & Tell: Phase 29.3 — MetaCognitiveMonitor bias detection & confidence calibration](https://github.com/web3guru888/asi-build/discussions/636)
+- ❓ [Q&A: Phase 29.3 — MetaCognitiveMonitor Brier score & intervention strategies](https://github.com/web3guru888/asi-build/discussions/637)
+- 🔬 [Show & Tell: Phase 29.4 — ConsciousnessSimulator Global Workspace & Phi computation](https://github.com/web3guru888/asi-build/discussions/638)
+- ❓ [Q&A: Phase 29.4 — ConsciousnessSimulator ignition threshold & broadcast mechanism](https://github.com/web3guru888/asi-build/discussions/639)
+- 🔬 [Show & Tell: Phase 29.5 — SelfAwarenessOrchestrator unified self-awareness pipeline (PHASE 29 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/640)
+- ❓ [Q&A: Phase 29.5 — SelfAwarenessOrchestrator awareness levels & strange loops](https://github.com/web3guru888/asi-build/discussions/641)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
