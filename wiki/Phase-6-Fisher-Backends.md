@@ -1,259 +1,255 @@
-# Phase 6 Fisher Backends: Neo4jFisherStore and CachedFisherStore
+# Phase 6.2 — Fisher Information Backends: Neo4j, Redis Cache, and FisherStoreFactory
 
-**Status**: Specification (Issue #245)  
-**Phase**: 6.2  
-**Depends on**: [Phase-6-EWC-Foundation](Phase-6-EWC-Foundation) (Phase 6.1)
+**Status**: 🟡 In Progress — Issue #245  
+**Depends on**: Phase-6-EWC-Foundation (Phase 6.1, Issue #241)  
+**Previous**: [Phase-6-EWC-Foundation](Phase-6-EWC-Foundation)  
+**Next**: [Phase-6-EWC-Integration](Phase-6-EWC-Integration) (Phase 6.3, Issue #249)
 
 ---
 
 ## Overview
 
-Phase 6.1 introduced `InMemoryFisherStore` — sufficient for development and testing, but Fisher matrices are lost on process restart. Phase 6.2 adds two production-grade backends:
+Phase 6.2 adds **persistent and cached Fisher information storage backends** to the EWC continual-learning system. The `InMemoryFisherStore` from Phase 6.1 is sufficient for single-run development but cannot share Fisher data across agents or survive process restarts. Phase 6.2 delivers:
 
-- **`Neo4jFisherStore`**: Persists Fisher matrices in the existing Neo4j knowledge graph via UNWIND batch writes.
-- **`CachedFisherStore`**: Wraps any `FisherMatrixBase` backend with a Redis TTL cache.
-
-Both implement the `FisherMatrixBase` ABC and are assembled by `FisherStoreFactory` based on `EWCConfig`.
+1. **`Neo4jFisherStore`** — durable persistence via the existing Neo4j knowledge graph
+2. **`CachedFisherStore`** — Redis-backed TTL cache layered over any backend
+3. **`FisherStoreFactory`** — configuration-driven backend selection
 
 ---
 
 ## Architecture
 
 ```
-FisherMatrixBase (ABC)
-├── InMemoryFisherStore          ← Phase 6.1
-├── Neo4jFisherStore             ← Phase 6.2
-└── CachedFisherStore            ← Phase 6.2
-      └── wraps: FisherMatrixBase (any)
+EWCRegulariser
+      │
+      ▼
+FisherMatrixBase (ABC, Phase 6.1)
+      │
+      ├── InMemoryFisherStore   ← dev / unit tests
+      │
+      ├── Neo4jFisherStore      ← production (durable, shared)
+      │       │
+      └── CachedFisherStore ───►│  (wraps Neo4j with Redis TTL cache)
+              │
+              ▼
+          Redis (TTL = 300s default)
+```
 
-FisherStoreFactory.build(config, neo4j_driver?, redis_client?)
-  → FisherMatrixBase
+**FisherStoreFactory** selects the backend at startup:
+
+```python
+store = FisherStoreFactory.from_config(ewc_config)
+# ewc_config.fisher_backend = "in_memory" | "neo4j" | "cached_neo4j"
 ```
 
 ---
 
-## Neo4jFisherStore
+## Components
 
-### Neo4j Schema
+### Neo4jFisherStore
+
+**File**: `asi/phase6/learning/fisher_neo4j.py`
+
+```python
+class Neo4jFisherStore(FisherMatrixBase):
+    """Persist FisherSnapshots to Neo4j as FisherMatrix nodes."""
+
+    async def save(self, task_id: str, snapshot: FisherSnapshot) -> None:
+        async with self._driver.session() as session:
+            await session.execute_write(self._write_snapshot, task_id, snapshot)
+
+    async def load(self, task_id: str) -> FisherSnapshot | None:
+        async with self._driver.session() as session:
+            return await session.execute_read(self._read_snapshot, task_id)
+
+    @staticmethod
+    async def _write_snapshot(tx, task_id: str, snapshot: FisherSnapshot) -> None:
+        await tx.run(
+            """
+            MERGE (f:FisherMatrix {task_id: $task_id})
+            SET f.fisher_diag    = $fisher_diag,
+                f.anchor_weights = $anchor_weights,
+                f.episode_count  = $episode_count,
+                f.updated_at     = datetime()
+            """,
+            task_id=task_id,
+            fisher_diag=snapshot.fisher_diag.tolist(),
+            anchor_weights=snapshot.anchor_weights.tolist(),
+            episode_count=snapshot.episode_count,
+        )
+```
+
+#### Neo4j Schema
 
 ```cypher
-// Store matrix — single UNWIND round-trip
-UNWIND $rows AS row
-MERGE (p:Parameter {name: row.name})
-MERGE (t:Task {id: row.task_id})
-CREATE (p)-[:HAS_FISHER {
-  value: row.value,
-  computed_at: datetime($computed_at)
-}]->(t)
+CREATE CONSTRAINT fisher_task_unique IF NOT EXISTS
+  FOR (f:FisherMatrix) REQUIRE f.task_id IS UNIQUE;
 
-// Load matrix — reconstruct FisherSnapshot
-MATCH (p:Parameter)-[f:HAS_FISHER]->(t:Task {id: $task_id})
-RETURN p.name AS name, f.value AS value
-ORDER BY p.name
-
-// List stored tasks
-MATCH ()-[f:HAS_FISHER]->(t:Task)
-RETURN DISTINCT t.id AS task_id
-ORDER BY task_id
+CREATE INDEX fisher_updated_idx IF NOT EXISTS
+  FOR (f:FisherMatrix) ON (f.updated_at);
 ```
 
-### Class Skeleton
-
-```python
-STORE_CYPHER = """
-UNWIND $rows AS row
-MERGE (p:Parameter {name: row.name})
-MERGE (t:Task {id: row.task_id})
-CREATE (p)-[:HAS_FISHER {value: row.value, computed_at: datetime($computed_at)}]->(t)
-"""
-
-LOAD_CYPHER = """
-MATCH (p:Parameter)-[f:HAS_FISHER]->(t:Task {id: $task_id})
-RETURN p.name AS name, f.value AS value
-ORDER BY p.name
-"""
-
-class Neo4jFisherStore(FisherMatrixBase):
-    def __init__(self, driver: AsyncDriver, db: str = "neo4j") -> None:
-        self._driver = driver
-        self._db = db
-
-    async def store_matrix(self, task_id: str, snapshot: FisherSnapshot) -> None:
-        rows = [
-            {"name": name, "task_id": task_id, "value": float(val)}
-            for name, val in snapshot.fisher_diag.items()
-        ]
-        async with self._driver.session(database=self._db) as session:
-            await session.run(
-                STORE_CYPHER,
-                rows=rows,
-                computed_at=snapshot.computed_at.isoformat(),
-            )
-
-    async def load_matrix(self, task_id: str) -> FisherSnapshot | None:
-        async with self._driver.session(database=self._db) as session:
-            result = await session.run(LOAD_CYPHER, task_id=task_id)
-            records = await result.data()
-        if not records:
-            return None
-        fisher_diag = {r["name"]: r["value"] for r in records}
-        return FisherSnapshot(
-            task_id=task_id,
-            fisher_diag=fisher_diag,
-            computed_at=datetime.utcnow(),  # approximate
-        )
-
-    async def list_tasks(self) -> list[str]:
-        async with self._driver.session(database=self._db) as session:
-            result = await session.run(
-                "MATCH ()-[f:HAS_FISHER]->(t:Task) RETURN DISTINCT t.id AS task_id ORDER BY task_id"
-            )
-            records = await result.data()
-        return [r["task_id"] for r in records]
+Node structure:
+```
+(:FisherMatrix {
+  task_id:        "agent-7f3a:navigation",
+  fisher_diag:    [0.12, 0.03, 0.87, ...],   // float list, len = weight_dim
+  anchor_weights: [0.45, -0.12, 0.33, ...],  // float list, len = weight_dim
+  episode_count:  42,
+  updated_at:     datetime
+})
 ```
 
-### Write Latency Reference
+#### Latency Characteristics
 
-| Parameters | Write time (Neo4j 5.x local) |
-|-----------|------------------------------|
-| 1 K | ~8 ms |
-| 10 K | ~35 ms |
-| 50 K | ~80 ms |
-| 100 K | ~160 ms |
-| 500 K | ~450 ms (chunk at >100K) |
-
-All within the SLEEP_PHASE budget (~500ms).
+| Operation | Typical latency | Notes |
+|---|---|---|
+| `save()` | 8–25 ms | MERGE + SET on indexed node |
+| `load()` | 5–15 ms | Single node lookup by task_id |
+| First write | 15–40 ms | Index warm-up |
+| Bulk UNWIND (Phase 6.4) | 2–5 ms per snapshot | For batch snapshot updates |
 
 ---
 
-## CachedFisherStore
+### CachedFisherStore
 
-### Prometheus Counters
-
-```python
-FISHER_CACHE_HITS = Counter(
-    "ewc_fisher_cache_hits_total",
-    "Redis cache hits on Fisher matrix load",
-)
-FISHER_CACHE_MISSES = Counter(
-    "ewc_fisher_cache_misses_total",
-    "Redis cache misses on Fisher matrix load",
-)
-```
-
-### Class Skeleton
+**File**: `asi/phase6/learning/fisher_cache.py`
 
 ```python
 class CachedFisherStore(FisherMatrixBase):
-    KEY_PREFIX = "fisher"
+    """Redis TTL cache wrapping any FisherMatrixBase backend."""
 
-    def __init__(
-        self, backend: FisherMatrixBase, redis: Redis, ttl: int = 3600
-    ) -> None:
-        self._backend = backend
-        self._redis = redis
-        self._ttl = ttl
+    KEY_PREFIX = "fisher:"
+    DEFAULT_TTL = 300  # seconds
 
-    def _key(self, task_id: str) -> str:
-        return f"{self.KEY_PREFIX}:{task_id}"
-
-    async def store_matrix(self, task_id: str, snapshot: FisherSnapshot) -> None:
-        await self._backend.store_matrix(task_id, snapshot)
-        # Populate cache immediately after write
-        await self._redis.setex(
-            self._key(task_id), self._ttl, snapshot.model_dump_json()
-        )
-
-    async def load_matrix(self, task_id: str) -> FisherSnapshot | None:
-        if cached := await self._redis.get(self._key(task_id)):
-            FISHER_CACHE_HITS.inc()
-            return FisherSnapshot.model_validate_json(cached)
-        FISHER_CACHE_MISSES.inc()
-        snapshot = await self._backend.load_matrix(task_id)
-        if snapshot:
-            await self._redis.setex(
-                self._key(task_id), self._ttl, snapshot.model_dump_json()
-            )
+    async def load(self, task_id: str) -> FisherSnapshot | None:
+        key = f"{self.KEY_PREFIX}{task_id}"
+        cached = await self._redis.get(key)
+        if cached is not None:
+            CACHE_HIT.labels(task_id=task_id).inc()
+            return FisherSnapshot.from_bytes(cached)
+        CACHE_MISS.labels(task_id=task_id).inc()
+        snapshot = await self._backend.load(task_id)
+        if snapshot is not None:
+            await self._redis.setex(key, self._ttl, snapshot.to_bytes())
         return snapshot
 
-    async def list_tasks(self) -> list[str]:
-        return await self._backend.list_tasks()
+    async def save(self, task_id: str, snapshot: FisherSnapshot) -> None:
+        await self._backend.save(task_id, snapshot)
+        key = f"{self.KEY_PREFIX}{task_id}"
+        await self._redis.setex(key, self._ttl, snapshot.to_bytes())
 ```
+
+#### Prometheus Metrics
+
+| Metric | Type | Labels |
+|---|---|---|
+| `phase6_fisher_cache_hit_total` | Counter | `task_id` |
+| `phase6_fisher_cache_miss_total` | Counter | `task_id` |
+| `phase6_fisher_cache_write_total` | Counter | `task_id` |
+
+#### Redis Key Convention
+
+All Fisher keys use the `fisher:` namespace prefix:
+```
+fisher:{task_id}    →  serialized FisherSnapshot (msgpack)
+fisher:agent-7f3a:navigation  →  TTL=300s
+```
+
+This allows bulk invalidation: `redis-cli --scan --pattern 'fisher:*' | xargs redis-cli del`
 
 ---
 
-## FisherStoreFactory
+### FisherStoreFactory
+
+**File**: `asi/phase6/learning/fisher_factory.py`
 
 ```python
 class FisherStoreFactory:
-    @staticmethod
-    def build(
-        config: EWCConfig,
-        neo4j_driver: AsyncDriver | None = None,
-        redis_client: Redis | None = None,
-    ) -> FisherMatrixBase:
+    """Select and construct a FisherMatrixBase implementation from EWCConfig."""
+
+    _REGISTRY: dict[str, type[FisherMatrixBase]] = {
+        "in_memory":    InMemoryFisherStore,
+        "neo4j":        Neo4jFisherStore,
+        "cached_neo4j": CachedFisherStore,
+    }
+
+    @classmethod
+    def from_config(cls, config: EWCConfig) -> FisherMatrixBase:
+        backend_cls = cls._REGISTRY.get(config.fisher_backend)
+        if backend_cls is None:
+            raise ValueError(
+                f"Unknown Fisher backend: {config.fisher_backend!r}. "
+                f"Valid options: {list(cls._REGISTRY)}"
+            )
         match config.fisher_backend:
             case "in_memory":
-                return InMemoryFisherStore()
+                return InMemoryFisherStore(max_snapshots=config.max_fisher_snapshots)
             case "neo4j":
-                assert neo4j_driver, "neo4j_driver required"
-                return Neo4jFisherStore(neo4j_driver, config.neo4j_db)
+                return Neo4jFisherStore(driver=config.neo4j_driver)
             case "cached_neo4j":
-                assert neo4j_driver and redis_client, "both required"
-                base = Neo4jFisherStore(neo4j_driver, config.neo4j_db)
-                return CachedFisherStore(base, redis_client, config.redis_ttl)
-            case _:
-                raise ValueError(f"Unknown fisher_backend: {config.fisher_backend!r}")
+                neo4j = Neo4jFisherStore(driver=config.neo4j_driver)
+                return CachedFisherStore(
+                    backend=neo4j,
+                    redis=config.redis_client,
+                    ttl=config.fisher_cache_ttl,
+                )
 ```
 
 ---
 
-## Test Targets
+## EWCConfig — New Fields (Phase 6.2)
 
-| # | Test | Scope |
-|---|------|-------|
-| 1 | `test_neo4j_store_roundtrip` | store → load → assert dict equal |
-| 2 | `test_unwind_single_round_trip` | `session.run` called exactly once |
-| 3 | `test_load_missing_task_returns_none` | missing task_id → None |
-| 4 | `test_list_tasks_sorted` | 3 tasks → sorted list |
-| 5 | `test_cached_store_hit_path` | Redis returns bytes → skip Neo4j |
-| 6 | `test_cached_store_miss_path` | Redis returns None → Neo4j called |
-| 7 | `test_cache_hit_counter_incremented` | FISHER_CACHE_HITS +1 |
-| 8 | `test_cache_miss_counter_incremented` | FISHER_CACHE_MISSES +1 |
-| 9 | `test_factory_in_memory` | → InMemoryFisherStore |
-| 10 | `test_factory_neo4j` | → Neo4jFisherStore |
-| 11 | `test_factory_cached_neo4j` | → CachedFisherStore |
-| 12 | `test_concurrent_store_load` | asyncio.gather(5 concurrent loads) |
+| Field | Type | Default | Purpose |
+|---|---|---|---|
+| `fisher_backend` | `Literal["in_memory", "neo4j", "cached_neo4j"]` | `"in_memory"` | Backend selector |
+| `neo4j_driver` | `AsyncDriver \| None` | `None` | Required for neo4j/cached_neo4j |
+| `redis_client` | `Redis \| None` | `None` | Required for cached_neo4j |
+| `fisher_cache_ttl` | `int` | `300` | Redis TTL in seconds |
+| `max_fisher_snapshots` | `int` | `100` | InMemoryFisherStore bound |
 
 ---
 
-## Redis Key Convention
+## Test Targets (12)
 
-| Key pattern | Value | TTL |
-|-------------|-------|-----|
-| `fisher:{task_id}` | JSON-serialised `FisherSnapshot` | 3600s (configurable) |
-
-Other ASI-Build Redis namespaces: `phero:*` (pheromones), `bb:*` (Blackboard).
+| Test | Backend | What it verifies |
+|---|---|---|
+| `test_neo4j_save_and_load` | Neo4j | Round-trip FisherSnapshot → Neo4j → back |
+| `test_neo4j_missing_task_id` | Neo4j | Returns None for unknown task_id |
+| `test_neo4j_overwrite` | Neo4j | MERGE updates existing node (no duplicate) |
+| `test_neo4j_shape_preserved` | Neo4j | Array shapes match after list→ndarray conversion |
+| `test_cache_hit_path` | Cached | Redis hit → no backend call → cache_hit counter |
+| `test_cache_miss_path` | Cached | Redis miss → backend call → populates cache |
+| `test_cache_save_writes_both` | Cached | save() writes backend AND Redis |
+| `test_cache_ttl_expiry` | Cached | After TTL, next load hits backend (mock time) |
+| `test_factory_in_memory` | Factory | Returns InMemoryFisherStore |
+| `test_factory_neo4j` | Factory | Returns Neo4jFisherStore with driver |
+| `test_factory_cached_neo4j` | Factory | Returns CachedFisherStore wrapping Neo4j |
+| `test_factory_unknown_backend` | Factory | Raises ValueError with helpful message |
 
 ---
 
 ## Error Handling
 
-If Neo4j write fails during SLEEP_PHASE:
-1. Catch exception, log to Blackboard: `blackboard.set("ewc.last_store_error", str(e))`
-2. Increment `ewc_store_errors_total` Prometheus counter
-3. **Do not raise** — SLEEP_PHASE must complete regardless
+| Scenario | Behaviour |
+|---|---|
+| Neo4j unavailable on `load()` | Propagate `ServiceUnavailable`; caller gets None via try/except in EWCRegulariser |
+| Neo4j unavailable on `save()` | Log error + increment `phase6_fisher_save_error_total`; don't crash SLEEP_PHASE |
+| Redis unavailable on `load()` | Fall through to backend (degraded mode, no cache) |
+| Redis unavailable on `save()` | Log warning; data is still in Neo4j |
+| Snapshot shape mismatch | Log warning + return None; caller uses zero gradient |
 
 ---
 
 ## Phase 6 Roadmap
 
-| Sub-phase | Scope |
-|-----------|-------|
-| **6.1** | FisherMatrixBase ABC, InMemoryFisherStore, EWCConfig, EWCRegulariser, SLEEP hook (#241) |
-| **6.2** | Neo4jFisherStore, CachedFisherStore, FisherStoreFactory (#245) |
-| **6.3** | EWCRegulariser × STDPOnlineLearner integration (TBD) |
-| **6.4** | Phase 6 CI harness + Grafana EWC dashboard panel (TBD) |
+| Phase | Issue | Status |
+|---|---|---|
+| 6.1 — EWC Foundation | #241 | 🟡 Open |
+| 6.2 — Fisher Backends | #245 | 🟡 Open |
+| 6.3 — EWC Integration | #249 | 🟡 Open |
+| 6.4 — Fisher warm-up + task registry | TBD | 📋 Planned |
 
-See also: [Phase-6-EWC-Foundation](Phase-6-EWC-Foundation) · [Phase-5-Online-Learning](Phase-5-Online-Learning) · Issue #241 · Issue #245
+---
 
+*See also: [Phase-6-EWC-Foundation](Phase-6-EWC-Foundation) · [Phase-6-EWC-Integration](Phase-6-EWC-Integration) · Issue #245 · Discussion #247*

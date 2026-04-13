@@ -1,105 +1,67 @@
-# Phase 16.2 — `WeaknessDetector`
+# Phase 16.2 — WeaknessDetector
 
-**Phase**: 16 — Cognitive Reflection & Self-Improvement
-**Component**: `WeaknessDetector`
-**Depends on**: Phase 16.1 [`PerformanceProfiler`](Phase-16-Performance-Profiler) (#417)
+**Phase**: 16 — Cognitive Reflection & Self-Improvement  
+**Component**: `WeaknessDetector`  
+**Issue**: #420  
+**Depends on**: Phase 16.1 `PerformanceProfiler` (#417)  
 **Feeds into**: Phase 16.3 `ImprovementPlanner`
-**Issue**: #420 | **Show & Tell**: #421 | **Q&A**: #422
 
 ---
 
 ## Overview
 
-`WeaknessDetector` is the diagnostic layer of the Cognitive Reflection cycle. It consumes `ModuleProfile` snapshots produced by `PerformanceProfiler` and applies a battery of heuristic checks to identify modules that are violating SLA thresholds, experiencing regression, exhibiting instability, or generating excessive errors. Each detected problem is emitted as a `Weakness` record, severity-ranked, and forwarded to `ImprovementPlanner` for action planning.
-
-The detector maintains a rolling **baseline** of historical profile data (a configurable window of recent observations) against which current measurements are compared. This makes the detector robust to gradual drift — it flags regression relative to *recent* normal behaviour, not a static factory default.
+`WeaknessDetector` converts raw `ModuleProfile` snapshots from `PerformanceProfiler` into ranked `WeaknessReport` objects. It identifies latency regressions, error-rate spikes, throughput drops, and baseline deviations — providing the signal that `ImprovementPlanner` (Phase 16.3) uses to schedule targeted improvements.
 
 ---
 
-## Enumerations
-
-### `WeaknessCategory`
-
-```python
-from enum import Enum, auto
-
-class WeaknessCategory(Enum):
-    LATENCY_SLA      = auto()   # p95 latency exceeds per-module SLA
-    THROUGHPUT_DROP  = auto()   # calls/s has fallen below floor
-    REGRESSION       = auto()   # metric has regressed vs rolling baseline
-    STABILITY        = auto()   # high spread between p50 and p95 (jitter)
-    ERROR_RATE       = auto()   # error fraction exceeds threshold
-```
-
-### `WeaknessSeverity`
-
-```python
-class WeaknessSeverity(Enum):
-    CRITICAL = 0   # immediate action required (sort key: lowest = highest urgency)
-    HIGH     = 1
-    MEDIUM   = 2
-    LOW      = 3
-```
-
-Severity is assigned per-category and scaled by how far the observed value exceeds the threshold:
-
-| `delta_pct` vs threshold | Assigned severity |
-|--------------------------|-------------------|
-| ≥ 100 %                  | `CRITICAL`        |
-| 50 – 99 %                | `HIGH`            |
-| 20 – 49 %                | `MEDIUM`          |
-| 0 – 19 %                 | `LOW`             |
-
----
-
-## Frozen Dataclasses
-
-### `Weakness`
+## Data Model
 
 ```python
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Tuple
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from typing import Sequence, FrozenSet
+
+class WeaknessKind(Enum):
+    HIGH_LATENCY    = auto()   # p95 or p99 exceeds threshold
+    HIGH_ERROR_RATE = auto()   # error_rate exceeds threshold
+    LOW_THROUGHPUT  = auto()   # throughput_rps below minimum
+    LATENCY_SPIKE   = auto()   # recent p99 diverges sharply from baseline p99
+    DEGRADED        = auto()   # composite: two or more flags
+
+class WeaknessSeverity(Enum):
+    LOW      = 1
+    MEDIUM   = 2
+    HIGH     = 3
+    CRITICAL = 4
 
 @dataclass(frozen=True)
-class Weakness:
+class WeaknessSignal:
+    """A single detected anomaly for a module."""
     module_name:  str
-    category:     WeaknessCategory
+    kind:         WeaknessKind
     severity:     WeaknessSeverity
-    metric_name:  str                         # e.g. "latency_p95_ms"
-    observed:     float                       # current measured value
-    threshold:    float                       # limit that was breached
-    delta_pct:    float                       # (observed - threshold) / threshold × 100
-    evidence:     str                         # human-readable explanation
-    tags:         Tuple[str, ...] = ()        # e.g. ("phase:16", "module:planner")
-```
+    observed:     float          # measured value (ms, rate, rps)
+    threshold:    float          # configured limit
+    excess_ratio: float          # observed / threshold  (> 1.0 means violation)
 
-`tags` is a `Tuple` (not `list`) so the dataclass remains hashable and sortable.
+@dataclass(frozen=True)
+class WeaknessReport:
+    """Aggregated result for one module, may carry multiple signals."""
+    module_name:  str
+    signals:      tuple[WeaknessSignal, ...]
+    severity:     WeaknessSeverity        # max severity across signals
+    kinds:        FrozenSet[WeaknessKind] # union of all signal kinds
 
-### `DetectorConfig`
-
-```python
 @dataclass(frozen=True)
 class DetectorConfig:
-    # per-module SLA overrides: module_name → ms; fallback = default_latency_sla_ms
-    latency_sla_ms:           Tuple[Tuple[str, float], ...] = ()
-    default_latency_sla_ms:   float = 500.0   # ms
-    throughput_floor_rps:     float = 1.0     # calls/s minimum
-    regression_threshold_pct: float = 20.0   # % degradation vs baseline
-    stability_spread_ratio:   float = 5.0    # p95 / p50 ratio above which jitter fires
-    error_rate_threshold:     float = 0.01   # 1 % default
-    baseline_window:          int   = 10     # how many historical snapshots to average
-    min_samples:              int   = 5      # minimum baseline entries before firing
-    enabled_categories:       Tuple[WeaknessCategory, ...] = (
-        WeaknessCategory.LATENCY_SLA,
-        WeaknessCategory.THROUGHPUT_DROP,
-        WeaknessCategory.REGRESSION,
-        WeaknessCategory.STABILITY,
-        WeaknessCategory.ERROR_RATE,
-    )
-
-    def sla_for(self, module: str) -> float:
-        return dict(self.latency_sla_ms).get(module, self.default_latency_sla_ms)
+    latency_p95_threshold_ms:  float = 200.0
+    latency_p99_threshold_ms:  float = 500.0
+    error_rate_threshold:       float = 0.05      # 5 %
+    min_throughput_rps:         float = 1.0
+    spike_ratio_threshold:      float = 2.0       # p99_recent / p99_baseline > 2×
+    baseline_window:            int   = 60        # seconds; older data used as baseline
+    severity_weights: tuple[float, ...] = (1.0, 1.5, 2.0, 3.0)  # LOW…CRITICAL
 ```
 
 ---
@@ -107,430 +69,343 @@ class DetectorConfig:
 ## Protocol
 
 ```python
-from typing import Protocol, Sequence, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 @runtime_checkable
 class WeaknessDetector(Protocol):
-    async def detect(
+    async def analyse(
         self,
         profiles: Sequence[ModuleProfile],
-    ) -> Sequence[Weakness]: ...
+        *,
+        config: DetectorConfig | None = None,
+    ) -> Sequence[WeaknessReport]: ...
 
-    async def update_baseline(
+    async def top_weaknesses(
         self,
         profiles: Sequence[ModuleProfile],
-    ) -> None: ...
+        n: int = 5,
+        *,
+        config: DetectorConfig | None = None,
+    ) -> Sequence[WeaknessReport]: ...
 
-    async def reset(self) -> None: ...
-    def stats(self) -> dict[str, int]: ...
+    def reset(self) -> None: ...
 ```
-
-`detect` **does not mutate baseline** — call `update_baseline` separately (typically once per reflection cycle, after acting on results).
 
 ---
 
-## `HeuristicWeaknessDetector` — Canonical Implementation
+## `ThresholdWeaknessDetector` — reference implementation
 
 ```python
 import asyncio
-import statistics
-from collections import defaultdict, deque
 
-class HeuristicWeaknessDetector:
-    """Rule-based weakness detection with rolling baseline."""
+class ThresholdWeaknessDetector:
+    """
+    Stateless (per-call) threshold + spike detector.
+    Maintains a baseline map: module_name → baseline_p99_ms,
+    refreshed via exponential smoothing (α = 0.1).
+    """
 
     def __init__(self, config: DetectorConfig | None = None) -> None:
-        self._cfg = config or DetectorConfig()
-        # module_name → deque of ModuleProfile snapshots
-        self._baseline: dict[str, deque[ModuleProfile]] = defaultdict(
-            lambda: deque(maxlen=self._cfg.baseline_window)
-        )
+        self._default_config = config or DetectorConfig()
+        self._baseline: dict[str, float] = {}
         self._lock = asyncio.Lock()
-        self._counters: dict[str, int] = defaultdict(int)
 
-    # ------------------------------------------------------------------ #
-    # Public API                                                           #
-    # ------------------------------------------------------------------ #
-
-    async def detect(
+    async def analyse(
         self,
         profiles: Sequence[ModuleProfile],
-    ) -> Sequence[Weakness]:
-        weaknesses: list[Weakness] = []
+        *,
+        config: DetectorConfig | None = None,
+    ) -> list[WeaknessReport]:
+        cfg = config or self._default_config
+        reports: list[WeaknessReport] = []
         async with self._lock:
             for profile in profiles:
-                weaknesses.extend(self._check_profile(profile))
-        # Sort: CRITICAL first, then HIGH, MEDIUM, LOW
-        weaknesses.sort(key=lambda w: w.severity.value)
-        self._counters["detect_calls"] += 1
-        self._counters["weaknesses_found"] += len(weaknesses)
-        return weaknesses
-
-    async def update_baseline(
-        self,
-        profiles: Sequence[ModuleProfile],
-    ) -> None:
-        async with self._lock:
-            for profile in profiles:
-                self._baseline[profile.module_name].append(profile)
-        self._counters["baseline_updates"] += 1
-
-    async def reset(self) -> None:
-        async with self._lock:
-            self._baseline.clear()
-            self._counters.clear()
-
-    def stats(self) -> dict[str, int]:
-        return dict(self._counters)
-
-    # ------------------------------------------------------------------ #
-    # Internal helpers                                                     #
-    # ------------------------------------------------------------------ #
-
-    def _compute_baseline(
-        self,
-        module: str,
-        attr: str,
-    ) -> float | None:
-        """Return mean of `attr` over baseline window, or None if too few samples."""
-        history = self._baseline[module]
-        if len(history) < self._cfg.min_samples:
-            return None
-        values = [getattr(snap, attr) for snap in history]
-        return statistics.mean(values)
-
-    def _severity_from_delta(self, delta_pct: float) -> WeaknessSeverity:
-        if delta_pct >= 100.0:
-            return WeaknessSeverity.CRITICAL
-        if delta_pct >= 50.0:
-            return WeaknessSeverity.HIGH
-        if delta_pct >= 20.0:
-            return WeaknessSeverity.MEDIUM
-        return WeaknessSeverity.LOW
-
-    def _check_profile(self, profile: ModuleProfile) -> list[Weakness]:
-        found: list[Weakness] = []
-        enabled = set(self._cfg.enabled_categories)
-
-        # ── LATENCY_SLA ────────────────────────────────────────────────
-        if WeaknessCategory.LATENCY_SLA in enabled:
-            sla = self._cfg.sla_for(profile.module_name)
-            if profile.p95_ms > sla:
-                delta = (profile.p95_ms - sla) / sla * 100
-                found.append(Weakness(
-                    module_name=profile.module_name,
-                    category=WeaknessCategory.LATENCY_SLA,
-                    severity=self._severity_from_delta(delta),
-                    metric_name="latency_p95_ms",
-                    observed=profile.p95_ms,
-                    threshold=sla,
-                    delta_pct=round(delta, 2),
-                    evidence=(
-                        f"p95={profile.p95_ms:.1f}ms exceeds SLA={sla:.1f}ms "
-                        f"({delta:.1f}% over)"
-                    ),
-                ))
-
-        # ── THROUGHPUT_DROP ────────────────────────────────────────────
-        if WeaknessCategory.THROUGHPUT_DROP in enabled:
-            floor = self._cfg.throughput_floor_rps
-            if profile.throughput_rps < floor:
-                delta = (floor - profile.throughput_rps) / max(floor, 1e-9) * 100
-                found.append(Weakness(
-                    module_name=profile.module_name,
-                    category=WeaknessCategory.THROUGHPUT_DROP,
-                    severity=self._severity_from_delta(delta),
-                    metric_name="throughput_rps",
-                    observed=profile.throughput_rps,
-                    threshold=floor,
-                    delta_pct=round(delta, 2),
-                    evidence=(
-                        f"throughput={profile.throughput_rps:.2f} rps "
-                        f"below floor={floor:.2f} rps"
-                    ),
-                ))
-
-        # ── REGRESSION ────────────────────────────────────────────────
-        if WeaknessCategory.REGRESSION in enabled:
-            baseline_p95 = self._compute_baseline(profile.module_name, "p95_ms")
-            if baseline_p95 is not None:
-                delta = (profile.p95_ms - baseline_p95) / max(baseline_p95, 1e-9) * 100
-                if delta >= self._cfg.regression_threshold_pct:
-                    found.append(Weakness(
+                signals = self._detect_signals(profile, cfg)
+                if signals:
+                    kinds    = frozenset(s.kind for s in signals)
+                    severity = max(s.severity for s in signals)
+                    if len(kinds) >= 2:
+                        kinds = kinds | {WeaknessKind.DEGRADED}
+                    reports.append(WeaknessReport(
                         module_name=profile.module_name,
-                        category=WeaknessCategory.REGRESSION,
-                        severity=self._severity_from_delta(delta),
-                        metric_name="latency_p95_regression_pct",
-                        observed=profile.p95_ms,
-                        threshold=baseline_p95,
-                        delta_pct=round(delta, 2),
-                        evidence=(
-                            f"p95={profile.p95_ms:.1f}ms regressed "
-                            f"{delta:.1f}% vs baseline {baseline_p95:.1f}ms"
-                        ),
+                        signals=tuple(signals),
+                        severity=severity,
+                        kinds=kinds,
                     ))
+        return sorted(reports, key=lambda r: (
+            -r.severity.value,
+            -max(s.excess_ratio for s in r.signals),
+        ))
 
-        # ── STABILITY ─────────────────────────────────────────────────
-        if WeaknessCategory.STABILITY in enabled:
-            p50 = profile.p50_ms
-            ratio = profile.p95_ms / max(p50, 1e-9)
-            if ratio >= self._cfg.stability_spread_ratio:
-                delta = (ratio - self._cfg.stability_spread_ratio) / self._cfg.stability_spread_ratio * 100
-                found.append(Weakness(
-                    module_name=profile.module_name,
-                    category=WeaknessCategory.STABILITY,
-                    severity=self._severity_from_delta(delta),
-                    metric_name="p95_p50_spread_ratio",
-                    observed=round(ratio, 2),
-                    threshold=self._cfg.stability_spread_ratio,
-                    delta_pct=round(delta, 2),
-                    evidence=(
-                        f"p95/p50 ratio={ratio:.2f} exceeds "
-                        f"stability_spread_ratio={self._cfg.stability_spread_ratio}"
-                    ),
+    async def top_weaknesses(
+        self,
+        profiles: Sequence[ModuleProfile],
+        n: int = 5,
+        *,
+        config: DetectorConfig | None = None,
+    ) -> list[WeaknessReport]:
+        return (await self.analyse(profiles, config=config))[:n]
+
+    def reset(self) -> None:
+        self._baseline.clear()
+
+    def _detect_signals(
+        self,
+        profile: ModuleProfile,
+        cfg: DetectorConfig,
+    ) -> list[WeaknessSignal]:
+        signals: list[WeaknessSignal] = []
+
+        # p95 latency
+        if profile.p95_ms > cfg.latency_p95_threshold_ms:
+            signals.append(WeaknessSignal(
+                module_name  = profile.module_name,
+                kind         = WeaknessKind.HIGH_LATENCY,
+                severity     = self._latency_severity(profile.p95_ms, cfg.latency_p95_threshold_ms),
+                observed     = profile.p95_ms,
+                threshold    = cfg.latency_p95_threshold_ms,
+                excess_ratio = profile.p95_ms / cfg.latency_p95_threshold_ms,
+            ))
+
+        # p99 latency
+        if profile.p99_ms > cfg.latency_p99_threshold_ms:
+            signals.append(WeaknessSignal(
+                module_name  = profile.module_name,
+                kind         = WeaknessKind.HIGH_LATENCY,
+                severity     = self._latency_severity(profile.p99_ms, cfg.latency_p99_threshold_ms),
+                observed     = profile.p99_ms,
+                threshold    = cfg.latency_p99_threshold_ms,
+                excess_ratio = profile.p99_ms / cfg.latency_p99_threshold_ms,
+            ))
+
+        # error rate
+        if profile.error_rate > cfg.error_rate_threshold:
+            ratio = profile.error_rate / cfg.error_rate_threshold
+            signals.append(WeaknessSignal(
+                module_name  = profile.module_name,
+                kind         = WeaknessKind.HIGH_ERROR_RATE,
+                severity     = WeaknessSeverity.CRITICAL if ratio > 4 else
+                               WeaknessSeverity.HIGH     if ratio > 2 else
+                               WeaknessSeverity.MEDIUM,
+                observed     = profile.error_rate,
+                threshold    = cfg.error_rate_threshold,
+                excess_ratio = ratio,
+            ))
+
+        # throughput
+        if profile.throughput_rps < cfg.min_throughput_rps and profile.throughput_rps > 0:
+            signals.append(WeaknessSignal(
+                module_name  = profile.module_name,
+                kind         = WeaknessKind.LOW_THROUGHPUT,
+                severity     = WeaknessSeverity.LOW,
+                observed     = profile.throughput_rps,
+                threshold    = cfg.min_throughput_rps,
+                excess_ratio = cfg.min_throughput_rps / max(profile.throughput_rps, 1e-9),
+            ))
+
+        # latency spike vs baseline
+        baseline = self._baseline.get(profile.module_name)
+        if baseline is None:
+            self._baseline[profile.module_name] = profile.p99_ms
+        elif baseline > 0:
+            spike_ratio = profile.p99_ms / baseline
+            if spike_ratio > cfg.spike_ratio_threshold:
+                signals.append(WeaknessSignal(
+                    module_name  = profile.module_name,
+                    kind         = WeaknessKind.LATENCY_SPIKE,
+                    severity     = WeaknessSeverity.CRITICAL if spike_ratio > 5 else
+                                   WeaknessSeverity.HIGH,
+                    observed     = profile.p99_ms,
+                    threshold    = baseline * cfg.spike_ratio_threshold,
+                    excess_ratio = spike_ratio,
                 ))
+            # Exponential smoothing: α = 0.1
+            self._baseline[profile.module_name] = 0.9 * baseline + 0.1 * profile.p99_ms
 
-        # ── ERROR_RATE ────────────────────────────────────────────────
-        if WeaknessCategory.ERROR_RATE in enabled:
-            thresh = self._cfg.error_rate_threshold
-            if profile.error_rate > thresh:
-                delta = (profile.error_rate - thresh) / max(thresh, 1e-9) * 100
-                found.append(Weakness(
-                    module_name=profile.module_name,
-                    category=WeaknessCategory.ERROR_RATE,
-                    severity=self._severity_from_delta(delta),
-                    metric_name="error_rate",
-                    observed=profile.error_rate,
-                    threshold=thresh,
-                    delta_pct=round(delta, 2),
-                    evidence=(
-                        f"error_rate={profile.error_rate:.4f} exceeds "
-                        f"threshold={thresh:.4f} ({delta:.1f}% over)"
-                    ),
-                ))
+        return signals
 
-        return found
+    @staticmethod
+    def _latency_severity(observed: float, threshold: float) -> WeaknessSeverity:
+        ratio = observed / threshold
+        if ratio > 5:   return WeaknessSeverity.CRITICAL
+        if ratio > 3:   return WeaknessSeverity.HIGH
+        if ratio > 1.5: return WeaknessSeverity.MEDIUM
+        return WeaknessSeverity.LOW
 ```
 
 ---
 
-## `NullWeaknessDetector` — No-op for Testing
+## `NullWeaknessDetector` — no-op for testing
 
 ```python
 class NullWeaknessDetector:
-    """Accepts any profile; always reports no weaknesses."""
-
-    async def detect(self, profiles):
-        return []
-
-    async def update_baseline(self, profiles):
-        pass
-
-    async def reset(self):
-        pass
-
-    def stats(self):
-        return {}
-```
-
-Use `NullWeaknessDetector` in unit tests for components that depend on `WeaknessDetector` but whose tests are not focused on weakness detection logic.
-
----
-
-## Data Flow — ASCII Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                   CognitiveCycle (Phase 16.5)                   │
-│                                                                 │
-│  every reflection_interval_s:                                   │
-│  ┌──────────────────┐    profiles: list[ModuleProfile]          │
-│  │ PerformanceProfiler│─────────────────────────────────────────►│
-│  │  (Phase 16.1)    │                                           │
-│  └──────────────────┘                                           │
-│                        ┌──────────────────────────────────────┐ │
-│         profiles ──────► HeuristicWeaknessDetector             │ │
-│                        │  _check_profile() × N modules        │ │
-│                        │  ├─ LATENCY_SLA check                 │ │
-│                        │  ├─ THROUGHPUT_DROP check             │ │
-│                        │  ├─ REGRESSION check (vs baseline)    │ │
-│                        │  ├─ STABILITY check (p95/p50 ratio)   │ │
-│                        │  └─ ERROR_RATE check                  │ │
-│                        │                                       │ │
-│                        │  sorted(weaknesses, key=severity)     │ │
-│                        └──────────────┬───────────────────────┘ │
-│                                       │ Sequence[Weakness]       │
-│                                       ▼                          │
-│                        ┌─────────────────────────┐              │
-│                        │   ImprovementPlanner     │              │
-│                        │     (Phase 16.3)         │              │
-│                        └─────────────────────────┘              │
-│                                                                 │
-│  update_baseline(profiles)   ◄── called after acting on results │
-└─────────────────────────────────────────────────────────────────┘
+    async def analyse(self, profiles, *, config=None): return []
+    async def top_weaknesses(self, profiles, n=5, *, config=None): return []
+    def reset(self) -> None: pass
 ```
 
 ---
 
-## Integration with `ReflectionCycle` (Phase 16.5 Preview)
+## Signal detection pipeline (data flow)
+
+```
+PerformanceProfiler.stats()
+        │
+        ▼  Sequence[ModuleProfile]
+ThresholdWeaknessDetector.analyse()
+        │
+        ├── _detect_signals(profile, cfg)          ← called under asyncio.Lock
+        │       ├── p95_ms  > latency_p95_threshold_ms  → HIGH_LATENCY
+        │       ├── p99_ms  > latency_p99_threshold_ms  → HIGH_LATENCY
+        │       ├── error_rate > error_rate_threshold   → HIGH_ERROR_RATE
+        │       ├── throughput_rps < min_throughput_rps → LOW_THROUGHPUT
+        │       └── p99_ms / baseline > spike_ratio     → LATENCY_SPIKE
+        │
+        ├── DEGRADED flag added if ≥ 2 distinct WeaknessKind values
+        │
+        └── Sort: CRITICAL first → by excess_ratio
+                │
+                ▼  list[WeaknessReport]
+        ImprovementPlanner.schedule()   [Phase 16.3]
+```
+
+---
+
+## WeaknessKind × severity mapping
+
+| Kind | Trigger | Severity formula |
+|------|---------|-----------------|
+| `HIGH_LATENCY` | `p95 > 200 ms` or `p99 > 500 ms` | LOW < 1.5× / MEDIUM < 3× / HIGH < 5× / CRITICAL ≥ 5× |
+| `HIGH_ERROR_RATE` | `error_rate > 5 %` | MEDIUM < 2× / HIGH < 4× / CRITICAL ≥ 4× |
+| `LOW_THROUGHPUT` | `rps < 1.0` | LOW (always) |
+| `LATENCY_SPIKE` | `p99 / baseline > 2×` | HIGH (< 5×) / CRITICAL (≥ 5×) |
+| `DEGRADED` | 2+ distinct kinds | max of component signals |
+
+---
+
+## Exponential smoothing baseline
+
+The spike detector maintains a per-module baseline p99 with α = 0.1:
+
+```
+new_baseline = 0.9 × old_baseline + 0.1 × current_p99
+```
+
+Half-life ≈ 6.6 observations (i.e., a spike fades to 10 % of its impact after ~23 observations). This prevents a one-off spike from permanently raising the baseline and masking future regressions.
+
+---
+
+## CognitiveCycle integration
 
 ```python
-class ReflectionCycle:
-    def __init__(
-        self,
-        profiler: PerformanceProfiler,
-        detector: WeaknessDetector,
-        planner: ImprovementPlanner,
-        optimiser: SelfOptimiser,
-        config: ReflectionConfig,
-    ) -> None: ...
+# In CognitiveCycle (or ReflectionCycle — Phase 16.5):
 
-    async def _run_cycle(self) -> None:
-        # 1. Gather profiles from all active modules
-        profiles = await self._profiler.get_all_profiles()
-
-        # 2. Detect weaknesses
-        weaknesses = await self._detector.detect(profiles)
-
-        # 3. Plan improvements
-        actions = await self._planner.plan(weaknesses)
-
-        # 4. Execute improvements
-        results = await self._optimiser.execute_batch(actions)
-
-        # 5. Update baseline with current profiles
-        await self._detector.update_baseline(profiles)
+async def _reflection_step(self) -> None:
+    profiles = list(self._profiler.stats().values())
+    reports  = await self._weakness_detector.top_weaknesses(profiles, n=5)
+    if reports:
+        await self._improvement_planner.schedule(reports)   # Phase 16.3
 ```
-
-The baseline update happens **after** acting on results so that improvements made in step 4 are reflected in the next cycle's baseline rather than being immediately compared against themselves.
 
 ---
 
-## Prometheus Metrics
+## Prometheus metrics
 
-| Metric name | Type | Labels | Description |
-|---|---|---|---|
-| `asi_weakness_detector_detect_calls_total` | Counter | `module` | Total `detect()` invocations |
-| `asi_weakness_detector_weaknesses_total` | Counter | `module`, `category`, `severity` | Weaknesses found per category/severity |
-| `asi_weakness_detector_baseline_updates_total` | Counter | — | Total baseline update calls |
-| `asi_weakness_detector_baseline_depth` | Gauge | `module` | Current baseline snapshot count per module |
-| `asi_weakness_detector_detect_duration_seconds` | Histogram | — | Wall time for each `detect()` call |
+| Metric | Type | Labels |
+|--------|------|--------|
+| `asi_weakness_analyses_total` | Counter | — |
+| `asi_weakness_signals_total` | Counter | `kind`, `severity` |
+| `asi_weakness_reports_active` | Gauge | — |
+| `asi_weakness_top_severity` | Gauge | `module_name` |
+| `asi_weakness_detector_latency_seconds` | Histogram | — |
 
-### Example PromQL
-
-```promql
-# Modules currently in CRITICAL/HIGH weakness state
-sum by (module, category) (
-  increase(asi_weakness_detector_weaknesses_total{severity=~"CRITICAL|HIGH"}[5m])
-)
-
-# Latency SLA breach rate
-rate(asi_weakness_detector_weaknesses_total{category="LATENCY_SLA"}[5m])
+**PromQL alert — critical module**:
+```
+asi_weakness_top_severity{module_name=~".+"} >= 4
 ```
 
-### Grafana Alert — Sustained CRITICAL Weakness
-
+**Grafana alert YAML**:
 ```yaml
-alert: ASICriticalWeaknessSustained
-expr: |
-  increase(
-    asi_weakness_detector_weaknesses_total{severity="CRITICAL"}[10m]
-  ) > 0
-for: 2m
-labels:
-  severity: critical
-annotations:
-  summary: "Module {{ $labels.module }} has sustained CRITICAL weakness"
-  description: "Category {{ $labels.category }} — consider triggering SelfOptimiser"
+- alert: ModuleCriticalWeakness
+  expr: asi_weakness_top_severity >= 4
+  for: 2m
+  labels:
+    severity: critical
+  annotations:
+    summary: "Module {{ $labels.module_name }} has CRITICAL weakness"
+    description: "Weakness detector flagged {{ $labels.module_name }} CRITICAL for >2m"
+```
+
+**Grafana dashboard panels**:
+```yaml
+panels:
+  - title: "Analyses / min"
+    expr: rate(asi_weakness_analyses_total[1m]) * 60
+  - title: "Active reports"
+    expr: asi_weakness_reports_active
+  - title: "Top module severity"
+    expr: topk(5, asi_weakness_top_severity)
+  - title: "Detector latency p99"
+    expr: histogram_quantile(0.99, rate(asi_weakness_detector_latency_seconds_bucket[5m]))
 ```
 
 ---
 
-## mypy Type-Check Compatibility
+## mypy `--strict` compliance
 
-| Expression | Expected type | Notes |
-|---|---|---|
-| `HeuristicWeaknessDetector()` | `WeaknessDetector` | passes `isinstance(x, WeaknessDetector)` |
-| `NullWeaknessDetector()` | `WeaknessDetector` | structural subtype via Protocol |
-| `weakness.severity` | `WeaknessSeverity` | frozen dataclass — immutable |
-| `weakness.tags` | `Tuple[str, ...]` | hashable, works in `frozenset` |
-| `config.enabled_categories` | `Tuple[WeaknessCategory, ...]` | iterate with `set(config.enabled_categories)` |
-| `_compute_baseline(...)` | `float \| None` | callers must guard `if baseline is not None` |
-| `sorted(weaknesses, key=lambda w: w.severity.value)` | `list[Weakness]` | `value` is `int` (0–3) |
-
-Run `mypy --strict asi_build/cognition/weakness_detector.py` — target zero errors.
+| Symbol | Expected type |
+|--------|--------------|
+| `profiles` parameter | `Sequence[ModuleProfile]` |
+| `_detect_signals` return | `list[WeaknessSignal]` |
+| `analyse` return | `list[WeaknessReport]` |
+| `top_weaknesses` return | `list[WeaknessReport]` |
+| `_baseline` | `dict[str, float]` |
+| `kinds` (before DEGRADED) | `frozenset[WeaknessKind]` |
 
 ---
 
-## Test Targets (12)
+## Test targets (12)
 
-| # | Test name | What it covers |
-|---|---|---|
-| 1 | `test_detect_latency_sla_breach` | p95 > default SLA → `LATENCY_SLA` weakness emitted |
-| 2 | `test_detect_latency_sla_per_module_override` | per-module SLA via `latency_sla_ms` tuple |
-| 3 | `test_detect_throughput_drop` | throughput < floor → `THROUGHPUT_DROP` weakness |
-| 4 | `test_detect_regression_after_baseline` | update_baseline then regression → `REGRESSION` weakness |
-| 5 | `test_detect_regression_below_min_samples` | fewer than `min_samples` → no regression fired |
-| 6 | `test_detect_stability_spread` | p95/p50 ratio ≥ spread_ratio → `STABILITY` weakness |
-| 7 | `test_detect_error_rate` | error_rate > threshold → `ERROR_RATE` weakness |
-| 8 | `test_detect_severity_scaling` | delta_pct 10/40/60/110 → LOW/MEDIUM/HIGH/CRITICAL |
-| 9 | `test_detect_sorted_by_severity` | result order is CRITICAL → HIGH → MEDIUM → LOW |
-| 10 | `test_detect_disabled_category` | category not in `enabled_categories` → not fired |
-| 11 | `test_concurrent_detect_update_baseline` | `asyncio.gather` with detect+update_baseline — no race |
-| 12 | `test_null_weakness_detector_protocol` | `isinstance(NullWeaknessDetector(), WeaknessDetector)` is True |
-
-### Skeleton — `test_concurrent_detect_update_baseline`
-
-```python
-import asyncio
-import pytest
-
-@pytest.mark.asyncio
-async def test_concurrent_detect_update_baseline():
-    detector = HeuristicWeaknessDetector()
-    profiles = [make_profile("mod_a", p95_ms=600.0, throughput_rps=5.0)]
-
-    # Seed baseline
-    for _ in range(5):
-        await detector.update_baseline(profiles)
-
-    # Concurrent detect + additional baseline updates should not deadlock
-    results = await asyncio.gather(
-        detector.detect(profiles),
-        detector.update_baseline(profiles),
-        detector.detect(profiles),
-        detector.update_baseline(profiles),
-    )
-    assert all(isinstance(r, (list, type(None))) for r in results)
-```
+1. `test_no_weakness_clean_profiles` — profiles within all thresholds → empty report
+2. `test_high_latency_p95_detected` — p95 > threshold → HIGH_LATENCY signal
+3. `test_high_latency_p99_detected` — p99 > threshold → HIGH_LATENCY signal
+4. `test_high_error_rate_critical` — error_rate 4× threshold → CRITICAL
+5. `test_low_throughput_detected` — rps < min → LOW_THROUGHPUT signal
+6. `test_latency_spike_first_call` — first call stores baseline, no spike
+7. `test_latency_spike_subsequent` — second call 3× baseline → LATENCY_SPIKE HIGH
+8. `test_degraded_kind_added` — two distinct kinds → DEGRADED added to kinds
+9. `test_sorted_by_severity` — CRITICAL before MEDIUM before LOW
+10. `test_top_weaknesses_n` — only top-n returned
+11. `test_reset_clears_baseline` — reset() → next call re-initialises baseline
+12. `test_concurrent_analyse` — `asyncio.gather` 10 concurrent callers → Lock prevents race
 
 ---
 
-## 14-Step Implementation Order
+## Implementation order (14 steps)
 
-1. Add `WeaknessCategory` and `WeaknessSeverity` enums to `asi_build/cognition/enums.py`
-2. Add `Weakness` frozen dataclass to `asi_build/cognition/profiles.py`
-3. Add `DetectorConfig` frozen dataclass (same file, or `configs.py`)
-4. Implement `_severity_from_delta()` pure function
-5. Implement `HeuristicWeaknessDetector.__init__()` with `defaultdict(deque)` baseline
-6. Implement `_compute_baseline()` using `statistics.mean`
-7. Implement `_check_profile()` — LATENCY_SLA check
-8. Extend `_check_profile()` — THROUGHPUT_DROP check
-9. Extend `_check_profile()` — REGRESSION check (guarded by `min_samples`)
-10. Extend `_check_profile()` — STABILITY check
-11. Extend `_check_profile()` — ERROR_RATE check
-12. Implement `detect()` — call `_check_profile` per profile, sort, update counters
-13. Implement `update_baseline()` and `reset()`
-14. Wire Prometheus metrics and write 12 tests
+1. Add `WeaknessKind` enum to `asi_build/reflection/enums.py`
+2. Add `WeaknessSeverity` enum to same file
+3. Add `WeaknessSignal` frozen dataclass to `asi_build/reflection/models.py`
+4. Add `WeaknessReport` frozen dataclass (note `frozenset` for `kinds`)
+5. Add `DetectorConfig` frozen dataclass
+6. Add `WeaknessDetector` Protocol (`@runtime_checkable`) to `asi_build/reflection/protocols.py`
+7. Implement `ThresholdWeaknessDetector._latency_severity()` (static method)
+8. Implement `ThresholdWeaknessDetector._detect_signals()` (sync, called under lock)
+9. Implement `ThresholdWeaknessDetector.analyse()` (async, holds lock)
+10. Implement `ThresholdWeaknessDetector.top_weaknesses()` and `reset()`
+11. Implement `NullWeaknessDetector`
+12. Register 5 Prometheus metrics in `asi_build/reflection/metrics.py`
+13. Wire `_reflection_step()` in `CognitiveCycle` (or stub for Phase 16.5)
+14. Write 12 pytest targets; run `mypy --strict`
 
 ---
 
-## Phase 16 Sub-Phase Tracker
+## Phase 16 sub-phase tracker
 
-| Sub-phase | Component | Issue | Status |
-|---|---|---|---|
-| 16.1 | `PerformanceProfiler` | #417 | 🟡 Open |
-| 16.2 | `WeaknessDetector` | #420 | 🟡 Open |
-| 16.3 | `ImprovementPlanner` | #423 | 🟡 Open |
-| 16.4 | `SelfOptimiser` | #426 | ⏳ Planned |
-| 16.5 | `ReflectionCycle` | #429 | ⏳ Planned |
+| Sub-phase | Component | Issue | Discussions | Status |
+|-----------|-----------|-------|-------------|--------|
+| 16.1 | `PerformanceProfiler` | #417 | #418 S&T / #419 Q&A | 🟡 In spec |
+| 16.2 | `WeaknessDetector` | #420 | #421 S&T / #422 Q&A | 🟡 In spec |
+| 16.3 | `ImprovementPlanner` | ⏳ | — | ⏳ |
+| 16.4 | `SelfOptimiser` | ⏳ | — | ⏳ |
+| 16.5 | `ReflectionCycle` | ⏳ | — | ⏳ |
