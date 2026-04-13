@@ -147,6 +147,20 @@ class ChainConfig:
     token_address: Optional[str] = None
 
     @property
+    def native_symbol(self) -> str:
+        """Alias for :attr:`native_token` — used by deployment scripts."""
+        return self.native_token
+
+    @property
+    def rpc_urls(self) -> list:
+        """Return a list of RPC URLs (primary only for now).
+
+        The deployment script iterates over this list to find a reachable
+        endpoint.  Future: add fallback URLs per chain.
+        """
+        return [self.rpc_url]
+
+    @property
     def gas_strategy(self) -> GasStrategy:
         """Infer the gas pricing strategy from chain properties.
 
@@ -224,6 +238,10 @@ CHAINS: Dict[str, ChainConfig] = {
         is_testnet=True,
         supports_eip1559=True,  # EIP-1559-like base fee with EWMA smoothing
         enabled=True,
+        # Deployed 2026-04-13 — blocks 36924357-36924365
+        verifier_address="0x9186fc5e27c15aEDbA2512687F2eF2E5aC7C0e59",
+        bridge_address="0xE034d479EDc2530d9917dDa4547b59bF0964A2Ca",
+        token_address="0x257dDA1fa34eb847060EcB743E808B65099FB497",
     ),
 }
 
