@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-232_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-237_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>510+ discussions · 232 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>520+ discussions · 237 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 232 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 237 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 510+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 520+ threads
 
 </td>
 <td>
@@ -1178,6 +1178,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 36.4 — PopulationManager configuration](https://github.com/web3guru888/asi-build/discussions/751)
 - 🔬 [Show & Tell: Phase 36.5 — EvolutionaryOrchestrator generation lifecycle (PHASE 36 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/752)
 - ❓ [Q&A: Phase 36.5 — EvolutionaryOrchestrator pipeline questions](https://github.com/web3guru888/asi-build/discussions/753)
+- 📋 [Phase 37 Planning — Swarm Intelligence & Bio-Inspired Optimization](https://github.com/web3guru888/asi-build/discussions/754)
+- 🔬 [Show & Tell: Phase 37.1 — ParticleSwarmOptimizer PSO velocity update & MOPSO archive](https://github.com/web3guru888/asi-build/discussions/760)
+- ❓ [Q&A: Phase 37.1 — ParticleSwarmOptimizer configuration & convergence](https://github.com/web3guru888/asi-build/discussions/761)
+- 🔬 [Show & Tell: Phase 37.2 — AntColonyOptimizer transition rules & pheromone updates](https://github.com/web3guru888/asi-build/discussions/762)
+- ❓ [Q&A: Phase 37.2 — AntColonyOptimizer variant selection & parameter tuning](https://github.com/web3guru888/asi-build/discussions/763)
+- 🔬 [Show & Tell: Phase 37.3 — BeeAlgorithm ABC three-phase cycle](https://github.com/web3guru888/asi-build/discussions/764)
+- ❓ [Q&A: Phase 37.3 — BeeAlgorithm colony sizing & trial limits](https://github.com/web3guru888/asi-build/discussions/765)
+- 🔬 [Show & Tell: Phase 37.4 — SwarmTopologyManager topologies & adaptive switching](https://github.com/web3guru888/asi-build/discussions/766)
+- ❓ [Q&A: Phase 37.4 — SwarmTopologyManager default topologies & adaptation](https://github.com/web3guru888/asi-build/discussions/767)
+- 🔬 [Show & Tell: Phase 37.5 — SwarmIntelligenceOrchestrator island model, cascade & ensemble (PHASE 37 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/768)
+- ❓ [Q&A: Phase 37.5 — SwarmIntelligenceOrchestrator strategy selection & budget](https://github.com/web3guru888/asi-build/discussions/769)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
