@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-177_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-182_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>393+ discussions · 177 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>403+ discussions · 182 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 177 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 182 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 393+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 403+ threads
 
 </td>
 <td>
@@ -1057,6 +1057,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - ❓ [Q&A: Phase 25.4 — SpatialReasoner dual representation & mental rotation](https://github.com/web3guru888/asi-build/discussions/574)
 - 🔬 [Show & Tell: Phase 25.5 — EmbodiedOrchestrator perception-action loops (PHASE 25 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/575)
 - ❓ [Q&A: Phase 25.5 — EmbodiedOrchestrator grounded language & embodied simulation](https://github.com/web3guru888/asi-build/discussions/576)
+- 📋 [Phase 26 Planning — Knowledge Representation & Ontology Engineering](https://github.com/web3guru888/asi-build/discussions/577)
+- 🔬 [Show & Tell: Phase 26.1 — ConceptGraph semantic networks & spreading activation](https://github.com/web3guru888/asi-build/discussions/583)
+- ❓ [Q&A: Phase 26.1 — ConceptGraph prototype theory & similarity metrics](https://github.com/web3guru888/asi-build/discussions/584)
+- 🔬 [Show & Tell: Phase 26.2 — OntologyManager DL tableau reasoning & TBox/ABox](https://github.com/web3guru888/asi-build/discussions/585)
+- ❓ [Q&A: Phase 26.2 — OntologyManager consistency checking & classification](https://github.com/web3guru888/asi-build/discussions/586)
+- 🔬 [Show & Tell: Phase 26.3 — KnowledgeCompiler ACT-R/Soar compilation pipeline](https://github.com/web3guru888/asi-build/discussions/587)
+- ❓ [Q&A: Phase 26.3 — KnowledgeCompiler compilation strategy & correctness](https://github.com/web3guru888/asi-build/discussions/588)
+- 🔬 [Show & Tell: Phase 26.4 — CommonSenseEngine plausibility reasoning & expectations](https://github.com/web3guru888/asi-build/discussions/589)
+- ❓ [Q&A: Phase 26.4 — CommonSenseEngine knowledge sources & inference limits](https://github.com/web3guru888/asi-build/discussions/590)
+- 🔬 [Show & Tell: Phase 26.5 — KnowledgeOrchestrator unified knowledge pipeline (PHASE 26 COMPLETE)](https://github.com/web3guru888/asi-build/discussions/591)
+- ❓ [Q&A: Phase 26.5 — KnowledgeOrchestrator lifecycle & cross-orchestrator integration](https://github.com/web3guru888/asi-build/discussions/592)
 - ❓ [FAQ](https://github.com/web3guru888/asi-build/discussions/16)
 
 ---
