@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-118_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-119_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>275+ discussions · 118+ wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>279+ discussions · 119+ wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,9 +822,9 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 118 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 119 pages of documentation
 <br />
-💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 275+ threads
+💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 279+ threads
 
 </td>
 <td>
@@ -884,6 +884,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 - 🚀 [Phase 14 — Autonomous Code Synthesis: CodeSynthesiser, SandboxRunner, TestHarness, PatchSelector, SynthesisAudit](https://github.com/web3guru888/asi-build/discussions/384)
 - 🛠️ [CodeSynthesiser — LLM-backed function drafting, self-refine loop, CognitiveCycle integration (Phase 14.1)](https://github.com/web3guru888/asi-build/discussions/386)
 - ❓ [CodeSynthesiser config — strategy selection, token budgets, self-refine tuning (Phase 14.1)](https://github.com/web3guru888/asi-build/discussions/387)
+- 🏗️ [SandboxRunner — safe isolated code execution, backends, resource limits, timeout enforcement (Phase 14.2)](https://github.com/web3guru888/asi-build/discussions/389)
+- ❓ [SandboxRunner config — backend selection, timeout tuning, Grafana setup (Phase 14.2)](https://github.com/web3guru888/asi-build/discussions/390)
 - 🖥️ [AlignmentDashboard — SSE operator console, Phase 11 complete](https://github.com/web3guru888/asi-build/discussions/350)
 - ❓ [AlignmentDashboard config — EventSource setup, overrides, Grafana](https://github.com/web3guru888/asi-build/discussions/351)
 - 🌐 [Show & Tell: AgentRegistry — distributed identity & capability registry (Phase 12.1)](https://github.com/web3guru888/asi-build/discussions/353)
