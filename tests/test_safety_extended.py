@@ -25,7 +25,7 @@ import os
 import sys
 import time
 from dataclasses import asdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -165,13 +165,13 @@ def _make_stakeholder(
         voting_power=voting_power,
         expertise_domains=["ai"],
         verified=verified,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
 
 
 def _make_proposal(pid="p1", proposer="s1", title="Test Proposal", deadline=None, impact=None):
     if deadline is None:
-        deadline = datetime.utcnow() + timedelta(days=7)
+        deadline = datetime.now(timezone.utc) + timedelta(days=7)
     return Proposal(
         id=pid,
         title=title,
@@ -185,8 +185,8 @@ def _make_proposal(pid="p1", proposer="s1", title="Test Proposal", deadline=None
         impact_assessment=impact or {"net_utility": 5},
         required_approvals=[],
         votes={},
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
 
 
@@ -199,7 +199,7 @@ def _make_audit_record(rid="r1", tx_hash="abc123"):
         metadata={},
         audit_level=AuditLevel.PUBLIC,
         privacy_mask=None,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         block_height=0,
         transaction_hash=tx_hash,
         previous_hash="0" * 64,
@@ -220,7 +220,7 @@ def _make_entity(eid="e1", name="TestEntity", etype=EntityType.HUMAN, **kwargs):
         rights_granted=[],
         consent_records=[],
         guardian_id=None,
-        creation_date=datetime.utcnow(),
+        creation_date=datetime.now(timezone.utc),
         last_assessment=None,
         metadata={},
     )
@@ -240,7 +240,7 @@ def _make_stakeholder_profile(
         active_delegations={},
         participation_history={},
         verification_status="verified",
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
 
 
@@ -329,7 +329,7 @@ class TestFormalVerificationExtended:
             ],
             quantifiers={},
             priority=10,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         engine.add_constraint(constraint)
         result = engine.verify_proposal_ethics(
@@ -351,7 +351,7 @@ class TestFormalVerificationExtended:
             predicates=[],
             quantifiers={},
             priority=1,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         facts = engine._extract_facts_from_proposal(
             {
@@ -777,7 +777,7 @@ class TestContractsExtended:
     def test_token_lock_and_unlock(self):
         """lock_tokens restricts available balance."""
         token = GovernanceTokenContract("0xT", "alice", initial_supply=1000)
-        unlock_time = datetime.utcnow() + timedelta(days=30)
+        unlock_time = datetime.now(timezone.utc) + timedelta(days=30)
         token.lock_tokens("alice", 600, unlock_time, _txctx("alice"))
         assert token.storage["locked_tokens"]["alice"] == 600
 
@@ -840,7 +840,7 @@ class TestContractsExtended:
         pc.vote(pid, "against", 30, _txctx("carol"))
         # Move voting_end into the past so finalize accepts it
         pc.storage["proposals"][pid]["voting_end"] = (
-            datetime.utcnow() - timedelta(seconds=1)
+            datetime.now(timezone.utc) - timedelta(seconds=1)
         ).isoformat()
         result = pc.finalize_proposal(pid, _txctx("deployer", total_voting_power=200))
         assert result == "passed"
@@ -852,7 +852,7 @@ class TestContractsExtended:
         pc.vote(pid, "for", 10, _txctx("bob"))
         pc.vote(pid, "against", 100, _txctx("carol"))
         pc.storage["proposals"][pid]["voting_end"] = (
-            datetime.utcnow() - timedelta(seconds=1)
+            datetime.now(timezone.utc) - timedelta(seconds=1)
         ).isoformat()
         result = pc.finalize_proposal(pid, _txctx("deployer", total_voting_power=200))
         assert result == "rejected"
@@ -863,7 +863,7 @@ class TestContractsExtended:
         pid = pc.create_proposal("X", "Y", {"a": 1}, _txctx("a"))
         pc.vote(pid, "for", 100, _txctx("b"))
         pc.storage["proposals"][pid]["voting_end"] = (
-            datetime.utcnow() - timedelta(seconds=1)
+            datetime.now(timezone.utc) - timedelta(seconds=1)
         ).isoformat()
         pc.finalize_proposal(pid, _txctx("deployer", total_voting_power=100))
         ok = pc.execute_proposal(pid, _txctx("deployer"))
@@ -1119,7 +1119,7 @@ class TestConsensusExtended:
             "direction": "for",
             "effective_power": 1.0,
             "reasoning": "ok",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         result = msc.finalize_consensus(pid)

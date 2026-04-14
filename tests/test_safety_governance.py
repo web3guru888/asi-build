@@ -14,7 +14,7 @@ import hashlib
 import math
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pytest
@@ -108,7 +108,7 @@ def _make_stakeholder(
         voting_power=voting_power,
         expertise_domains=["ai"],
         verified=verified,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
 
 
@@ -120,7 +120,7 @@ def _make_proposal(
     impact: dict = None,
 ) -> Proposal:
     if deadline is None:
-        deadline = datetime.utcnow() + timedelta(days=7)
+        deadline = datetime.now(timezone.utc) + timedelta(days=7)
     return Proposal(
         id=pid,
         title=title,
@@ -134,8 +134,8 @@ def _make_proposal(
         impact_assessment=impact or {"net_utility": 5},
         required_approvals=[],
         votes={},
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
 
 
@@ -148,7 +148,7 @@ def _make_audit_record(rid: str = "r1", tx_hash: str = "abc123") -> AuditRecord:
         metadata={},
         audit_level=AuditLevel.PUBLIC,
         privacy_mask=None,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         block_height=0,
         transaction_hash=tx_hash,
         previous_hash="0" * 64,
@@ -219,7 +219,7 @@ class TestFormalVerification:
             ],
             quantifiers={},
             priority=10,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         engine.add_constraint(constraint)
         assert "c1" in engine.constraints
@@ -272,7 +272,7 @@ class TestGovernanceEngine:
         assert ok is True
 
         # Move deadline into the past so finalize_proposal accepts it
-        engine.proposals["p1"].voting_deadline = datetime.utcnow() - timedelta(seconds=1)
+        engine.proposals["p1"].voting_deadline = datetime.now(timezone.utc) - timedelta(seconds=1)
         decision = engine.finalize_proposal("p1")
         assert decision is not None
         assert isinstance(decision, GovernanceDecision)
@@ -291,7 +291,7 @@ class TestGovernanceEngine:
         engine.cast_vote("p1", "s1", VoteType.FOR)
 
         # Move deadline to past
-        engine.proposals["p1"].voting_deadline = datetime.utcnow() - timedelta(seconds=1)
+        engine.proposals["p1"].voting_deadline = datetime.now(timezone.utc) - timedelta(seconds=1)
         decision = engine.finalize_proposal("p1")
         assert decision is not None
 
@@ -309,7 +309,7 @@ class TestGovernanceEngine:
         engine.cast_vote("p1", "s1", VoteType.FOR)
 
         # Move deadline to past
-        engine.proposals["p1"].voting_deadline = datetime.utcnow() - timedelta(seconds=1)
+        engine.proposals["p1"].voting_deadline = datetime.now(timezone.utc) - timedelta(seconds=1)
         decision = engine.finalize_proposal("p1")
         assert decision is not None
         # participation = 1/3 ≈ 0.33 < 0.8
@@ -327,7 +327,7 @@ class TestGovernanceEngine:
         engine.cast_vote("p1", "s1", VoteType.FOR)
 
         # Move deadline to past for finalization
-        engine.proposals["p1"].voting_deadline = datetime.utcnow() - timedelta(seconds=1)
+        engine.proposals["p1"].voting_deadline = datetime.now(timezone.utc) - timedelta(seconds=1)
         decision = engine.finalize_proposal("p1")
         assert decision is not None
         assert decision.decision == "approved"
@@ -372,7 +372,7 @@ class TestGovernanceEngine:
         engine.cast_vote("p1", "s3", VoteType.FOR)  # 5
 
         # Move deadline to past for finalization
-        engine.proposals["p1"].voting_deadline = datetime.utcnow() - timedelta(seconds=1)
+        engine.proposals["p1"].voting_deadline = datetime.now(timezone.utc) - timedelta(seconds=1)
         decision = engine.finalize_proposal("p1")
         assert decision is not None
         # for=15, against=5, approval_rate=15/20=0.75 >= 0.6 → approved
@@ -639,7 +639,7 @@ class TestConsensus:
             active_delegations={},
             participation_history={},
             verification_status="verified",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         sp2 = StakeholderProfile(
             id="s2",
@@ -652,7 +652,7 @@ class TestConsensus:
             active_delegations={},
             participation_history={},
             verification_status="verified",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         assert msc.register_stakeholder(sp1)
         assert msc.register_stakeholder(sp2)
