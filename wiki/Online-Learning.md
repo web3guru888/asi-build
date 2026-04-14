@@ -170,7 +170,7 @@ async def record_learned_association(
         tx.add_triple(
             subject, relation, object_,
             confidence=confidence,
-            valid_from=datetime.utcnow(),
+            valid_from=datetime.now(tz=timezone.utc),
         )
     blackboard.write(
         f"learning.new_association.{source_module}",

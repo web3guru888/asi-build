@@ -180,8 +180,8 @@ class InMemoryConsensusVoting:
             goal_id    = goal_id,
             eligible   = frozenset(eligible),
             threshold  = threshold,
-            opened_at  = datetime.utcnow(),
-            deadline   = datetime.utcnow() + timedelta(seconds=ttl),
+            opened_at  = datetime.now(tz=timezone.utc),
+            deadline   = datetime.now(tz=timezone.utc) + timedelta(seconds=ttl),
             hmac_key   = key,
             allow_veto = self._config.allow_veto,
         )
@@ -233,7 +233,7 @@ class InMemoryConsensusVoting:
                 choice    = choice,
                 rationale = rationale,
                 hmac_tag  = hmac_tag or b"",
-                cast_at   = datetime.utcnow(),
+                cast_at   = datetime.now(tz=timezone.utc),
             )
             self._votes[ballot_id].append(vote)
             self._metrics.votes_cast.inc()
@@ -287,7 +287,7 @@ class InMemoryConsensusVoting:
             veto_count    = veto,
             abstain_count = abstain,
             total_cast    = total,
-            finalized_at  = datetime.utcnow(),
+            finalized_at  = datetime.now(tz=timezone.utc),
         )
         self._results[ballot_id] = result
 
@@ -316,7 +316,7 @@ class InMemoryConsensusVoting:
         """Periodic cleanup of old results to bound memory growth."""
         while True:
             await asyncio.sleep(self._config.eviction_interval_secs)
-            cutoff = datetime.utcnow() - timedelta(seconds=300)
+            cutoff = datetime.now(tz=timezone.utc) - timedelta(seconds=300)
             async with self._lock:
                 stale = [bid for bid, r in self._results.items()
                          if r.finalized_at < cutoff]

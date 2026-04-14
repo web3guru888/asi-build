@@ -12,7 +12,7 @@ import json
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -136,7 +136,7 @@ class GovernanceEngine:
                     "event_type": "stakeholder_registered",
                     "stakeholder_id": stakeholder.id,
                     "stakeholder_type": stakeholder.type.value,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(tz=timezone.utc).isoformat(),
                 }
             )
 
@@ -155,7 +155,7 @@ class GovernanceEngine:
                 raise ValueError(f"Unknown proposer: {proposal.proposer_id}")
 
             # Set voting deadline
-            proposal.voting_deadline = datetime.utcnow() + timedelta(days=self.voting_period_days)
+            proposal.voting_deadline = datetime.now(tz=timezone.utc) + timedelta(days=self.voting_period_days)
             proposal.status = ProposalStatus.SUBMITTED
 
             # Store proposal
@@ -167,7 +167,7 @@ class GovernanceEngine:
                     "proposal_id": proposal.id,
                     "proposer_id": proposal.proposer_id,
                     "title": proposal.title,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(tz=timezone.utc).isoformat(),
                 }
             )
 
@@ -197,7 +197,7 @@ class GovernanceEngine:
                 else:
                     raise ValueError(f"Proposal not in voting phase: {proposal.status}")
 
-            if datetime.utcnow() > proposal.voting_deadline:
+            if datetime.now(tz=timezone.utc) > proposal.voting_deadline:
                 raise ValueError("Voting deadline has passed")
 
             # Record vote
@@ -206,7 +206,7 @@ class GovernanceEngine:
                 "reasoning": reasoning,
                 "voting_power": stakeholder.voting_power,
                 "reputation_score": stakeholder.reputation_score,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(tz=timezone.utc).isoformat(),
             }
 
             self._log_audit_event(
@@ -215,7 +215,7 @@ class GovernanceEngine:
                     "proposal_id": proposal_id,
                     "stakeholder_id": stakeholder_id,
                     "vote_type": vote_type.value,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(tz=timezone.utc).isoformat(),
                 }
             )
 
@@ -274,7 +274,7 @@ class GovernanceEngine:
             if not proposal:
                 raise ValueError(f"Unknown proposal: {proposal_id}")
 
-            if datetime.utcnow() <= proposal.voting_deadline:
+            if datetime.now(tz=timezone.utc) <= proposal.voting_deadline:
                 raise ValueError("Voting period not yet ended")
 
             # Calculate vote results
@@ -311,7 +311,7 @@ class GovernanceEngine:
                 oversight_requirements=(
                     [] if decision != "approved" else self._create_oversight_requirements(proposal)
                 ),
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
             )
 
             # Update proposal status
@@ -328,7 +328,7 @@ class GovernanceEngine:
                     "proposal_id": proposal_id,
                     "decision_id": governance_decision.id,
                     "decision": decision,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(tz=timezone.utc).isoformat(),
                 }
             )
 
@@ -399,7 +399,7 @@ class GovernanceEngine:
 
     def _generate_id(self, prefix: str) -> str:
         """Generate a unique ID with prefix."""
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(tz=timezone.utc).isoformat()
         data = f"{prefix}_{timestamp}_{id(self)}"
         return f"{prefix}_{hashlib.md5(data.encode()).hexdigest()[:8]}"
 

@@ -173,7 +173,7 @@ async def _evaluate(self, offer_id: str) -> None:
             status=NegotiationStatus.AWARDED if winner else NegotiationStatus.FAILED,
             winning_bid=winner,
             all_bids=bids,
-            selected_at=datetime.utcnow(),
+            selected_at=datetime.now(tz=timezone.utc),
         )
         NEG_ACTIVE.set(len(self._offers))
 ```

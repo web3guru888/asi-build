@@ -1608,7 +1608,7 @@ class SecurityAuditLogger:
     
     def _generate_session_id(self) -> str:
         """Generate unique session ID"""
-        timestamp = str(datetime.utcnow().timestamp())
+        timestamp = str(datetime.now(tz=timezone.utc).timestamp())
         return hashlib.sha256(timestamp.encode()).hexdigest()[:16]
     
     def log_authentication(self, username: str, success: bool, ip_address: str):
@@ -1674,7 +1674,7 @@ class SecurityAuditLogger:
     
     def _write_audit_log(self, event: Dict[str, Any]):
         """Write audit log entry"""
-        event["timestamp"] = datetime.utcnow().isoformat()
+        event["timestamp"] = datetime.now(tz=timezone.utc).isoformat()
         event["log_version"] = "1.0"
         
         try:

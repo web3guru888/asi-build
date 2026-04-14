@@ -12,7 +12,7 @@ import logging
 import math
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -154,7 +154,7 @@ class QuadraticVotingSystem:
                 vote_intensity=vote_intensity,
                 token_cost=cost,
                 reasoning=reasoning,
-                cast_at=datetime.utcnow(),
+                cast_at=datetime.now(tz=timezone.utc),
             )
 
             # Store vote
@@ -258,7 +258,7 @@ class LiquidDemocracy:
                 voting_power=voting_power,
                 expiration=expiration,
                 revocable=True,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
             )
 
             # Store delegation
@@ -394,7 +394,7 @@ class LiquidDemocracy:
 
     def _is_delegation_active(self, delegation: Delegation) -> bool:
         """Check if a delegation is currently active."""
-        if delegation.expiration and datetime.utcnow() > delegation.expiration:
+        if delegation.expiration and datetime.now(tz=timezone.utc) > delegation.expiration:
             return False
         return True
 
@@ -440,7 +440,7 @@ class MultiStakeholderConsensus:
     ) -> str:
         """Initiate a new consensus process."""
         try:
-            process_id = f"consensus_{proposal_id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+            process_id = f"consensus_{proposal_id}_{datetime.now(tz=timezone.utc).strftime('%Y%m%d%H%M%S')}"
 
             # Define process phases
             phases = []
@@ -451,7 +451,7 @@ class MultiStakeholderConsensus:
 
             # Calculate phase deadlines
             phase_deadlines = {}
-            base_time = datetime.utcnow()
+            base_time = datetime.now(tz=timezone.utc)
 
             phase_durations = {
                 "information": timedelta(days=2),
@@ -484,7 +484,7 @@ class MultiStakeholderConsensus:
                 deliberation_log=[],
                 status=ConsensusStatus.GATHERING,
                 final_result=None,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
             )
 
             self.consensus_processes[process_id] = process
@@ -550,7 +550,7 @@ class MultiStakeholderConsensus:
                 "effective_power": effective_power,
                 "direction": vote_data["direction"],
                 "reasoning": vote_data.get("reasoning", ""),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(tz=timezone.utc).isoformat(),
             }
 
         return success, message
@@ -577,7 +577,7 @@ class MultiStakeholderConsensus:
             "direction": vote_data["direction"],
             "reasoning": vote_data.get("reasoning", ""),
             "delegation_chain": self.liquid_democracy.get_delegation_chain(stakeholder.id, scope),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(tz=timezone.utc).isoformat(),
         }
 
         return True, "Liquid democracy vote cast successfully"
@@ -596,7 +596,7 @@ class MultiStakeholderConsensus:
             "effective_power": effective_power,
             "direction": vote_data["direction"],
             "reasoning": vote_data.get("reasoning", ""),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(tz=timezone.utc).isoformat(),
         }
 
         return True, "Weighted vote cast successfully"
@@ -656,7 +656,7 @@ class MultiStakeholderConsensus:
             process.final_result = {
                 "consensus_reached": consensus_reached,
                 "results": results,
-                "finalized_at": datetime.utcnow().isoformat(),
+                "finalized_at": datetime.now(tz=timezone.utc).isoformat(),
             }
 
             process.status = (

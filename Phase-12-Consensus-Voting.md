@@ -179,7 +179,7 @@ async def _close(self, ballot_id: str, status: VoteStatus) -> ConsensusResult:
         yes_count=yes, no_count=no, abstain_count=ab, veto_count=vt,
         total_cast=yes+no+ab+vt,
         threshold_met=(yes / len(eligible)) >= threshold and vt == 0,
-        closed_at=datetime.utcnow(),
+        closed_at=datetime.now(tz=timezone.utc),
     )
     self._results[ballot_id] = result
     await self._channel.publish(
@@ -213,7 +213,7 @@ Background loop (runs every `eviction_secs / 10`):
 async def _evict_closed(self) -> None:
     while True:
         await asyncio.sleep(self._config.eviction_secs / 10)
-        cutoff = datetime.utcnow() - timedelta(seconds=self._config.eviction_secs)
+        cutoff = datetime.now(tz=timezone.utc) - timedelta(seconds=self._config.eviction_secs)
         expired = [bid for bid, r in self._results.items() if r.closed_at < cutoff]
         for bid in expired:
             self._results.pop(bid, None)

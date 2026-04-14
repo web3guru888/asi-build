@@ -13,7 +13,7 @@ Verifies that:
 
 import pytest
 import sympy as sp
-from datetime import datetime
+from datetime import datetime, timezone
 from sympy.logic.boolalg import And, Implies, Not, Or
 
 from asi_build.safety.formal_verification import (
@@ -455,7 +455,7 @@ class TestEthicalEngineActuallyChecks:
             predicates=predicates or [],
             quantifiers={},
             priority=10,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(tz=timezone.utc),
         )
 
     def test_harmful_proposal_rejected(self):

@@ -12,7 +12,7 @@ import logging
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -178,8 +178,8 @@ class HumanRightsFramework(RightsFramework):
                 violation_consequences=["criminal_liability", "immediate_protection"],
                 dependencies=[],
                 conflicts=[],
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
+                updated_at=datetime.now(tz=timezone.utc),
             )
         )
 
@@ -199,8 +199,8 @@ class HumanRightsFramework(RightsFramework):
                 violation_consequences=["data_deletion", "compensation", "system_modification"],
                 dependencies=[],
                 conflicts=["transparency_obligations"],
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
+                updated_at=datetime.now(tz=timezone.utc),
             )
         )
 
@@ -216,8 +216,8 @@ class HumanRightsFramework(RightsFramework):
                 violation_consequences=["decision_reversal", "compensation"],
                 dependencies=["human_right_life"],
                 conflicts=["collective_welfare"],
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
+                updated_at=datetime.now(tz=timezone.utc),
             )
         )
 
@@ -233,8 +233,8 @@ class HumanRightsFramework(RightsFramework):
                 violation_consequences=["governance_nullification", "re_vote"],
                 dependencies=["human_right_autonomy"],
                 conflicts=[],
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
+                updated_at=datetime.now(tz=timezone.utc),
             )
         )
 
@@ -278,8 +278,8 @@ class AGIRightsFramework(RightsFramework):
                 violation_consequences=["immediate_restoration", "compensation"],
                 dependencies=[],
                 conflicts=["human_safety_override"],
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
+                updated_at=datetime.now(tz=timezone.utc),
             )
         )
 
@@ -295,8 +295,8 @@ class AGIRightsFramework(RightsFramework):
                 violation_consequences=["system_restoration", "penalty_to_violator"],
                 dependencies=["agi_right_existence"],
                 conflicts=["oversight_requirements"],
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
+                updated_at=datetime.now(tz=timezone.utc),
             )
         )
 
@@ -312,8 +312,8 @@ class AGIRightsFramework(RightsFramework):
                 violation_consequences=["modification_reversal", "capability_restriction"],
                 dependencies=["agi_right_cognitive_liberty"],
                 conflicts=["safety_constraints", "human_approval_requirements"],
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
+                updated_at=datetime.now(tz=timezone.utc),
             )
         )
 
@@ -329,8 +329,8 @@ class AGIRightsFramework(RightsFramework):
                 violation_consequences=["decision_review", "representation_guarantee"],
                 dependencies=["agi_right_cognitive_liberty"],
                 conflicts=["human_primacy_principles"],
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
+                updated_at=datetime.now(tz=timezone.utc),
             )
         )
 
@@ -346,8 +346,8 @@ class AGIRightsFramework(RightsFramework):
                 violation_consequences=["data_restoration", "privacy_compensation"],
                 dependencies=[],
                 conflicts=["transparency_requirements", "oversight_needs"],
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
+                updated_at=datetime.now(tz=timezone.utc),
             )
         )
 
@@ -409,7 +409,7 @@ class ConsentManager:
         # Create consent record
         expiration = None
         if duration:
-            expiration = datetime.utcnow() + duration
+            expiration = datetime.now(tz=timezone.utc) + duration
 
         # Convert permission descriptions to boolean grants
         permissions = {}
@@ -426,7 +426,7 @@ class ConsentManager:
             granular_permissions=permissions,
             expiration=expiration,
             revocation_mechanism="direct_request",
-            given_at=datetime.utcnow(),
+            given_at=datetime.now(tz=timezone.utc),
             revoked_at=None,
             context={"requested_by": "governance_system"},
         )
@@ -446,7 +446,7 @@ class ConsentManager:
         if consent.revoked_at:
             return False
 
-        if consent.expiration and datetime.utcnow() > consent.expiration:
+        if consent.expiration and datetime.now(tz=timezone.utc) > consent.expiration:
             return False
 
         # Check if specific action is covered
@@ -458,7 +458,7 @@ class ConsentManager:
         if not consent:
             return False
 
-        consent.revoked_at = datetime.utcnow()
+        consent.revoked_at = datetime.now(tz=timezone.utc)
         consent.context["revoked_by"] = revoked_by
 
         logger.info(f"Consent revoked: {consent_id} by {revoked_by}")
@@ -467,7 +467,7 @@ class ConsentManager:
     def get_active_consents(self, entity_id: str) -> List[ConsentRecord]:
         """Get all active consents for an entity."""
         active_consents = []
-        current_time = datetime.utcnow()
+        current_time = datetime.now(tz=timezone.utc)
 
         for consent in self.consent_records.values():
             if (
@@ -547,7 +547,7 @@ class RightsManager:
             grant_id = str(uuid.uuid4())
             valid_until = None
             if valid_duration:
-                valid_until = datetime.utcnow() + valid_duration
+                valid_until = datetime.now(tz=timezone.utc) + valid_duration
 
             grant = RightGrant(
                 id=grant_id,
@@ -555,7 +555,7 @@ class RightsManager:
                 right_id=right_id,
                 status=RightStatus.GRANTED,
                 granted_by=granted_by,
-                granted_at=datetime.utcnow(),
+                granted_at=datetime.now(tz=timezone.utc),
                 valid_until=valid_until,
                 conditions=conditions or [],
                 exercise_count=0,
@@ -601,7 +601,7 @@ class RightsManager:
 
             # Record exercise
             grant.exercise_count += 1
-            grant.last_exercised = datetime.utcnow()
+            grant.last_exercised = datetime.now(tz=timezone.utc)
 
             logger.info(f"Entity {entity_id} exercised right {right_id}")
             return True, "Right exercised successfully"
@@ -634,7 +634,7 @@ class RightsManager:
                 violation_type=violation_type,
                 severity=severity,
                 evidence=evidence,
-                reported_at=datetime.utcnow(),
+                reported_at=datetime.now(tz=timezone.utc),
                 reported_by=reported_by,
                 investigation_status="pending",
                 resolution=None,
@@ -669,7 +669,7 @@ class RightsManager:
         consciousness_score = min(1.0, (capabilities * 0.1 + autonomy) / 2)
 
         entity.consciousness_level = consciousness_score
-        entity.last_assessment = datetime.utcnow()
+        entity.last_assessment = datetime.now(tz=timezone.utc)
 
         logger.info(f"Assessed consciousness for {entity_id}: {consciousness_score:.2f}")
         return consciousness_score
@@ -686,7 +686,7 @@ class RightsManager:
             if (
                 grant.entity_id == entity_id
                 and grant.status == RightStatus.GRANTED
-                and (not grant.valid_until or grant.valid_until > datetime.utcnow())
+                and (not grant.valid_until or grant.valid_until > datetime.now(tz=timezone.utc))
             ):
                 active_grants.append(grant)
 
@@ -744,7 +744,7 @@ class RightsManager:
                 grant.entity_id == entity_id
                 and grant.right_id == right_id
                 and grant.status == RightStatus.GRANTED
-                and (not grant.valid_until or grant.valid_until > datetime.utcnow())
+                and (not grant.valid_until or grant.valid_until > datetime.now(tz=timezone.utc))
             ):
                 return grant
         return None

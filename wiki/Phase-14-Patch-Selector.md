@@ -137,7 +137,7 @@ class RankedPatchSelector:
             synthesis_result=sr,
             harness_stats=hs,
             composite_score=score,
-            selected_at=datetime.utcnow(),
+            selected_at=datetime.now(tz=timezone.utc),
         )
 
     async def select(
