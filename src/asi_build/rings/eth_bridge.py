@@ -71,9 +71,17 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, utils
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from Crypto.Hash import keccak as _pycryptodome_keccak
-from eth_keys import keys as eth_keys_mod
+try:
+    from eth_keys import keys as eth_keys_mod
+except ImportError:  # pragma: no cover
+    eth_keys_mod = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
+
+if eth_keys_mod is None:
+    logger.warning(
+        "eth_keys is not installed — install with: pip install asi-build[rings]"
+    )
 
 # ---------------------------------------------------------------------------
 # Constants
