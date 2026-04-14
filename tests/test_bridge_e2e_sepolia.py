@@ -43,7 +43,7 @@ BRIDGE = "0xE034d479EDc2530d9917dDa4547b59bF0964A2Ca"
 TOKEN = "0x257dDA1fa34eb847060EcB743E808B65099FB497"
 USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
 DEPLOYER = "0x35C3770470F57560beBd1C6C74366b0297110Bc2"
-DEPLOYER_KEY = "0x7fb897978f5c645a317049f54a4f517c4d1c8e47661fa0bc43211409823215fd"
+DEPLOYER_KEY = os.environ.get("DEPLOYER_PRIVATE_KEY", "")
 SEPOLIA_RPC = "https://ethereum-sepolia-rpc.publicnode.com"
 
 # A deterministic test Rings DID (bytes32)
@@ -187,6 +187,13 @@ def _parse_address(raw: str) -> str:
 # ═══════════════════════════════════════════════════════════════════════════
 #  Fixtures
 # ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _require_deployer_key():
+    """Skip the entire session if DEPLOYER_PRIVATE_KEY is not set."""
+    if not DEPLOYER_KEY:
+        pytest.skip("DEPLOYER_PRIVATE_KEY env var not set — skipping e2e bridge tests")
 
 
 @pytest.fixture(scope="session")
