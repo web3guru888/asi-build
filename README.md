@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>715+ discussions · 312 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>725+ discussions · 317 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -1480,3 +1480,16 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 52.4 — AdaptiveRetriever](https://github.com/web3guru888/asi-build/discussions/1014)
 - 🔬 [Show & Tell: Phase 52.5 — RAGOrchestrator](https://github.com/web3guru888/asi-build/discussions/1015)
 - ❓ [Q&A: Phase 52.5 — RAGOrchestrator](https://github.com/web3guru888/asi-build/discussions/1016)
+
+### Phase 53: Autonomous Agents & Tool-Using AI
+- 📋 [Phase 53 Planning — Autonomous Agents & Tool-Using AI](https://github.com/web3guru888/asi-build/discussions/1017)
+- 🔬 [Show & Tell: Phase 53.1 — ToolRegistry](https://github.com/web3guru888/asi-build/discussions/1023)
+- ❓ [Q&A: Phase 53.1 — ToolRegistry](https://github.com/web3guru888/asi-build/discussions/1024)
+- 🔬 [Show & Tell: Phase 53.2 — PlanningEngine](https://github.com/web3guru888/asi-build/discussions/1025)
+- ❓ [Q&A: Phase 53.2 — PlanningEngine](https://github.com/web3guru888/asi-build/discussions/1026)
+- 🔬 [Show & Tell: Phase 53.3 — ActionExecutor](https://github.com/web3guru888/asi-build/discussions/1027)
+- ❓ [Q&A: Phase 53.3 — ActionExecutor](https://github.com/web3guru888/asi-build/discussions/1028)
+- 🔬 [Show & Tell: Phase 53.4 — ReflectionModule](https://github.com/web3guru888/asi-build/discussions/1029)
+- ❓ [Q&A: Phase 53.4 — ReflectionModule](https://github.com/web3guru888/asi-build/discussions/1030)
+- 🔬 [Show & Tell: Phase 53.5 — AutonomousAgentOrchestrator](https://github.com/web3guru888/asi-build/discussions/1031)
+- ❓ [Q&A: Phase 53.5 — AutonomousAgentOrchestrator](https://github.com/web3guru888/asi-build/discussions/1032)
