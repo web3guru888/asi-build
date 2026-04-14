@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-362_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-367_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>845+ discussions · 362 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>860+ discussions · 367 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,7 +822,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 357 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 367 pages of documentation
 <br />
 💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 600+ threads
 
@@ -1610,3 +1610,15 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 62.4 — AudioSynthesizer](https://github.com/web3guru888/asi-build/discussions/1174)
 - 🔬 [Show & Tell: Phase 62.5 — AudioIntelligenceOrchestrator](https://github.com/web3guru888/asi-build/discussions/1175)
 - ❓ [Q&A: Phase 62.5 — AudioIntelligenceOrchestrator](https://github.com/web3guru888/asi-build/discussions/1176)
+### Phase 63: 3D Vision & Neural Scene Representations
+- 📋 [Phase 63 Planning — 3D Vision & Neural Scene Representations](https://github.com/web3guru888/asi-build/discussions/1177)
+- 🔬 [Show & Tell: Phase 63.1 — PointCloudProcessor](https://github.com/web3guru888/asi-build/discussions/1183)
+- ❓ [Q&A: Phase 63.1 — PointCloudProcessor](https://github.com/web3guru888/asi-build/discussions/1184)
+- 🔬 [Show & Tell: Phase 63.2 — DepthEstimator](https://github.com/web3guru888/asi-build/discussions/1185)
+- ❓ [Q&A: Phase 63.2 — DepthEstimator](https://github.com/web3guru888/asi-build/discussions/1186)
+- 🔬 [Show & Tell: Phase 63.3 — NeuralRadianceField](https://github.com/web3guru888/asi-build/discussions/1187)
+- ❓ [Q&A: Phase 63.3 — NeuralRadianceField](https://github.com/web3guru888/asi-build/discussions/1188)
+- 🔬 [Show & Tell: Phase 63.4 — GaussianSplatRenderer](https://github.com/web3guru888/asi-build/discussions/1189)
+- ❓ [Q&A: Phase 63.4 — GaussianSplatRenderer](https://github.com/web3guru888/asi-build/discussions/1190)
+- 🔬 [Show & Tell: Phase 63.5 — SceneReconstructionOrchestrator](https://github.com/web3guru888/asi-build/discussions/1191)
+- ❓ [Q&A: Phase 63.5 — SceneReconstructionOrchestrator](https://github.com/web3guru888/asi-build/discussions/1192)
