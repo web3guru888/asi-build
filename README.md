@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-312_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-327_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>735+ discussions · 322 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>745+ discussions · 327 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,7 +822,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 312 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 327 pages of documentation
 <br />
 💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 600+ threads
 
@@ -1506,3 +1506,16 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 54.4 — ImaginationEngine](https://github.com/web3guru888/asi-build/discussions/1046)
 - 🔬 [Show & Tell: Phase 54.5 — WorldModelOrchestrator](https://github.com/web3guru888/asi-build/discussions/1047)
 - ❓ [Q&A: Phase 54.5 — WorldModelOrchestrator](https://github.com/web3guru888/asi-build/discussions/1048)
+
+### Phase 55: AI Safety & Alignment Architectures
+- 📋 [Phase 55 Planning — AI Safety & Alignment Architectures](https://github.com/web3guru888/asi-build/discussions/1049)
+- 🔬 [Show & Tell: Phase 55.1 — RewardModeler](https://github.com/web3guru888/asi-build/discussions/1055)
+- ❓ [Q&A: Phase 55.1 — RewardModeler](https://github.com/web3guru888/asi-build/discussions/1056)
+- 🔬 [Show & Tell: Phase 55.2 — ValueAligner](https://github.com/web3guru888/asi-build/discussions/1057)
+- ❓ [Q&A: Phase 55.2 — ValueAligner](https://github.com/web3guru888/asi-build/discussions/1058)
+- 🔬 [Show & Tell: Phase 55.3 — SafetyMonitor](https://github.com/web3guru888/asi-build/discussions/1059)
+- ❓ [Q&A: Phase 55.3 — SafetyMonitor](https://github.com/web3guru888/asi-build/discussions/1060)
+- 🔬 [Show & Tell: Phase 55.4 — PreferenceOptimizer](https://github.com/web3guru888/asi-build/discussions/1061)
+- ❓ [Q&A: Phase 55.4 — PreferenceOptimizer](https://github.com/web3guru888/asi-build/discussions/1062)
+- 🔬 [Show & Tell: Phase 55.5 — AlignmentOrchestrator](https://github.com/web3guru888/asi-build/discussions/1063)
+- ❓ [Q&A: Phase 55.5 — AlignmentOrchestrator](https://github.com/web3guru888/asi-build/discussions/1064)
