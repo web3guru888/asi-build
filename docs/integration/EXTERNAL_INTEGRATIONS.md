@@ -1014,7 +1014,7 @@ class AWSIntegration:
         serialized_state = consciousness_state.to_encrypted_json()
         
         # Generate object key
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(tz=timezone.utc).isoformat()
         object_key = f"consciousness_states/{consciousness_state.id}/{timestamp}.json"
         
         try:

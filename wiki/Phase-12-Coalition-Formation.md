@@ -210,7 +210,7 @@ class InMemoryCoalitionFormation:
             members      = frozenset(accepted),
             status       = CoalitionStatus.ACTIVE,
             channel_id   = channel_id,
-            formed_at    = datetime.utcnow(),
+            formed_at    = datetime.now(tz=timezone.utc),
             dissolved_at = None,
         )
         async with self._lock:
@@ -281,7 +281,7 @@ class InMemoryCoalitionFormation:
                 status       = CoalitionStatus.DISSOLVED,
                 channel_id   = coalition.channel_id,
                 formed_at    = coalition.formed_at,
-                dissolved_at = datetime.utcnow(),
+                dissolved_at = datetime.now(tz=timezone.utc),
             )
             self._coalitions[coalition_id] = updated
         await self._channel_mgr.close(coalition.channel_id)
@@ -301,7 +301,7 @@ class InMemoryCoalitionFormation:
     async def _evict_loop(self) -> None:
         while True:
             await asyncio.sleep(self._config.eviction_interval_secs)
-            cutoff = datetime.utcnow() - timedelta(seconds=600)
+            cutoff = datetime.now(tz=timezone.utc) - timedelta(seconds=600)
             async with self._lock:
                 stale = [
                     cid for cid, c in self._coalitions.items()

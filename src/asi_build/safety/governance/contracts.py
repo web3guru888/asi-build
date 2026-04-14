@@ -14,7 +14,7 @@ import json
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -96,7 +96,7 @@ class SmartContract(ABC):
         self.storage: Dict[str, Any] = {}
         self.permissions: List[ContractPermission] = []
         self.events: List[ContractEvent] = []
-        self.deployed_at = datetime.utcnow()
+        self.deployed_at = datetime.now(tz=timezone.utc)
         self.version = "1.0.0"
 
         # Set up default permissions
@@ -194,7 +194,7 @@ class SmartContract(ABC):
             parameters=parameters,
             block_height=transaction_context.get("block_height", 0),
             transaction_hash=transaction_context.get("transaction_hash", ""),
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(tz=timezone.utc),
         )
         self.events.append(event)
 
@@ -417,7 +417,7 @@ class ProposalContract(SmartContract):
         proposal_id = self.storage["proposal_counter"] + 1
         self.storage["proposal_counter"] = proposal_id
 
-        voting_end = datetime.utcnow() + timedelta(seconds=self.storage["voting_period"])
+        voting_end = datetime.now(tz=timezone.utc) + timedelta(seconds=self.storage["voting_period"])
 
         proposal = {
             "id": proposal_id,
@@ -430,7 +430,7 @@ class ProposalContract(SmartContract):
             "votes_abstain": 0,
             "voters": {},
             "status": "voting",
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(tz=timezone.utc).isoformat(),
             "voting_end": voting_end.isoformat(),
             "executed": False,
         }
@@ -463,7 +463,7 @@ class ProposalContract(SmartContract):
             raise ValueError("Proposal not in voting phase")
 
         voting_end = datetime.fromisoformat(proposal["voting_end"])
-        if datetime.utcnow() > voting_end:
+        if datetime.now(tz=timezone.utc) > voting_end:
             raise ValueError("Voting period has ended")
 
         if voter in proposal["voters"]:
@@ -473,7 +473,7 @@ class ProposalContract(SmartContract):
         proposal["voters"][voter] = {
             "vote_type": vote_type,
             "voting_power": voting_power,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(tz=timezone.utc).isoformat(),
         }
 
         # Update vote counts
@@ -510,7 +510,7 @@ class ProposalContract(SmartContract):
             raise ValueError("Proposal not in voting phase")
 
         voting_end = datetime.fromisoformat(proposal["voting_end"])
-        if datetime.utcnow() <= voting_end:
+        if datetime.now(tz=timezone.utc) <= voting_end:
             raise ValueError("Voting period not yet ended")
 
         # Calculate results
@@ -535,7 +535,7 @@ class ProposalContract(SmartContract):
 
         proposal["participation_rate"] = participation_rate
         proposal["approval_rate"] = approval_rate
-        proposal["finalized_at"] = datetime.utcnow().isoformat()
+        proposal["finalized_at"] = datetime.now(tz=timezone.utc).isoformat()
 
         self._emit_event(
             "ProposalFinalized",
@@ -565,7 +565,7 @@ class ProposalContract(SmartContract):
 
         # Mark as executed
         proposal["executed"] = True
-        proposal["executed_at"] = datetime.utcnow().isoformat()
+        proposal["executed_at"] = datetime.now(tz=timezone.utc).isoformat()
 
         self._emit_event(
             "ProposalExecuted",
@@ -586,7 +586,7 @@ class ProposalContract(SmartContract):
 
         proposal["status"] = "vetoed"
         proposal["veto_reason"] = reason
-        proposal["vetoed_at"] = datetime.utcnow().isoformat()
+        proposal["vetoed_at"] = datetime.now(tz=timezone.utc).isoformat()
         proposal["vetoed_by"] = transaction_context["caller"]
 
         self._emit_event(
@@ -648,7 +648,7 @@ class EthicsEnforcementContract(SmartContract):
             "enforcement_action": enforcement_action,
             "active": True,
             "created_by": transaction_context["caller"],
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(tz=timezone.utc).isoformat(),
             "violation_count": 0,
         }
 
@@ -698,7 +698,7 @@ class EthicsEnforcementContract(SmartContract):
             "constraint_id": constraint_id,
             "evidence": evidence,
             "reported_by": transaction_context["caller"],
-            "reported_at": datetime.utcnow().isoformat(),
+            "reported_at": datetime.now(tz=timezone.utc).isoformat(),
             "severity": evidence.get("severity", "medium"),
             "status": "reported",
             "investigation_started": False,
@@ -741,7 +741,7 @@ class EthicsEnforcementContract(SmartContract):
             "action_type": action_type,
             "target": target,
             "executed_by": transaction_context["caller"],
-            "executed_at": datetime.utcnow().isoformat(),
+            "executed_at": datetime.now(tz=timezone.utc).isoformat(),
             "status": "executed",
         }
 
@@ -867,7 +867,7 @@ class ContractRegistry:
             status=ExecutionStatus.PENDING,
             result=None,
             events=[],
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(tz=timezone.utc),
             executed_at=None,
             block_height=None,
         )
@@ -887,7 +887,7 @@ class ContractRegistry:
                 transaction.status = ExecutionStatus.FAILED
                 transaction.result = result
 
-            transaction.executed_at = datetime.utcnow()
+            transaction.executed_at = datetime.now(tz=timezone.utc)
             transaction.block_height = self.block_height
 
             self.transactions[transaction_id] = transaction
@@ -898,7 +898,7 @@ class ContractRegistry:
         except Exception as e:
             transaction.status = ExecutionStatus.FAILED
             transaction.result = str(e)
-            transaction.executed_at = datetime.utcnow()
+            transaction.executed_at = datetime.now(tz=timezone.utc)
             self.transactions[transaction_id] = transaction
 
             logger.error(f"Transaction {transaction_id} failed: {e}")
@@ -928,14 +928,14 @@ class ContractRegistry:
 
     def _generate_address(self, contract_name: str) -> str:
         """Generate contract address."""
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(tz=timezone.utc).isoformat()
         data = f"{contract_name}_{timestamp}_{len(self.contracts)}"
         return f"0x{hashlib.sha256(data.encode()).hexdigest()[:40]}"
 
     def _generate_transaction_id(self) -> str:
         """Generate transaction ID."""
         self.transaction_counter += 1
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(tz=timezone.utc).isoformat()
         data = f"tx_{self.transaction_counter}_{timestamp}"
         return hashlib.sha256(data.encode()).hexdigest()
 

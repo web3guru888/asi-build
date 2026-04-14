@@ -17,7 +17,7 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
@@ -225,7 +225,7 @@ class TheoremProver:
         self, hypothesis: List[str], conclusion: str, method: str = "resolution"
     ) -> FormalProof:
         """Attempt to prove a theorem using specified method."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(tz=timezone.utc)
 
         try:
             if method == "resolution":
@@ -237,7 +237,7 @@ class TheoremProver:
             else:
                 raise ValueError(f"Unknown proof method: {method}")
 
-            end_time = datetime.utcnow()
+            end_time = datetime.now(tz=timezone.utc)
             verification_time = (end_time - start_time).total_seconds()
 
             formal_proof = FormalProof(
@@ -661,7 +661,7 @@ class TheoremProver:
 
     def _generate_proof_id(self) -> str:
         """Generate unique proof ID."""
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%d%H%M%S")
         return f"proof_{timestamp}_{id(self) % 10000}"
 
 

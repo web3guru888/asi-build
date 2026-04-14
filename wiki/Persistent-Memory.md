@@ -155,7 +155,7 @@ class MemoryConsolidator:
                         "salience": event.salience,
                         "tick": event.tick,
                         "valid_from": event.timestamp.isoformat(),
-                        "transaction_time": datetime.utcnow().isoformat(),
+                        "transaction_time": datetime.now(tz=timezone.utc).isoformat(),
                         "source": event.source_module,
                     }
                 )
@@ -217,7 +217,7 @@ memories = await kg.query(
     "LIMIT $limit",
     params={
         "min_salience": RETRIEVAL_MIN_SALIENCE,
-        "cutoff": (datetime.utcnow() - timedelta(hours=RETRIEVAL_WINDOW_HOURS)).isoformat(),
+        "cutoff": (datetime.now(tz=timezone.utc) - timedelta(hours=RETRIEVAL_WINDOW_HOURS)).isoformat(),
         "limit": RETRIEVAL_LIMIT,
     }
 )

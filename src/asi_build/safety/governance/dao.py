@@ -12,7 +12,7 @@ import json
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -113,7 +113,7 @@ class QuadraticVoting:
             "vote_direction": vote_direction,
             "token_cost": cost,
             "voting_power": abs(vote_intensity),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(tz=timezone.utc).isoformat(),
         }
 
 
@@ -154,7 +154,7 @@ class DAOTreasury:
                     block_height=len(self.transactions) + 1,
                     transaction_hash=self._generate_hash(f"alloc_{proposal_id}_{amount}"),
                     gas_used=0.1,
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(tz=timezone.utc),
                 )
 
                 self.transactions.append(transaction)
@@ -181,14 +181,14 @@ class DAOTreasury:
             block_height=len(self.transactions) + 1,
             transaction_hash=self._generate_hash(f"revenue_{source}_{amount}"),
             gas_used=0.05,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(tz=timezone.utc),
         )
 
         self.transactions.append(transaction)
         logger.info(f"Added {amount} {token_type} from {source} to treasury")
 
     def _generate_transaction_id(self) -> str:
-        return f"tx_{hashlib.md5(str(datetime.utcnow()).encode()).hexdigest()[:12]}"
+        return f"tx_{hashlib.md5(str(datetime.now(tz=timezone.utc)).encode()).hexdigest()[:12]}"
 
     def _generate_hash(self, data: str) -> str:
         return hashlib.sha256(data.encode()).hexdigest()
@@ -225,7 +225,7 @@ class ReputationSystem:
                 "context": context,
                 "reputation_change": reputation_change,
                 "new_score": new_score,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(tz=timezone.utc).isoformat(),
             }
         )
 
@@ -313,7 +313,7 @@ class DAOGovernance:
                 proposer_id, self.min_proposal_tokens, reason=f"proposal_{proposal_data['title']}"
             )
 
-            voting_starts = datetime.utcnow() + timedelta(hours=24)  # 24h delay
+            voting_starts = datetime.now(tz=timezone.utc) + timedelta(hours=24)  # 24h delay
             voting_ends = voting_starts + timedelta(days=self.voting_period_days)
 
             proposal = DAOProposal(
@@ -329,7 +329,7 @@ class DAOGovernance:
                 smart_contract_code=proposal_data.get("smart_contract_code"),
                 implementation_hash=self._generate_hash(proposal_data["description"]),
                 votes={},
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
                 voting_starts_at=voting_starts,
                 voting_ends_at=voting_ends,
                 execution_at=None,
@@ -353,7 +353,7 @@ class DAOGovernance:
             if not proposal:
                 raise ValueError(f"Unknown proposal: {proposal_id}")
 
-            current_time = datetime.utcnow()
+            current_time = datetime.now(tz=timezone.utc)
             if current_time < proposal.voting_starts_at:
                 raise ValueError("Voting has not started yet")
 
@@ -392,7 +392,7 @@ class DAOGovernance:
                 {
                     "proposal_id": proposal_id,
                     "vote_data": vote_data,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(tz=timezone.utc).isoformat(),
                 }
             )
 
@@ -413,7 +413,7 @@ class DAOGovernance:
             if not proposal:
                 raise ValueError(f"Unknown proposal: {proposal_id}")
 
-            if datetime.utcnow() <= proposal.voting_ends_at:
+            if datetime.now(tz=timezone.utc) <= proposal.voting_ends_at:
                 raise ValueError("Voting period not yet ended")
 
             # Calculate results
@@ -425,7 +425,7 @@ class DAOGovernance:
 
             # Wait for execution delay
             execution_time = proposal.voting_ends_at + proposal.execution_delay
-            if datetime.utcnow() < execution_time:
+            if datetime.now(tz=timezone.utc) < execution_time:
                 proposal.execution_at = execution_time
                 logger.info(f"Proposal {proposal_id} scheduled for execution at {execution_time}")
                 return True
@@ -465,7 +465,7 @@ class DAOGovernance:
                 locked_until=None,
                 voting_power_multiplier=1.0,
                 earned_from=reason,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
             )
 
             if stakeholder_id not in self.tokens:
@@ -491,7 +491,7 @@ class DAOGovernance:
             return 0.0
 
         total = 0.0
-        current_time = datetime.utcnow()
+        current_time = datetime.now(tz=timezone.utc)
 
         for token in self.tokens[stakeholder_id]:
             if token.token_type == token_type:
@@ -506,7 +506,7 @@ class DAOGovernance:
             raise ValueError(f"No tokens found for stakeholder {stakeholder_id}")
 
         remaining_to_lock = amount
-        current_time = datetime.utcnow()
+        current_time = datetime.now(tz=timezone.utc)
         lock_until = current_time + timedelta(
             days=self.voting_period_days + self.execution_delay_days
         )
@@ -526,7 +526,7 @@ class DAOGovernance:
                         locked_until=lock_until,
                         voting_power_multiplier=token.voting_power_multiplier,
                         earned_from=f"split_from_{token.id}",
-                        created_at=datetime.utcnow(),
+                        created_at=datetime.now(tz=timezone.utc),
                     )
 
                     token.amount -= remaining_to_lock
@@ -610,7 +610,7 @@ class DAOGovernance:
 
     def _generate_id(self, prefix: str) -> str:
         """Generate a unique ID with prefix."""
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(tz=timezone.utc).isoformat()
         data = f"{prefix}_{timestamp}_{id(self)}"
         return f"{prefix}_{hashlib.md5(data.encode()).hexdigest()[:8]}"
 
@@ -623,7 +623,7 @@ class DAOGovernance:
         return {
             "total_proposals": len(self.proposals),
             "active_proposals": sum(
-                1 for p in self.proposals.values() if datetime.utcnow() <= p.voting_ends_at
+                1 for p in self.proposals.values() if datetime.now(tz=timezone.utc) <= p.voting_ends_at
             ),
             "total_stakeholders": len(self.tokens),
             "treasury_balances": self.treasury.balances,

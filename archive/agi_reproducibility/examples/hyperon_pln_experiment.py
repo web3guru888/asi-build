@@ -18,7 +18,7 @@ import asyncio
 import json
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add the parent directory to the path so we can import the platform
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -180,7 +180,7 @@ Executes the MeTTa PLN experiment and collects results.
 import json
 import time
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 def run_hyperon_experiment():
     """Run the Hyperon PLN experiment."""
@@ -196,7 +196,7 @@ def run_hyperon_experiment():
         # Simulate PLN inference results
         results = {
             'experiment_id': 'hyperon_pln_symbolic_reasoning_001',
-            'execution_timestamp': datetime.utcnow().isoformat(),
+            'execution_timestamp': datetime.now(tz=timezone.utc).isoformat(),
             'execution_time_seconds': time.time() - start_time,
             
             # Inference results
@@ -267,7 +267,7 @@ def run_hyperon_experiment():
     except Exception as e:
         error_results = {
             'experiment_id': 'hyperon_pln_symbolic_reasoning_001',
-            'execution_timestamp': datetime.utcnow().isoformat(),
+            'execution_timestamp': datetime.now(tz=timezone.utc).isoformat(),
             'execution_time_seconds': time.time() - start_time,
             'error': str(e),
             'status': 'failed'
@@ -435,7 +435,7 @@ if __name__ == '__main__':
         
         report = {
             'experiment_id': self.experiment_id,
-            'report_timestamp': datetime.utcnow().isoformat(),
+            'report_timestamp': datetime.now(tz=timezone.utc).isoformat(),
             'platform_version': self.platform.config.version,
             
             'summary': {

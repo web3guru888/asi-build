@@ -12,7 +12,7 @@ import logging
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -146,7 +146,7 @@ class HumanInTheLoopController:
             "availability": availability,
             "active_sessions": 0,
             "decisions_handled": 0,
-            "last_active": datetime.utcnow(),
+            "last_active": datetime.now(tz=timezone.utc),
             "rating": 5.0,  # Average rating
         }
 
@@ -172,7 +172,7 @@ class HumanInTheLoopController:
             "urgency_level": urgency_level,
             "assigned_operator": available_operator,
             "timeout": timeout,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(tz=timezone.utc),
             "status": "waiting_for_human",
             "decision": None,
             "reasoning": None,
@@ -205,14 +205,14 @@ class HumanInTheLoopController:
         loop_data["decision"] = decision
         loop_data["reasoning"] = reasoning
         loop_data["confidence"] = confidence
-        loop_data["decided_at"] = datetime.utcnow()
+        loop_data["decided_at"] = datetime.now(tz=timezone.utc)
         loop_data["status"] = "decided"
 
         # Update operator statistics
         operator = self.human_operators[operator_id]
         operator["active_sessions"] -= 1
         operator["decisions_handled"] += 1
-        operator["last_active"] = datetime.utcnow()
+        operator["last_active"] = datetime.now(tz=timezone.utc)
 
         # Remove from queue
         if operator_id in self.decision_queues:
@@ -307,7 +307,7 @@ class DemocraticOverrideSystem:
             request_id = str(uuid.uuid4())
 
             # Set expiration time based on severity
-            expiration_time = datetime.utcnow() + self._get_expiration_time(severity)
+            expiration_time = datetime.now(tz=timezone.utc) + self._get_expiration_time(severity)
 
             override_request = OverrideRequest(
                 id=request_id,
@@ -324,7 +324,7 @@ class DemocraticOverrideSystem:
                 emergency_contacts=self._get_emergency_contacts(severity),
                 expiration_time=expiration_time,
                 status=OverrideStatus.INITIATED,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(tz=timezone.utc),
                 votes={},
                 execution_details=None,
             )
@@ -357,7 +357,7 @@ class DemocraticOverrideSystem:
             if override_request.status != OverrideStatus.VOTING:
                 raise ValueError("Override request not in voting phase")
 
-            if datetime.utcnow() > override_request.expiration_time:
+            if datetime.now(tz=timezone.utc) > override_request.expiration_time:
                 override_request.status = OverrideStatus.EXPIRED
                 raise ValueError("Override request has expired")
 
@@ -366,7 +366,7 @@ class DemocraticOverrideSystem:
                 "vote": vote,
                 "reasoning": reasoning,
                 "voting_power": voting_power,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(tz=timezone.utc).isoformat(),
             }
 
             logger.info(f"Vote cast on override {request_id}: {voter_id} voted {vote}")
@@ -410,7 +410,7 @@ class DemocraticOverrideSystem:
                 side_effects=side_effects,
                 rollback_plan=self._create_rollback_plan(override_request),
                 recovery_time=None,
-                executed_at=datetime.utcnow(),
+                executed_at=datetime.now(tz=timezone.utc),
             )
 
             self.executions[execution_id] = execution
@@ -419,7 +419,7 @@ class DemocraticOverrideSystem:
                 override_request.status = OverrideStatus.EXECUTED
                 override_request.execution_details = {
                     "execution_id": execution_id,
-                    "executed_at": datetime.utcnow().isoformat(),
+                    "executed_at": datetime.now(tz=timezone.utc).isoformat(),
                     "executed_by": executor_id,
                 }
 
