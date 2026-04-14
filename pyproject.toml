@@ -93,9 +93,15 @@ ci = [
     "aiodns>=3.0",
     "cryptography>=41.0",
     "scikit-learn>=1.3",
+    "eth_keys>=0.4",
+    "py_ecc>=7.0",
+]
+rings = [
+    "eth_keys>=0.4",
+    "py_ecc>=7.0",
 ]
 all = [
-    "asi-build[consciousness,graph,homomorphic,vectordb,quantum,ml,deployment,distributed_training,dev]",
+    "asi-build[consciousness,graph,homomorphic,vectordb,quantum,ml,deployment,distributed_training,rings,dev]",
 ]
 
 [project.urls]

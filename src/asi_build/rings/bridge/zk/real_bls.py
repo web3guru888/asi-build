@@ -68,10 +68,23 @@ import os
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, ClassVar, List, Optional, Tuple, Type
 
-from py_ecc.bls import G2ProofOfPossession as bls_pop
-from py_ecc.optimized_bls12_381 import curve_order as CURVE_ORDER
+try:
+    from py_ecc.bls import G2ProofOfPossession as bls_pop
+    from py_ecc.optimized_bls12_381 import curve_order as CURVE_ORDER
+
+    _HAS_PY_ECC = True
+except ImportError:  # pragma: no cover
+    bls_pop = None  # type: ignore[assignment,misc]
+    CURVE_ORDER = None  # type: ignore[assignment]
+    _HAS_PY_ECC = False
 
 logger = logging.getLogger(__name__)
+
+if not _HAS_PY_ECC:
+    logger.warning(
+        "py_ecc is not installed — real BLS12-381 unavailable. "
+        "Install with: pip install asi-build[rings]"
+    )
 
 # ---------------------------------------------------------------------------
 # Constants (shared with bls.py for cross-compatibility)

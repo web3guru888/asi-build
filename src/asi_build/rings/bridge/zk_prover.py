@@ -60,26 +60,37 @@ import secrets
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from py_ecc.bn128 import (
-    G1,
-    G2,
-    Z1,
-    Z2,
-    FQ,
-    FQ2,
-    FQ12,
-    add,
-    curve_order,
-    field_modulus,
-    is_on_curve,
-    multiply,
-    neg,
-)
-from py_ecc.bn128 import pairing as miller_loop_pairing
-from py_ecc.bn128.bn128_pairing import final_exponentiate
-from py_ecc.bn128.bn128_curve import b as B_COEFF, b2 as B2_COEFF
+try:
+    from py_ecc.bn128 import (
+        G1,
+        G2,
+        Z1,
+        Z2,
+        FQ,
+        FQ2,
+        FQ12,
+        add,
+        curve_order,
+        field_modulus,
+        is_on_curve,
+        multiply,
+        neg,
+    )
+    from py_ecc.bn128 import pairing as miller_loop_pairing
+    from py_ecc.bn128.bn128_pairing import final_exponentiate
+    from py_ecc.bn128.bn128_curve import b as B_COEFF, b2 as B2_COEFF
+
+    _HAS_PY_ECC = True
+except ImportError:  # pragma: no cover
+    _HAS_PY_ECC = False
 
 logger = logging.getLogger(__name__)
+
+if not _HAS_PY_ECC:
+    logger.warning(
+        "py_ecc is not installed — ZK prover unavailable. "
+        "Install with: pip install asi-build[rings]"
+    )
 
 # ---------------------------------------------------------------------------
 # Type aliases
