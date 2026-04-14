@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>770+ discussions · 337 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>785+ discussions · 342 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -1545,3 +1545,16 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 57.4 — ExpertMerger](https://github.com/web3guru888/asi-build/discussions/1094)
 - 🔬 [Show & Tell: Phase 57.5 — MoEOrchestrator](https://github.com/web3guru888/asi-build/discussions/1095)
 - ❓ [Q&A: Phase 57.5 — MoEOrchestrator](https://github.com/web3guru888/asi-build/discussions/1096)
+
+### Phase 58: Diffusion Models & Score-Based Generative AI
+- 📋 [Phase 58 Planning — Diffusion Models & Score-Based Generative AI](https://github.com/web3guru888/asi-build/discussions/1097)
+- 🔬 [Show & Tell: Phase 58.1 — NoiseScheduler](https://github.com/web3guru888/asi-build/discussions/1103)
+- ❓ [Q&A: Phase 58.1 — NoiseScheduler](https://github.com/web3guru888/asi-build/discussions/1104)
+- 🔬 [Show & Tell: Phase 58.2 — ScoreEstimator](https://github.com/web3guru888/asi-build/discussions/1105)
+- ❓ [Q&A: Phase 58.2 — ScoreEstimator](https://github.com/web3guru888/asi-build/discussions/1106)
+- 🔬 [Show & Tell: Phase 58.3 — SamplingEngine](https://github.com/web3guru888/asi-build/discussions/1107)
+- ❓ [Q&A: Phase 58.3 — SamplingEngine](https://github.com/web3guru888/asi-build/discussions/1108)
+- 🔬 [Show & Tell: Phase 58.4 — LatentDiffusionEncoder](https://github.com/web3guru888/asi-build/discussions/1109)
+- ❓ [Q&A: Phase 58.4 — LatentDiffusionEncoder](https://github.com/web3guru888/asi-build/discussions/1110)
+- 🔬 [Show & Tell: Phase 58.5 — DiffusionOrchestrator](https://github.com/web3guru888/asi-build/discussions/1111)
+- ❓ [Q&A: Phase 58.5 — DiffusionOrchestrator](https://github.com/web3guru888/asi-build/discussions/1112)
