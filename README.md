@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-302_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-312_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>700+ discussions · 307 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>715+ discussions · 312 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,7 +822,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 302 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 312 pages of documentation
 <br />
 💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 600+ threads
 
@@ -1467,3 +1467,16 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 51.4 — ModalityGenerator](https://github.com/web3guru888/asi-build/discussions/998)
 - 🔬 [Show & Tell: Phase 51.5 — MultiModalOrchestrator](https://github.com/web3guru888/asi-build/discussions/999)
 - ❓ [Q&A: Phase 51.5 — MultiModalOrchestrator](https://github.com/web3guru888/asi-build/discussions/1000)
+
+### Phase 52: Retrieval-Augmented Generation & Grounded AI
+- 📋 [Phase 52 Planning — Retrieval-Augmented Generation & Grounded AI](https://github.com/web3guru888/asi-build/discussions/1001)
+- 🔬 [Show & Tell: Phase 52.1 — DocumentIndexer](https://github.com/web3guru888/asi-build/discussions/1007)
+- ❓ [Q&A: Phase 52.1 — DocumentIndexer](https://github.com/web3guru888/asi-build/discussions/1008)
+- 🔬 [Show & Tell: Phase 52.2 — RetrievalEngine](https://github.com/web3guru888/asi-build/discussions/1009)
+- ❓ [Q&A: Phase 52.2 — RetrievalEngine](https://github.com/web3guru888/asi-build/discussions/1010)
+- 🔬 [Show & Tell: Phase 52.3 — ContextGrounder](https://github.com/web3guru888/asi-build/discussions/1011)
+- ❓ [Q&A: Phase 52.3 — ContextGrounder](https://github.com/web3guru888/asi-build/discussions/1012)
+- 🔬 [Show & Tell: Phase 52.4 — AdaptiveRetriever](https://github.com/web3guru888/asi-build/discussions/1013)
+- ❓ [Q&A: Phase 52.4 — AdaptiveRetriever](https://github.com/web3guru888/asi-build/discussions/1014)
+- 🔬 [Show & Tell: Phase 52.5 — RAGOrchestrator](https://github.com/web3guru888/asi-build/discussions/1015)
+- ❓ [Q&A: Phase 52.5 — RAGOrchestrator](https://github.com/web3guru888/asi-build/discussions/1016)
