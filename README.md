@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-337_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-352_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>800+ discussions · 347 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>815+ discussions · 352 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -822,7 +822,7 @@ We welcome contributions from **all backgrounds** — neuroscience, ML, distribu
 <br />
 🔬 &nbsp;[**Research Issues**](https://github.com/web3guru888/asi-build/labels/research) — Open research problems
 <br />
-📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 337 pages of documentation
+📖 &nbsp;[**Wiki**](https://github.com/web3guru888/asi-build/wiki) — 352 pages of documentation
 <br />
 💬 &nbsp;[**Discussions**](https://github.com/web3guru888/asi-build/discussions) — 600+ threads
 
@@ -1571,3 +1571,16 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 59.4 — QuantizedFineTuner](https://github.com/web3guru888/asi-build/discussions/1126)
 - 🔬 [Show & Tell: Phase 59.5 — PEFTOrchestrator](https://github.com/web3guru888/asi-build/discussions/1127)
 - ❓ [Q&A: Phase 59.5 — PEFTOrchestrator](https://github.com/web3guru888/asi-build/discussions/1128)
+
+### Phase 60: Efficient Inference & Model Serving Optimization
+- 📋 [Phase 60 Planning — Efficient Inference & Model Serving Optimization](https://github.com/web3guru888/asi-build/discussions/1129)
+- 🔬 [Show & Tell: Phase 60.1 — KVCacheManager](https://github.com/web3guru888/asi-build/discussions/1135)
+- ❓ [Q&A: Phase 60.1 — KVCacheManager](https://github.com/web3guru888/asi-build/discussions/1136)
+- 🔬 [Show & Tell: Phase 60.2 — SpeculativeDecoder](https://github.com/web3guru888/asi-build/discussions/1137)
+- ❓ [Q&A: Phase 60.2 — SpeculativeDecoder](https://github.com/web3guru888/asi-build/discussions/1138)
+- 🔬 [Show & Tell: Phase 60.3 — AttentionOptimizer](https://github.com/web3guru888/asi-build/discussions/1139)
+- ❓ [Q&A: Phase 60.3 — AttentionOptimizer](https://github.com/web3guru888/asi-build/discussions/1140)
+- 🔬 [Show & Tell: Phase 60.4 — BatchScheduler](https://github.com/web3guru888/asi-build/discussions/1141)
+- ❓ [Q&A: Phase 60.4 — BatchScheduler](https://github.com/web3guru888/asi-build/discussions/1142)
+- 🔬 [Show & Tell: Phase 60.5 — InferenceOrchestrator](https://github.com/web3guru888/asi-build/discussions/1143)
+- ❓ [Q&A: Phase 60.5 — InferenceOrchestrator](https://github.com/web3guru888/asi-build/discussions/1144)
