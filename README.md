@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>860+ discussions · 367 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>875+ discussions · 372 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -1622,3 +1622,15 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 63.4 — GaussianSplatRenderer](https://github.com/web3guru888/asi-build/discussions/1190)
 - 🔬 [Show & Tell: Phase 63.5 — SceneReconstructionOrchestrator](https://github.com/web3guru888/asi-build/discussions/1191)
 - ❓ [Q&A: Phase 63.5 — SceneReconstructionOrchestrator](https://github.com/web3guru888/asi-build/discussions/1192)
+### Phase 64: Temporal Sequence Modeling & Time Series Intelligence
+- 📋 [Phase 64 Planning — Temporal Sequence Modeling & Time Series Intelligence](https://github.com/web3guru888/asi-build/discussions/1193)
+- 🔬 [Strategy & Technical: Phase 64.1 — TemporalFeatureExtractor](https://github.com/web3guru888/asi-build/discussions/1205)
+- ❓ [Q&A: Phase 64.1 — TemporalFeatureExtractor](https://github.com/web3guru888/asi-build/discussions/1206)
+- 🔬 [Strategy & Technical: Phase 64.2 — SequenceForecaster](https://github.com/web3guru888/asi-build/discussions/1207)
+- ❓ [Q&A: Phase 64.2 — SequenceForecaster](https://github.com/web3guru888/asi-build/discussions/1208)
+- 🔬 [Strategy & Technical: Phase 64.3 — AnomalyDetector](https://github.com/web3guru888/asi-build/discussions/1209)
+- ❓ [Q&A: Phase 64.3 — AnomalyDetector](https://github.com/web3guru888/asi-build/discussions/1210)
+- 🔬 [Strategy & Technical: Phase 64.4 — TimeSeriesClassifier](https://github.com/web3guru888/asi-build/discussions/1212)
+- ❓ [Q&A: Phase 64.4 — TimeSeriesClassifier](https://github.com/web3guru888/asi-build/discussions/1213)
+- 🔬 [Strategy & Technical: Phase 64.5 — TemporalIntelligenceOrchestrator](https://github.com/web3guru888/asi-build/discussions/1214)
+- ❓ [Q&A: Phase 64.5 — TemporalIntelligenceOrchestrator](https://github.com/web3guru888/asi-build/discussions/1215)
