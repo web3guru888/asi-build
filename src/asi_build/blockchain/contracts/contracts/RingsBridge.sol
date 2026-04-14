@@ -344,8 +344,11 @@ contract RingsBridge is AccessControl, Pausable, ReentrancyGuard {
      * @param amount        Amount of ETH to withdraw (wei).
      * @param nonce_        Withdrawal nonce (for replay protection).
      * @param proof         ABI-encoded Groth16 proof bytes.
-     * @param publicInputs  Public inputs for the proof (must encode
-     *                      recipient, ringsDID, amount, nonce).
+     * @param publicInputs  Public inputs for the proof. Must have at least 5
+     *                      elements; publicInputs[4] must equal block.chainid
+     *                      to prevent cross-chain replay attacks (#1242).
+     *                      Layout: [amount, nonce, recipientHash, stateRoot,
+     *                               chainId].
      *
      * @dev Checks: proof validity → replay protection → rate limits.
      *      Effects: record withdrawal, update daily volume.
@@ -362,6 +365,16 @@ contract RingsBridge is AccessControl, Pausable, ReentrancyGuard {
         require(recipient != address(0), "RingsBridge: zero recipient");
         require(amount > 0, "RingsBridge: zero amount");
         require(ringsDID != bytes32(0), "RingsBridge: zero DID");
+
+        // ── Cross-chain replay protection (#1242) ───────────────────
+        // publicInputs[4] must be the chain ID included in the ZK proof.
+        // This prevents a valid proof generated for chain A from being
+        // replayed on chains B or C (all deployed at the same CREATE2 addr).
+        require(publicInputs.length >= 5, "RingsBridge: missing chain ID input");
+        require(
+            uint256(publicInputs[4]) == block.chainid,
+            "RingsBridge: proof bound to wrong chain"
+        );
 
         // ── Replay protection ───────────────────────────────────────
         require(
@@ -427,7 +440,9 @@ contract RingsBridge is AccessControl, Pausable, ReentrancyGuard {
      * @param amount        Amount of tokens to mint.
      * @param nonce_        Withdrawal nonce (for replay protection).
      * @param proof         ABI-encoded Groth16 proof bytes.
-     * @param publicInputs  Public inputs for the proof.
+     * @param publicInputs  Public inputs for the proof. Must have at least 5
+     *                      elements; publicInputs[4] must equal block.chainid
+     *                      to prevent cross-chain replay attacks (#1242).
      *
      * @dev The bridge must hold BRIDGE_ROLE on the BridgedToken contract.
      */
@@ -444,6 +459,13 @@ contract RingsBridge is AccessControl, Pausable, ReentrancyGuard {
         require(recipient != address(0), "RingsBridge: zero recipient");
         require(amount > 0, "RingsBridge: zero amount");
         require(ringsDID != bytes32(0), "RingsBridge: zero DID");
+
+        // ── Cross-chain replay protection (#1242) ───────────────────
+        require(publicInputs.length >= 5, "RingsBridge: missing chain ID input");
+        require(
+            uint256(publicInputs[4]) == block.chainid,
+            "RingsBridge: proof bound to wrong chain"
+        );
 
         // ── Replay protection ───────────────────────────────────────
         require(

@@ -543,6 +543,13 @@ class WithdrawalWitness:
 
     All numeric fields are Python ints; they are stringified when
     passed to the circuit.
+
+    The ``chain_id`` field is required to prevent cross-chain replay attacks
+    (#1242).  It must match the EVM ``block.chainid`` of the destination
+    bridge contract.  Known chain IDs:
+        - Sepolia:       11155111
+        - Base Sepolia:  84532
+        - ARC Testnet:   5042002
     """
 
     # Public inputs
@@ -550,6 +557,7 @@ class WithdrawalWitness:
     nonce: int
     recipient_hash: int
     state_root: int
+    chain_id: int  # EVM chain ID — binds proof to a specific chain (#1242)
 
     # Private inputs
     secret: int
@@ -559,6 +567,10 @@ class WithdrawalWitness:
 
     def to_circuit_inputs(self) -> Tuple[dict, dict]:
         """Split into ``(witness, public_inputs)`` dicts for the prover.
+
+        The ``public`` dict contains 5 signals matching the circuit's
+        ``component main {public [...]}`` declaration in the same order.
+        ``publicInputs[4]`` in the on-chain call must equal ``block.chainid``.
 
         Returns
         -------
@@ -576,6 +588,7 @@ class WithdrawalWitness:
             "nonce": self.nonce,
             "recipientHash": self.recipient_hash,
             "stateRoot": self.state_root,
+            "chainId": self.chain_id,  # Must equal block.chainid on destination (#1242)
         }
         return witness, public
 

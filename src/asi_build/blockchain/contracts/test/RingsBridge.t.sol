@@ -131,8 +131,14 @@ contract RingsBridgeTest is Test {
         vm.deal(user2, 200 ether);
         vm.deal(address(bridge), 500 ether); // Fund bridge for withdrawals
 
-        // Set up dummy public inputs
-        dummyInputs.push(bytes32(uint256(1)));
+        // Set up dummy public inputs — 5 elements matching circuit layout:
+        // [amount, nonce, recipientHash, stateRoot, chainId]
+        // publicInputs[4] must equal block.chainid for the chain ID check (#1242).
+        dummyInputs.push(bytes32(uint256(1)));        // amount
+        dummyInputs.push(bytes32(uint256(0)));        // nonce
+        dummyInputs.push(bytes32(uint256(0)));        // recipientHash
+        dummyInputs.push(bytes32(uint256(0)));        // stateRoot
+        dummyInputs.push(bytes32(block.chainid));     // chainId (#1242 fix)
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -396,6 +402,47 @@ contract RingsBridgeTest is Test {
 
         vm.expectRevert("Pausable: paused");
         bridge.withdraw(payable(user1), TEST_DID, 1 ether, 0, dummyProof, dummyInputs);
+    }
+
+    /// @dev Fix for #1242 — cross-chain replay attack prevention.
+    /// A proof generated for chain A (chainId in publicInputs[4] = A)
+    /// must not be accepted on chain B (block.chainid = B).
+    function test_WithdrawETH_RejectsWrongChainId() public {
+        // Build public inputs with a wrong chain ID (block.chainid + 1)
+        bytes32[] memory wrongChainInputs = new bytes32[](5);
+        wrongChainInputs[0] = bytes32(uint256(1));        // amount
+        wrongChainInputs[1] = bytes32(uint256(0));        // nonce
+        wrongChainInputs[2] = bytes32(uint256(0));        // recipientHash
+        wrongChainInputs[3] = bytes32(uint256(0));        // stateRoot
+        wrongChainInputs[4] = bytes32(block.chainid + 1); // wrong chainId
+
+        vm.expectRevert("RingsBridge: proof bound to wrong chain");
+        bridge.withdraw(payable(user1), TEST_DID, 1 ether, 0, dummyProof, wrongChainInputs);
+    }
+
+    /// @dev Withdrawal must fail when publicInputs array is too short (< 5 elements).
+    function test_WithdrawETH_RejectsMissingChainId() public {
+        bytes32[] memory shortInputs = new bytes32[](4);
+        shortInputs[0] = bytes32(uint256(1));
+        shortInputs[1] = bytes32(uint256(0));
+        shortInputs[2] = bytes32(uint256(0));
+        shortInputs[3] = bytes32(uint256(0));
+
+        vm.expectRevert("RingsBridge: missing chain ID input");
+        bridge.withdraw(payable(user1), TEST_DID, 1 ether, 0, dummyProof, shortInputs);
+    }
+
+    /// @dev Same replay protection for token withdrawals.
+    function test_WithdrawToken_RejectsWrongChainId() public {
+        bytes32[] memory wrongChainInputs = new bytes32[](5);
+        wrongChainInputs[0] = bytes32(uint256(1));
+        wrongChainInputs[1] = bytes32(uint256(0));
+        wrongChainInputs[2] = bytes32(uint256(0));
+        wrongChainInputs[3] = bytes32(uint256(0));
+        wrongChainInputs[4] = bytes32(block.chainid + 1); // wrong chainId
+
+        vm.expectRevert("RingsBridge: proof bound to wrong chain");
+        bridge.withdrawToken(address(bToken), user1, TEST_DID, 1 ether, 0, dummyProof, wrongChainInputs);
     }
 
     // ──────────────────────────────────────────────────────────────────

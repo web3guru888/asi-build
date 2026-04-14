@@ -15,6 +15,9 @@ include "node_modules/circomlib/circuits/comparators.circom";
  *   - nonce           : replay protection nonce
  *   - recipientHash   : Poseidon(recipient_address) — front-running protection
  *   - stateRoot       : Merkle root of the account state tree
+ *   - chainId         : EVM chain ID — binds proof to a specific chain,
+ *                       preventing cross-chain replay attacks. Must equal
+ *                       block.chainid on the destination contract.
  *
  * Private inputs:
  *   - secret          : user's private authorization key
@@ -27,6 +30,13 @@ include "node_modules/circomlib/circuits/comparators.circom";
  *   2. Account leaf = Poseidon(secret, balance, nonce)
  *   3. Merkle path from leaf reconstructs to stateRoot
  *   4. recipientHash is bound as public input (non-trivial constraint)
+ *   5. chainId is cryptographically bound to the withdrawal commitment
+ *
+ * SECURITY NOTE: After this circuit change, a new trusted setup (Powers of
+ * Tau + Groth16 setup ceremony) is required before enabling withdrawals.
+ * The current zkey/verification key is now stale. Do NOT enable
+ * syncCommitteeRoot (i.e., do NOT enable withdrawals) until the new verifier
+ * is deployed. See issue #1242.
  */
 template WithdrawalProof(nLevels) {
     // ── Public inputs ──────────────────────────────────────────────
@@ -34,6 +44,9 @@ template WithdrawalProof(nLevels) {
     signal input nonce;
     signal input recipientHash;
     signal input stateRoot;
+    // chainId binds this proof to a specific EVM chain (fix for #1242).
+    // publicInputs[4] in the on-chain verifier call.
+    signal input chainId;
 
     // ── Private inputs ─────────────────────────────────────────────
     signal input secret;
@@ -92,6 +105,22 @@ template WithdrawalProof(nLevels) {
     // that the optimizer cannot remove)
     signal recipientCommitment;
     recipientCommitment <== recipientBinding.out;
+
+    // ── Constraint 6: Bind chainId to withdrawal commitment ───────
+    // Hash chainId with the account leaf so the proof is cryptographically
+    // tied to a specific chain. A proof generated for chain A cannot be
+    // reused on chain B because chainId appears in this hash, and the
+    // public chainId input would need to be different — which would change
+    // the commitment and fail the Merkle proof verification on the other
+    // chain. This prevents cross-chain replay attacks (#1242).
+    component chainBinding = Poseidon(2);
+    chainBinding.inputs[0] <== chainId;
+    chainBinding.inputs[1] <== leafHash.out;
+    signal chainCommitment;
+    chainCommitment <== chainBinding.out;
 }
 
-component main {public [amount, nonce, recipientHash, stateRoot]} = WithdrawalProof(10);
+// Public signals list now includes chainId as the 5th public input.
+// On-chain publicInputs[4] must equal block.chainid.
+// NOTE: Recompile circuit + redo trusted setup before enabling withdrawals.
+component main {public [amount, nonce, recipientHash, stateRoot, chainId]} = WithdrawalProof(10);
