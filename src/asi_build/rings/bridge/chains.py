@@ -191,8 +191,8 @@ CHAINS: Dict[str, ChainConfig] = {
         finality_blocks=2,
         is_testnet=True,
         supports_eip1559=True,
-        # Contracts deployed during Phase A-D
-        verifier_address="0xf7D6eb1e746bE1f907beA49660cC0F86be3b350e",
+        # Contracts deployed during Phase A-D (verifier upgraded during Phase J)
+        verifier_address="0x9186fc5e27c15aEDbA2512687F2eF2E5aC7C0e59",
         bridge_address="0xE034d479EDc2530d9917dDa4547b59bF0964A2Ca",
         token_address="0x257dDA1fa34eb847060EcB743E808B65099FB497",
     ),
@@ -219,6 +219,11 @@ CHAINS: Dict[str, ChainConfig] = {
         finality_blocks=2,
         is_testnet=True,
         supports_eip1559=True,
+        enabled=True,
+        # Deployed 2026-04-14 via forge script (Deploy.s.sol)
+        verifier_address="0x9186fc5e27c15aEDbA2512687F2eF2E5aC7C0e59",
+        bridge_address="0xE034d479EDc2530d9917dDa4547b59bF0964A2Ca",
+        token_address="0x257dDA1fa34eb847060EcB743E808B65099FB497",
     ),
     # Circle Arc Network — USDC native gas, Malachite BFT, ~350ms
     # deterministic finality.  Testnet live since Oct 2025.
