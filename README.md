@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-287_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-297_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>650+ discussions · 292 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>660+ discussions · 297 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -1428,3 +1428,16 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 48.4 — TaskDetector](https://github.com/web3guru888/asi-build/discussions/950)
 - 🔬 [Show & Tell: Phase 48.5 — ContinualLearningOrchestrator](https://github.com/web3guru888/asi-build/discussions/951)
 - ❓ [Q&A: Phase 48.5 — ContinualLearningOrchestrator](https://github.com/web3guru888/asi-build/discussions/952)
+
+### Phase 49: Program Synthesis & Automated Code Generation
+- 📋 [Phase 49 Planning — Program Synthesis & Automated Code Generation](https://github.com/web3guru888/asi-build/discussions/953)
+- 🔬 [Show & Tell: Phase 49.1 — SpecificationParser](https://github.com/web3guru888/asi-build/discussions/959)
+- ❓ [Q&A: Phase 49.1 — SpecificationParser](https://github.com/web3guru888/asi-build/discussions/960)
+- 🔬 [Show & Tell: Phase 49.2 — SynthesisEngine](https://github.com/web3guru888/asi-build/discussions/961)
+- ❓ [Q&A: Phase 49.2 — SynthesisEngine](https://github.com/web3guru888/asi-build/discussions/962)
+- 🔬 [Show & Tell: Phase 49.3 — CodeTransformer](https://github.com/web3guru888/asi-build/discussions/963)
+- ❓ [Q&A: Phase 49.3 — CodeTransformer](https://github.com/web3guru888/asi-build/discussions/964)
+- 🔬 [Show & Tell: Phase 49.4 — VerificationEngine](https://github.com/web3guru888/asi-build/discussions/965)
+- ❓ [Q&A: Phase 49.4 — VerificationEngine](https://github.com/web3guru888/asi-build/discussions/966)
+- 🔬 [Show & Tell: Phase 49.5 — ProgramSynthesisOrchestrator](https://github.com/web3guru888/asi-build/discussions/967)
+- ❓ [Q&A: Phase 49.5 — ProgramSynthesisOrchestrator](https://github.com/web3guru888/asi-build/discussions/968)
