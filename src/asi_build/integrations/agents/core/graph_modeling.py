@@ -13,7 +13,7 @@ from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,8 @@ class GraphModelingStrategy(Enum):
 class LLMGraphNode(BaseModel):
     """Node definition for LLM-generated graph models."""
 
+    model_config = ConfigDict(extra="forbid")  # fix #1245: was class Config (Pydantic v1)
+
     name: str = Field(description="Unique identifier for the node")
     label: str = Field(description="Cypher label for the node (e.g., 'User', 'Product')")
     properties: List[str] = Field(description="List of properties to include from source table")
@@ -38,14 +40,11 @@ class LLMGraphNode(BaseModel):
     source_table: str = Field(description="Source SQL table name")
     modeling_rationale: str = Field(description="Explanation for modeling decisions")
 
-    class Config:
-        """Pydantic config for OpenAI structured output compatibility."""
-
-        extra = "forbid"
-
 
 class LLMGraphRelationship(BaseModel):
     """Relationship definition for LLM-generated graph models."""
+
+    model_config = ConfigDict(extra="forbid")  # fix #1245: was class Config (Pydantic v1)
 
     name: str = Field(description="Relationship type name (e.g., 'OWNS', 'BELONGS_TO')")
     type: Literal["one_to_many", "many_to_many", "one_to_one"] = Field(
@@ -61,14 +60,12 @@ class LLMGraphRelationship(BaseModel):
     )
     modeling_rationale: str = Field(description="Explanation for this relationship")
 
-    class Config:
-        """Pydantic config for OpenAI structured output compatibility."""
-
-        extra = "forbid"
-
 
 class LLMGraphModel(BaseModel):
     """Complete LLM-generated graph model."""
+
+    # fix #1245: was class Config (Pydantic v1) — extra="forbid" ensures additionalProperties=false
+    model_config = ConfigDict(extra="forbid")
 
     nodes: List[LLMGraphNode] = Field(description="All nodes in the graph model")
     relationships: List[LLMGraphRelationship] = Field(
@@ -81,11 +78,6 @@ class LLMGraphModel(BaseModel):
     domain_insights: List[str] = Field(
         description="Domain-specific insights discovered during modeling", default=[]
     )
-
-    class Config:
-        """Pydantic config for OpenAI structured output compatibility."""
-
-        extra = "forbid"  # This ensures additionalProperties = false
 
 
 # Structured output models for LLM operations

@@ -12,6 +12,7 @@ import os
 # Kenny Graph imports
 import sys
 import time
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -27,10 +28,25 @@ import sqlite3
 
 from neo4j import GraphDatabase
 
+
+# ---------------------------------------------------------------------------
+# Lifespan handler (replaces deprecated @app.on_event("startup")) — fix #1246
+# ---------------------------------------------------------------------------
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan: initialise connections on startup."""
+    logging.basicConfig(level=logging.INFO)
+    await kenny_sse.connect_memgraph()
+    yield
+    # shutdown: nothing to tear down currently
+
+
 app = FastAPI(
     title="Kenny Graph SSE API",
     description="Real-time streaming access to Kenny Graph MCP server",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Enable CORS for web clients
@@ -201,13 +217,6 @@ class KennyGraphSSE:
 
 
 kenny_sse = KennyGraphSSE()
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize connections on startup"""
-    logging.basicConfig(level=logging.INFO)
-    await kenny_sse.connect_memgraph()
 
 
 @app.get("/")
