@@ -12,7 +12,7 @@ import os
 # Kenny Graph imports
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -76,7 +76,7 @@ class KennyGraphSSE:
     def get_kenny_graph_stats(self) -> Dict[str, Any]:
         """Get real-time Kenny Graph statistics"""
         stats = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "status": "unknown",
             "nodes": 0,
             "relationships": 0,
@@ -224,7 +224,7 @@ async def root():
             "/health": "Health check",
             "/demo": "SSE demo page",
         },
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -238,7 +238,7 @@ async def health_check():
         "status": "healthy" if graph_connected else "degraded",
         "kenny_graph_connected": graph_connected,
         "analysis_db_available": analysis_db_exists,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "uptime": time.time(),
     }
 
@@ -250,7 +250,7 @@ async def current_stats():
         "kenny_graph": kenny_sse.get_kenny_graph_stats(),
         "kenny_analysis": kenny_sse.get_kenny_analysis_stats(),
         "supervisor": kenny_sse.get_supervisor_stats(),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -263,7 +263,7 @@ async def generate_kenny_graph_stream():
             yield f"data: {data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
         except Exception as e:
-            error_data = json.dumps({"error": str(e), "timestamp": datetime.utcnow().isoformat()})
+            error_data = json.dumps({"error": str(e), "timestamp": datetime.now(timezone.utc).isoformat()})
             yield f"data: {error_data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
 
@@ -277,7 +277,7 @@ async def generate_supervisor_stream():
             yield f"data: {data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
         except Exception as e:
-            error_data = json.dumps({"error": str(e), "timestamp": datetime.utcnow().isoformat()})
+            error_data = json.dumps({"error": str(e), "timestamp": datetime.now(timezone.utc).isoformat()})
             yield f"data: {error_data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
 
@@ -290,13 +290,13 @@ async def generate_combined_stream():
                 "kenny_graph": kenny_sse.get_kenny_graph_stats(),
                 "kenny_analysis": kenny_sse.get_kenny_analysis_stats(),
                 "supervisor": kenny_sse.get_supervisor_stats(),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
             data = json.dumps(combined_stats)
             yield f"data: {data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
         except Exception as e:
-            error_data = json.dumps({"error": str(e), "timestamp": datetime.utcnow().isoformat()})
+            error_data = json.dumps({"error": str(e), "timestamp": datetime.now(timezone.utc).isoformat()})
             yield f"data: {error_data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
 

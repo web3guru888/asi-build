@@ -15,7 +15,7 @@ import sqlite3
 import threading
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -338,7 +338,7 @@ class PublicLedger:
                         metadata or {},
                         audit_level,
                         None,
-                        datetime.utcnow(),
+                        datetime.now(timezone.utc),
                         0,
                         "",
                         "",
@@ -357,7 +357,7 @@ class PublicLedger:
                 metadata=metadata or {},
                 audit_level=audit_level,
                 privacy_mask=privacy_mask,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 block_height=0,  # Will be set when added to block
                 transaction_hash=self._generate_transaction_hash(record_id, event_data),
                 previous_hash="",  # Will be set when added to block
@@ -540,7 +540,7 @@ class PublicLedger:
 
     def generate_transparency_report(self, time_period: timedelta) -> str:
         """Generate a transparency report for public consumption."""
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         start_time = end_time - time_period
 
         query = AuditQuery(date_range=(start_time, end_time), audit_levels=[AuditLevel.PUBLIC])
@@ -612,7 +612,7 @@ class PublicLedger:
             metadata={"genesis": True},
             audit_level=AuditLevel.PUBLIC,
             privacy_mask=None,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             block_height=0,
             transaction_hash="0000000000000000000000000000000000000000000000000000000000000000",
             previous_hash="0000000000000000000000000000000000000000000000000000000000000000",
@@ -626,7 +626,7 @@ class PublicLedger:
 
         genesis_block = Block(
             height=0,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             previous_hash="0000000000000000000000000000000000000000000000000000000000000000",
             merkle_root=genesis_record.merkle_root,
             audit_records=[genesis_record],
@@ -665,7 +665,7 @@ class PublicLedger:
             # Create block
             block = Block(
                 height=block_height,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 previous_hash=previous_hash,
                 merkle_root=merkle_root,
                 audit_records=self.pending_records.copy(),
@@ -704,7 +704,7 @@ class PublicLedger:
 
     def _generate_record_id(self) -> str:
         """Generate unique record ID."""
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
         return f"audit_{timestamp}_{id(self) % 10000}"
 
     def _generate_transaction_hash(self, record_id: str, event_data: Dict[str, Any]) -> str:
