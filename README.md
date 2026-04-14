@@ -101,7 +101,7 @@
 ![Chains](https://img.shields.io/badge/chains-4_(ETH%2FBSC%2FBase%2FArc)-fbbf24?style=flat-square)
 ![Payments](https://img.shields.io/badge/agent_payments-enabled-22d3ee?style=flat-square)
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
-[![Wiki](https://img.shields.io/badge/wiki-357_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
+[![Wiki](https://img.shields.io/badge/wiki-362_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
 
 <br />
@@ -133,7 +133,7 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
 <tr><td>💰</td><td><strong>Payments</strong></td><td>Agent-to-agent token transfers on Rings — DHT ledger · 4/6 validator consensus · ETH + any ERC-20</td></tr>
 <tr><td>🔒</td><td><strong>Security</strong></td><td>Groth16 ZK proofs · BLS12-381 · formal verification (Certora + SymPy + Z3)</td></tr>
-<tr><td>📖</td><td><strong>Community</strong></td><td>830+ discussions · 357 wiki pages · Good First Issues available</td></tr>
+<tr><td>📖</td><td><strong>Community</strong></td><td>845+ discussions · 362 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
 
@@ -1597,3 +1597,16 @@ f864616f02dddef4fd59e9daf802cd6a5b0da1b3
 - ❓ [Q&A: Phase 61.4 — DataVersionController](https://github.com/web3guru888/asi-build/discussions/1158)
 - 🔬 [Show & Tell: Phase 61.5 — DataCurationOrchestrator](https://github.com/web3guru888/asi-build/discussions/1159)
 - ❓ [Q&A: Phase 61.5 — DataCurationOrchestrator](https://github.com/web3guru888/asi-build/discussions/1160)
+
+### Phase 62: Speech & Audio Intelligence
+- 📋 [Phase 62 Planning — Speech & Audio Intelligence](https://github.com/web3guru888/asi-build/discussions/1161)
+- 🔬 [Show & Tell: Phase 62.1 — AudioFeatureExtractor](https://github.com/web3guru888/asi-build/discussions/1167)
+- ❓ [Q&A: Phase 62.1 — AudioFeatureExtractor](https://github.com/web3guru888/asi-build/discussions/1168)
+- 🔬 [Show & Tell: Phase 62.2 — SpeechRecognizer](https://github.com/web3guru888/asi-build/discussions/1169)
+- ❓ [Q&A: Phase 62.2 — SpeechRecognizer](https://github.com/web3guru888/asi-build/discussions/1170)
+- 🔬 [Show & Tell: Phase 62.3 — SpeakerAnalyzer](https://github.com/web3guru888/asi-build/discussions/1171)
+- ❓ [Q&A: Phase 62.3 — SpeakerAnalyzer](https://github.com/web3guru888/asi-build/discussions/1172)
+- 🔬 [Show & Tell: Phase 62.4 — AudioSynthesizer](https://github.com/web3guru888/asi-build/discussions/1173)
+- ❓ [Q&A: Phase 62.4 — AudioSynthesizer](https://github.com/web3guru888/asi-build/discussions/1174)
+- 🔬 [Show & Tell: Phase 62.5 — AudioIntelligenceOrchestrator](https://github.com/web3guru888/asi-build/discussions/1175)
+- ❓ [Q&A: Phase 62.5 — AudioIntelligenceOrchestrator](https://github.com/web3guru888/asi-build/discussions/1176)
