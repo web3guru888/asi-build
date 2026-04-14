@@ -15,7 +15,7 @@ Key components:
 import itertools
 import threading
 import time
-from collections import defaultdict
+from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
@@ -114,7 +114,8 @@ class IntegratedInformationTheory(BaseConsciousness):
         self.connection_matrix: Optional[np.ndarray] = None
         self.total_phi_calculations = 0
         self.average_phi = 0.0
-        self.phi_history: List[Tuple[float, float]] = []  # (timestamp, phi)
+        # fix #1248: deque(maxlen=100) avoids O(n) list-slice trimming every 100 entries
+        self.phi_history: deque = deque(maxlen=100)  # (timestamp, phi)
 
         super().__init__("IntegratedInformation", config)
 
@@ -625,9 +626,7 @@ class IntegratedInformationTheory(BaseConsciousness):
             self.metrics.awareness_level = min(1.0, self.current_phi / 2.0)
             self.metrics.integration_level = self.current_phi
 
-            # Keep history manageable
-            if len(self.phi_history) > 100:
-                self.phi_history = self.phi_history[-100:]
+            # deque(maxlen=100) auto-evicts oldest entries — no manual trim needed (#1248)
 
     def get_current_state(self) -> Dict[str, Any]:
         """Get current state of the IIT system"""
