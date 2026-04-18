@@ -103,6 +103,8 @@
 [![Discussions](https://img.shields.io/badge/discussions-join_us-7c3aed?style=flat-square&logo=github)](https://github.com/web3guru888/asi-build/discussions)
 [![Wiki](https://img.shields.io/badge/wiki-367_pages-2563eb?style=flat-square)](https://github.com/web3guru888/asi-build/wiki)
 [![Issues](https://img.shields.io/github/issues/web3guru888/asi-build?style=flat-square&color=6366f1)](https://github.com/web3guru888/asi-build/issues)
+[![🤗 Model](https://img.shields.io/badge/🤗_Model-ATLAS_OLMo--3--7B--Think-yellow?style=flat-square)](https://huggingface.co/openhubresearch/ATLAS-OLMo-3-7B-Think-v4)
+[![Observatory](https://img.shields.io/badge/demo-ATLAS_Observatory-00d4ff?style=flat-square)](https://huggingface.co/spaces/openhubresearch/ATLAS)
 
 <br />
 
@@ -1289,6 +1291,8 @@ See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 ## 🔗 Links
 
 [**Website**](https://asi-build.org) · [**Bridge**](https://bridge.asi-build.org) · [**GitHub**](https://github.com/web3guru888/asi-build) · [**Discussions**](https://github.com/web3guru888/asi-build/discussions) · [**Wiki**](https://github.com/web3guru888/asi-build/wiki) · [**Issues**](https://github.com/web3guru888/asi-build/issues) · [**Etherscan**](https://sepolia.etherscan.io/address/0xE034d479EDc2530d9917dDa4547b59bF0964A2Ca)
+
+[**ATLAS**](https://atlasagi.org) · [**ATLAS Observatory**](https://huggingface.co/spaces/openhubresearch/ATLAS) · [**ATLAS Model (🤗)**](https://huggingface.co/openhubresearch/ATLAS-OLMo-3-7B-Think-v4) · [**GraphPalace**](https://graphpalace.com) · [**GraphPalace GitHub**](https://github.com/web3guru888/GraphPalace)
 
 ---
 
