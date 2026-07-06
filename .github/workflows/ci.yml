@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+# Cancel superseded runs on the same ref — saves runner minutes when
+# pushing in quick succession.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     name: Lint & Format Check
@@ -18,11 +24,19 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: Install dev dependencies
-        run: pip install black isort mypy
+        run: pip install black isort mypy ruff
       - name: Check formatting (black)
         run: black --check --diff src/ tests/
       - name: Check import order (isort)
         run: isort --check-only --diff src/ tests/
+      - name: Ruff — syntax errors & undefined names (blocking)
+        # E9 = syntax/IO errors, F82* = undefined names, F63* = invalid
+        # comparisons/asserts, F7 = keyword misuse. These are always real
+        # bugs (the F821 sweep in 78174a2 found 9 latent NameErrors).
+        run: ruff check src/ tests/ --select E9,F63,F7,F82
+      - name: Ruff — full lint report (non-blocking)
+        run: ruff check src/ tests/ --statistics
+        continue-on-error: true
       - name: Type check (mypy)
         run: mypy src/
         continue-on-error: true  # non-blocking until type coverage improves
@@ -31,6 +45,7 @@ jobs:
     name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false  # a 3.13-only failure shouldn't hide 3.10 results
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]  # fix #1250: add 3.13
     steps:
@@ -43,7 +58,7 @@ jobs:
       - name: Install package with ci extras
         run: pip install -e ".[ci]"
       - name: Run tests with coverage
-        run: pytest --cov=asi_build --cov-report=xml --cov-report=term-missing -v
+        run: pytest --cov=asi_build --cov-report=xml --cov-report=term -q
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: matrix.python-version == '3.11'
@@ -61,10 +76,11 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - name: Install safety
-        run: pip install safety bandit
-      - name: Check for known vulnerabilities
-        run: safety check --file pyproject.toml || true
-      - name: Static security analysis (bandit)
+      - name: Install scanners
+        run: pip install bandit pip-audit
+      - name: Dependency vulnerabilities (pip-audit, non-blocking)
+        # Audits the resolved dependency set declared in pyproject.
+        run: pip-audit --skip-editable . || true
+      - name: Static security analysis (bandit, MEDIUM+)
         run: bandit -r src/ -ll -q
-        continue-on-error: true
+        continue-on-error: true  # 40 HIGHs left: 35× B324 MD5-annotation, 5× B413 false positive
