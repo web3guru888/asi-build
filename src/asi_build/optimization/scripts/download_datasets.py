@@ -7,11 +7,9 @@ Downloads and prepares real datasets for VLA++ training.
 """
 
 import json
-import os
 import subprocess
 import sys
 import tarfile
-import urllib.request
 import zipfile
 from pathlib import Path
 

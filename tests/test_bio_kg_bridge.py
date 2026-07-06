@@ -17,7 +17,6 @@ import pytest
 
 from asi_build.bio_inspired.core import BioCognitiveArchitecture, CognitiveState
 from asi_build.bio_inspired.kg_bridge import (
-    AGENT,
     SOURCE,
     SUBJECT,
     CognitiveStateKGBridge,

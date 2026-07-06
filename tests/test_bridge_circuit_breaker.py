@@ -28,7 +28,7 @@ from asi_build.rings.bridge.circuit_breaker import (
     VolumeThresholdBreaker,
     WithdrawalAnomalyDetector,
 )
-from asi_build.rings.bridge.safety import AlertSeverity, SafetyAlert
+from asi_build.rings.bridge.safety import AlertSeverity
 
 # ===========================================================================
 # ProofFailureBreaker Tests (5)

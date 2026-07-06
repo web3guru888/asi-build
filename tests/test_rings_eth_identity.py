@@ -13,7 +13,6 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import ec
 
 from asi_build.rings.eth_bridge import (
-    SECP256K1_ORDER,
     RingsEthIdentity,
     _eip55_checksum,
     _keccak256,

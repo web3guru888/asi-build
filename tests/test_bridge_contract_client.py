@@ -6,9 +6,6 @@ arguments, return-value processing, and error handling.
 
 from __future__ import annotations
 
-import dataclasses
-import importlib
-import sys
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

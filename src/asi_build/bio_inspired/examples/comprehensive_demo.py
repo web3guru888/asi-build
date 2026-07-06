@@ -13,10 +13,10 @@ from typing import Any, Dict
 import numpy as np
 
 # Import all bio-inspired modules
-from ..core import BioCognitiveArchitecture, CognitiveState
+from ..core import BioCognitiveArchitecture
 from ..energy_efficiency import EnergyMetrics
 from ..evolutionary import BiologicalFitnessFunction, EvolutionaryOptimizer
-from ..homeostatic import HomeostaticRegulator, HomeostaticVariable
+from ..homeostatic import HomeostaticRegulator
 from ..neuromorphic import NeuromorphicProcessor, SpikingNeuralNetwork
 
 # Configure logging

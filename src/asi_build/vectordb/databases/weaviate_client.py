@@ -10,12 +10,9 @@ This module provides comprehensive integration with Weaviate, including:
 """
 
 import logging
-import time
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
-
-import numpy as np
+from typing import Any, Dict, List, Optional
 
 try:
     import weaviate

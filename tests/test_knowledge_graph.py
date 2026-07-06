@@ -13,8 +13,6 @@ Covers:
 - A* pathfinding (basic, disconnected, with embedding fn, pheromone-aware)
 """
 
-import time
-
 import pytest
 
 from asi_build.knowledge_graph.pathfinder import KGPathfinder

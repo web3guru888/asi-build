@@ -4,17 +4,14 @@ Provides robust error handling and recovery mechanisms for decentralized trainin
 """
 
 import asyncio
-import json
 import logging
-import os
-import sys
 import time
 import traceback
 from collections import defaultdict
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 
 class ErrorSeverity(Enum):

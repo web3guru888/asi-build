@@ -9,12 +9,10 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import aiohttp
-import requests
 from eth_account import Account
-from eth_account.signers.local import LocalAccount
 from web3 import AsyncWeb3, Web3
 from web3.middleware import geth_poa_middleware
 

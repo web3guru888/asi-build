@@ -1,7 +1,7 @@
 """Oblivious Transfer protocols."""
 
 import random
-from typing import List, Tuple
+from typing import Tuple
 
 
 class ObliviousTransfer:

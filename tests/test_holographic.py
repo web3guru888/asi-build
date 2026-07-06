@@ -23,13 +23,10 @@ Covers:
 - Exceptions
 """
 
-import asyncio
 import math
 import sys
 import time
-import types
-from dataclasses import asdict
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -694,14 +691,14 @@ class TestSubConfigs:
 
 class TestHolographicEvent:
     def test_event_creation(self):
-        from src.asi_build.holographic.core.event_system import EventPriority, HolographicEvent
+        from src.asi_build.holographic.core.event_system import HolographicEvent
 
         e = HolographicEvent(name="test", data={"k": 1}, timestamp=time.time())
         assert e.name == "test"
         assert e.event_id is not None
 
     def test_event_to_dict(self):
-        from src.asi_build.holographic.core.event_system import EventPriority, HolographicEvent
+        from src.asi_build.holographic.core.event_system import HolographicEvent
 
         e = HolographicEvent(name="test", data={}, timestamp=1.0)
         d = e.to_dict()

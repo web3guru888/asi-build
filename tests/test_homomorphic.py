@@ -17,7 +17,6 @@ negative for realistic parameters). Tests that need FHEParameters construct
 them directly using a helper that bypasses the generator.
 """
 
-import math
 import random
 import sys
 
@@ -57,12 +56,11 @@ if HAS_NUMPY:
     from asi_build.homomorphic.core.evaluation import Evaluator
     from asi_build.homomorphic.core.keys import (
         KeyGenerator,
-        KeyMetadata,
         PublicKey,
         RelinearizationKeys,
         SecretKey,
     )
-    from asi_build.homomorphic.core.noise import NoiseEstimator, NoiseManager
+    from asi_build.homomorphic.core.noise import NoiseEstimator
     from asi_build.homomorphic.core.parameters import FHEParameters, ParameterGenerator
     from asi_build.homomorphic.core.polynomial import Polynomial, PolynomialRing
 

@@ -14,8 +14,6 @@ Key components:
 - Safety constraints and limits
 """
 
-import hashlib
-import json
 import threading
 import time
 from collections import defaultdict, deque
@@ -25,7 +23,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from .base_consciousness import BaseConsciousness, ConsciousnessEvent, ConsciousnessState
+from .base_consciousness import BaseConsciousness, ConsciousnessEvent
 
 
 class ImprovementType(Enum):

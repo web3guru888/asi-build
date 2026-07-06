@@ -5,7 +5,6 @@ Converts Kenny's existing data (OCR results, UI elements, workflows) into graph 
 """
 
 import hashlib
-import json
 import logging
 import time
 from dataclasses import dataclass
@@ -13,14 +12,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from .schema import (
     ApplicationNode,
-    CommunityNode,
     KnowledgeGraphSchema,
     NodeType,
     RelationshipType,
     ScreenNode,
-    UIElementNode,
-    WorkflowNode,
-    create_community,
     create_ui_element,
     create_workflow,
 )

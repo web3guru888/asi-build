@@ -5,16 +5,15 @@ Holographic physics manager for realistic hologram behavior
 import asyncio
 import logging
 import math
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from ..core.base import HolographicBase, HolographicPerformanceMonitor, Transform3D, Vector3D
+from ..core.base import HolographicBase, HolographicPerformanceMonitor, Vector3D
 from ..core.math_utils import SpatialMath
 
 logger = logging.getLogger(__name__)

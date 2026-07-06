@@ -3,7 +3,6 @@ Comprehensive tests for Byzantine Fault Tolerance system
 """
 
 import time
-from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest

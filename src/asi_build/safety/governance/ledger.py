@@ -6,15 +6,13 @@ transparent, immutable records of all AGI decisions, actions, and governance
 activities to ensure accountability and public oversight.
 """
 
-import asyncio
 import hashlib
 import hmac
 import json
 import logging
 import sqlite3
 import threading
-from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple

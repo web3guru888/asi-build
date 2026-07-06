@@ -6,26 +6,21 @@ Advanced authentication and trust management system for secure
 AGI-to-AGI communications with reputation tracking and zero-trust principles.
 """
 
-import asyncio
 import base64
-import hashlib
-import hmac
 import json
 import logging
 import secrets
-import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-import jwt
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from .core import AGIIdentity, CommunicationMessage, MessageType
+from .core import CommunicationMessage, MessageType
 
 logger = logging.getLogger(__name__)
 

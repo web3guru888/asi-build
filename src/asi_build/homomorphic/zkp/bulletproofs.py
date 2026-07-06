@@ -1,7 +1,7 @@
 """Bulletproofs implementation for range proofs."""
 
 import random
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 
 class Bulletproofs:

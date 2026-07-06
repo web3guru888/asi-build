@@ -57,8 +57,8 @@ from __future__ import annotations
 import hashlib
 import logging
 import secrets
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Union
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     from py_ecc.bn128 import (

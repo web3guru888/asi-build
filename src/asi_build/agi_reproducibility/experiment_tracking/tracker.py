@@ -5,16 +5,14 @@ Comprehensive experiment tracking system that records all aspects of AGI experim
 for reproducibility, comparison, and analysis.
 """
 
-import asyncio
 import hashlib
 import json
 import os
-import sqlite3
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 import aiosqlite
 import git

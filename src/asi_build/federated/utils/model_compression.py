@@ -7,10 +7,9 @@ pruning, and knowledge distillation for federated learning.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
-import tensorflow as tf
 
 
 class ModelCompressor(ABC):

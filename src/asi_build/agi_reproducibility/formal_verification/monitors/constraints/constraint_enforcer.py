@@ -13,16 +13,13 @@ Key Features:
 """
 
 import logging
-import math
-import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 from ...lang.ast.safety_ast import *
-from ..runtime.safety_monitor import AlertLevel, SafetyAlert
 
 
 class EnforcementAction(Enum):

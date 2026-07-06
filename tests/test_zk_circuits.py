@@ -8,7 +8,6 @@ plus general Circuit ABC and ALL_CIRCUITS convenience list.
 import hashlib
 import os
 import struct
-from abc import ABC
 
 import pytest
 

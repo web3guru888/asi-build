@@ -17,7 +17,6 @@ import pytest
 
 from asi_build.rings.bridge.protocol import (
     BridgeProtocol,
-    BridgeState,
     BridgeValidator,
 )
 from asi_build.rings.client import InMemoryTransport, RingsClient

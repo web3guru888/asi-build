@@ -6,29 +6,19 @@ Advanced marketplace simulation with supply/demand modeling, price discovery,
 and multi-agent economic interactions in the AGI ecosystem.
 """
 
-import heapq
 import logging
-import math
 import time
-from collections import defaultdict
 from dataclasses import dataclass, field
 from decimal import Decimal, getcontext
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
-
-import numpy as np
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..core.base_engine import BaseEconomicEngine, EconomicEvent
-from ..core.exceptions import MarketplaceError, PriceDiscoveryError
+from ..core.exceptions import MarketplaceError
 from ..core.types import (
-    Agent,
-    EconomicTransaction,
     MarketData,
     MarketState,
-    ResourceType,
-    ServiceRequest,
     TokenType,
-    TransactionType,
 )
 
 # Set decimal precision

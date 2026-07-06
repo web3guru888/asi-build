@@ -9,26 +9,19 @@ Covers: KnowledgeGraphManager, InformationAggregator, IntelligentSearch,
 import pytest
 
 pytest.importorskip("aiohttp")
-import asyncio
 import os
 import sys
-import time
-from dataclasses import asdict
-from unittest.mock import AsyncMock, MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from asi_build.knowledge_management.core.information_aggregator import (
-    AggregatedInformation,
     InformationAggregator,
     InformationSource,
 )
 from asi_build.knowledge_management.core.knowledge_engine import (
     KnowledgeQuery,
-    KnowledgeResult,
 )
 from asi_build.knowledge_management.core.knowledge_graph_manager import (
-    GraphAnalysisResult,
     KnowledgeGraphManager,
     KnowledgeNode,
     KnowledgeRelationship,
@@ -42,18 +35,14 @@ from asi_build.knowledge_management.learning.contextual_learner import (
 from asi_build.knowledge_management.search.intelligent_search import (
     IntelligentSearch,
     SearchQuery,
-    SearchResponse,
-    SearchResult,
 )
 from asi_build.knowledge_management.synthesis.predictive_synthesizer import (
-    KnowledgeSynthesis,
     Prediction,
     PredictiveSynthesizer,
     SynthesisQuery,
 )
 from asi_build.knowledge_management.validation.quality_controller import (
     QualityController,
-    ValidationResult,
     ValidationRule,
 )
 

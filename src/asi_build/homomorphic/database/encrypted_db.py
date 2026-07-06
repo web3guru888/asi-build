@@ -1,7 +1,6 @@
 """Encrypted database implementation with homomorphic operations."""
 
-import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from ..schemes.ckks import CKKSCiphertext, CKKSScheme
 

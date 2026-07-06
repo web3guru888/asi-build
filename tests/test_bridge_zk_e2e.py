@@ -12,7 +12,6 @@ primitives, SSZ serialization, and the BridgeOrchestrator.
 - E2E Orchestrator with ZK coordinator (5)
 """
 
-import asyncio
 import hashlib
 import os
 import time
@@ -21,7 +20,6 @@ import pytest
 
 from src.asi_build.rings.bridge.zk.bls import (
     BLS12381,
-    G1_SIZE,
     G2_SIZE,
     BLSKeyPair,
     SyncCommitteeBLS,
@@ -30,7 +28,6 @@ from src.asi_build.rings.bridge.zk.bls import (
 from src.asi_build.rings.bridge.zk.circuits import (
     BLSVerificationCircuit,
     BridgeWithdrawalCircuit,
-    MerklePatriciaCircuit,
     SyncCommitteeRotationCircuit,
 )
 from src.asi_build.rings.bridge.zk.coordinator import (
@@ -41,12 +38,10 @@ from src.asi_build.rings.bridge.zk.coordinator import (
 from src.asi_build.rings.bridge.zk.prover import (
     GAS_ESTIMATE_SIMULATED,
     PROOF_SIZE,
-    ProofGenerationError,
     SimulatedProver,
     ZKProof,
 )
 from src.asi_build.rings.bridge.zk.ssz import (
-    SSZ,
     BeaconBlockHeader,
     LightClientUpdate,
     SyncCommitteeSSZ,

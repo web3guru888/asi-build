@@ -45,7 +45,6 @@ from asi_build.bci.core.config import (
     SignalProcessingConfig,
 )
 from asi_build.bci.core.device_interface import (
-    BCIDevice,
     DataPacket,
     DeviceInfo,
     SimulatedEEGDevice,

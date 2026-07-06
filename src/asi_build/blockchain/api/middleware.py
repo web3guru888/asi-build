@@ -5,13 +5,11 @@ Provides middleware for rate limiting, logging, CORS handling,
 and other cross-cutting concerns.
 """
 
-import asyncio
-import json
 import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
 import aioredis

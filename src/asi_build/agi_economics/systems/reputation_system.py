@@ -9,16 +9,16 @@ SingularityNET ecosystem with economic incentives and validation mechanisms.
 import logging
 import math
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from decimal import Decimal, getcontext
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
 from ..core.base_engine import BaseEconomicEngine, EconomicEvent
-from ..core.exceptions import InvalidReputationScoreError, ReputationError, TrustThresholdError
-from ..core.types import Agent, AgentID, AgentType, ReputationEvent, TokenType
+from ..core.exceptions import InvalidReputationScoreError, ReputationError
+from ..core.types import ReputationEvent
 
 # Set decimal precision
 getcontext().prec = 28

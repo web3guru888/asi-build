@@ -4,14 +4,12 @@ Noise estimation and management for homomorphic encryption.
 
 import logging
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
 
-from .base import NoiseException
 from .encryption import Ciphertext
 from .parameters import FHEParameters
-from .polynomial import Polynomial
 
 logger = logging.getLogger(__name__)
 

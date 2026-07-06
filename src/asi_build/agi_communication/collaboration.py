@@ -6,20 +6,14 @@ Advanced framework for enabling multiple AGIs to collaborate
 on complex problem-solving tasks with distributed cognition.
 """
 
-import asyncio
-import heapq
-import json
 import logging
 import uuid
-from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-import numpy as np
-
-from .core import AGIIdentity, CommunicationMessage, MessageType
+from .core import CommunicationMessage, MessageType
 
 logger = logging.getLogger(__name__)
 

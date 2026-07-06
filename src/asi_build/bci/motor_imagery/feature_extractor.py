@@ -9,7 +9,6 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from scipy import stats
 from scipy.signal import coherence, hilbert, welch
 from sklearn.base import BaseEstimator, TransformerMixin
 

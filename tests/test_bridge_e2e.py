@@ -16,15 +16,12 @@ import asyncio
 import hashlib
 import hmac
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
 from asi_build.rings.bridge.e2e import (
     BridgeOrchestrator,
-    ProcessedDeposit,
-    _mock_public_inputs,
-    _mock_zk_proof,
 )
 from asi_build.rings.bridge.light_client import (
     BeaconHeader,
@@ -32,12 +29,8 @@ from asi_build.rings.bridge.light_client import (
     SyncCommittee,
 )
 from asi_build.rings.bridge.protocol import (
-    BridgeMessage,
-    BridgeProtocol,
     BridgeState,
     BridgeValidator,
-    DepositRecord,
-    WithdrawalRecord,
 )
 from asi_build.rings.client import InMemoryTransport, RingsClient
 

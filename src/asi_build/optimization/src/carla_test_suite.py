@@ -10,10 +10,9 @@ import random
 import time
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
-import torch
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

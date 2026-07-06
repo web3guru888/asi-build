@@ -16,7 +16,6 @@ from memgraph_toolbox.tools.page_rank import PageRankTool
 from memgraph_toolbox.tools.schema import ShowSchemaInfoTool
 from memgraph_toolbox.tools.storage import ShowStorageInfoTool
 from memgraph_toolbox.tools.trigger import ShowTriggersTool
-from memgraph_toolbox.utils.logging import logger_init
 from pydantic import BaseModel, ConfigDict, Field
 
 

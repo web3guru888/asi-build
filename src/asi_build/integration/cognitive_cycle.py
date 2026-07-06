@@ -76,18 +76,14 @@ import threading
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from .blackboard import CognitiveBlackboard
-from .events import EventBus
 from .protocols import (
     BlackboardEntry,
-    BlackboardQuery,
     CognitiveEvent,
     EntryPriority,
-    EntryStatus,
     ModuleCapability,
-    ModuleInfo,
 )
 
 logger = logging.getLogger(__name__)

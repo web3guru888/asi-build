@@ -5,14 +5,12 @@ This module provides support for multiple logical formalisms including
 FOL, PLN, temporal logic, modal logic, and others.
 """
 
-import asyncio
-import json
 import logging
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List
 
 
 class LogicFormalism(Enum):

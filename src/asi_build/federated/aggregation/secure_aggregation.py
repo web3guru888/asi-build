@@ -5,16 +5,11 @@ Implementation of secure multi-party computation for aggregating model updates
 without revealing individual client contributions.
 """
 
-import hashlib
 import secrets
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from ..core.exceptions import AggregationError, SecurityError
 from .base_aggregator import BaseAggregator

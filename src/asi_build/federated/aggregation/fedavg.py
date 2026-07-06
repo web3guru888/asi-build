@@ -6,7 +6,7 @@ by computing weighted averages based on the number of training samples.
 """
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import numpy as np
 

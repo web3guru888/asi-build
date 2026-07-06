@@ -4,23 +4,17 @@ Main holographic engine - orchestrates all holographic components
 
 import asyncio
 import logging
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable, Dict, List, Optional
-
-import numpy as np
+from typing import Any, Callable, Dict, Optional
 
 from .base import (
     HolographicBase,
     HolographicPerformanceMonitor,
     InitializationError,
-    Transform3D,
-    Vector3D,
 )
 from .config import HolographicConfig
 from .event_system import HolographicEventSystem
-from .math_utils import SpatialMath
 
 logger = logging.getLogger(__name__)
 

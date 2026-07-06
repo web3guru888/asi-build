@@ -31,12 +31,10 @@ Covers:
 
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import sys
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any, List
 
 import pytest
 
@@ -47,11 +45,7 @@ if _src not in sys.path:
     sys.path.insert(0, _src)
 
 from asi_build.rings.bridge.beacon_client import (
-    DEFAULT_HEADER_CACHE_SIZE,
-    EPOCHS_PER_SYNC_COMMITTEE_PERIOD,
     SEPOLIA_GENESIS_TIME,
-    SLOTS_PER_EPOCH,
-    SLOTS_PER_SYNC_COMMITTEE_PERIOD,
     BeaconAPIError,
     BeaconAPILightClient,
     ExecutionRPCError,
@@ -64,7 +58,6 @@ from asi_build.rings.bridge.beacon_client import (
 from asi_build.rings.bridge.light_client import (
     BeaconHeader,
     EthLightClient,
-    StateProof,
     SyncCommittee,
 )
 from asi_build.rings.bridge.merkle_patricia import MerklePatriciaVerifier

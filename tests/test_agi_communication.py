@@ -26,13 +26,10 @@ Pre-existing bugs found during testing (flagged, not fixed):
 """
 
 import asyncio
-import hashlib
-import json
 import math
 import uuid
-from dataclasses import asdict
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np
 import pytest
@@ -147,7 +144,7 @@ class TestAGIIdentity:
 
 class TestCommunicationMessage:
     def test_to_dict_roundtrip(self):
-        from src.asi_build.agi_communication.core import CommunicationMessage, MessageType
+        from src.asi_build.agi_communication.core import CommunicationMessage
 
         msg = _make_message(payload={"key": "value"})
         d = msg.to_dict()
@@ -159,7 +156,7 @@ class TestCommunicationMessage:
         assert restored.payload == msg.payload
 
     def test_from_dict_preserves_fields(self):
-        from src.asi_build.agi_communication.core import CommunicationMessage, MessageType
+        from src.asi_build.agi_communication.core import CommunicationMessage
 
         d = {
             "id": "m1",
@@ -221,7 +218,6 @@ class TestProtocolHelpers:
 
     def test_get_session_status_missing(self):
         """get_session_status returns None for unknown session."""
-        from src.asi_build.agi_communication.core import AGICommunicationProtocol
 
         # We can't instantiate the class, so test via mock
         proto = _make_mock_protocol()
@@ -738,7 +734,6 @@ class TestCollaborationSession:
             CollaborationStrategy,
             Problem,
             ProblemType,
-            Task,
         )
 
         prob = Problem(id="p1", description="test", problem_type=ProblemType.SEARCH, complexity=0.5)
@@ -983,7 +978,6 @@ class TestCollaborativeProblemSolver:
 
     def test_submit_solution(self):
         from src.asi_build.agi_communication.collaboration import (
-            CollaborationStrategy,
             Problem,
             ProblemType,
             Solution,
@@ -1123,7 +1117,6 @@ class TestNegotiationProposal:
             Goal,
             GoalType,
             NegotiationProposal,
-            UtilityFunction,
         )
 
         g1 = Goal(
@@ -1176,7 +1169,6 @@ class TestNegotiationProposal:
             outcome_prediction={},
             conditions=[],
         )
-        from src.asi_build.agi_communication.negotiation import Goal, GoalType
 
         assert prop.calculate_fairness([]) == 1.0
 
@@ -1555,7 +1547,6 @@ def _patch_rdf_enum():
 
     if not hasattr(KnowledgeRepresentation, "RDF"):
         # Extend the enum at runtime — ugly but necessary to test the rest of the layer
-        import enum
 
         KnowledgeRepresentation._member_map_["RDF"] = KnowledgeRepresentation.KNOWLEDGE_GRAPH
         # Also make it accessible as attribute
@@ -2011,7 +2002,6 @@ class TestKnowledgeGraphMerger:
         (or limitation) in _get_node_cluster_key. Test that with SAME type but
         different properties, we DO get a factual conflict."""
         from src.asi_build.agi_communication.knowledge_graph import (
-            KnowledgeEdge,
             KnowledgeGraph,
             KnowledgeNode,
         )

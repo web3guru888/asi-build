@@ -6,20 +6,14 @@ into structured semantic representations, supporting compositional semantics and
 multiple parsing strategies.
 """
 
-import asyncio
 import logging
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
-import nltk
-import numpy as np
 import spacy
-import torch
-from nltk.parse import CoreNLPParser
-from nltk.tree import Tree
-from transformers import AutoModel, AutoTokenizer, pipeline
+from transformers import pipeline
 
 
 class SemanticRole(Enum):

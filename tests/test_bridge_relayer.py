@@ -14,11 +14,8 @@ All web3/network deps are mocked — tests run offline in < 1s.
 
 from __future__ import annotations
 
-import asyncio
 import os
-import time
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 import pytest_asyncio

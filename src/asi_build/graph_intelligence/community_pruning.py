@@ -11,14 +11,10 @@ Based on FastToG research paper for efficient community-based reasoning.
 import json
 import logging
 import time
-from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Tuple
 
-import numpy as np
-
-from .community_detection import CommunityDetectionEngine
-from .schema import NodeType, RelationshipType
+from .schema import NodeType
 from .schema_manager import SchemaManager
 
 logger = logging.getLogger(__name__)

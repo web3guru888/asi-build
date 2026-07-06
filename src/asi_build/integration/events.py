@@ -20,7 +20,6 @@ Usage::
 
 from __future__ import annotations
 
-import asyncio
 import collections
 import fnmatch
 import logging
@@ -30,13 +29,10 @@ import uuid
 from dataclasses import dataclass, field
 from typing import (
     Any,
-    Callable,
     Deque,
     Dict,
     List,
     Optional,
-    Set,
-    Tuple,
 )
 
 from .protocols import AsyncEventHandler, CognitiveEvent, EventHandler

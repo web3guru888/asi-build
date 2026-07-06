@@ -7,16 +7,13 @@ generating predictions, and creating comprehensive insights through
 AI-powered analysis and pattern recognition.
 """
 
-import asyncio
-import json
 import logging
 import re
 import statistics
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

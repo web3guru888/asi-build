@@ -18,16 +18,12 @@ Covers classes not adequately tested in test_consciousness_engine.py:
 Total: ~220 tests
 """
 
-import math
 import time
-from collections import deque
-from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
 from asi_build.consciousness.base_consciousness import (
-    BaseConsciousness,
     ConsciousnessEvent,
     ConsciousnessMetrics,
     ConsciousnessState,
@@ -520,7 +516,6 @@ class TestEmotionalConsciousness:
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.emotional_consciousness import (
-            AppraisalPattern,
             EmotionalConsciousness,
             EmotionalMemory,
             EmotionalState,
@@ -1177,7 +1172,6 @@ class TestSensoryIntegration:
     @pytest.fixture(autouse=True)
     def setup(self):
         from asi_build.consciousness.sensory_integration import (
-            IntegratedPercept,
             PerceptualBinding,
             SensoryInput,
             SensoryIntegration,

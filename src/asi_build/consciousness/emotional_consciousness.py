@@ -14,17 +14,16 @@ Key components:
 - Empathic responses
 """
 
-import math
 import threading
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from .base_consciousness import BaseConsciousness, ConsciousnessEvent, ConsciousnessState
+from .base_consciousness import BaseConsciousness, ConsciousnessEvent
 
 
 class EmotionType(Enum):

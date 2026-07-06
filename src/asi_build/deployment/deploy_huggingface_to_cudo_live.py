@@ -5,11 +5,8 @@ This script ACTUALLY provisions a GPU and deploys a model
 WARNING: This will incur real costs!
 """
 
-import json
 import os
-import sys
 import time
-from datetime import datetime
 
 import requests
 

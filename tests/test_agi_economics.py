@@ -45,7 +45,6 @@ import numpy as np
 import pytest
 
 from asi_build.agi_economics.algorithms.resource_allocator import (
-    AllocationStrategy,
     ResourceAllocator,
     ResourceProvider,
 )
@@ -56,7 +55,7 @@ from asi_build.agi_economics.analysis.game_theory import (
     Player,
     StrategyProfile,
 )
-from asi_build.agi_economics.core.base_engine import BaseEconomicEngine, EconomicEvent
+from asi_build.agi_economics.core.base_engine import BaseEconomicEngine
 from asi_build.agi_economics.core.exceptions import (
     AgentError,
     AGIEconomicsError,
@@ -64,13 +63,11 @@ from asi_build.agi_economics.core.exceptions import (
     GovernanceError,
     InsufficientFundsError,
     MarketplaceError,
-    ReputationError,
     ResourceError,
     ResourceUnavailableError,
     SecurityError,
     TokenError,
 )
-from asi_build.agi_economics.core.exceptions import ValidationError as EconValidationError
 from asi_build.agi_economics.core.types import (
     Agent,
     AgentType,
@@ -97,7 +94,6 @@ from asi_build.agi_economics.engines.token_economics import (
     TokenSupplyInfo,
 )
 from asi_build.agi_economics.simulation.marketplace_dynamics import (
-    AuctionType,
     MarketOrder,
     MarketplaceDynamics,
     OrderStatus,

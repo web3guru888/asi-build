@@ -13,12 +13,11 @@ import hashlib
 import json
 import logging
 import time
-from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ..core.search import SearchQuery, SearchResult
+from ..core.search import SearchResult
 from ..core.utils import timed_operation
 from .unified_client import UnifiedVectorDB
 

@@ -10,15 +10,14 @@ import asyncio
 import json
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from .community_detection import CommunityDetectionEngine
 from .community_pruning import CommunityPruningSystem
 from .community_to_text import CommunityTextGenerator
-from .schema import NodeType, RelationshipType
+from .schema import NodeType
 from .schema_manager import SchemaManager
 
 logger = logging.getLogger(__name__)

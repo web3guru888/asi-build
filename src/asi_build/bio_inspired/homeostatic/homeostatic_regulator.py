@@ -5,12 +5,11 @@ Implements biological homeostasis mechanisms for maintaining system stability
 and optimal operating conditions in bio-inspired cognitive architectures.
 """
 
-import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
 

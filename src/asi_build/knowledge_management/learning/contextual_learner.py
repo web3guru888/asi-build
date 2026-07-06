@@ -6,8 +6,6 @@ Advanced learning system that adapts and improves knowledge processing
 based on interactions, feedback, and performance patterns.
 """
 
-import asyncio
-import json
 import logging
 import os
 import pickle
@@ -15,7 +13,7 @@ import statistics
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

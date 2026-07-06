@@ -6,7 +6,7 @@ CAR, Laplacian, ICA, and source localization methods.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from scipy import linalg

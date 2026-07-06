@@ -3,14 +3,10 @@ Kubernetes Integration - Integrates compute pool with Kubernetes scheduler
 """
 
 import asyncio
-import json
 import logging
 import time
-import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
-
-import yaml
+from typing import Any, Dict, List, Optional
 
 try:
     from kubernetes import client, config, watch

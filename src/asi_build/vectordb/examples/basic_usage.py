@@ -18,7 +18,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from kenny_vectordb import IndexingAPI, RetrievalAPI, UnifiedVectorDB, VectorDBConfig
 from kenny_vectordb.api.indexing import Document
-from kenny_vectordb.core.embeddings import EmbeddingPipeline
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

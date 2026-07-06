@@ -5,17 +5,14 @@ Advanced versioning system for AGI experiments with semantic versioning,
 branching strategies, and reproducibility tracking.
 """
 
-import asyncio
 import hashlib
 import json
-import os
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-import git
 from git import GitCommandError, Repo
 
 from ..core.config import PlatformConfig

@@ -11,13 +11,12 @@ Requirements:
 
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 

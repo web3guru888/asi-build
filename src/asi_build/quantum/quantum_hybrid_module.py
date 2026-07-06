@@ -4,12 +4,10 @@ Enables integration with real quantum hardware for optimization and ML tasks
 """
 
 import asyncio
-import json
 import logging
 from abc import ABC, abstractmethod
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 

@@ -6,11 +6,10 @@ based on the precise timing of pre- and post-synaptic spikes.
 """
 
 import logging
-import time
 from abc import ABC, abstractmethod
 from collections import deque
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 

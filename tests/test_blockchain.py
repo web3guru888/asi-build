@@ -12,7 +12,6 @@ Testable pure-Python files:
 """
 
 import importlib.util
-import json
 import os
 import sys
 import tempfile

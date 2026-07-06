@@ -40,11 +40,10 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from .light_client import BeaconHeader, EthLightClient
+from .light_client import EthLightClient
 from .protocol import BridgeValidator, DepositRecord
 
 if TYPE_CHECKING:

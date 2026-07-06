@@ -1,9 +1,9 @@
 """Encrypted indexing for database operations."""
 
 import hashlib
-from typing import Any, Dict, List, Set
+from typing import List
 
-from ..schemes.ckks import CKKSCiphertext, CKKSScheme
+from ..schemes.ckks import CKKSScheme
 
 
 class EncryptedIndex:

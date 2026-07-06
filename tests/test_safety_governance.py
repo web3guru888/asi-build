@@ -10,12 +10,9 @@ Covers:
   6. Consensus (QuadraticVotingSystem, LiquidDemocracy, MultiStakeholderConsensus)
 """
 
-import hashlib
-import math
 import os
 import sys
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
 
 import pytest
 
@@ -47,7 +44,6 @@ from asi_build.safety.governance.consensus import (
 # --- Contracts imports ---
 from asi_build.safety.governance.contracts import (
     ContractRegistry,
-    ContractState,
     EthicsEnforcementContract,
     GovernanceTokenContract,
     ProposalContract,
@@ -59,13 +55,11 @@ from asi_build.safety.governance.dao import (
     DAOTreasury,
     QuadraticVoting,
     ReputationSystem,
-    TokenType,
 )
 
 # --- Governance Engine imports ---
 from asi_build.safety.governance.engine import (
     DeontologicalFramework,
-    EthicalFramework,
     GovernanceDecision,
     GovernanceEngine,
     Proposal,
@@ -82,7 +76,6 @@ from asi_build.safety.governance.ledger import (
     AuditEventType,
     AuditLevel,
     AuditRecord,
-    Block,
     MerkleTree,
     PublicLedger,
     VerificationStatus,

@@ -12,7 +12,6 @@ Covers:
 from __future__ import annotations
 
 import asyncio
-import hashlib
 
 import pytest
 

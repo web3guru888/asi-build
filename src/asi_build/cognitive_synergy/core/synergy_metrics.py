@@ -9,13 +9,10 @@ information theory, dynamical systems theory, and complexity science.
 import time
 import warnings
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-import networkx as nx
 import numpy as np
-from scipy.signal import find_peaks
 from scipy.stats import entropy
-from sklearn.feature_selection import mutual_info_regression
 from sklearn.metrics import normalized_mutual_info_score
 
 warnings.filterwarnings("ignore")

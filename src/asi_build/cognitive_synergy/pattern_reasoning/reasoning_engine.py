@@ -7,17 +7,15 @@ and knowledge synthesis. Integrates with pattern mining through bidirectional
 information flow to enable emergent cognitive capabilities.
 """
 
-import itertools
 import logging
 import time
 from abc import ABC, abstractmethod
-from collections import defaultdict, deque
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set
 
 import networkx as nx
-import numpy as np
 
 
 class ReasoningType(Enum):

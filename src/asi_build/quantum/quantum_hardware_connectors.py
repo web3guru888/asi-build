@@ -4,15 +4,11 @@ Supports IBM, Google, IonQ, and AWS Braket quantum computers
 """
 
 import asyncio
-import json
 import logging
 import os
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
-
-import numpy as np
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +94,6 @@ class IBMQuantumConnector:
             raise RuntimeError("IBM Quantum backend not initialized")
 
         from qiskit import execute, transpile
-        from qiskit.tools.monitor import job_monitor
 
         start_time = datetime.now()
 
@@ -209,7 +204,6 @@ class GoogleQuantumConnector:
             return
 
         try:
-            import cirq
             import cirq_google
 
             # Create engine
@@ -236,8 +230,6 @@ class GoogleQuantumConnector:
         """
         if not self.engine:
             raise RuntimeError("Google Quantum engine not initialized")
-
-        import cirq
 
         start_time = datetime.now()
 
@@ -421,7 +413,6 @@ class AWSBraketConnector:
     def _initialize(self):
         """Initialize AWS Braket connection"""
         try:
-            from braket.aws import AwsDevice
             from braket.devices import LocalSimulator
 
             # Use local simulator by default
@@ -677,7 +668,6 @@ class QuantumCircuitOptimizer:
     @staticmethod
     def optimize_for_google(circuit):
         """Optimize circuit for Google Sycamore"""
-        import cirq
         import cirq_google
 
         # Use Google's optimizer
@@ -707,7 +697,7 @@ class QuantumCircuitOptimizer:
         Parallelizes gates where possible
         """
         from qiskit.transpiler import PassManager
-        from qiskit.transpiler.passes import CommutationAnalysis, CommutativeCancellation, Depth
+        from qiskit.transpiler.passes import CommutationAnalysis, CommutativeCancellation
 
         pm = PassManager()
         pm.append(CommutationAnalysis())

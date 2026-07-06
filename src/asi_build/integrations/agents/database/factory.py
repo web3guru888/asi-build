@@ -5,7 +5,7 @@ This module provides a factory pattern for creating appropriate database
 analyzers based on the database type or connection parameters.
 """
 
-from typing import Any, Dict, Type
+from typing import Dict, Type
 
 from .adapters.mysql import MySQLAnalyzer
 from .interface import DatabaseAnalyzer

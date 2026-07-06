@@ -8,16 +8,12 @@ beacon chain types defined in ``rings.bridge.zk.ssz``.
 
 from __future__ import annotations
 
-import hashlib
 import os
-import struct
 
 import pytest
 
 from src.asi_build.rings.bridge.zk.ssz import (
-    BYTES_PER_CHUNK,
     SSZ,
-    SYNC_COMMITTEE_SIZE,
     ZERO_HASH,
     BeaconBlockHeader,
     LightClientUpdate,

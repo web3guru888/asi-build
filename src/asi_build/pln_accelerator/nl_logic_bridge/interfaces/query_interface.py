@@ -6,17 +6,14 @@ the NL-Logic bridge system, perform translations, and explore the
 relationship between natural language and logical representations.
 """
 
-import asyncio
-import json
 import logging
 import time
 import uuid
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
-from ..core.bridge import LogicFormalism, NLLogicBridge, TranslationResult
-from ..core.context_manager import ContextManager
+from ..core.bridge import LogicFormalism, NLLogicBridge
 
 
 class QueryType(Enum):

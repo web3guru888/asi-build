@@ -13,7 +13,7 @@ Type system includes:
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Dict, List, Optional
 
 from ..ast.safety_ast import *
 

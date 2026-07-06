@@ -18,23 +18,17 @@ Target: Linear scaling to 1000+ devices
 """
 
 import asyncio
-import hashlib
 import json
 import logging
-import pickle
-import socket
 import threading
 import time
 import uuid
-import zlib
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 import consul
 import etcd3
-import grpc
 import numpy as np
 from kubernetes import client
 from kubernetes import config as k8s_config
@@ -46,8 +40,6 @@ logger = logging.getLogger(__name__)
 # Import our local modules
 from real_time_inference_engine import (
     InferencePriority,
-    InferenceRequest,
-    InferenceResult,
     InferenceType,
     RealTimeInferenceEngine,
     TruthValue,

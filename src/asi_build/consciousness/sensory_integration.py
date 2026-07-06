@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from .base_consciousness import BaseConsciousness, ConsciousnessEvent, ConsciousnessState
+from .base_consciousness import BaseConsciousness, ConsciousnessEvent
 
 
 class SensoryModality(Enum):

@@ -27,24 +27,18 @@ Comprehensive tests for :mod:`asi_build.rings.bridge.ledger`:
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
-import time
 import uuid
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import List
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from asi_build.rings.bridge.ledger import (
     DEFAULT_THRESHOLD,
     DEFAULT_TOTAL,
-    DEFAULT_TRANSFER_TTL,
-    ETH_TOKEN,
     ETH_ZERO_ADDRESS,
     LEDGER_NS,
-    MAX_HISTORY_PER_DID,
     LedgerKeys,
     LedgerMessage,
     RingsTokenLedger,

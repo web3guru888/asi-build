@@ -5,7 +5,6 @@ Shows the optimization pipeline results
 """
 
 import json
-import time
 
 
 def demonstrate_optimization():

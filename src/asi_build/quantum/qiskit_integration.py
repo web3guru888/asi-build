@@ -17,12 +17,11 @@ Features:
 Author: Kenny Quantum Team
 """
 
-import json
 import logging
 import warnings
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 

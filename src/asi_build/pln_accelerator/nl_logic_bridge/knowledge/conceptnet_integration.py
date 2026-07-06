@@ -6,7 +6,6 @@ network that captures commonsense knowledge about concepts and their relationshi
 """
 
 import asyncio
-import json
 import logging
 import time
 from typing import Any, Dict, List, Optional

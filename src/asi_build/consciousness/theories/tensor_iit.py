@@ -17,14 +17,11 @@ Mathematical foundation based on IIT 3.0 framework.
 
 import logging
 from dataclasses import dataclass
-from itertools import combinations, product
-from typing import Dict, List, Optional, Tuple, Union
+from itertools import combinations
+from typing import Dict, List, Optional, Tuple
 
-import networkx as nx
 import numpy as np
 import torch
-from scipy.linalg import eigh
-from scipy.spatial.distance import pdist, squareform
 
 
 @dataclass

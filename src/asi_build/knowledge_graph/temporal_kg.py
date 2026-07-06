@@ -28,7 +28,6 @@ No external dependencies — only the Python standard library (``sqlite3``,
 
 from __future__ import annotations
 
-import json
 import logging
 import sqlite3
 import uuid

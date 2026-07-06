@@ -5,18 +5,12 @@ Implements decentralized node discovery using DHT and gossip protocols
 
 import asyncio
 import hashlib
-import ipaddress
-import json
 import logging
 import random
-import socket
-import struct
 import time
-from collections import defaultdict
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
-import aiodns
 import aiohttp
 from aiohttp import web
 

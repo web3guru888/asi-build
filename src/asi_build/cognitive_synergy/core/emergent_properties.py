@@ -12,13 +12,10 @@ import time
 from abc import ABC, abstractmethod
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 import networkx as nx
 import numpy as np
-from sklearn.cluster import DBSCAN
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 
 
 @dataclass

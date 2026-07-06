@@ -3,7 +3,6 @@ Storage Pool Manager - Manages distributed storage resources and datasets
 """
 
 import asyncio
-import json
 import logging
 import os
 import shutil

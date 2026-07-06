@@ -12,10 +12,9 @@ from typing import Any, Dict, List, Optional, Union
 from ..core.base import CiphertextBase, FHEConfiguration, FHECore, PlaintextBase, SchemeType
 from ..core.encryption import Ciphertext, Decryptor, Encryptor, Plaintext
 from ..core.evaluation import Evaluator
-from ..core.keys import GaloisKeys, KeyGenerator, PublicKey, RelinearizationKeys, SecretKey
-from ..core.parameters import FHEParameters, ParameterGenerator
-from ..core.polynomial import Polynomial, PolynomialRing
-from ..core.utils import HomomorphicUtils
+from ..core.keys import KeyGenerator, PublicKey, SecretKey
+from ..core.parameters import ParameterGenerator
+from ..core.polynomial import Polynomial
 
 logger = logging.getLogger(__name__)
 

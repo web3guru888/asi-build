@@ -6,15 +6,13 @@ human rights and establishes rights for AGI entities, ensuring ethical
 treatment and autonomy preservation in AGI governance systems.
 """
 
-import asyncio
-import json
 import logging
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

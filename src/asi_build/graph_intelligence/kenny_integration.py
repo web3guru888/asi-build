@@ -6,13 +6,11 @@ providing a bridge between graph-based reasoning and actual UI automation.
 """
 
 import asyncio
-import json
 import logging
-import os
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 from .data_ingestion import DataIngestionPipeline, IngestionResult
 from .fastog_reasoning import FastToGReasoningEngine, FastToGResult, ReasoningMode, ReasoningRequest

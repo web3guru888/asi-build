@@ -5,7 +5,6 @@ This module manages conversational context, session state, and contextual inform
 to enable coherent multi-turn interactions and context-aware translations.
 """
 
-import json
 import logging
 import threading
 import time

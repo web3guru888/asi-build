@@ -3,7 +3,7 @@ Privacy-preserving techniques for encrypted machine learning.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import List
 
 import numpy as np
 

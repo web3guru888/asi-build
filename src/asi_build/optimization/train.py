@@ -8,12 +8,10 @@ Real training implementation for VLA++ autonomous vehicle AI.
 
 import json
 import logging
-import os
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict
 
 import numpy as np
 import torch
@@ -26,7 +24,7 @@ from torch.utils.data import DataLoader, Dataset
 sys.path.append(str(Path(__file__).parent))
 
 from src.architecture import VLAConfig, VLAPlusPlus
-from src.training import TrainingConfig, VLADataset, apply_lora
+from src.training import TrainingConfig, apply_lora
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

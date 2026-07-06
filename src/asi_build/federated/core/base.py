@@ -7,14 +7,13 @@ Core abstractions for federated learning components.
 import abc
 import logging
 import time
-import uuid
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import tensorflow as tf
 
-from .config import ClientConfig, FederatedConfig, ServerConfig
-from .exceptions import ClientError, FederatedLearningError, ModelError, ServerError
+from .config import ClientConfig, ServerConfig
+from .exceptions import ClientError, ModelError, ServerError
 
 
 class FederatedModel(abc.ABC):

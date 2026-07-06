@@ -6,12 +6,10 @@ the SSE server needs 'neo4j' and 'fastapi'.
 We mock all external deps and test the data-handling / handler logic.
 """
 
-import asyncio
 import json
 import os
 import sys
-import time
-from unittest.mock import AsyncMock, MagicMock, mock_open, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 

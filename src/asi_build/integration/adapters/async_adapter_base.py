@@ -52,13 +52,12 @@ import asyncio
 import logging
 import threading
 import time
-from typing import Any, Callable, Dict, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 from ..protocols import (
     BlackboardEntry,
     CognitiveEvent,
     EventHandler,
-    ModuleCapability,
     ModuleInfo,
 )
 

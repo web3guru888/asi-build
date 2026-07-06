@@ -4,11 +4,8 @@ Comprehensive tests for the Federated Learning Orchestrator
 
 import asyncio
 import time
-from unittest.mock import AsyncMock, Mock, patch
 
-import numpy as np
 import pytest
-import torch
 
 from ..core.federated_orchestrator import (
     FederatedOrchestrator,

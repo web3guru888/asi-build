@@ -9,13 +9,11 @@ Tests the core functionality including:
 """
 
 import os
-import shutil
 
 # Import the modules we're testing
 import sys
 import tempfile
 import time
-from pathlib import Path
 
 import pytest
 

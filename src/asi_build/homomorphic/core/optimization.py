@@ -7,9 +7,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-import numpy as np
-
-from .encryption import Ciphertext, Plaintext
+from .encryption import Ciphertext
 from .parameters import FHEParameters
 from .polynomial import Polynomial
 

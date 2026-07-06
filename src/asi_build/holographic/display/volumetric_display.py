@@ -5,11 +5,10 @@ Volumetric display system for true 3D holographic rendering
 import asyncio
 import logging
 import math
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -17,7 +16,6 @@ from ..core.base import (
     HolographicBase,
     HolographicPerformanceMonitor,
     RenderingError,
-    Transform3D,
     Vector3D,
 )
 from ..core.config import DisplayConfig

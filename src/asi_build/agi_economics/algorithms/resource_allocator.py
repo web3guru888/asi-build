@@ -6,30 +6,22 @@ Advanced resource allocation algorithms for compute, memory, bandwidth,
 and other computational resources in the AGI ecosystem.
 """
 
-import heapq
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from decimal import Decimal, getcontext
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
-
-import numpy as np
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..core.base_engine import BaseEconomicEngine, EconomicEvent
 from ..core.exceptions import (
-    InsufficientFundsError,
     ResourceAllocationError,
     ResourceUnavailableError,
 )
 from ..core.types import (
-    Agent,
-    AgentID,
     Resource,
     ResourceType,
     ServiceRequest,
-    TokenAmount,
-    TokenType,
 )
 
 # Set decimal precision

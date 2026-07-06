@@ -6,7 +6,6 @@ data persistence and availability across the network.
 """
 
 import asyncio
-import json
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass

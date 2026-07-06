@@ -210,7 +210,6 @@ _ensure_module(
 # Phase 2: Actual imports
 # ============================================================================
 
-from asi_build.federated.aggregation.base_aggregator import BaseAggregator  # noqa: E402
 from asi_build.federated.aggregation.fedavg import FedAvgAggregator  # noqa: E402
 from asi_build.federated.aggregation.secure_aggregation import SecretSharing  # noqa: E402
 from asi_build.federated.core.config import (  # noqa: E402

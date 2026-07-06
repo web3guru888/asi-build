@@ -6,19 +6,16 @@ Implements various compression techniques to reduce communication overhead
 import asyncio
 import logging
 import pickle
-import struct
 import time
 import zlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple
 
 import brotli
 import lz4
 import numpy as np
 import torch
-import torch.nn as nn
-from scipy.sparse import csc_matrix, csr_matrix
 
 
 @dataclass

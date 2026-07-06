@@ -13,16 +13,16 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from ..databases.pinecone_client import PineconeClient, PineconeSearchResult
-from ..databases.qdrant_client import QdrantClient, QdrantSearchResult
-from ..databases.weaviate_client import WeaviateClient, WeaviateSearchResult
+from ..databases.pinecone_client import PineconeClient
+from ..databases.qdrant_client import QdrantClient
+from ..databases.weaviate_client import WeaviateClient
 from .config import SearchConfig
 from .embeddings import EmbeddingPipeline
-from .utils import TextUtils, VectorUtils, timed_operation
+from .utils import TextUtils, timed_operation
 
 logger = logging.getLogger(__name__)
 

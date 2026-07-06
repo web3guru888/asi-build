@@ -8,7 +8,6 @@ and emergent conscious behaviors.
 
 import logging
 import time
-from typing import Any, Dict
 
 from .attention_schema import AttentionSchemaTheory
 from .base_consciousness import ConsciousnessEvent

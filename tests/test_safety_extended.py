@@ -19,14 +19,9 @@ Targets uncovered paths beyond test_safety_governance.py:
   - Framework: ConstitutionalAI full API, constitution lifecycle, safe action generation
 """
 
-import hashlib
-import math
 import os
 import sys
-import time
-from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -41,7 +36,6 @@ from asi_build.safety.formal_verification import (
     FormalProof,
     LogicalPredicate,
     LogicOperator,
-    ProofStep,
     TheoremProver,
 )
 
@@ -61,13 +55,11 @@ from asi_build.safety.governance.consensus import (
 
 # --- Contracts ---
 from asi_build.safety.governance.contracts import (
-    ContractPermission,
     ContractRegistry,
     ContractState,
     EthicsEnforcementContract,
     ExecutionStatus,
     GovernanceTokenContract,
-    PermissionLevel,
     ProposalContract,
     deploy_governance_contracts,
 )
@@ -75,10 +67,7 @@ from asi_build.safety.governance.contracts import (
 # --- DAO ---
 from asi_build.safety.governance.dao import (
     DAOGovernance,
-    DAOProposal,
-    DAOToken,
     DAOTreasury,
-    ProposalType,
     QuadraticVoting,
     ReputationSystem,
     TokenType,
@@ -87,8 +76,6 @@ from asi_build.safety.governance.dao import (
 # --- Governance Engine ---
 from asi_build.safety.governance.engine import (
     DeontologicalFramework,
-    EthicalFramework,
-    GovernanceDecision,
     GovernanceEngine,
     Proposal,
     ProposalStatus,
@@ -106,7 +93,6 @@ from asi_build.safety.governance.ledger import (
     AuditLogger,
     AuditQuery,
     AuditRecord,
-    Block,
     CryptographicVerifier,
     MerkleTree,
     PrivacyPreserver,
@@ -117,9 +103,7 @@ from asi_build.safety.governance.ledger import (
 # --- Override ---
 from asi_build.safety.governance.override import (
     DemocraticOverrideSystem,
-    EmergencyProtocol,
     HumanInTheLoopController,
-    OverrideCapability,
     OverrideSeverity,
     OverrideStatus,
     OverrideType,
@@ -130,17 +114,12 @@ from asi_build.safety.governance.override import (
 from asi_build.safety.governance.rights import (
     AGIRightsFramework,
     ConsentManager,
-    ConsentRecord,
     ConsentType,
     Entity,
     EntityType,
     HumanRightsFramework,
-    Right,
-    RightGrant,
     RightsManager,
-    RightStatus,
     RightType,
-    RightViolation,
 )
 
 # ============================================================

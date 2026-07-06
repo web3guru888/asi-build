@@ -14,12 +14,11 @@ Key components:
 - Consciousness level assessment
 """
 
-import json
 import threading
 import time
 from collections import defaultdict, deque
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 

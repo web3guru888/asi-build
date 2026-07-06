@@ -14,7 +14,6 @@ import yaml
 # Add the compute pool to the path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.pool_manager import ComputePoolManager, PoolConfig
 from integrations.kubernetes_integration import KubernetesIntegration, KubernetesPodSpec
 
 # Configure logging

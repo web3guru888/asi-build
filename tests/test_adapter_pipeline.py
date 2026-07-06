@@ -8,9 +8,7 @@ Covers Issue #99: Integration tests for the adapter pipeline.
 from __future__ import annotations
 
 import threading
-import time
-from typing import Any, Dict, List, Optional, Sequence
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -37,10 +35,6 @@ from asi_build.integration.protocols import (
     BlackboardEntry,
     BlackboardQuery,
     CognitiveEvent,
-    EntryPriority,
-    EntryStatus,
-    EventHandler,
-    ModuleCapability,
     ModuleInfo,
 )
 

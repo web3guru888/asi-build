@@ -14,9 +14,8 @@ All tests handle torch gracefully — skip if torch is unavailable.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Optional
 
-import numpy as np
 import pytest
 
 # ---------- optional torch ---------
@@ -349,7 +348,6 @@ class TestModuleImports:
 
     def test_benchmarks_init(self):
         from asi_build.consciousness.benchmarks import (
-            BiologicalBenchmark,
             BiologicalConsciousnessMarkers,
         )
 
@@ -359,7 +357,6 @@ class TestModuleImports:
     def test_trackers_init(self):
         from asi_build.consciousness.trackers import (
             ConsciousnessEvolutionTracker,
-            ConsciousnessSnapshot,
         )
 
         tracker = ConsciousnessEvolutionTracker()
@@ -368,8 +365,6 @@ class TestModuleImports:
     @requires_torch
     def test_theories_init(self):
         from asi_build.consciousness.theories import (
-            HOTTheoryImplementation,
-            PredictiveProcessingTensor,
             TensorIITCalculator,
         )
 

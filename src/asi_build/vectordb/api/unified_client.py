@@ -11,7 +11,7 @@ import logging
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 from ..core.config import VectorDBConfig
 from ..core.embeddings import EmbeddingPipeline

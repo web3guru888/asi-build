@@ -3,11 +3,9 @@ Homomorphic evaluation operations for ciphertexts.
 """
 
 import logging
-from typing import List, Optional, Union
+from typing import List, Optional
 
-import numpy as np
-
-from .base import EvaluationException, NoiseException
+from .base import EvaluationException
 from .encryption import Ciphertext
 from .keys import GaloisKeys, RelinearizationKeys
 from .modular import ModularArithmetic

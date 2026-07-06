@@ -11,10 +11,9 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from scipy.signal import coherence, hilbert, welch
+from scipy.signal import hilbert, welch
 from scipy.stats import pearsonr
 from sklearn.cross_decomposition import CCA
-from sklearn.preprocessing import StandardScaler
 
 from ..core.config import BCIConfig
 

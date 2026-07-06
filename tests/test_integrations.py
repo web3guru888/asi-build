@@ -11,11 +11,8 @@ These tests are designed to work WITHOUT external dependencies
 import ast
 import importlib
 import importlib.util
-import os
 import sys
-from dataclasses import fields
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 

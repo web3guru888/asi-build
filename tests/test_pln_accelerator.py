@@ -7,12 +7,9 @@ the core pure-Python modules directly via importlib.util:
   - context_manager.py (591 LOC)  – Session/context management
 """
 
-import asyncio
 import importlib.util
-import re
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 

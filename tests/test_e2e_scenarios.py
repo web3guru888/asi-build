@@ -17,10 +17,9 @@ multi-tick convergence, and complex research scenarios.
 
 from __future__ import annotations
 
-import threading
 import time
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, List, Optional, Sequence
 
 import pytest
 
@@ -40,7 +39,6 @@ from asi_build.integration.adapters import (
     HolographicBlackboardAdapter,
     IntegrationsBlackboardBridge,
     KennyGraphBlackboardAdapter,
-    KnowledgeGraphAdapter,
     KnowledgeManagementAdapter,
     NeuromorphicBlackboardAdapter,
     QuantumBlackboardAdapter,
@@ -52,10 +50,7 @@ from asi_build.integration.adapters import (
     VLABlackboardAdapter,
 )
 from asi_build.integration.cognitive_cycle import (
-    AdapterRole,
     CognitiveCycle,
-    CycleMetrics,
-    CyclePhase,
     CycleState,
     TickResult,
 )
@@ -63,7 +58,6 @@ from asi_build.integration.protocols import (
     BlackboardEntry,
     CognitiveEvent,
     EntryPriority,
-    EntryStatus,
     ModuleCapability,
     ModuleInfo,
 )

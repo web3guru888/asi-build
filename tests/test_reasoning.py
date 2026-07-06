@@ -5,9 +5,7 @@ The reasoning __init__.py imports non-existent modules (symbolic_processing, etc
 so we import hybrid_reasoning.py directly via importlib.util.
 """
 
-import asyncio
 import importlib.util
-import time
 from pathlib import Path
 
 import pytest

@@ -3,8 +3,6 @@
 import pytest
 
 aiohttp = pytest.importorskip("aiohttp", reason="aiohttp not installed")
-import asyncio
-import time
 
 
 class TestKnowledgeGraphManager:
@@ -34,7 +32,6 @@ class TestKnowledgeGraphManager:
 
     def test_add_relationship(self):
         from src.asi_build.knowledge_management.core.knowledge_graph_manager import (
-            KnowledgeGraphManager,
             KnowledgeRelationship,
         )
 

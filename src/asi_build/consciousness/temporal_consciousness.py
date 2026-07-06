@@ -17,13 +17,13 @@ Key components:
 import math
 import threading
 import time
-from collections import defaultdict, deque
+from collections import deque
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
-from .base_consciousness import BaseConsciousness, ConsciousnessEvent, ConsciousnessState
+from .base_consciousness import BaseConsciousness, ConsciousnessEvent
 
 
 @dataclass

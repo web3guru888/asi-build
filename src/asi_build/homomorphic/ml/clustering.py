@@ -3,9 +3,7 @@ Encrypted clustering algorithms (K-Means, DBSCAN).
 """
 
 import logging
-from typing import Any, Dict, List
-
-import numpy as np
+from typing import List
 
 from ..schemes.ckks import CKKSCiphertext, CKKSScheme
 

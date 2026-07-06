@@ -14,14 +14,12 @@ from __future__ import annotations
 
 import hashlib
 import os
-import time
 
 import pytest
 
 from asi_build.rings.bridge.zk.real_bls import (
     CURVE_ORDER,
     DEFAULT_SYNC_THRESHOLD,
-    DOMAIN_SEPARATOR,
     FIELD_MODULUS,
     G1_SIZE,
     G2_SIZE,

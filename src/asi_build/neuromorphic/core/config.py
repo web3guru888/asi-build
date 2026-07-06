@@ -7,11 +7,10 @@ including timing parameters, neural dynamics, learning rates, and hardware speci
 
 import json
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-import numpy as np
 import yaml
 
 

@@ -4,7 +4,6 @@ Covers BLSKeyPair, BLSPublicKey, BLSSignature, BLS12381 static methods,
 SyncCommitteeBLS, and module constants.
 """
 
-import hashlib
 import os
 
 import pytest

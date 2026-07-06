@@ -3,13 +3,10 @@ AGIX Token Rewards System for Compute Contribution
 Integrates with SingularityNET's AGIX token for incentivizing decentralized training
 """
 
-import asyncio
-import json
 import logging
-import time
 from dataclasses import asdict, dataclass
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from eth_account import Account

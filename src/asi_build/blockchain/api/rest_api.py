@@ -5,28 +5,22 @@ Provides comprehensive REST endpoints for audit trail operations including
 record creation, querying, verification, and system management.
 """
 
-import asyncio
 import json
 import logging
-from dataclasses import asdict
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from datetime import datetime
+from typing import Any, Dict, Optional
 
-from fastapi import Body, Depends, FastAPI, HTTPException, Path, Query, status
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field, validator
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import Response
 
-from ..crypto import DigitalSignature, HashManager, SignatureManager, SignatureVerifier
-from ..ipfs import DataManager, EncryptedDataManager, IPFSClient, PinningService
+from ..crypto import HashManager, SignatureManager, SignatureVerifier
+from ..ipfs import DataManager, EncryptedDataManager, IPFSClient
 
 # Internal imports
 from ..web3_integration import ContractManager, Web3Client
-from .auth import APIKey, AuthManager, JWTAuth
+from .auth import AuthManager
 from .middleware import LoggingMiddleware, RateLimitMiddleware
 from .validators import RequestValidator
 

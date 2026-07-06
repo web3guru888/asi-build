@@ -7,7 +7,7 @@ Based on Kenny AGI BCI motor imagery classification
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import torch
@@ -15,8 +15,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from scipy import signal
 from scipy.linalg import eigh
-from sklearn.decomposition import PCA, FastICA
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.decomposition import FastICA
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

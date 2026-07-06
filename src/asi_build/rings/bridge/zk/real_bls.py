@@ -66,7 +66,7 @@ import hashlib
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, ClassVar, List, Optional, Tuple, Type
+from typing import List, Optional, Tuple
 
 try:
     from py_ecc.bls import G2ProofOfPossession as bls_pop

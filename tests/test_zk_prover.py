@@ -13,29 +13,20 @@ tests are clearly marked.
 
 from __future__ import annotations
 
-import hashlib
 import os
-import secrets
-import time
 
 import pytest
 from py_ecc.bn128 import (
     FQ,
-    FQ2,
-    FQ12,
     G1,
     G2,
     Z1,
     Z2,
-    add,
     curve_order,
     field_modulus,
-    is_on_curve,
     multiply,
     neg,
 )
-from py_ecc.bn128.bn128_curve import b as B_COEFF
-from py_ecc.bn128.bn128_curve import b2 as B2_COEFF
 
 from asi_build.rings.bridge.zk_prover import (
     BridgeWithdrawalCircuit,

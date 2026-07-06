@@ -3,7 +3,6 @@ Privacy-Preserving Training with Differential Privacy and Secure Aggregation
 Implements secure multi-party computation for federated learning
 """
 
-import asyncio
 import base64
 import hashlib
 import json
@@ -15,11 +14,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
-import torch.nn as nn
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
 @dataclass

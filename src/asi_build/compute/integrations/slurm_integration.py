@@ -3,14 +3,10 @@ Slurm Integration - Integrates compute pool with Slurm Workload Manager
 """
 
 import asyncio
-import json
 import logging
 import re
-import subprocess
-import time
-import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

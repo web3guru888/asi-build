@@ -18,8 +18,7 @@ import asyncio
 import hashlib
 import os
 import time
-import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -40,7 +39,6 @@ from src.asi_build.rings.bridge.zk.prover import (
     SimulatedProver,
     SP1ProverInterface,
     ZKProof,
-    ZKProofEngine,
 )
 
 # ---------------------------------------------------------------------------

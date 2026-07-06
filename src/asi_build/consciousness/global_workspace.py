@@ -18,11 +18,9 @@ import threading
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
-import numpy as np
-
-from .base_consciousness import BaseConsciousness, ConsciousnessEvent, ConsciousnessState
+from .base_consciousness import BaseConsciousness, ConsciousnessEvent
 
 
 @dataclass

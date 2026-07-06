@@ -9,18 +9,14 @@ Tests cover:
 
 from __future__ import annotations
 
-import asyncio
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, List, Optional, Sequence
 
 import pytest
 
 from src.asi_build.integration import (
-    AsyncBlackboardConsumer,
-    AsyncBlackboardProducer,
     BlackboardConsumer,
     BlackboardEntry,
     BlackboardParticipant,
@@ -29,15 +25,11 @@ from src.asi_build.integration import (
     BlackboardTransformer,
     CognitiveBlackboard,
     CognitiveEvent,
-    DeadLetter,
     EntryPriority,
     EntryStatus,
     EventBus,
-    EventEmitter,
-    EventListener,
     ModuleCapability,
     ModuleInfo,
-    Subscription,
 )
 
 # ═══════════════════════════════════════════════════════════════════════

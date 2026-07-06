@@ -4,27 +4,17 @@ Schema Manager for Kenny Graph Intelligence System
 Handles schema validation, migrations, and database operations.
 """
 
-import json
 import logging
-import re
-import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from neo4j import GraphDatabase
 
 from .schema import (
-    ApplicationNode,
     BaseNode,
-    CommunityNode,
-    ErrorNode,
     KnowledgeGraphSchema,
     NodeType,
-    PatternNode,
     Relationship,
     RelationshipType,
-    ScreenNode,
-    UIElementNode,
-    WorkflowNode,
     _sanitize_label,
 )
 

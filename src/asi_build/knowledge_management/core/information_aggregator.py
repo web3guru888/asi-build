@@ -8,16 +8,11 @@ sources including web, databases, APIs, files, and Kenny's existing systems.
 
 import asyncio
 import hashlib
-import json
 import logging
 import os
-import sqlite3
 import time
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Union
-
-import aiohttp
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

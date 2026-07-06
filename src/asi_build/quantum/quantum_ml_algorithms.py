@@ -6,11 +6,10 @@ Implements QML, QSVM, and other quantum-enhanced ML techniques
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler
 
 logger = logging.getLogger(__name__)

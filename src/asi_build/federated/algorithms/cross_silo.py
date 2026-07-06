@@ -8,13 +8,10 @@ between different organizations or data silos.
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
-
-import numpy as np
+from typing import Any, Dict, List, Optional
 
 from ..aggregation.secure_aggregation import SecureAggregator
-from ..core.base import FederatedClient, FederatedServer
-from ..core.exceptions import FederatedLearningError, SecurityError
+from ..core.exceptions import FederatedLearningError
 from ..privacy.differential_privacy import DifferentialPrivacyManager
 
 

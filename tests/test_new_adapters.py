@@ -19,8 +19,7 @@ Plus extra safety-specific tests for SafetyBlackboardAdapter.
 from __future__ import annotations
 
 import time
-import types
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -33,16 +32,12 @@ from asi_build.integration.adapters import (
     NeuromorphicBlackboardAdapter,
     QuantumBlackboardAdapter,
     SafetyBlackboardAdapter,
-    production_sweep,
-    wire_all,
 )
 from asi_build.integration.protocols import (
     BlackboardEntry,
     CognitiveEvent,
     EntryPriority,
-    EntryStatus,
     ModuleCapability,
-    ModuleInfo,
 )
 
 # ============================================================================

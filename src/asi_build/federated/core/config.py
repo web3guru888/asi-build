@@ -8,7 +8,7 @@ import json
 import os
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 
 class AggregationType(Enum):

@@ -31,11 +31,9 @@ import importlib
 import json
 import threading
 import time
-from collections import OrderedDict
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock
 
 import networkx as nx
-import numpy as np
 import pytest
 
 # --- Community detection (pure algorithms, no DB) ---
@@ -96,19 +94,9 @@ from asi_build.graph_intelligence.performance_optimizer import (
 
 # --- Schema / enums (always importable) ---
 from asi_build.graph_intelligence.schema import (
-    ApplicationNode,
-    BaseNode,
-    CommunityNode,
     KnowledgeGraphSchema,
     NodeType,
-    Relationship,
     RelationshipType,
-    ScreenNode,
-    UIElementNode,
-    WorkflowNode,
-    create_community,
-    create_ui_element,
-    create_workflow,
 )
 
 # =========================================================================

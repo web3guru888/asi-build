@@ -19,19 +19,15 @@ import uuid
 import pytest
 
 from asi_build.graph_intelligence.schema import (  # Factory functions
-    ApplicationNode,
     BaseNode,
     CommunityNode,
-    ErrorNode,
     KnowledgeGraphSchema,
     MemoryItemNode,
     MemoryPatternNode,
     MemorySessionNode,
     NodeType,
-    PatternNode,
     Relationship,
     RelationshipType,
-    ScreenNode,
     UIElementNode,
     UserProfileNode,
     WorkflowNode,

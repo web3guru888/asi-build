@@ -17,9 +17,8 @@ import pytest
 pytest.importorskip("psutil")
 import asyncio
 import json
-import os
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 from asi_build.compute.core.job_scheduler import (
     Job,
@@ -40,7 +39,6 @@ from asi_build.compute.core.resource_allocator import (
     LocalProvider,
     ResourceAllocation,
     ResourceAllocator,
-    ResourceProvider,
     ResourceRequest,
     ResourceType,
 )

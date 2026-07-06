@@ -11,9 +11,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import mne
 import numpy as np
-from scipy import signal, stats
+from scipy import signal
 from scipy.signal import butter, coherence, filtfilt, welch
-from sklearn.decomposition import PCA, FastICA
 
 from ..core.config import BCIConfig
 from ..core.signal_processor import ProcessedSignal

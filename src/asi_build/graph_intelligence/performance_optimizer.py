@@ -16,7 +16,7 @@ import time
 from collections import OrderedDict, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .fastog_reasoning import FastToGReasoningEngine, FastToGResult, ReasoningRequest
 from .schema import NodeType, RelationshipType

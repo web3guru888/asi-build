@@ -7,7 +7,7 @@ In a full implementation, this would contain sophisticated action planning and e
 """
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import numpy as np
 

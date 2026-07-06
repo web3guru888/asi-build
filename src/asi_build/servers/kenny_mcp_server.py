@@ -8,11 +8,11 @@ import asyncio
 import json
 import logging
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
-from mcp.types import EmbeddedResource, ImageContent, Resource, TextContent, Tool
+from mcp.types import Resource, TextContent, Tool
 from neo4j import GraphDatabase
 
 # Configure logging

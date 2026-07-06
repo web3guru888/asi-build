@@ -5,7 +5,7 @@ Test that Kenny's intelligence systems can connect to the rebuilt Memgraph schem
 
 from neo4j import GraphDatabase
 
-from asi_build.graph_intelligence.schema import NodeType, RelationshipType, create_ui_element
+from asi_build.graph_intelligence.schema import NodeType, create_ui_element
 from asi_build.graph_intelligence.schema_manager import SchemaManager
 
 

@@ -21,7 +21,6 @@ from systems.decentralized_training.core.error_handling import (
     ErrorCategory,
     ErrorHandler,
     ErrorSeverity,
-    get_global_error_handler,
 )
 
 # Import system components

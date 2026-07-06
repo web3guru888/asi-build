@@ -16,10 +16,9 @@ Based on Friston's Free Energy Principle and predictive processing frameworks.
 """
 
 import logging
-import math
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import torch

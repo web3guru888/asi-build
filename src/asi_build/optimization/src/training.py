@@ -11,13 +11,11 @@ Implements MiniMind-inspired ultra-efficient training:
 
 import json
 import logging
-import os
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim

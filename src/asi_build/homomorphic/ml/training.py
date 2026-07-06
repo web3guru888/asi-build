@@ -3,9 +3,7 @@ Encrypted training utilities for machine learning models.
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional
-
-import numpy as np
+from typing import List
 
 from ..schemes.ckks import CKKSCiphertext, CKKSScheme
 

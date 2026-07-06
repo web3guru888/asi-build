@@ -7,17 +7,11 @@ bridge with world knowledge.
 """
 
 import asyncio
-import json
 import logging
 import re
-from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
-
-import aiohttp
-import networkx as nx
-import numpy as np
+from typing import Any, Dict, List, Optional
 
 from .conceptnet_integration import ConceptNetIntegration
 from .cyc_integration import CycIntegration

@@ -3,7 +3,6 @@
 import pytest
 
 psutil = pytest.importorskip("psutil", reason="psutil not installed")
-import numpy as np
 
 
 class TestSpikeEvent:
@@ -30,7 +29,6 @@ class TestNeuronBase:
 
     def _make_neuron(self):
         """Create a concrete neuron for testing."""
-        import numpy as np
 
         from src.asi_build.neuromorphic.core.neural_base import NeuronBase
 
@@ -108,7 +106,7 @@ class TestSynapseBase:
     """Test synapse base functionality."""
 
     def _make_synapse(self):
-        from src.asi_build.neuromorphic.core.neural_base import NeuronBase, SpikeEvent, SynapseBase
+        from src.asi_build.neuromorphic.core.neural_base import NeuronBase, SynapseBase
 
         class SimpleNeuron(NeuronBase):
             def compute_membrane_dynamics(self, dt):

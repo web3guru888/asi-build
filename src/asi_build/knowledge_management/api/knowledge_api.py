@@ -10,24 +10,15 @@ import asyncio
 import json
 import logging
 import time
-from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-
-from ..core.information_aggregator import InformationAggregator
 
 # Import omniscience components
 from ..core.knowledge_engine import KnowledgeEngine, KnowledgeQuery
-from ..core.knowledge_graph_manager import KnowledgeGraphManager
-from ..learning.contextual_learner import ContextualLearner
-from ..search.intelligent_search import IntelligentSearch
-from ..synthesis.predictive_synthesizer import PredictiveSynthesizer
-from ..validation.quality_controller import QualityController
 
 
 # API Models

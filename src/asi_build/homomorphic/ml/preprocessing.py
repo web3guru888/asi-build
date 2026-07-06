@@ -3,9 +3,7 @@ Encrypted preprocessing utilities for machine learning.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
-
-import numpy as np
+from typing import List
 
 from ..schemes.ckks import CKKSCiphertext, CKKSScheme
 

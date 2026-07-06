@@ -3,19 +3,14 @@ Byzantine Fault Tolerance for Malicious Nodes
 Implements robust aggregation mechanisms to handle adversarial participants
 """
 
-import asyncio
-import hashlib
-import json
 import logging
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 import numpy as np
 import torch
-import torch.nn as nn
-from scipy import stats
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 

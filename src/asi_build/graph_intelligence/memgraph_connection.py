@@ -12,7 +12,6 @@ from contextlib import contextmanager
 from typing import Any, Dict, List, Optional
 
 import mgclient
-from neo4j import GraphDatabase
 
 logger = logging.getLogger(__name__)
 

@@ -6,14 +6,12 @@ ICA, template matching, and machine learning approaches.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 from scipy import signal, stats
 from scipy.signal import butter, filtfilt
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA, FastICA
-from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import FastICA
 
 from ..core.config import BCIConfig
 

@@ -5,7 +5,6 @@ Provides high-level interface for interacting with IPFS nodes
 for decentralized data storage and retrieval.
 """
 
-import asyncio
 import hashlib
 import json
 import logging

@@ -6,13 +6,12 @@ entities, relations, and logical structures, creating a comprehensive
 semantic representation of the knowledge.
 """
 
-import asyncio
 import json
 import logging
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import networkx as nx
 import numpy as np

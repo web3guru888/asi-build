@@ -10,12 +10,9 @@ This module provides comprehensive integration with Qdrant, including:
 """
 
 import logging
-import time
 import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
-
-import numpy as np
 
 try:
     from qdrant_client import QdrantClient as QdrantClientBase

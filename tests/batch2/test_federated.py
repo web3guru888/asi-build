@@ -3,7 +3,6 @@ import pytest
 tf = pytest.importorskip("tensorflow", reason="tensorflow not installed")
 tensorflow = pytest.importorskip("tensorflow")
 """Tests for federated learning module (Candidate 7)."""
-from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest

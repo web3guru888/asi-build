@@ -6,9 +6,7 @@ governance mechanisms including DAO voting, ethical verification, and
 stakeholder consensus.
 """
 
-import asyncio
 import hashlib
-import json
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass

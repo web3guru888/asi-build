@@ -6,19 +6,14 @@ Advanced system for merging knowledge graphs from different AGIs
 with sophisticated conflict detection and resolution mechanisms.
 """
 
-import asyncio
 import hashlib
-import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
-
-import numpy as np
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from .core import CommunicationMessage, MessageType
-from .semantic import KnowledgeRepresentation, SemanticEntity
 
 logger = logging.getLogger(__name__)
 

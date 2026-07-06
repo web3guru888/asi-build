@@ -17,11 +17,9 @@ import hashlib
 import math
 import sys
 import time
-import types
-from collections import defaultdict, deque
 from dataclasses import asdict
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -72,7 +70,6 @@ from asi_build.distributed_training.core.error_handling import (
     ErrorSeverity,
     HealthChecker,
     RetryManager,
-    error_handler_decorator,
     get_global_error_handler,
     set_global_error_handler,
 )

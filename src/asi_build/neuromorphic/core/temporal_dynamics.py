@@ -14,11 +14,9 @@ import threading
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
-from scipy import signal
-from scipy.fft import fft, fftfreq
 
 
 @dataclass

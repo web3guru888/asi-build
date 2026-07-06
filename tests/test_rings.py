@@ -12,13 +12,11 @@ Covers:
 from __future__ import annotations
 
 import asyncio
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pytest
 
 from asi_build.integration.adapters.rings_adapter import (
-    DEFAULT_TOPIC_SUBRING_MAP,
     RingsNetworkAdapter,
 )
 from asi_build.integration.protocols import (
@@ -38,21 +36,17 @@ from asi_build.rings.client import (
     SessionInfo,
     SubRingInfo,
     _compute_vid,
-    _did_to_position,
 )
 from asi_build.rings.did import (
     DIDDocument,
     DIDKeyPair,
-    DIDProof,
     KeyCurve,
     RingsDID,
     VerificationType,
 )
 from asi_build.rings.reputation import (
     BehaviourType,
-    GlobalRankRecord,
     LocalObservation,
-    LocalRankRecord,
     ReputationClient,
     SlashReport,
     TrustTier,

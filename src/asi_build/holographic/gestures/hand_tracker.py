@@ -4,22 +4,18 @@ Advanced 3D hand tracking for holographic interaction
 
 import asyncio
 import logging
-import math
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import cv2
 import numpy as np
 
 from ..core.base import (
-    GestureRecognitionError,
     HolographicBase,
     HolographicPerformanceMonitor,
-    Transform3D,
     Vector3D,
 )
 from ..core.math_utils import SpatialMath

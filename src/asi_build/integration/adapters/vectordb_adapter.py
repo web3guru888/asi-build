@@ -36,10 +36,8 @@ from typing import Any, Dict, List, Optional, Sequence
 
 from ..protocols import (
     BlackboardEntry,
-    BlackboardQuery,
     CognitiveEvent,
     EntryPriority,
-    EntryStatus,
     EventHandler,
     ModuleCapability,
     ModuleInfo,

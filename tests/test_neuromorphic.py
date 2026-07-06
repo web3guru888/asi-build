@@ -115,9 +115,6 @@ for _mod_name, _attrs in [
             setattr(_m, _a, type(_a, (), {}))
         sys.modules[_mod_name] = _m
 
-import json
-
-import numpy as np
 
 # ===========================================================================
 # Actual imports — now safe
@@ -147,7 +144,6 @@ from asi_build.neuromorphic.core.event_processor import SpikeEvent as EPSpikeEve
 from asi_build.neuromorphic.core.event_processor import SynapticEvent as EPSynapticEvent
 from asi_build.neuromorphic.core.neural_base import (
     NetworkBase,
-    NeuralBase,
     NeuronBase,
     SpikeEvent,
     SynapseBase,
@@ -176,7 +172,6 @@ from asi_build.neuromorphic.hardware.memristive_device import (
 )
 from asi_build.neuromorphic.learning.stdp import (
     PairSTDP,
-    STDPLearning,
     STDPParameters,
     TripletSTDP,
     VoltageSTDP,

@@ -6,13 +6,11 @@ Manages knowledge graphs and relationship analysis using Kenny's existing
 Memgraph infrastructure to provide deep contextual understanding.
 """
 
-import asyncio
-import json
 import logging
 import time
-from collections import defaultdict, deque
+from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 import networkx as nx
 

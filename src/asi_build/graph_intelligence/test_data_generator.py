@@ -6,7 +6,7 @@ Generates realistic test data for development and testing purposes.
 
 import random
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 from .schema import (
     ApplicationNode,
@@ -14,7 +14,6 @@ from .schema import (
     KnowledgeGraphSchema,
     NodeType,
     PatternNode,
-    Relationship,
     RelationshipType,
     ScreenNode,
     create_community,

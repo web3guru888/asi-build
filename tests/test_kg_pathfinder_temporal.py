@@ -8,9 +8,8 @@ whose ``valid_at <= t AND (invalid_at IS NULL OR invalid_at > t)``.
 
 from __future__ import annotations
 
-import sqlite3
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Optional
 
 import pytest

@@ -5,19 +5,16 @@ This module generates natural language explanations of logical expressions,
 making symbolic reasoning accessible to human users and researchers.
 """
 
-import asyncio
-import json
 import logging
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+from transformers import pipeline
 
 from ..core.logic_systems import LogicFormalism
-from ..parsers.pln_extractor import PLNRule, PLNRuleType
+from ..parsers.pln_extractor import PLNRuleType
 
 
 class ExplanationStyle(Enum):

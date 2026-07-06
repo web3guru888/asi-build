@@ -6,12 +6,11 @@ import asyncio
 import json
 import logging
 import ssl
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, Optional
 
 import numpy as np
 import websockets

@@ -7,19 +7,17 @@ based on Ben Goertzel's PRIMUS theory. This engine manages the interaction
 between all synergy modules and maintains global cognitive coherence.
 """
 
-import asyncio
 import logging
 import threading
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
-import networkx as nx
 import numpy as np
 
 from .emergent_properties import EmergentPropertyDetector
-from .primus_foundation import CognitivePrimitive, PRIMUSFoundation, PRIMUSState
+from .primus_foundation import PRIMUSFoundation
 from .self_organization import SelfOrganizationMechanism
 from .synergy_metrics import SynergyMetrics
 

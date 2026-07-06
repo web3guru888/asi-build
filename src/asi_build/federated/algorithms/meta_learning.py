@@ -14,8 +14,7 @@ import numpy as np
 import tensorflow as tf
 
 from ..aggregation.base_aggregator import BaseAggregator
-from ..core.base import FederatedClient, FederatedModel, FederatedServer
-from ..core.exceptions import FederatedLearningError, ModelError
+from ..core.exceptions import FederatedLearningError
 
 
 class MetaLearningStrategy(ABC):

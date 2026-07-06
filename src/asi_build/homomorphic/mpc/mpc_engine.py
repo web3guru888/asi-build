@@ -2,14 +2,11 @@
 Complete MPC engine for orchestrating secure multi-party computations.
 """
 
-import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-import numpy as np
-
-from .protocols import BGWProtocol, GMWProtocol, MPCShare, SecretSharingProtocol
+from .protocols import BGWProtocol, GMWProtocol, MPCShare
 
 logger = logging.getLogger(__name__)
 

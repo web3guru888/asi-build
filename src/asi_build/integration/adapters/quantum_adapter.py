@@ -38,15 +38,12 @@ from __future__ import annotations
 import hashlib
 import logging
 import threading
-import time
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from ..protocols import (
     BlackboardEntry,
-    BlackboardQuery,
     CognitiveEvent,
     EntryPriority,
-    EntryStatus,
     EventHandler,
     ModuleCapability,
     ModuleInfo,
@@ -461,7 +458,6 @@ class QuantumBlackboardAdapter:
                 except (IndexError, TypeError, ValueError):
                     energy = None
                 try:
-                    import numpy as np
 
                     params = (
                         opt_params.tolist() if hasattr(opt_params, "tolist") else list(opt_params)
@@ -475,7 +471,6 @@ class QuantumBlackboardAdapter:
             opt_params = getattr(self._vqe, "optimal_params", None)
             if opt_params is not None:
                 try:
-                    import numpy as np
 
                     params = (
                         opt_params.tolist() if hasattr(opt_params, "tolist") else list(opt_params)
@@ -541,7 +536,6 @@ class QuantumBlackboardAdapter:
 
         # Build a hash from the latest metrics state
         try:
-            import numpy as np
 
             pred_hash = hashlib.sha256(
                 f"{len(adv_scores)}:{adv_scores[-1]:.8f}".encode()

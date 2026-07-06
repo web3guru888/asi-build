@@ -4,9 +4,6 @@ Simplified test for VLA++ BCI Integration
 Demonstrates the Vision-Language-Brain-Action model concept
 """
 
-from typing import Dict, Tuple
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

@@ -8,15 +8,11 @@ Total: ~12TB of driving data
 import hashlib
 import json
 import logging
-import os
-import shutil
-import sys
 import tarfile
 import time
 import zipfile
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
 
 def _safe_extract_zip(zip_ref: zipfile.ZipFile, extract_to: Path) -> None:

@@ -12,12 +12,11 @@ Supports:
 - Abstraction refinement
 """
 
-import hashlib
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 from ...lang.ast.safety_ast import *
 

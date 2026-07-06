@@ -6,16 +6,13 @@ Basic Usage Example - Demonstrates fundamental compute pool operations
 import asyncio
 import logging
 import sys
-import time
 from pathlib import Path
 
 # Add the compute pool to the path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.job_scheduler import SchedulingAlgorithm, SchedulingPolicy
 from core.pool_manager import ComputePoolManager, PoolConfig
 from fault_tolerance.checkpoint_manager import CheckpointPolicy
-from monitoring.metrics_collector import MetricsCollector
 
 # Configure logging
 logging.basicConfig(

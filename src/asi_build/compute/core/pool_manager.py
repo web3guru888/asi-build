@@ -23,7 +23,7 @@ from ..resources.storage_manager import StoragePoolManager
 from .fair_share import FairShareManager
 from .job_scheduler import Job, JobScheduler, JobStatus
 from .preemption import PreemptionManager
-from .resource_allocator import ResourceAllocator, ResourceRequest
+from .resource_allocator import ResourceAllocator
 
 
 class PoolStatus(Enum):

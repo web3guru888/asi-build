@@ -38,12 +38,9 @@ Usage
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
-import time
 from collections import OrderedDict
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 

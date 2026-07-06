@@ -5,12 +5,11 @@ Spatial audio manager for immersive holographic experiences
 import asyncio
 import logging
 import math
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 

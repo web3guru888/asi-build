@@ -8,8 +8,6 @@ import random
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
-import numpy as np
-
 from .base import ParameterException, SchemeType, SecurityLevel
 
 logger = logging.getLogger(__name__)

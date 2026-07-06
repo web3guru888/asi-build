@@ -8,7 +8,6 @@ MySQLToMemgraphAgent to ensure the enhanced SQL to Graph mapping works correctly
 
 import logging
 import os
-from typing import Any, Dict
 
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI

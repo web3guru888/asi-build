@@ -4,12 +4,11 @@ Signal Processing Utilities
 Collection of utility functions for BCI signal processing.
 """
 
-import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 from scipy import signal
-from scipy.signal import butter, filtfilt, hilbert, welch
+from scipy.signal import butter, filtfilt, welch
 
 
 class SignalUtilities:

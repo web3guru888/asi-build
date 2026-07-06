@@ -5,14 +5,10 @@ Agent QUANTUM-001 Coordination with QUANTUM-002 through QUANTUM-015
 """
 
 import asyncio
-import json
 import logging
-import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -27,7 +23,6 @@ except ImportError:
 # Classical ML imports
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from torch.optim import Adam

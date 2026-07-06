@@ -6,8 +6,6 @@ encryption functionality for securing audit trail data at rest and in
 transit.
 """
 
-import base64
-import hashlib
 import logging
 import os
 from dataclasses import dataclass, field

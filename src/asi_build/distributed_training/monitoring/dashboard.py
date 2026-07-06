@@ -6,20 +6,17 @@ Provides comprehensive monitoring and visualization for decentralized training
 import asyncio
 import json
 import logging
-import threading
 import time
 from collections import defaultdict, deque
-from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List
 
 import dash
 import numpy as np
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
-import websocket
-from dash import Input, Output, callback, dcc, html
+from dash import Input, Output, dcc, html
 from plotly.subplots import make_subplots
 
 

@@ -6,10 +6,10 @@ spectral features, connectivity metrics, and frequency tracking.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict
 
 import numpy as np
-from scipy.signal import coherence, hilbert, periodogram, welch
+from scipy.signal import coherence, hilbert, welch
 from scipy.stats import entropy
 
 from ..core.config import BCIConfig

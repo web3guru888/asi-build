@@ -14,21 +14,17 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from asi_build.integration import (
     BlackboardEntry,
-    BlackboardQuery,
     CognitiveBlackboard,
     CognitiveEvent,
     EntryPriority,
-    EntryStatus,
-    EventBus,
     ModuleCapability,
-    ModuleInfo,
 )
 from asi_build.integration.adapters import (
     CognitiveSynergyAdapter,

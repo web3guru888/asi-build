@@ -64,12 +64,11 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import struct
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List
 
 from Crypto.Hash import keccak as _pycryptodome_keccak
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec, utils
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 try:

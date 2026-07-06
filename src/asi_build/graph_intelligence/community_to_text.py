@@ -10,7 +10,7 @@ import logging
 import time
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from .schema import NodeType, RelationshipType
 from .schema_manager import SchemaManager

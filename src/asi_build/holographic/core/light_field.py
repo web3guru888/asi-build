@@ -5,11 +5,9 @@ Light field generation and processing for holographic displays
 import asyncio
 import logging
 import math
-import threading
-import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -17,7 +15,6 @@ from .base import (
     HolographicBase,
     HolographicPerformanceMonitor,
     RenderingError,
-    Transform3D,
     Vector3D,
 )
 from .math_utils import SpatialMath

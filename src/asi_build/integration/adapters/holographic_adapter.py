@@ -42,15 +42,12 @@ from __future__ import annotations
 
 import logging
 import threading
-import time
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from ..protocols import (
     BlackboardEntry,
-    BlackboardQuery,
     CognitiveEvent,
     EntryPriority,
-    EntryStatus,
     EventHandler,
     ModuleCapability,
     ModuleInfo,

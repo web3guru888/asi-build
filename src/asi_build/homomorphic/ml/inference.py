@@ -4,9 +4,7 @@ Encrypted inference engine for machine learning models.
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Union
-
-import numpy as np
+from typing import Any, Dict, List
 
 from ..schemes.ckks import CKKSCiphertext, CKKSScheme
 

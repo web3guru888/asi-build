@@ -2,13 +2,11 @@
 Main NL-Logic Bridge system implementing Ben Goertzel's symbolic-neural AGI vision.
 """
 
-import asyncio
-import json
 import logging
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..generators.explanation_generator import ExplanationGenerator
 from ..generators.nl_generator import NLGenerator

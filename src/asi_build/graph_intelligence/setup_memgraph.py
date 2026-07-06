@@ -6,7 +6,6 @@ Sets up the database with proper schema, indexes, and constraints.
 """
 
 import logging
-import time
 
 import mgclient
 

@@ -16,7 +16,7 @@ Grammar supports:
 
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 from ..ast.safety_ast import *
 

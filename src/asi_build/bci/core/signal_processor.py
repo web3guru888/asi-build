@@ -5,7 +5,6 @@ Handles filtering, artifact removal, and feature extraction for BCI signals.
 """
 
 import logging
-import queue
 import threading
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple

@@ -4,7 +4,7 @@ Encryption and decryption operations for homomorphic encryption.
 
 import logging
 import random
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 

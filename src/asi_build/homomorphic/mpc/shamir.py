@@ -1,7 +1,7 @@
 """Shamir Secret Sharing implementation."""
 
 import random
-from typing import List, Tuple
+from typing import List
 
 from .protocols import MPCShare
 

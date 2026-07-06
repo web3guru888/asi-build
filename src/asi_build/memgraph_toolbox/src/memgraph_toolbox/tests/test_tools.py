@@ -1,5 +1,3 @@
-import pytest
-
 from ..api.memgraph import Memgraph
 from ..tools.betweenness_centrality import BetweennessCentralityTool
 from ..tools.config import ShowConfigTool

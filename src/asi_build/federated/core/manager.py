@@ -8,17 +8,13 @@ servers, and the overall training process.
 import asyncio
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 
-from ..aggregation.byzantine_robust import ByzantineRobustAggregator
-from ..aggregation.fedavg import FedAvgAggregator
-from ..aggregation.secure_aggregation import SecureAggregator
-from .base import FederatedClient, FederatedModel, FederatedServer
+from .base import FederatedClient, FederatedServer
 from .config import FederatedConfig
-from .exceptions import ClientError, FederatedLearningError, ServerError
+from .exceptions import FederatedLearningError, ServerError
 
 
 class FederatedManager:

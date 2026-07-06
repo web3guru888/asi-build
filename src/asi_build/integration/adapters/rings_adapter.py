@@ -43,17 +43,15 @@ Events listened
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import threading
 import time
-from typing import Any, Callable, Dict, List, Optional, Sequence, Set
+from typing import Any, Dict, List, Optional, Sequence, Set
 
 from ..protocols import (
     BlackboardEntry,
     CognitiveEvent,
     EntryPriority,
-    EntryStatus,
     EventHandler,
     ModuleCapability,
     ModuleInfo,

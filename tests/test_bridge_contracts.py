@@ -14,12 +14,11 @@ roots—mirroring the logic that ``RingsBridge.sol`` would enforce.
 
 from __future__ import annotations
 
-import asyncio
 import time
 from dataclasses import dataclass
 from dataclasses import dataclass as _dc
 from dataclasses import field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Set
 from unittest.mock import MagicMock
 
 import pytest

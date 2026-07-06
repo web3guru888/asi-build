@@ -16,16 +16,14 @@ Target: IBM Qiskit, Google Cirq, Amazon Braket
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 import numpy as np
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
-from qiskit.algorithms import VQE
-from qiskit.algorithms.optimizers import COBYLA, SPSA
+from qiskit.algorithms.optimizers import SPSA
 from qiskit.circuit import Parameter, ParameterVector
-from qiskit.circuit.library import EfficientSU2, RealAmplitudes
+from qiskit.circuit.library import EfficientSU2
 from qiskit.providers.aer import AerSimulator
-from qiskit.quantum_info import SparsePauliOp
 
 
 class QuantumPLNProcessor:

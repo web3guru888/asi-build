@@ -11,9 +11,7 @@ All imports rely on torch which IS available (CPU-only).
 import pytest
 
 pytest.importorskip("torch")
-import time
 
-import numpy as np
 import torch
 import torch.nn as nn
 

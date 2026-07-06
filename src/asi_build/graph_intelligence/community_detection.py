@@ -5,17 +5,15 @@ Implements community detection algorithms to group related UI elements, workflow
 Based on FastToG research paper and Kenny's graph-based automation needs.
 """
 
-import json
 import logging
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Tuple
 
 import networkx as nx
-import numpy as np
 
-from .schema import CommunityNode, NodeType, RelationshipType, create_community
+from .schema import NodeType, RelationshipType, create_community
 from .schema_manager import SchemaManager
 
 logger = logging.getLogger(__name__)

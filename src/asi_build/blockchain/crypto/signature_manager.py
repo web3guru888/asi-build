@@ -12,7 +12,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import nacl.encoding
 import nacl.signing
@@ -20,7 +20,7 @@ from cryptography.exceptions import InvalidSignature
 
 # Cryptographic imports
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec, ed25519, padding, rsa
+from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
 from eth_account import Account
 from eth_account.messages import encode_defunct
 

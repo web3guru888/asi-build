@@ -8,11 +8,9 @@ Laplace noise, and advanced privacy accounting.
 import logging
 import math
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-import tensorflow as tf
-from scipy import stats
 
 from ..core.exceptions import PrivacyError
 

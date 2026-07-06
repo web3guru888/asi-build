@@ -3,21 +3,16 @@ Blockchain-based Model Checkpointing with IPFS/Filecoin Integration
 Provides decentralized, immutable storage for model checkpoints
 """
 
-import asyncio
 import hashlib
-import json
 import logging
 import os
-import pickle
 import tempfile
 import time
 import uuid
-from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
-import aiohttp
 import ipfshttpclient
-import numpy as np
 import torch
 from eth_account import Account
 from web3 import Web3

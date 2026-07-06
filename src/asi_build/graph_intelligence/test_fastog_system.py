@@ -5,13 +5,11 @@ Test FastToG (Fast Think-on-Graph) reasoning system completeness.
 
 import asyncio
 import logging
-import os
 import sys
 import time
 
 from asi_build.graph_intelligence.community_detection import CommunityDetectionEngine
 from asi_build.graph_intelligence.community_pruning import CommunityPruningSystem
-from asi_build.graph_intelligence.community_to_text import CommunityTextGenerator
 from asi_build.graph_intelligence.fastog_reasoning import (
     FastToGReasoningEngine,
     ReasoningMode,

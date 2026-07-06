@@ -6,21 +6,17 @@ Advanced goal negotiation system using game theory, mechanism design,
 and multi-agent coordination principles for AGI collaboration.
 """
 
-import asyncio
 import itertools
-import json
 import logging
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from scipy.optimize import minimize
-from scipy.spatial.distance import cosine
 
-from .core import AGIIdentity, CommunicationMessage, MessageType
+from .core import CommunicationMessage, MessageType
 
 logger = logging.getLogger(__name__)
 

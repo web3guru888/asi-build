@@ -8,14 +8,13 @@ global models to individual client data distributions.
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import tensorflow as tf
 
 from ..aggregation.base_aggregator import BaseAggregator
-from ..core.base import FederatedClient, FederatedModel, FederatedServer
-from ..core.exceptions import FederatedLearningError, ModelError
+from ..core.exceptions import ModelError
 
 
 class PersonalizationStrategy(ABC):

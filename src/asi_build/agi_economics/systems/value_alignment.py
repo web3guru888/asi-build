@@ -7,26 +7,14 @@ and SingularityNET's decentralized AI ecosystem goals.
 """
 
 import logging
-import math
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from decimal import Decimal, getcontext
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
-
-import numpy as np
+from typing import Any, Dict, List, Optional
 
 from ..core.base_engine import BaseEconomicEngine, EconomicEvent
-from ..core.exceptions import AgentError, ValidationError
-from ..core.types import (
-    Agent,
-    AgentID,
-    AgentType,
-    EconomicTransaction,
-    ReputationEvent,
-    TokenBalance,
-    TokenType,
-)
+from ..core.exceptions import ValidationError
 
 # Set decimal precision
 getcontext().prec = 28

@@ -5,16 +5,14 @@ Provides comprehensive authentication mechanisms including API keys,
 JWT tokens, and role-based access control.
 """
 
-import asyncio
 import hashlib
 import logging
 import secrets
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
-import bcrypt
 import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa

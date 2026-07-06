@@ -11,9 +11,7 @@ This module provides comprehensive integration with Pinecone, including:
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
-
-import numpy as np
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import pinecone

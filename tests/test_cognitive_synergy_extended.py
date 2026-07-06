@@ -14,10 +14,8 @@ Covers ALL submodules not tested in test_cognitive_synergy.py:
 All tests run standalone without optional deps (torch) — only numpy, scipy, networkx, sklearn.
 """
 
-import threading
 import time
-from collections import defaultdict, deque
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import networkx as nx
 import numpy as np
@@ -30,7 +28,6 @@ from asi_build.cognitive_synergy.core.cognitive_synergy_engine import (
 )
 from asi_build.cognitive_synergy.core.emergent_properties import (
     BehavioralEmergenceDetector,
-    EmergenceSignature,
     EmergentProperty,
     EmergentPropertyDetector,
     FunctionalEmergenceDetector,
@@ -45,14 +42,12 @@ from asi_build.cognitive_synergy.core.self_organization import (
     AdaptiveRestructurer,
     CoherenceMaintainer,
     HomeostaticController,
-    OrganizationRule,
     OrganizationState,
     ResourceOptimizer,
     SelfOrganizationMechanism,
 )
 from asi_build.cognitive_synergy.pattern_reasoning.pattern_mining_engine import (
     Pattern,
-    PatternHierarchy,
     PatternMiningEngine,
 )
 from asi_build.cognitive_synergy.pattern_reasoning.pattern_reasoning_synergy import (
@@ -79,7 +74,6 @@ from asi_build.cognitive_synergy.perception_action.perception_engine import (
     PerceptionEngine,
 )
 from asi_build.cognitive_synergy.perception_action.sensorimotor_synergy import (
-    ActionState,
     ForwardModel,
     InverseModel,
     PerceptionState,

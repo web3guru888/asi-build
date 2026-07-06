@@ -12,7 +12,6 @@ the individual files that DO exist and have real code.
 
 import asyncio
 import sys
-import time
 import types
 
 import numpy as np
@@ -78,14 +77,12 @@ from asi_build.bio_inspired.core import (
 )
 from asi_build.bio_inspired.energy_efficiency.energy_metrics import (
     EnergyCalculator,
-    EnergyMetrics,
     EnergyType,
     MetabolicCost,
 )
 from asi_build.bio_inspired.evolutionary.evolutionary_optimizer import (
     BiologicalFitnessFunction,
     EvolutionaryOptimizer,
-    FitnessFunction,
     Individual,
     MultiObjectiveOptimizer,
     OptimizationMethod,
@@ -106,7 +103,6 @@ from asi_build.bio_inspired.neuromorphic.neuromorphic_processor import (
     ThermalModel,
 )
 from asi_build.bio_inspired.neuromorphic.spiking_networks import (
-    SpikeEvent,
     SpikingNeuralNetwork,
 )
 

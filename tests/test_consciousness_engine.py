@@ -15,7 +15,6 @@ import numpy as np
 import pytest
 
 from asi_build.consciousness.base_consciousness import (
-    BaseConsciousness,
     ConsciousnessEvent,
     ConsciousnessMetrics,
     ConsciousnessState,
@@ -31,7 +30,6 @@ from asi_build.consciousness.integrated_information import (
     SystemElement,
 )
 from asi_build.consciousness.memory_integration import (
-    ConsolidationState,
     MemoryIntegration,
     MemoryType,
 )

@@ -19,7 +19,6 @@ Run this example to see:
 import asyncio
 import time
 from decimal import Decimal
-from typing import Any, Dict
 
 # Algorithm imports
 from agi_economics.algorithms.resource_allocator import ResourceAllocator, ResourceProvider
@@ -33,8 +32,6 @@ from agi_economics.contracts.agi_service_contract import AGIServiceContract
 # Core imports
 from agi_economics.core.config import EconomicConfig
 from agi_economics.core.types import (
-    Agent,
-    AgentType,
     ReputationEvent,
     Resource,
     ResourceType,
@@ -43,7 +40,7 @@ from agi_economics.core.types import (
     ValueCategory,
     ValueMeasurement,
 )
-from agi_economics.engines.bonding_curves import BondingCurveConfig, BondingCurveEngine, CurveType
+from agi_economics.engines.bonding_curves import BondingCurveEngine
 
 # Engine imports
 from agi_economics.engines.token_economics import TokenEconomicsEngine
@@ -55,9 +52,7 @@ from agi_economics.simulation.marketplace_dynamics import (
     OrderType,
 )
 from agi_economics.systems.reputation_system import (
-    ReputationDimension,
     ReputationSystem,
-    ReputationValidator,
 )
 
 # System imports

@@ -3,14 +3,13 @@ GPU Pool Manager - Manages GPU resources across multiple providers
 """
 
 import asyncio
-import json
 import logging
 import subprocess
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 
 class GPUVendor(Enum):

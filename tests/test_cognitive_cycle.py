@@ -7,15 +7,12 @@ metrics & history, multi-tick / background, and error handling.
 
 from __future__ import annotations
 
-import threading
 import time
-from dataclasses import field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, List, Optional, Sequence
 
 import pytest
 
 from asi_build.integration import (
-    AdapterRole,
     CognitiveBlackboard,
     CognitiveCycle,
     CycleMetrics,

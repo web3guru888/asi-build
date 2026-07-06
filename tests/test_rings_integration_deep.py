@@ -13,13 +13,10 @@ error handling, stress, and state persistence.
 from __future__ import annotations
 
 import asyncio
-import copy
-import hashlib
 import random
-import string
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import List
 
 import pytest
 
@@ -50,33 +47,21 @@ from asi_build.integration.protocols import (
 # Imports — SDK
 # ---------------------------------------------------------------------------
 from asi_build.rings.client import (
-    RING_MODULUS,
-    ConnectionState,
     DHTOperator,
-    FingerEntry,
     InMemoryTransport,
     PeerInfo,
     RingsClient,
-    SessionInfo,
-    SubRingInfo,
     _compute_vid,
-    _did_to_position,
 )
 from asi_build.rings.did import (
     DIDDocument,
-    DIDKeyPair,
     DIDProof,
     KeyCurve,
     RingsDID,
-    VerificationType,
 )
 from asi_build.rings.reputation import (
     BehaviourType,
-    GlobalRankRecord,
-    LocalObservation,
-    LocalRankRecord,
     ReputationClient,
-    SlashReport,
     TrustTier,
 )
 

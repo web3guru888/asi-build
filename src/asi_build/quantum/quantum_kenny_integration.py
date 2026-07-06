@@ -4,19 +4,14 @@ Main module that integrates all quantum computing capabilities into Kenny AGI
 """
 
 import asyncio
-import json
 import logging
 import os
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from quantum_hardware_connectors import (
-    AWSBraketConnector,
-    GoogleQuantumConnector,
-    IBMQuantumConnector,
-    IonQConnector,
     QuantumCircuitOptimizer,
     UnifiedQuantumInterface,
 )
@@ -25,17 +20,12 @@ from quantum_hardware_connectors import (
 from quantum_hybrid_module import (
     QAOA,
     VQE,
-    KennyQuantumIntegration,
-    QuantumHardwareManager,
     QuantumKernel,
     QuantumVLAOptimizer,
 )
 from quantum_ml_algorithms import (
-    QuantumAutoencoder,
     QuantumBoltzmannMachine,
     QuantumMLForVLA,
-    QuantumNeuralNetwork,
-    QuantumSupportVectorMachine,
 )
 
 logger = logging.getLogger(__name__)

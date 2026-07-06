@@ -6,15 +6,12 @@ to intervene in AGI decisions and governance processes when necessary,
 ensuring human control and democratic accountability in AGI systems.
 """
 
-import asyncio
-import json
 import logging
 import uuid
-from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

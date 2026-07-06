@@ -19,7 +19,6 @@ Target Latency: < 1μs for simple operations, < 10μs for complex chains
 
 import asyncio
 import ctypes
-import heapq
 import logging
 import mmap
 import multiprocessing as mp
@@ -27,12 +26,9 @@ import queue
 import signal
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
-
-import numpy as np
+from typing import Callable, Dict, List, Optional, Tuple
 
 # Configure logging for real-time systems
 logging.basicConfig(level=logging.WARNING)  # Minimal logging for performance

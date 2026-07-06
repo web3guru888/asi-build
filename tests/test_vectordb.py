@@ -9,7 +9,6 @@ The asi_build package tree is imported normally.
 
 import hashlib
 import math
-import os
 import sys
 import time
 import types
@@ -93,7 +92,6 @@ except Exception as _e:
 
 try:
     from asi_build.vectordb.core.utils import (
-        PerformanceMetrics,
         PerformanceMonitor,
         TextUtils,
         VectorStats,
@@ -122,7 +120,6 @@ except Exception as _e:
 try:
     from asi_build.vectordb.api.retrieval import (
         FacetProcessor,
-        FacetResult,
         QueryCache,
         QueryOptimizer,
         RetrievalQuery,
@@ -138,7 +135,6 @@ try:
         Document,
         DocumentProcessor,
         IndexingJob,
-        IndexingStats,
     )
 
     HAS_INDEXING = True

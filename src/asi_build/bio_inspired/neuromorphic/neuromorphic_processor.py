@@ -7,18 +7,16 @@ computation patterns of biological neural networks.
 
 import asyncio
 import logging
-import threading
 import time
 from collections import defaultdict, deque
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 
 from ..core import BioCognitiveModule, BiologicalMetrics
-from .spiking_networks import SpikeEvent, SpikingNeuralNetwork
+from .spiking_networks import SpikeEvent
 
 logger = logging.getLogger(__name__)
 

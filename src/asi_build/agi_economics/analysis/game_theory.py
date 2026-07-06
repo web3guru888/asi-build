@@ -11,17 +11,13 @@ import itertools
 import logging
 import time
 from dataclasses import dataclass, field
-from decimal import Decimal, getcontext
+from decimal import getcontext
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from scipy.linalg import null_space
-from scipy.optimize import linprog, minimize
 
 from ..core.base_engine import BaseEconomicEngine, EconomicEvent
-from ..core.exceptions import ValidationError
-from ..core.types import Agent, AgentID
 
 # Set decimal precision
 getcontext().prec = 28

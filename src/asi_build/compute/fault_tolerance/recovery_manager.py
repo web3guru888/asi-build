@@ -3,7 +3,6 @@ Recovery Manager - Handles automatic failure detection and recovery
 """
 
 import asyncio
-import json
 import logging
 import time
 import uuid

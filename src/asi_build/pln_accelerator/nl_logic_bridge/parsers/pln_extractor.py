@@ -11,14 +11,11 @@ import logging
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import nltk
-import numpy as np
 import spacy
-import torch
-from nltk.corpus import wordnet
-from transformers import AutoModel, AutoTokenizer, pipeline
+from transformers import pipeline
 
 
 class PLNRuleType(Enum):

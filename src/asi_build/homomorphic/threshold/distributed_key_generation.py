@@ -1,7 +1,7 @@
 """Distributed key generation protocols."""
 
 import random
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 
 class DistributedKeyGeneration:

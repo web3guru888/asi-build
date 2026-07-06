@@ -7,19 +7,17 @@ Handles token supply, inflation, burning, staking, and complex economic mechanis
 """
 
 import logging
-import math
 import time
 from dataclasses import dataclass, field
 from decimal import Decimal, getcontext
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from ..core.base_engine import BaseEconomicEngine, EconomicEvent
-from ..core.exceptions import InsufficientFundsError, InvalidTokenError, TokenError
+from ..core.exceptions import InsufficientFundsError, InvalidTokenError
 from ..core.types import (
     Agent,
     EconomicTransaction,
     MarketData,
-    MarketState,
     TokenBalance,
     TokenType,
     TransactionType,

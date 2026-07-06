@@ -5,12 +5,11 @@ Mixed Reality Engine for seamless AR/VR holographic experiences
 import asyncio
 import logging
 import math
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import cv2
 import numpy as np
@@ -18,7 +17,6 @@ import numpy as np
 from ..core.base import (
     HolographicBase,
     HolographicPerformanceMonitor,
-    RenderingError,
     Transform3D,
     Vector3D,
 )

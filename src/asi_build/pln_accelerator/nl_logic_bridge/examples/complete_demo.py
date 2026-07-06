@@ -9,9 +9,7 @@ Author: Kenny (implementing Ben Goertzel's AGI vision)
 """
 
 import asyncio
-import json
 import time
-from typing import Any, Dict, List
 
 # Import the complete NL-Logic Bridge system
 from nl_logic_bridge import BridgeConfig, LogicFormalism, NLLogicBridge, QueryInterface, QueryType

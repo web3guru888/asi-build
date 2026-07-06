@@ -2,7 +2,7 @@
 
 import hashlib
 import random
-from typing import Dict, List, Set
+from typing import List, Set
 
 
 class MultiPartyPSI:

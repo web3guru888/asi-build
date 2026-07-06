@@ -10,19 +10,16 @@ symbols / sp.true), added shared symbol registry, ungrounded-symbol
 safety checks, exhaustive model checking, and symbolic natural deduction.
 """
 
-import asyncio
 import itertools
-import json
 import logging
 import re
-from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set
 
 import sympy as sp
-from sympy.logic.boolalg import And, Equivalent, Implies, Not, Or
+from sympy.logic.boolalg import And, Implies, Not
 from sympy.logic.inference import satisfiable
 
 logger = logging.getLogger(__name__)

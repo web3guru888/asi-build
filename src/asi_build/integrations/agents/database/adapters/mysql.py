@@ -13,8 +13,6 @@ from ..interface import (
     ColumnInfo,
     DatabaseAnalyzer,
     ForeignKeyInfo,
-    TableInfo,
-    TableType,
 )
 
 logger = logging.getLogger(__name__)

@@ -18,7 +18,7 @@ Based on Rosenthal's HOT theory of consciousness.
 import logging
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import networkx as nx
 import numpy as np

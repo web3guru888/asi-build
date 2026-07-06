@@ -16,7 +16,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import numpy as np
 
 from ..core.config import BCIConfig
-from ..core.signal_processor import ProcessedSignal
 from .p300_classifier import P300Classifier
 from .stimulus_controller import StimulusController
 

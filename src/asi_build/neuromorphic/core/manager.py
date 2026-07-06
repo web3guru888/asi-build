@@ -7,15 +7,13 @@ Manages system lifecycle, resource allocation, and coordination between subsyste
 
 import json
 import logging
-import os
 import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
-import numpy as np
 import psutil
 
 from .config import NeuromorphicConfig

@@ -2,7 +2,6 @@ import asyncio
 from contextlib import AsyncExitStack
 from typing import Optional
 
-import pytest
 from anthropic import Anthropic
 from dotenv import load_dotenv
 from mcp import ClientSession, StdioServerParameters

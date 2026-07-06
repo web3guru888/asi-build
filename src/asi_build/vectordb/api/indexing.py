@@ -9,7 +9,6 @@ This module provides comprehensive indexing capabilities including:
 - Index optimization and management
 """
 
-import asyncio
 import json
 import logging
 import queue
@@ -19,10 +18,9 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
-from ..core.embeddings import EmbeddingPipeline
-from ..core.utils import TextUtils, timed_operation
+from ..core.utils import TextUtils
 from .unified_client import UnifiedVectorDB
 
 logger = logging.getLogger(__name__)

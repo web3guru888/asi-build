@@ -14,8 +14,7 @@ import sys
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import uvicorn
 from fastapi import FastAPI, Request

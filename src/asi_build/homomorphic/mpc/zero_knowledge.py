@@ -1,8 +1,7 @@
 """Zero-knowledge proof systems for MPC."""
 
-import hashlib
 import random
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 
 
 class ZKProofs:

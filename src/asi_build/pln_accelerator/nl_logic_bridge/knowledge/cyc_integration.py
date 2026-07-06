@@ -6,9 +6,7 @@ that contains hundreds of thousands of terms and millions of assertions.
 """
 
 import asyncio
-import json
 import logging
-import re
 from typing import Any, Dict, List, Optional
 
 import aiohttp

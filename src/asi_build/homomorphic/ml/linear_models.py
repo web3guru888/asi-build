@@ -6,14 +6,13 @@ and other linear models using homomorphic encryption.
 """
 
 import logging
-import math
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List
 
 import numpy as np
 
-from ..core.base import FHEConfiguration, SchemeType, SecurityLevel
-from ..schemes.ckks import CKKSCiphertext, CKKSPlaintext, CKKSScheme
+from ..core.base import FHEConfiguration
+from ..schemes.ckks import CKKSCiphertext, CKKSScheme
 
 logger = logging.getLogger(__name__)
 

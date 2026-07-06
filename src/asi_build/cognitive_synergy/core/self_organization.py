@@ -9,15 +9,12 @@ principles from complex adaptive systems, autopoiesis, and emergent dynamics.
 import logging
 import time
 import warnings
-from abc import ABC, abstractmethod
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List
 
 import networkx as nx
 import numpy as np
-from scipy.optimize import minimize
-from sklearn.cluster import KMeans
 
 warnings.filterwarnings("ignore")
 

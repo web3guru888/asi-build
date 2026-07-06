@@ -11,13 +11,12 @@ import threading
 import time
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 
 from ..aggregation.base_aggregator import BaseAggregator
 from ..core.base import FederatedClient, FederatedModel, FederatedServer
-from ..core.exceptions import FederatedLearningError, ServerError
 
 
 class AsyncUpdateBuffer:

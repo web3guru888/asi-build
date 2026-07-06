@@ -16,7 +16,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, List, Optional, Set
 
 from ...lang.ast.safety_ast import *
 from ...lang.semantic.type_checker import SafetyTypeChecker

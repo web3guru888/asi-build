@@ -20,12 +20,12 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
 from ...lang.ast.safety_ast import *
-from ...monitors.runtime.safety_monitor import AlertLevel, SafetyAlert
+from ...monitors.runtime.safety_monitor import SafetyAlert
 
 
 class AdversarialTestResult(Enum):

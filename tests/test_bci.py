@@ -5,11 +5,8 @@ Covers signal processing, feature extraction, CSP, SSVEP detection,
 metrics, and configuration.
 """
 
-import math
-
 import numpy as np
 import pytest
-from scipy.signal import butter, filtfilt
 
 # BCI modules require mne (optional). Skip gracefully if not installed.
 try:

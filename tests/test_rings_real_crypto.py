@@ -5,12 +5,11 @@ Covers: key generation, DID creation, proof generation & verification,
 VID computation, service registration, and edge cases.
 """
 
-import asyncio
 import hashlib
 
 import pytest
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec, ed25519
+from cryptography.hazmat.primitives.asymmetric import ec
 
 from asi_build.rings.did import (
     RING_MODULUS,
@@ -20,8 +19,6 @@ from asi_build.rings.did import (
     KeyCurve,
     RingsDID,
     VerificationType,
-    _private_key_from_hex,
-    _public_key_from_hex,
 )
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -5,13 +5,12 @@ Biologically-inspired spiking neural networks with Leaky Integrate-and-Fire neur
 STDP learning, and temporal dynamics that mirror biological neural networks.
 """
 
-import asyncio
 import logging
 import time
 from abc import ABC, abstractmethod
 from collections import deque
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Union
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 

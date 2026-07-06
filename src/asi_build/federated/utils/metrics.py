@@ -8,7 +8,7 @@ import json
 import logging
 import time
 from collections import defaultdict, deque
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
 

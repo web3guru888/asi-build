@@ -6,7 +6,6 @@ Ensures all components work together seamlessly.
 
 import json
 import logging
-import os
 import sys
 import time
 
@@ -26,7 +25,6 @@ except ImportError:
     ContextEngine = DecisionEngine = LearningEngine = None
     ActionExecutor = KennyIntelligence = Context = ActionType = None
 from asi_build.graph_intelligence.performance_optimizer import PerformanceOptimizer
-from asi_build.graph_intelligence.schema import NodeType, RelationshipType, create_ui_element
 from asi_build.graph_intelligence.schema_manager import SchemaManager
 
 logging.basicConfig(level=logging.INFO)
