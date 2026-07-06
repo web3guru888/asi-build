@@ -111,7 +111,7 @@ all = [
 ]
 
 [project.urls]
-Repository = "https://gitlab.com/asi-build/asi-build"
+Repository = "https://github.com/web3guru888/asi-build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/asi_build"]
