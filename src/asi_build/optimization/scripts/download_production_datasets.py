@@ -18,6 +18,20 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+
+def _safe_extract_zip(zip_ref: zipfile.ZipFile, extract_to: Path) -> None:
+    """Extract a zip archive, rejecting path-traversal members (zip-slip).
+
+    Every member's resolved destination must stay inside *extract_to*.
+    """
+    dest_root = Path(extract_to).resolve()
+    for member in zip_ref.namelist():
+        target = (dest_root / member).resolve()
+        if dest_root != target and dest_root not in target.parents:
+            raise ValueError(f"Blocked zip-slip path in archive: {member!r}")
+    zip_ref.extractall(dest_root)  # nosec B202 — members validated above (zip, not tar)
+
+
 import requests
 from tqdm import tqdm
 
@@ -237,10 +251,12 @@ class ProductionDatasetDownloader:
 
             if filepath.suffix == ".zip":
                 with zipfile.ZipFile(filepath, "r") as zip_ref:
-                    zip_ref.extractall(extract_to)
+                    _safe_extract_zip(zip_ref, extract_to)
             elif filepath.suffix in [".tar", ".gz", ".tgz"]:
                 with tarfile.open(filepath, "r:*") as tar_ref:
-                    tar_ref.extractall(extract_to)
+                    # filter="data" rejects absolute paths, ../ traversal,
+                    # symlinks/devices (tar-slip, B202)
+                    tar_ref.extractall(extract_to, filter="data")
             else:
                 logger.warning(f"Unknown archive format: {filepath}")
                 return False

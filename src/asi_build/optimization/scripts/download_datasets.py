@@ -16,6 +16,19 @@ import zipfile
 from pathlib import Path
 
 
+def _safe_extract_zip(zip_ref: zipfile.ZipFile, extract_to: Path) -> None:
+    """Extract a zip archive, rejecting path-traversal members (zip-slip).
+
+    Every member's resolved destination must stay inside *extract_to*.
+    """
+    dest_root = Path(extract_to).resolve()
+    for member in zip_ref.namelist():
+        target = (dest_root / member).resolve()
+        if dest_root != target and dest_root not in target.parents:
+            raise ValueError(f"Blocked zip-slip path in archive: {member!r}")
+    zip_ref.extractall(dest_root)  # nosec B202 — members validated above (zip, not tar)
+
+
 class DatasetDownloader:
     """Download and prepare datasets for VLA++."""
 
@@ -51,9 +64,11 @@ class DatasetDownloader:
                 print(f"File {dest_path} already exists, skipping download")
                 return True
 
-            # Download with wget for better progress reporting
-            cmd = f"wget -c {url} -O {dest_path}"
-            result = subprocess.run(cmd, shell=True, capture_output=False)
+            # Download with wget for better progress reporting.
+            # Argument list (no shell=True) — a crafted URL must not be
+            # able to inject shell commands (B602).
+            cmd = ["wget", "-c", url, "-O", str(dest_path)]
+            result = subprocess.run(cmd, capture_output=False)
 
             if result.returncode == 0:
                 print(f"Successfully downloaded {dest_path.name}")
@@ -73,10 +88,12 @@ class DatasetDownloader:
         try:
             if archive_path.suffix == ".zip":
                 with zipfile.ZipFile(archive_path, "r") as zip_ref:
-                    zip_ref.extractall(extract_to)
+                    _safe_extract_zip(zip_ref, extract_to)
             elif archive_path.suffix in [".tar", ".tgz", ".tar.gz"]:
                 with tarfile.open(archive_path, "r:*") as tar_ref:
-                    tar_ref.extractall(extract_to)
+                    # filter="data" rejects absolute paths, ../ traversal,
+                    # symlinks/devices (tar-slip, B202)
+                    tar_ref.extractall(extract_to, filter="data")
             else:
                 print(f"Unknown archive format: {archive_path.suffix}")
                 return False
