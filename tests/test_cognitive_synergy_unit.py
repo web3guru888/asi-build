@@ -20,8 +20,6 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-# --- Imports ---
-
 from asi_build.cognitive_synergy.core.cognitive_synergy_engine import (
     CognitiveDynamic,
     CognitiveSynergyEngine,
@@ -53,19 +51,22 @@ from asi_build.cognitive_synergy.core.synergy_metrics import (
     SynergyMetrics,
     SynergyProfile,
 )
-from asi_build.cognitive_synergy.perception_action.perception_engine import (
-    PerceptionEngine,
-)
 from asi_build.cognitive_synergy.pattern_reasoning.pattern_mining_engine import (
     Pattern,
     PatternHierarchy,
     PatternMiningEngine,
 )
+from asi_build.cognitive_synergy.perception_action.perception_engine import (
+    PerceptionEngine,
+)
+
+# --- Imports ---
 
 
 # ============================================================
 # Fixtures
 # ============================================================
+
 
 @pytest.fixture
 def primus():
@@ -100,6 +101,7 @@ def self_org():
 # ============================================================
 # 1. Data-class tests
 # ============================================================
+
 
 class TestSynergyPairDataclass:
     def test_field_defaults(self):
@@ -240,6 +242,7 @@ class TestOrganizationStateDataclass:
 # ============================================================
 # 2. CognitiveSynergyEngine tests
 # ============================================================
+
 
 class TestCognitiveSynergyEngine:
     def test_init_creates_10_pairs(self, engine):
@@ -397,6 +400,7 @@ class TestCognitiveSynergyEngine:
 # 3. SynergyMetrics tests
 # ============================================================
 
+
 class TestSynergyMetrics:
     def test_add_time_series_creates_pair(self, metrics):
         metrics.add_time_series_data("pair_a", 1.0, 2.0)
@@ -452,9 +456,7 @@ class TestSynergyMetrics:
         )
         metrics.synergy_profiles["test"] = p
         strength = metrics.get_synergy_strength("test")
-        expected = (
-            0.25 * 0.5 + 0.20 * 0.3 + 0.15 * 0.4 + 0.15 * 0.6 + 0.15 * 0.2 + 0.10 * 0.1
-        )
+        expected = 0.25 * 0.5 + 0.20 * 0.3 + 0.15 * 0.4 + 0.15 * 0.6 + 0.15 * 0.2 + 0.10 * 0.1
         assert strength == pytest.approx(expected, abs=1e-6)
 
     def test_get_emergence_indicators_no_profile(self, metrics):
@@ -538,6 +540,7 @@ class TestSynergyMetrics:
 # ============================================================
 # 4. PRIMUSFoundation tests
 # ============================================================
+
 
 class TestPRIMUSFoundation:
     def test_init_defaults(self, primus):
@@ -655,6 +658,7 @@ class TestPRIMUSFoundation:
 # 5. EmergentPropertyDetector tests
 # ============================================================
 
+
 class TestEmergentPropertyDetector:
     def test_init_has_three_detectors(self, detector):
         assert "behavioral" in detector.detectors
@@ -696,8 +700,14 @@ class TestEmergentPropertyDetector:
 
     def test_get_stable_properties(self, detector):
         ep = EmergentProperty(
-            id="s1", name="stable", description="", emergence_type="behavioral",
-            strength=0.8, novelty=0.5, stability=0.9, complexity=0.5,
+            id="s1",
+            name="stable",
+            description="",
+            emergence_type="behavioral",
+            strength=0.8,
+            novelty=0.5,
+            stability=0.9,
+            complexity=0.5,
             contributing_processes=[],
         )
         detector.detected_properties["s1"] = ep
@@ -706,8 +716,14 @@ class TestEmergentPropertyDetector:
 
     def test_get_novel_properties(self, detector):
         ep = EmergentProperty(
-            id="n1", name="novel", description="", emergence_type="behavioral",
-            strength=0.8, novelty=0.95, stability=0.5, complexity=0.5,
+            id="n1",
+            name="novel",
+            description="",
+            emergence_type="behavioral",
+            strength=0.8,
+            novelty=0.95,
+            stability=0.5,
+            complexity=0.5,
             contributing_processes=[],
         )
         detector.detected_properties["n1"] = ep
@@ -716,8 +732,14 @@ class TestEmergentPropertyDetector:
 
     def test_get_complex_properties(self, detector):
         ep = EmergentProperty(
-            id="c1", name="complex", description="", emergence_type="structural",
-            strength=0.8, novelty=0.5, stability=0.5, complexity=0.95,
+            id="c1",
+            name="complex",
+            description="",
+            emergence_type="structural",
+            strength=0.8,
+            novelty=0.5,
+            stability=0.5,
+            complexity=0.95,
             contributing_processes=[],
         )
         detector.detected_properties["c1"] = ep
@@ -734,8 +756,14 @@ class TestEmergentPropertyDetector:
 
     def test_property_tracking_updates_observation_count(self, detector):
         ep = EmergentProperty(
-            id="track1", name="tracked", description="", emergence_type="behavioral",
-            strength=0.8, novelty=0.9, stability=0.5, complexity=0.5,
+            id="track1",
+            name="tracked",
+            description="",
+            emergence_type="behavioral",
+            strength=0.8,
+            novelty=0.9,
+            stability=0.5,
+            complexity=0.5,
             contributing_processes=[],
         )
         detector._update_property_tracking([ep])
@@ -808,6 +836,7 @@ class TestFunctionalEmergenceDetector:
 # ============================================================
 # 6. SelfOrganizationMechanism tests
 # ============================================================
+
 
 class TestSelfOrganizationMechanism:
     def _make_system_args(self, coherence=0.5, n_pairs=5, strength=0.5):
@@ -952,6 +981,7 @@ class TestCoherenceMaintainer:
 # 7. PerceptionEngine tests
 # ============================================================
 
+
 class TestPerceptionEngine:
     def test_init_state(self):
         pe = PerceptionEngine()
@@ -982,6 +1012,7 @@ class TestPerceptionEngine:
 # ============================================================
 # 8. PatternMiningEngine tests
 # ============================================================
+
 
 class TestPatternDataclass:
     def test_construction_and_defaults(self):

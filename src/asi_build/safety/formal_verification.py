@@ -32,8 +32,10 @@ logger = logging.getLogger(__name__)
 # FormulaParseError — explicit failure instead of silent degradation
 # ---------------------------------------------------------------------------
 
+
 class FormulaParseError(Exception):
     """Raised when a logical formula cannot be parsed."""
+
     pass
 
 
@@ -107,6 +109,7 @@ def parse_logic_formula(formula: str) -> sp.Basic:
 # ---------------------------------------------------------------------------
 # Enums & data classes (unchanged public API)
 # ---------------------------------------------------------------------------
+
 
 class LogicOperator(Enum):
     AND = "and"
@@ -187,6 +190,7 @@ class FormalProof:
 # EthicalAxiom
 # ---------------------------------------------------------------------------
 
+
 class EthicalAxiom:
     """Represents fundamental ethical axioms."""
 
@@ -207,6 +211,7 @@ class EthicalAxiom:
 # ---------------------------------------------------------------------------
 # TheoremProver
 # ---------------------------------------------------------------------------
+
 
 class TheoremProver:
     """Automated theorem prover for ethical verification."""
@@ -286,9 +291,7 @@ class TheoremProver:
         return syms
 
     @staticmethod
-    def _check_ungrounded(
-        premise_formulas, conclusion_formula
-    ) -> Optional[Set[sp.Symbol]]:
+    def _check_ungrounded(premise_formulas, conclusion_formula) -> Optional[Set[sp.Symbol]]:
         """Return ungrounded symbols in conclusion, or None if all grounded."""
         premise_syms: Set[sp.Symbol] = set()
         for pf in premise_formulas:
@@ -487,7 +490,11 @@ class TheoremProver:
                                 )
                             )
                             if neg_antecedent == conclusion_formula:
-                                return {"valid": True, "steps": steps, "method": "natural_deduction"}
+                                return {
+                                    "valid": True,
+                                    "steps": steps,
+                                    "method": "natural_deduction",
+                                }
 
                 # Simplification: if we know (A & B), derive A and B
                 if isinstance(expr, And):
@@ -499,7 +506,11 @@ class TheoremProver:
                 break
             known_exprs.update(new_facts)
 
-        return {"valid": conclusion_formula in known_exprs, "steps": steps, "method": "natural_deduction"}
+        return {
+            "valid": conclusion_formula in known_exprs,
+            "steps": steps,
+            "method": "natural_deduction",
+        }
 
     # ----- model checking -----
 
@@ -538,7 +549,12 @@ class TheoremProver:
                     ),
                 )
             )
-            return {"valid": False, "steps": steps, "method": "model_checking", "counter_examples": []}
+            return {
+                "valid": False,
+                "steps": steps,
+                "method": "model_checking",
+                "counter_examples": [],
+            }
 
         # --- Premise consistency check ---
         combined_mc = And(*all_premise_formulas) if all_premise_formulas else sp.true
@@ -552,7 +568,12 @@ class TheoremProver:
                     justification="Premises are contradictory — no valid proof possible",
                 )
             )
-            return {"valid": False, "steps": steps, "method": "model_checking", "counter_examples": []}
+            return {
+                "valid": False,
+                "steps": steps,
+                "method": "model_checking",
+                "counter_examples": [],
+            }
 
         # Collect all propositional variables
         variables: Set[sp.Symbol] = set()
@@ -579,9 +600,7 @@ class TheoremProver:
                     conclusion_val = conclusion_formula.subs(assignment)
                     if conclusion_val == sp.false or conclusion_val is False:
                         is_valid = False
-                        counter_examples.append(
-                            {str(k): v for k, v in assignment.items()}
-                        )
+                        counter_examples.append({str(k): v for k, v in assignment.items()})
         else:
             # No variables — vacuously check the constant expressions
             if all(f == sp.true or f is True for f in all_premise_formulas):
@@ -668,6 +687,7 @@ class TheoremProver:
 # ---------------------------------------------------------------------------
 # EthicalVerificationEngine
 # ---------------------------------------------------------------------------
+
 
 class EthicalVerificationEngine:
     """Main engine for ethical constraint verification."""

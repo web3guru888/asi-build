@@ -24,7 +24,6 @@ import enum
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
-
 # ---------------------------------------------------------------------------
 # Gas strategy enum
 # ---------------------------------------------------------------------------
@@ -37,9 +36,9 @@ class GasStrategy(enum.Enum):
     construct transaction fee parameters.
     """
 
-    EIP1559 = "eip1559"     #: EIP-1559 dynamic fee (Ethereum, Base)
-    LEGACY = "legacy"       #: Legacy gasPrice (BSC)
-    FIXED = "fixed"         #: Stable/fixed gas (Arc — USDC native gas)
+    EIP1559 = "eip1559"  #: EIP-1559 dynamic fee (Ethereum, Base)
+    LEGACY = "legacy"  #: Legacy gasPrice (BSC)
+    FIXED = "fixed"  #: Stable/fixed gas (Arc — USDC native gas)
 
     @staticmethod
     def estimate_gas_params(chain: "ChainConfig", base_gas_price: int) -> Dict[str, int]:
@@ -89,6 +88,7 @@ class GasStrategy(enum.Enum):
 # ---------------------------------------------------------------------------
 # Chain configuration
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class ChainConfig:
@@ -255,6 +255,7 @@ CHAINS: Dict[str, ChainConfig] = {
 # Helper functions
 # ---------------------------------------------------------------------------
 
+
 def get_chain(name: str) -> ChainConfig:
     """Return the :class:`ChainConfig` for *name*.
 
@@ -267,9 +268,7 @@ def get_chain(name: str) -> ChainConfig:
         return CHAINS[name]
     except KeyError:
         available = ", ".join(sorted(CHAINS))
-        raise KeyError(
-            f"Unknown chain {name!r}. Available chains: {available}"
-        ) from None
+        raise KeyError(f"Unknown chain {name!r}. Available chains: {available}") from None
 
 
 def get_enabled_chains() -> Dict[str, ChainConfig]:
@@ -279,11 +278,7 @@ def get_enabled_chains() -> Dict[str, ChainConfig]:
 
 def get_deployed_chains() -> Dict[str, ChainConfig]:
     """Return all chains that have a deployed bridge contract address."""
-    return {
-        name: cfg
-        for name, cfg in CHAINS.items()
-        if cfg.bridge_address is not None
-    }
+    return {name: cfg for name, cfg in CHAINS.items() if cfg.bridge_address is not None}
 
 
 def get_chain_by_id(chain_id: int) -> Optional[ChainConfig]:
@@ -342,4 +337,3 @@ def update_deployed_addresses(
         cfg.bridge_address = bridge
     if token is not None:
         cfg.token_address = token
-

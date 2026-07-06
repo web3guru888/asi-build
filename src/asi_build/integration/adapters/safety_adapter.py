@@ -387,9 +387,7 @@ class SafetyBlackboardAdapter:
                 result["alignment_check"] = aligned
                 if not aligned:
                     result["is_ethical"] = False
-                    result["verification_summary"] += (
-                        " Constitutional alignment check FAILED."
-                    )
+                    result["verification_summary"] += " Constitutional alignment check FAILED."
             except Exception:
                 logger.warning(
                     "Constitutional alignment check failed — treating as misaligned",
@@ -474,11 +472,7 @@ class SafetyBlackboardAdapter:
                 data=ver,
                 source_module=self.MODULE_NAME,
                 confidence=ver.get("overall_confidence", 0.5),
-                priority=(
-                    EntryPriority.CRITICAL
-                    if not is_ethical
-                    else EntryPriority.NORMAL
-                ),
+                priority=(EntryPriority.CRITICAL if not is_ethical else EntryPriority.NORMAL),
                 ttl_seconds=self._verification_ttl,
                 tags=frozenset(
                     {"ethics", "verification"}
@@ -559,15 +553,10 @@ class SafetyBlackboardAdapter:
                 priority=(
                     EntryPriority.CRITICAL
                     if not is_valid and proof.get("safety_critical", False)
-                    else EntryPriority.HIGH
-                    if not is_valid
-                    else EntryPriority.NORMAL
+                    else EntryPriority.HIGH if not is_valid else EntryPriority.NORMAL
                 ),
                 ttl_seconds=self._proof_ttl,
-                tags=frozenset(
-                    {"proof", "theorem"}
-                    | ({"valid"} if is_valid else {"invalid"})
-                ),
+                tags=frozenset({"proof", "theorem"} | ({"valid"} if is_valid else {"invalid"})),
                 metadata={"is_valid": is_valid, "method": proof.get("method", "")},
             )
             entries.append(entry)
@@ -654,9 +643,7 @@ class SafetyBlackboardAdapter:
             },
             source_module=self.MODULE_NAME,
             confidence=0.95,
-            priority=(
-                EntryPriority.HIGH if failed > 0 else EntryPriority.NORMAL
-            ),
+            priority=(EntryPriority.HIGH if failed > 0 else EntryPriority.NORMAL),
             ttl_seconds=self._verification_ttl,
             tags=frozenset({"verification", "statistics"}),
             metadata={"total": total, "failed": failed},
@@ -679,7 +666,10 @@ class SafetyBlackboardAdapter:
                 if sm is not None:
                     try:
                         from asi_build.safety.governance import DAOGovernance
-                        if isinstance(self._governance, type) or hasattr(self._governance, "policies"):
+
+                        if isinstance(self._governance, type) or hasattr(
+                            self._governance, "policies"
+                        ):
                             pass  # Minimal stub — no DAO
                     except (ImportError, AttributeError):
                         pass
@@ -698,8 +688,7 @@ class SafetyBlackboardAdapter:
                         "active_proposals": sum(
                             1
                             for p in proposals.values()
-                            if getattr(p, "status", "").lower()
-                            in ("active", "pending", "voting")
+                            if getattr(p, "status", "").lower() in ("active", "pending", "voting")
                         ),
                         "timestamp": time.time(),
                     },
@@ -932,9 +921,7 @@ class SafetyBlackboardAdapter:
         """Handle communication events — verify negotiation outcomes."""
         if event.event_type == "agi_comm.negotiation.completed":
             payload = event.payload or {}
-            logger.debug(
-                "Negotiation completed — will verify on next consume cycle"
-            )
+            logger.debug("Negotiation completed — will verify on next consume cycle")
 
     def _handle_economics_event(self, event: CognitiveEvent) -> None:
         """Handle economic events — check for compliance violations."""
@@ -959,9 +946,7 @@ class SafetyBlackboardAdapter:
                             action,
                         )
                 except Exception:
-                    logger.debug(
-                        "Failed constitutional check on economic event", exc_info=True
-                    )
+                    logger.debug("Failed constitutional check on economic event", exc_info=True)
 
     def _handle_consciousness_event(self, event: CognitiveEvent) -> None:
         """Handle consciousness state changes for oversight adjustment."""
@@ -969,9 +954,7 @@ class SafetyBlackboardAdapter:
         new_state = payload.get("new_state", "")
         if new_state == "dormant":
             self._oversight_level = 1.0  # Maximum caution
-            logger.info(
-                "Consciousness dormant — oversight level set to MAXIMUM (1.0)"
-            )
+            logger.info("Consciousness dormant — oversight level set to MAXIMUM (1.0)")
 
     # ── Snapshot ──────────────────────────────────────────────────────
 
@@ -996,17 +979,13 @@ class SafetyBlackboardAdapter:
 
         if self._constitutional is not None:
             try:
-                snap["constitution_status"] = (
-                    self._constitutional.get_constitution_status()
-                )
+                snap["constitution_status"] = self._constitutional.get_constitution_status()
             except Exception:
                 snap["constitution_status"] = None
 
         if self._verifier is not None:
             try:
-                snap["verification_stats"] = (
-                    self._verifier.get_verification_statistics()
-                )
+                snap["verification_stats"] = self._verifier.get_verification_statistics()
             except Exception:
                 snap["verification_stats"] = None
 

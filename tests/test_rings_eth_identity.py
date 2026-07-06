@@ -13,12 +13,11 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import ec
 
 from asi_build.rings.eth_bridge import (
-    RingsEthIdentity,
     SECP256K1_ORDER,
+    RingsEthIdentity,
     _eip55_checksum,
     _keccak256,
 )
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 1. Identity Creation (10 tests)
@@ -500,9 +499,7 @@ class TestEIP712Signing:
         }
         message = {"amount": 100, "price": 50, "isBuy": True}
         sig = identity.sign_eip712(self._DOMAIN, types, message)
-        recovered = RingsEthIdentity.recover_eip712_address(
-            self._DOMAIN, types, message, sig
-        )
+        recovered = RingsEthIdentity.recover_eip712_address(self._DOMAIN, types, message, sig)
         assert recovered.lower() == identity.ethereum_address.lower()
 
 

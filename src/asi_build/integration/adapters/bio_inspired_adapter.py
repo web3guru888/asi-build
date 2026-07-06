@@ -138,9 +138,7 @@ class BioInspiredAdapter:
         return ModuleInfo(
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
-            capabilities=(
-                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER
-            ),
+            capabilities=(ModuleCapability.PRODUCER | ModuleCapability.CONSUMER),
             description=(
                 "Bio-inspired module: evolutionary optimization, homeostatic "
                 "regulation, and bio-cognitive architecture status."
@@ -410,9 +408,7 @@ class BioInspiredAdapter:
             return None
 
         status_data = status_data if isinstance(status_data, dict) else {"raw": status_data}
-        status_name = str(
-            status_data.get("state", status_data.get("status", ""))
-        )
+        status_name = str(status_data.get("state", status_data.get("status", "")))
 
         # Only post if state changed
         if status_name == self._last_status:

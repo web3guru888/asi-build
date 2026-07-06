@@ -22,10 +22,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # Ensure the package is importable
-sys.path.insert(
-    0, str(Path(__file__).resolve().parents[1] / "src")
-)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from asi_build.rings.bridge.zk.prover import (
+    ProofGenerationError,
+    ProofVerificationError,
+    ZKProof,
+    ZKProofEngine,
+)
 from asi_build.rings.bridge.zk.snarkjs_prover import (
     BN254_FIELD_ORDER,
     DEFAULT_CIRCUITS_DIR,
@@ -35,12 +39,6 @@ from asi_build.rings.bridge.zk.snarkjs_prover import (
     _stringify_inputs,
     compute_withdrawal_witness,
     poseidon_hash,
-)
-from asi_build.rings.bridge.zk.prover import (
-    ProofGenerationError,
-    ProofVerificationError,
-    ZKProof,
-    ZKProofEngine,
 )
 
 # ---------------------------------------------------------------------------
@@ -496,9 +494,7 @@ class TestHelpers:
         assert result == {"a": "hello"}
 
     def test_stringify_inputs_mixed(self):
-        result = _stringify_inputs(
-            {"amount": 100, "path": [1, 2], "name": "test"}
-        )
+        result = _stringify_inputs({"amount": 100, "path": [1, 2], "name": "test"})
         assert result == {
             "amount": "100",
             "path": ["1", "2"],
@@ -518,9 +514,7 @@ class TestPoseidonHash:
     @pytest.mark.asyncio
     async def test_poseidon2(self):
         """Poseidon(1, 2) should return a deterministic result."""
-        result = await poseidon_hash(
-            [1, 2], circuits_dir=CIRCUITS_DIR
-        )
+        result = await poseidon_hash([1, 2], circuits_dir=CIRCUITS_DIR)
         assert isinstance(result, int)
         assert result > 0
         assert result < BN254_FIELD_ORDER
@@ -529,9 +523,7 @@ class TestPoseidonHash:
     @pytest.mark.asyncio
     async def test_poseidon3(self):
         """Poseidon(42, 1000, 1) — the leaf hash for test inputs."""
-        result = await poseidon_hash(
-            [42, 1000, 1], circuits_dir=CIRCUITS_DIR
-        )
+        result = await poseidon_hash([42, 1000, 1], circuits_dir=CIRCUITS_DIR)
         assert isinstance(result, int)
         assert result > 0
 
@@ -555,9 +547,7 @@ class TestPoseidonHash:
     @pytest.mark.asyncio
     async def test_poseidon_known_value(self):
         """Verify against the known leaf from our test input generation."""
-        leaf = await poseidon_hash(
-            [42, 1000, 1], circuits_dir=CIRCUITS_DIR
-        )
+        leaf = await poseidon_hash([42, 1000, 1], circuits_dir=CIRCUITS_DIR)
         # This is the leaf hash computed by our generate_test_input.js
         expected = 7138946408509900141572757971884330120447472310724103259417700574110708038504
         assert leaf == expected
@@ -608,7 +598,9 @@ class TestComputeWitness:
         )
         # Expected values from generate_test_input.js
         expected_root = 3305197735301507071566117782537473216135263344381086466045543627147954894876
-        expected_recipient = 8115236278915580287033870785443340863078946943991125563411906784305589881962
+        expected_recipient = (
+            8115236278915580287033870785443340863078946943991125563411906784305589881962
+        )
         assert w.state_root == expected_root
         assert w.recipient_hash == expected_recipient
 
@@ -920,9 +912,7 @@ class TestCircuitCompilation:
         reason="circom not installed",
     )
     def test_wasm_exists(self):
-        assert (
-            BUILD_DIR / "withdrawal_js" / "withdrawal.wasm"
-        ).exists()
+        assert (BUILD_DIR / "withdrawal_js" / "withdrawal.wasm").exists()
 
     @skip_no_snarkjs
     def test_verification_key_valid(self):

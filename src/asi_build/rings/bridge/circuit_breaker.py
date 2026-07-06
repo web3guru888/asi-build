@@ -95,7 +95,8 @@ class ProofFailureBreaker:
     # ── Public API ───────────────────────────────────────────────────────
 
     def record_proof_failure(
-        self, timestamp: Optional[float] = None,
+        self,
+        timestamp: Optional[float] = None,
     ) -> bool:
         """Record a proof-verification failure.
 
@@ -204,9 +205,7 @@ class VolumeThresholdBreaker:
         if daily_limit <= 0:
             raise ValueError("daily_limit must be > 0")
         if not (0 < warning_pct < critical_pct <= 1.0):
-            raise ValueError(
-                "Must have 0 < warning_pct < critical_pct <= 1.0"
-            )
+            raise ValueError("Must have 0 < warning_pct < critical_pct <= 1.0")
 
         self._daily_limit = daily_limit
         self._warning_pct = warning_pct
@@ -249,8 +248,7 @@ class VolumeThresholdBreaker:
             if level is not None:
                 logger.log(
                     logging.CRITICAL if level == "pause" else logging.WARNING,
-                    "VolumeThresholdBreaker: %s — %.1f%% of daily limit "
-                    "(%d / %d)",
+                    "VolumeThresholdBreaker: %s — %.1f%% of daily limit " "(%d / %d)",
                     level,
                     utilisation * 100,
                     self._used,
@@ -382,7 +380,8 @@ class WithdrawalAnomalyDetector:
                         },
                     )
                     logger.warning(
-                        "WithdrawalAnomalyDetector: %s", alert.message,
+                        "WithdrawalAnomalyDetector: %s",
+                        alert.message,
                     )
 
             # Always record the observation
@@ -407,9 +406,14 @@ class WithdrawalAnomalyDetector:
                 "samples": len(self._history),
                 "min_samples": self._min_samples,
                 "total": self._total,
-                "average": round(
-                    self._total / len(self._history), 2,
-                ) if self._history else 0.0,
+                "average": (
+                    round(
+                        self._total / len(self._history),
+                        2,
+                    )
+                    if self._history
+                    else 0.0
+                ),
                 "multiplier": self._multiplier,
             }
 
@@ -489,9 +493,11 @@ class AddressRateLimiter:
 
             if len(window) >= self._max:
                 logger.warning(
-                    "AddressRateLimiter: %s rate-limited "
-                    "(%d/%d in %.0fs window)",
-                    address, len(window), self._max, self._window,
+                    "AddressRateLimiter: %s rate-limited " "(%d/%d in %.0fs window)",
+                    address,
+                    len(window),
+                    self._max,
+                    self._window,
                 )
                 return False
 
@@ -656,17 +662,16 @@ class CooldownGuard:
         """Diagnostic snapshot."""
         with self._lock:
             now = time.time()
-            active = (
-                self._unpause_time is not None
-                and (now - self._unpause_time) < self._cooldown
-            )
+            active = self._unpause_time is not None and (now - self._unpause_time) < self._cooldown
             return {
                 "cooldown_seconds": self._cooldown,
                 "active": active,
                 "remaining": round(
-                    max(0.0, self._cooldown - (now - self._unpause_time))
-                    if self._unpause_time is not None
-                    else 0.0,
+                    (
+                        max(0.0, self._cooldown - (now - self._unpause_time))
+                        if self._unpause_time is not None
+                        else 0.0
+                    ),
                     1,
                 ),
                 "unpause_time": self._unpause_time,
@@ -674,10 +679,7 @@ class CooldownGuard:
 
     def __repr__(self) -> str:
         rem = self.remaining_seconds()
-        return (
-            f"CooldownGuard(cooldown={self._cooldown}s, "
-            f"remaining={rem:.0f}s)"
-        )
+        return f"CooldownGuard(cooldown={self._cooldown}s, " f"remaining={rem:.0f}s)"
 
 
 # ---------------------------------------------------------------------------
@@ -796,10 +798,7 @@ class EnhancedSafetyManager:
         # 2. Cooldown guard
         if self.cooldown.is_in_cooldown():
             remaining = self.cooldown.remaining_seconds()
-            reason = (
-                f"Bridge is in post-unpause cooldown — "
-                f"{remaining:.0f}s remaining"
-            )
+            reason = f"Bridge is in post-unpause cooldown — " f"{remaining:.0f}s remaining"
             self._record_block(amount, recipient, reason)
             return False, reason
 
@@ -823,7 +822,8 @@ class EnhancedSafetyManager:
                 return False, reason
             # WARNING-level anomalies are logged but allowed through
             logger.warning(
-                "Withdrawal anomaly (allowed): %s", alert.message,
+                "Withdrawal anomaly (allowed): %s",
+                alert.message,
             )
 
         # 5. Volume threshold
@@ -838,8 +838,7 @@ class EnhancedSafetyManager:
         if level == "critical":
             # Critical but not yet at 100% — allow with warning
             logger.warning(
-                "Withdrawal allowed at critical volume level "
-                "(%s utilisation)",
+                "Withdrawal allowed at critical volume level " "(%s utilisation)",
                 f"{self.volume_breaker.utilisation:.1%}",
             )
 
@@ -848,7 +847,8 @@ class EnhancedSafetyManager:
     # ── Event recording ──────────────────────────────────────────────────
 
     def record_proof_failure(
-        self, timestamp: Optional[float] = None,
+        self,
+        timestamp: Optional[float] = None,
     ) -> bool:
         """Record a proof-verification failure.
 
@@ -884,7 +884,8 @@ class EnhancedSafetyManager:
         # accounting extensions.
         logger.debug(
             "Withdrawal recorded: amount=%d, recipient=%s",
-            amount, recipient,
+            amount,
+            recipient,
         )
 
     def record_unpause(self, timestamp: Optional[float] = None) -> None:
@@ -894,10 +895,7 @@ class EnhancedSafetyManager:
             timestamp=timestamp if timestamp is not None else time.time(),
             severity=AlertSeverity.INFO,
             source="cooldown_guard",
-            message=(
-                f"Bridge unpaused — cooldown active for "
-                f"{self.cooldown._cooldown:.0f}s"
-            ),
+            message=(f"Bridge unpaused — cooldown active for " f"{self.cooldown._cooldown:.0f}s"),
             metrics=self.cooldown.stats,
         )
         with self._lock:
@@ -982,12 +980,17 @@ class EnhancedSafetyManager:
     # ── Internals ────────────────────────────────────────────────────────
 
     def _record_block(
-        self, amount: int, recipient: str, reason: str,
+        self,
+        amount: int,
+        recipient: str,
+        reason: str,
     ) -> None:
         """Log a blocked withdrawal and create an alert."""
         logger.warning(
             "Withdrawal BLOCKED: amount=%d, recipient=%s, reason=%s",
-            amount, recipient, reason,
+            amount,
+            recipient,
+            reason,
         )
         alert = SafetyAlert(
             timestamp=time.time(),

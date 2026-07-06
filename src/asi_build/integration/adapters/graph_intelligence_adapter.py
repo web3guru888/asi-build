@@ -146,9 +146,7 @@ class GraphIntelligenceAdapter:
         return ModuleInfo(
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
-            capabilities=(
-                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER
-            ),
+            capabilities=(ModuleCapability.PRODUCER | ModuleCapability.CONSUMER),
             description=(
                 "Graph intelligence: community detection (Louvain / Girvan-Newman), "
                 "FastToG community-based reasoning, and graph statistics."

@@ -440,7 +440,9 @@ class MultiStakeholderConsensus:
     ) -> str:
         """Initiate a new consensus process."""
         try:
-            process_id = f"consensus_{proposal_id}_{datetime.now(tz=timezone.utc).strftime('%Y%m%d%H%M%S')}"
+            process_id = (
+                f"consensus_{proposal_id}_{datetime.now(tz=timezone.utc).strftime('%Y%m%d%H%M%S')}"
+            )
 
             # Define process phases
             phases = []

@@ -23,10 +23,10 @@ from asi_build.temporal import (
     TemporalNode,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _node(nid: str, ts: int = 0, **snapshot: object) -> TemporalNode:
     return TemporalNode(nid, ts, dict(snapshot), frozenset())
@@ -45,6 +45,7 @@ def _edge(
 # 1. test_add_node_increments_counter
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_add_node_increments_counter() -> None:
     g = DictTemporalGraph()
@@ -59,19 +60,21 @@ async def test_add_node_increments_counter() -> None:
 # 2. test_duplicate_node_ignored
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_duplicate_node_ignored() -> None:
     g = DictTemporalGraph()
     await g.add_node(_node("a", 1))
-    await g.add_node(_node("a", 1))          # duplicate
+    await g.add_node(_node("a", 1))  # duplicate
     s = g.stats()
     assert s["nodes"] == 1
-    assert s["nodes_added_total"] == 1        # counter should NOT increment
+    assert s["nodes_added_total"] == 1  # counter should NOT increment
 
 
 # ---------------------------------------------------------------------------
 # 3. test_max_nodes_evicts_oldest
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_max_nodes_evicts_oldest() -> None:
@@ -80,14 +83,15 @@ async def test_max_nodes_evicts_oldest() -> None:
     for i in range(4):
         await g.add_node(_node(str(i), ts=i))
     s = g.stats()
-    assert s["nodes"] == 3                    # oldest ("0") evicted
+    assert s["nodes"] == 3  # oldest ("0") evicted
     succs = await g.get_successors("0")
-    assert succs == []                        # node "0" is gone
+    assert succs == []  # node "0" is gone
 
 
 # ---------------------------------------------------------------------------
 # 4. test_add_edge_unknown_node_raises
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_add_edge_unknown_node_raises() -> None:
@@ -100,6 +104,7 @@ async def test_add_edge_unknown_node_raises() -> None:
 # ---------------------------------------------------------------------------
 # 5. test_add_edge_creates_allen_relation
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_add_edge_creates_allen_relation() -> None:
@@ -120,6 +125,7 @@ async def test_add_edge_creates_allen_relation() -> None:
 # 6. test_cycle_detection_raises
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_cycle_detection_raises() -> None:
     g = DictTemporalGraph()
@@ -137,6 +143,7 @@ async def test_cycle_detection_raises() -> None:
 # ---------------------------------------------------------------------------
 # 7. test_get_successors_returns_correct_nodes
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_get_successors_returns_correct_nodes() -> None:
@@ -156,6 +163,7 @@ async def test_get_successors_returns_correct_nodes() -> None:
 # 8. test_get_predecessors_returns_correct_nodes
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_get_predecessors_returns_correct_nodes() -> None:
     g = DictTemporalGraph()
@@ -174,6 +182,7 @@ async def test_get_predecessors_returns_correct_nodes() -> None:
 # 9. test_check_consistency_clean_dag
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_check_consistency_clean_dag() -> None:
     g = DictTemporalGraph()
@@ -182,7 +191,7 @@ async def test_check_consistency_clean_dag() -> None:
     await g.add_edge(_edge("a", "b"))
     await g.add_edge(_edge("b", "c"))
     await g.add_edge(_edge("c", "d"))
-    await g.add_edge(_edge("a", "d"))          # diamond (still DAG)
+    await g.add_edge(_edge("a", "d"))  # diamond (still DAG)
     await g.add_edge(_edge("d", "e"))
     assert await g.check_consistency() is True
 
@@ -190,6 +199,7 @@ async def test_check_consistency_clean_dag() -> None:
 # ---------------------------------------------------------------------------
 # 10. test_prune_removes_stale_nodes
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_prune_removes_stale_nodes() -> None:
@@ -206,6 +216,7 @@ async def test_prune_removes_stale_nodes() -> None:
 # 11. test_prune_removes_dangling_edges
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_prune_removes_dangling_edges() -> None:
     g = DictTemporalGraph()
@@ -214,12 +225,13 @@ async def test_prune_removes_dangling_edges() -> None:
     await g.add_edge(_edge("old", "new"))
     assert g.stats()["edges"] == 1
     await g.prune(horizon_ns=5000)
-    assert g.stats()["edges"] == 0            # dangling edge removed
+    assert g.stats()["edges"] == 0  # dangling edge removed
 
 
 # ---------------------------------------------------------------------------
 # 12. test_null_temporal_graph_no_ops
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_null_temporal_graph_no_ops() -> None:

@@ -30,7 +30,6 @@ from asi_build.rings.bridge.circuit_breaker import (
 )
 from asi_build.rings.bridge.safety import AlertSeverity, SafetyAlert
 
-
 # ===========================================================================
 # ProofFailureBreaker Tests (5)
 # ===========================================================================
@@ -236,7 +235,7 @@ class TestAddressRateLimiter:
         now = time.time()
 
         arl.check_and_record("0xBob", now - 100)  # old — will be pruned
-        arl.check_and_record("0xBob", now - 70)   # old — will be pruned
+        arl.check_and_record("0xBob", now - 70)  # old — will be pruned
 
         # Both are outside the 60s window, so Bob should have 2 remaining
         assert arl.get_remaining("0xBob", now) == 2

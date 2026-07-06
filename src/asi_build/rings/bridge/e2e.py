@@ -42,14 +42,14 @@ import hashlib
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from .light_client import EthLightClient, BeaconHeader
+from .light_client import BeaconHeader, EthLightClient
 from .protocol import BridgeValidator, DepositRecord
 
 if TYPE_CHECKING:
-    from .zk_prover import BridgeWithdrawalCircuit, SyncCommitteeCircuit
     from .zk.coordinator import BridgeProofCoordinator
+    from .zk_prover import BridgeWithdrawalCircuit, SyncCommitteeCircuit
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +57,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _mock_zk_proof(data: bytes) -> bytes:
     """Generate a deterministic placeholder ZK proof.
@@ -189,7 +190,9 @@ class BridgeOrchestrator:
     # ── Deposit processing ───────────────────────────────────────────────
 
     async def process_deposits(
-        self, from_block: int, to_block: Optional[int] = None,
+        self,
+        from_block: int,
+        to_block: Optional[int] = None,
     ) -> List[ProcessedDeposit]:
         """Watch for deposit events and attest them.
 
@@ -260,7 +263,8 @@ class BridgeOrchestrator:
                 except KeyError:
                     logger.warning(
                         "No verified header for block %d — skipping deposit %s",
-                        block_number, tx_hash,
+                        block_number,
+                        tx_hash,
                     )
                     pd.error = f"No verified header for block {block_number}"
                     results.append(pd)
@@ -286,7 +290,9 @@ class BridgeOrchestrator:
                     self._safety.record_deposit_result(True, amount, sender)
                 logger.info(
                     "Deposit processed: %s (%d wei → %s)",
-                    tx_hash, amount, rings_did,
+                    tx_hash,
+                    amount,
+                    rings_did,
                 )
 
             except Exception as exc:
@@ -343,7 +349,9 @@ class BridgeOrchestrator:
         """
         logger.info(
             "Processing withdrawal: %d wei from %s → %s",
-            amount, rings_did, eth_address,
+            amount,
+            rings_did,
+            eth_address,
         )
 
         # 0. Safety pre-flight check
@@ -366,7 +374,9 @@ class BridgeOrchestrator:
             logger.warning(
                 "Threshold not met for withdrawal nonce=%d (%d/%d). "
                 "Proceeding with self-approval only (single-validator mode).",
-                nonce, len(signatures), self.validator.threshold,
+                nonce,
+                len(signatures),
+                self.validator.threshold,
             )
 
         # 3. Generate ZK proof — three paths in priority order:
@@ -381,15 +391,10 @@ class BridgeOrchestrator:
                 nonce=nonce,
                 rings_did=rings_did,
                 header_proof={
-                    "state_root": hashlib.sha256(
-                        f"{nonce}:{amount}".encode()
-                    ).digest(),
+                    "state_root": hashlib.sha256(f"{nonce}:{amount}".encode()).digest(),
                 },
                 receipt_proof={},
-                validator_sigs=[
-                    s.encode() if isinstance(s, str) else s
-                    for s in signatures
-                ],
+                validator_sigs=[s.encode() if isinstance(s, str) else s for s in signatures],
             )
             proof = zk_proof.proof_bytes
             # Convert bytes32 public inputs to ints for contract
@@ -398,9 +403,10 @@ class BridgeOrchestrator:
                 for pi in zk_proof.public_inputs
             ]
             logger.info(
-                "Generated ZK proof via coordinator (%d bytes, type=%s) "
-                "for withdrawal nonce=%d",
-                len(proof), zk_proof.proof_type, nonce,
+                "Generated ZK proof via coordinator (%d bytes, type=%s) " "for withdrawal nonce=%d",
+                len(proof),
+                zk_proof.proof_type,
+                nonce,
             )
         elif self._withdrawal_circuit is not None:
             # Phase 2: real Groth16 proof via BN254 pairing math
@@ -408,23 +414,19 @@ class BridgeOrchestrator:
                 amount=amount,
                 nonce=nonce,
                 recipient=eth_address,
-                signatures=[s.encode() if isinstance(s, str) else s
-                            for s in signatures],
-                state_root=hashlib.sha256(
-                    f"{nonce}:{amount}".encode()
-                ).digest(),
+                signatures=[s.encode() if isinstance(s, str) else s for s in signatures],
+                state_root=hashlib.sha256(f"{nonce}:{amount}".encode()).digest(),
             )
             logger.info(
                 "Generated real Groth16 proof (%d bytes) for withdrawal nonce=%d",
-                len(proof), nonce,
+                len(proof),
+                nonce,
             )
         else:
             # Mock proof (backward compatibility)
             proof_data = f"{nonce}|{amount}|{eth_address}".encode()
             proof = _mock_zk_proof(proof_data)
-            addr_bytes = bytes.fromhex(
-                eth_address.replace("0x", "").ljust(40, "0")[:40]
-            )
+            addr_bytes = bytes.fromhex(eth_address.replace("0x", "").ljust(40, "0")[:40])
             recipient_hash = int.from_bytes(addr_bytes[:8], "big")
             public_inputs = _mock_public_inputs(amount, nonce, recipient_hash)
 
@@ -471,9 +473,7 @@ class BridgeOrchestrator:
             return False
 
         # Compute committee root (hash of aggregate pubkey for simplicity)
-        new_root = hashlib.sha256(
-            committee.aggregate_pubkey.encode()
-        ).digest()
+        new_root = hashlib.sha256(committee.aggregate_pubkey.encode()).digest()
 
         # Get on-chain root
         try:
@@ -495,12 +495,13 @@ class BridgeOrchestrator:
             # Phase 3: full ZK proof coordinator
             bitmap = [True] * 342 + [False] * 170  # supermajority
             zk_proof = await self._proof_coordinator.prove_sync_committee_update(
-                current_root=on_chain_root if on_chain_root != b"\x00" * 32
-                    else new_root,
+                current_root=on_chain_root if on_chain_root != b"\x00" * 32 else new_root,
                 new_committee_pubkeys=[
-                    committee.aggregate_pubkey.encode()
-                    if isinstance(committee.aggregate_pubkey, str)
-                    else committee.aggregate_pubkey
+                    (
+                        committee.aggregate_pubkey.encode()
+                        if isinstance(committee.aggregate_pubkey, str)
+                        else committee.aggregate_pubkey
+                    )
                 ],
                 attestation_sig=b"aggregate_bls_sig",
                 attestation_bitmap=bitmap,
@@ -514,7 +515,9 @@ class BridgeOrchestrator:
             logger.info(
                 "Generated ZK proof via coordinator for sync committee "
                 "(period %d, slot %d, type=%s)",
-                current_period, latest_slot, zk_proof.proof_type,
+                current_period,
+                latest_slot,
+                zk_proof.proof_type,
             )
         elif self._sync_circuit is not None:
             # Phase 2: real Groth16 proof
@@ -526,8 +529,9 @@ class BridgeOrchestrator:
                 aggregate_sig=b"aggregate_bls_sig",
             )
             logger.info(
-                "Generated real Groth16 proof for sync committee "
-                "(period %d, slot %d)", current_period, latest_slot,
+                "Generated real Groth16 proof for sync committee " "(period %d, slot %d)",
+                current_period,
+                latest_slot,
             )
         else:
             # Mock proof (backward compatibility)
@@ -636,7 +640,9 @@ class BridgeOrchestrator:
                 cursor = 0
 
         logger.info(
-            "Starting bridge loop from block %d (poll=%.1fs)", cursor, poll_interval,
+            "Starting bridge loop from block %d (poll=%.1fs)",
+            cursor,
+            poll_interval,
         )
 
         try:

@@ -472,10 +472,12 @@ class TestBeaconGet:
     async def test_fallback_url(self, client_with_fallback):
         fake = FakeSession()
         # Primary fails, fallback succeeds
-        fake.set_get_responses([
-            FakeResponse(500, {}, "Primary down"),
-            FakeResponse(200, {"data": "from_fallback"}),
-        ])
+        fake.set_get_responses(
+            [
+                FakeResponse(500, {}, "Primary down"),
+                FakeResponse(200, {"data": "from_fallback"}),
+            ]
+        )
         client_with_fallback._session = fake
         client_with_fallback._retry_base_delay = 0.001
 
@@ -494,9 +496,9 @@ class TestExecutionRPC:
     @pytest.mark.asyncio
     async def test_successful_rpc(self, client):
         fake = FakeSession()
-        fake.set_post_responses([
-            FakeResponse(200, {"jsonrpc": "2.0", "id": 1, "result": "0x1234"})
-        ])
+        fake.set_post_responses(
+            [FakeResponse(200, {"jsonrpc": "2.0", "id": 1, "result": "0x1234"})]
+        )
         client._session = fake
 
         result = await client._execution_rpc("eth_blockNumber", [])
@@ -505,12 +507,18 @@ class TestExecutionRPC:
     @pytest.mark.asyncio
     async def test_rpc_error(self, client):
         fake = FakeSession()
-        fake.set_post_responses([
-            FakeResponse(200, {
-                "jsonrpc": "2.0", "id": 1,
-                "error": {"code": -32600, "message": "Invalid request"},
-            })
-        ])
+        fake.set_post_responses(
+            [
+                FakeResponse(
+                    200,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 1,
+                        "error": {"code": -32600, "message": "Invalid request"},
+                    },
+                )
+            ]
+        )
         client._session = fake
 
         with pytest.raises(ExecutionRPCError) as exc_info:
@@ -540,14 +548,27 @@ class TestHeaderParsing:
         header = BeaconAPILightClient._parse_beacon_header(msg)
         assert header.slot == 10022528
         assert header.proposer_index == 512
-        assert header.parent_root == "0x539b1b69a5a897e264390a80d40ddfad988c832db6b225c8abac24bf3fe4430d"
-        assert header.state_root == "0x46166af871046f6f47837f3e045adf8e067650188df5cb727c3fa1f594077da4"
-        assert header.body_root == "0xa4d7db20e66cfdfeb7a76598d2104985633dcfc32876b8a78c0217f124dde9ec"
+        assert (
+            header.parent_root
+            == "0x539b1b69a5a897e264390a80d40ddfad988c832db6b225c8abac24bf3fe4430d"
+        )
+        assert (
+            header.state_root
+            == "0x46166af871046f6f47837f3e045adf8e067650188df5cb727c3fa1f594077da4"
+        )
+        assert (
+            header.body_root == "0xa4d7db20e66cfdfeb7a76598d2104985633dcfc32876b8a78c0217f124dde9ec"
+        )
         assert header.timestamp == slot_to_timestamp(10022528)
 
     def test_parse_beacon_header_with_timestamp(self):
-        msg = {"slot": "100", "proposer_index": "5", "parent_root": "0xaa",
-               "state_root": "0xbb", "body_root": "0xcc"}
+        msg = {
+            "slot": "100",
+            "proposer_index": "5",
+            "parent_root": "0xaa",
+            "state_root": "0xbb",
+            "body_root": "0xcc",
+        }
         header = BeaconAPILightClient._parse_beacon_header(msg, timestamp=9999)
         assert header.timestamp == 9999
 
@@ -642,9 +663,12 @@ class TestGetVerifiedHeader:
     @pytest.mark.asyncio
     async def test_cache_hit(self, client):
         header = BeaconHeader(
-            slot=100, proposer_index=5,
-            parent_root="0xaa", state_root="0xbb",
-            body_root="0xcc", timestamp=1234,
+            slot=100,
+            proposer_index=5,
+            parent_root="0xaa",
+            state_root="0xbb",
+            body_root="0xcc",
+            timestamp=1234,
         )
         client._header_cache.put(100, header)
 
@@ -698,8 +722,10 @@ class TestLatestHeader:
     async def test_refreshes_from_api(self, client):
         client._synced = True
         client._finalized_header = BeaconHeader(
-            slot=100, proposer_index=1,
-            parent_root="0x", state_root="0x",
+            slot=100,
+            proposer_index=1,
+            parent_root="0x",
+            state_root="0x",
             body_root="0x",
         )
 
@@ -714,8 +740,10 @@ class TestLatestHeader:
     async def test_uses_cached_on_failure(self, client):
         client._synced = True
         cached = BeaconHeader(
-            slot=100, proposer_index=1,
-            parent_root="0x", state_root="0x",
+            slot=100,
+            proposer_index=1,
+            parent_root="0x",
+            state_root="0x",
             body_root="0x",
         )
         client._finalized_header = cached
@@ -752,7 +780,7 @@ class TestVerifyStateProof:
             block=10644593,
         )
         assert proof.address == "0xe034d479edc2530d9917dda4547b59bf0964a2ca"
-        assert proof.balance == 0x38d7ea4c68000
+        assert proof.balance == 0x38D7EA4C68000
         assert proof.nonce == 1
         assert proof.block_number == 10644593
         # Verification skipped since we can't get state root
@@ -831,9 +859,7 @@ class TestGetSyncCommittee:
 
     @pytest.mark.asyncio
     async def test_cached_committee(self, client):
-        committee = SyncCommittee(
-            period=42, pubkeys=["0xaa"], aggregate_pubkey="0xbb"
-        )
+        committee = SyncCommittee(period=42, pubkeys=["0xaa"], aggregate_pubkey="0xbb")
         client._committee_cache[42] = committee
 
         result = await client.get_sync_committee(42)
@@ -873,8 +899,11 @@ class TestGetLatestSlot:
         client._synced = True
         client._latest_slot = 12345
         client._finalized_header = BeaconHeader(
-            slot=12345, proposer_index=0,
-            parent_root="0x", state_root="0x", body_root="0x",
+            slot=12345,
+            proposer_index=0,
+            parent_root="0x",
+            state_root="0x",
+            body_root="0x",
         )
 
         slot = await client.get_latest_slot()
@@ -1097,9 +1126,7 @@ class TestNetworkSync:
             execution_url=SEPOLIA_EXECUTION,
             fallback_beacon_url=None,
         ) as client:
-            raw = await client.get_execution_proof(
-                BRIDGE_CONTRACT, storage_keys=[], block="latest"
-            )
+            raw = await client.get_execution_proof(BRIDGE_CONTRACT, storage_keys=[], block="latest")
             assert "accountProof" in raw
             assert "balance" in raw
             assert "nonce" in raw
@@ -1120,14 +1147,10 @@ class TestNetworkSync:
             await client.sync()
 
             # Get latest block number from execution layer
-            block_num_hex = await client._execution_rpc(
-                "eth_blockNumber", []
-            )
+            block_num_hex = await client._execution_rpc("eth_blockNumber", [])
             block_num = int(block_num_hex, 16)
 
-            proof = await client.verify_state_proof(
-                BRIDGE_CONTRACT, [], block=block_num
-            )
+            proof = await client.verify_state_proof(BRIDGE_CONTRACT, [], block=block_num)
             assert proof.address == BRIDGE_CONTRACT
             assert proof.nonce >= 0
             assert proof.balance >= 0
@@ -1146,34 +1169,24 @@ class TestNetworkSync:
             fallback_beacon_url=None,
         ) as client:
             # Get the latest block with its state root
-            block_num_hex = await client._execution_rpc(
-                "eth_blockNumber", []
-            )
+            block_num_hex = await client._execution_rpc("eth_blockNumber", [])
             block_num = int(block_num_hex, 16)
 
             # Get the block to find the state root
-            block = await client._execution_rpc(
-                "eth_getBlockByNumber", [hex(block_num), False]
-            )
+            block = await client._execution_rpc("eth_getBlockByNumber", [hex(block_num), False])
             state_root_hex = block["stateRoot"]
             state_root = bytes.fromhex(state_root_hex[2:])
 
             # Get the proof
-            raw = await client._execution_rpc(
-                "eth_getProof", [BRIDGE_CONTRACT, [], hex(block_num)]
-            )
+            raw = await client._execution_rpc("eth_getProof", [BRIDGE_CONTRACT, [], hex(block_num)])
 
             # Verify with MPT verifier
-            proof_nodes = [
-                bytes.fromhex(p[2:]) for p in raw["accountProof"]
-            ]
+            proof_nodes = [bytes.fromhex(p[2:]) for p in raw["accountProof"]]
             result = MerklePatriciaVerifier.verify_account_proof(
                 state_root, BRIDGE_CONTRACT, proof_nodes
             )
 
-            assert result is not None, (
-                f"MPT verification failed for state root {state_root_hex}"
-            )
+            assert result is not None, f"MPT verification failed for state root {state_root_hex}"
             assert result.nonce >= 0
             assert result.balance >= 0
             print(f"\n  MPT verification SUCCESS:")
@@ -1235,22 +1248,16 @@ class TestNetworkSync:
             print(f"  Step 3: Sync committee period {period}, {len(committee.pubkeys)} validators")
 
             # Step 4: Get execution proof
-            raw = await client.get_execution_proof(
-                BRIDGE_CONTRACT, block="latest"
-            )
+            raw = await client.get_execution_proof(BRIDGE_CONTRACT, block="latest")
             balance = int(raw["balance"], 16)
             print(f"  Step 4: Bridge contract balance = {balance} wei ({balance / 1e18:.6f} ETH)")
 
             # Step 5: MPT verification
             block_num_hex = await client._execution_rpc("eth_blockNumber", [])
             block_num = int(block_num_hex, 16)
-            block = await client._execution_rpc(
-                "eth_getBlockByNumber", [hex(block_num), False]
-            )
+            block = await client._execution_rpc("eth_getBlockByNumber", [hex(block_num), False])
             state_root = bytes.fromhex(block["stateRoot"][2:])
-            proof_nodes = [
-                bytes.fromhex(p[2:]) for p in raw["accountProof"]
-            ]
+            proof_nodes = [bytes.fromhex(p[2:]) for p in raw["accountProof"]]
             account = MerklePatriciaVerifier.verify_account_proof(
                 state_root, BRIDGE_CONTRACT, proof_nodes
             )

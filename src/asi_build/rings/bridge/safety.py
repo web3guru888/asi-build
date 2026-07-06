@@ -166,7 +166,10 @@ class CircuitBreaker:
                 return
 
             # Check sliding-window error rate
-            if len(self._results) >= self.failure_threshold and self.error_rate > self.error_rate_threshold:
+            if (
+                len(self._results) >= self.failure_threshold
+                and self.error_rate > self.error_rate_threshold
+            ):
                 self._do_trip(
                     f"error rate ({self.error_rate:.2%}) "
                     f"> threshold ({self.error_rate_threshold:.2%})"
@@ -193,7 +196,8 @@ class CircuitBreaker:
             self.state = self.State.HALF_OPEN
             logger.info(
                 "CircuitBreaker[%s]: OPEN → HALF_OPEN after %.1fs cooldown",
-                self.name, elapsed,
+                self.name,
+                elapsed,
             )
             return True
 
@@ -243,7 +247,10 @@ class CircuitBreaker:
         self._last_failure_time = time.time()
         logger.warning(
             "CircuitBreaker[%s]: %s → OPEN (reason: %s, trip #%d)",
-            self.name, prev.value, reason, self._trip_count,
+            self.name,
+            prev.value,
+            reason,
+            self._trip_count,
         )
         if self.on_trip is not None:
             try:
@@ -257,7 +264,9 @@ class CircuitBreaker:
         self.state = self.State.CLOSED
         self._consecutive_failures = 0
         logger.info(
-            "CircuitBreaker[%s]: %s → CLOSED", self.name, prev.value,
+            "CircuitBreaker[%s]: %s → CLOSED",
+            self.name,
+            prev.value,
         )
         if self.on_reset is not None:
             try:
@@ -402,9 +411,12 @@ class AnomalyDetector:
 
         # Check volume anomaly against the pre-update baseline
         alert = self._check_volume_anomaly(
-            amt, self._deposit_amounts,
-            prev_mean, prev_var,
-            prev_count, "deposit",
+            amt,
+            self._deposit_amounts,
+            prev_mean,
+            prev_var,
+            prev_count,
+            "deposit",
         )
         if alert is not None:
             alert.metrics["sender"] = sender
@@ -414,7 +426,10 @@ class AnomalyDetector:
         # Check frequency anomaly (using pre-update interval EWMA)
         if interval is not None:
             freq_alert = self._check_frequency_anomaly_with(
-                interval, ts, prev_interval_mean, prev_interval_var,
+                interval,
+                ts,
+                prev_interval_mean,
+                prev_interval_var,
             )
             if freq_alert is not None:
                 freq_alert.metrics["sender"] = sender
@@ -457,9 +472,12 @@ class AnomalyDetector:
         self._update_ewma_withdrawal(amt)
 
         alert = self._check_volume_anomaly(
-            amt, self._withdrawal_amounts,
-            prev_mean, prev_var,
-            prev_count, "withdrawal",
+            amt,
+            self._withdrawal_amounts,
+            prev_mean,
+            prev_var,
+            prev_count,
+            "withdrawal",
         )
         if alert is not None:
             alert.metrics["recipient"] = recipient
@@ -501,7 +519,8 @@ class AnomalyDetector:
 
         if recent >= self._failure_burst_threshold:
             severity = (
-                AlertSeverity.CRITICAL if recent >= self._failure_burst_threshold * 2
+                AlertSeverity.CRITICAL
+                if recent >= self._failure_burst_threshold * 2
                 else AlertSeverity.WARNING
             )
             alert = SafetyAlert(
@@ -535,7 +554,8 @@ class AnomalyDetector:
             "ewma_deposit_stddev": round(math.sqrt(max(self._ewma_variance, 0)), 4),
             "ewma_withdrawal": round(self._ewma_withdrawal, 4),
             "ewma_withdrawal_stddev": round(
-                math.sqrt(max(self._ewma_withdrawal_variance, 0)), 4,
+                math.sqrt(max(self._ewma_withdrawal_variance, 0)),
+                4,
             ),
             "ewma_interval": round(self._ewma_interval, 4),
             "alerts_generated": len(self._alerts),
@@ -769,10 +789,7 @@ class RateLimitMonitor:
                 },
             )
         elif utilisation >= self.warning_threshold:
-            severity = (
-                AlertSeverity.CRITICAL if utilisation >= 0.95
-                else AlertSeverity.WARNING
-            )
+            severity = AlertSeverity.CRITICAL if utilisation >= 0.95 else AlertSeverity.WARNING
             exhaustion = self.predict_exhaustion()
             alert = SafetyAlert(
                 timestamp=now,
@@ -993,10 +1010,7 @@ class ValidatorHealthMonitor:
         # Check validator count
         active = self.active_validators
         if active < self.threshold:
-            severity = (
-                AlertSeverity.EMERGENCY if active == 0
-                else AlertSeverity.CRITICAL
-            )
+            severity = AlertSeverity.EMERGENCY if active == 0 else AlertSeverity.CRITICAL
             alert = SafetyAlert(
                 timestamp=now,
                 severity=severity,
@@ -1023,10 +1037,7 @@ class ValidatorHealthMonitor:
     def active_validators(self) -> int:
         """Number of validators with recent heartbeats (within timeout)."""
         now = time.time()
-        return sum(
-            1 for t in self._last_heartbeats.values()
-            if (now - t) <= self.heartbeat_timeout
-        )
+        return sum(1 for t in self._last_heartbeats.values() if (now - t) <= self.heartbeat_timeout)
 
     @property
     def stats(self) -> dict:
@@ -1090,13 +1101,19 @@ class BridgeSafetyManager:
 
         # Circuit breakers
         self.deposit_breaker = CircuitBreaker(
-            "deposit", failure_threshold=3, cooldown_seconds=120,
+            "deposit",
+            failure_threshold=3,
+            cooldown_seconds=120,
         )
         self.withdrawal_breaker = CircuitBreaker(
-            "withdrawal", failure_threshold=3, cooldown_seconds=120,
+            "withdrawal",
+            failure_threshold=3,
+            cooldown_seconds=120,
         )
         self.sync_breaker = CircuitBreaker(
-            "sync_committee", failure_threshold=2, cooldown_seconds=300,
+            "sync_committee",
+            failure_threshold=2,
+            cooldown_seconds=300,
         )
 
         # Sub-monitors
@@ -1167,7 +1184,10 @@ class BridgeSafetyManager:
     # ── Result recording ─────────────────────────────────────────────────
 
     def record_deposit_result(
-        self, success: bool, amount: int = 0, sender: str = "",
+        self,
+        success: bool,
+        amount: int = 0,
+        sender: str = "",
     ) -> None:
         """Record the outcome of a deposit operation."""
         if success:
@@ -1175,11 +1195,15 @@ class BridgeSafetyManager:
         else:
             self.deposit_breaker.record_failure()
             self.anomaly_detector.observe_failed_attempt(
-                "deposit", f"deposit failed (amount={amount}, sender={sender})",
+                "deposit",
+                f"deposit failed (amount={amount}, sender={sender})",
             )
 
     def record_withdrawal_result(
-        self, success: bool, amount: int = 0, recipient: str = "",
+        self,
+        success: bool,
+        amount: int = 0,
+        recipient: str = "",
     ) -> None:
         """Record the outcome of a withdrawal operation."""
         if success:
@@ -1197,16 +1221,14 @@ class BridgeSafetyManager:
         """Process an alert — may trigger auto-pause on EMERGENCY."""
         self._alerts.append(alert)
         logger.log(
-            logging.CRITICAL if alert.severity == AlertSeverity.EMERGENCY
-            else logging.WARNING,
+            logging.CRITICAL if alert.severity == AlertSeverity.EMERGENCY else logging.WARNING,
             "Safety alert [%s/%s]: %s",
-            alert.severity.value, alert.source, alert.message,
+            alert.severity.value,
+            alert.source,
+            alert.message,
         )
 
-        if (
-            alert.severity == AlertSeverity.EMERGENCY
-            and self._auto_pause_enabled
-        ):
+        if alert.severity == AlertSeverity.EMERGENCY and self._auto_pause_enabled:
             await self._auto_pause(alert.message)
 
     async def _auto_pause(self, reason: str) -> None:
@@ -1228,9 +1250,7 @@ class BridgeSafetyManager:
         # Halt the validator
         if self.validator is not None:
             try:
-                await self.validator.emergency_halt(
-                    f"Auto-halt by safety system: {reason}"
-                )
+                await self.validator.emergency_halt(f"Auto-halt by safety system: {reason}")
             except Exception as exc:
                 logger.error("Failed to emergency halt validator: %s", exc)
 

@@ -368,9 +368,7 @@ class AGIEconomicsBlackboardAdapter:
                     if agent_id:
                         try:
                             rep = self._reputation.get_agent_reputation(agent_id)
-                            metadata["agent_reputation_score"] = rep.get(
-                                "overall_score", 0.0
-                            )
+                            metadata["agent_reputation_score"] = rep.get("overall_score", 0.0)
                         except Exception:
                             pass
 
@@ -445,7 +443,11 @@ class AGIEconomicsBlackboardAdapter:
             market_data = self._bonding_engine.get_all_market_data()
             prices = {}
             for token, data in market_data.items():
-                price = getattr(data, "price", None) or data.get("price") if isinstance(data, dict) else None
+                price = (
+                    getattr(data, "price", None) or data.get("price")
+                    if isinstance(data, dict)
+                    else None
+                )
                 if price is not None:
                     prices[token] = float(price) if isinstance(price, Decimal) else price
 
@@ -470,10 +472,7 @@ class AGIEconomicsBlackboardAdapter:
                 topic="economics.bonding_curve.price",
                 data={
                     "prices": prices,
-                    "price_changes": {
-                        t: prices[t] - old_prices.get(t, prices[t])
-                        for t in prices
-                    },
+                    "price_changes": {t: prices[t] - old_prices.get(t, prices[t]) for t in prices},
                     "timestamp": time.time(),
                 },
                 source_module=self.MODULE_NAME,
@@ -647,11 +646,7 @@ class AGIEconomicsBlackboardAdapter:
                 },
                 source_module=self.MODULE_NAME,
                 confidence=0.85,
-                priority=(
-                    EntryPriority.HIGH
-                    if avg_score < 0.5
-                    else EntryPriority.NORMAL
-                ),
+                priority=(EntryPriority.HIGH if avg_score < 0.5 else EntryPriority.NORMAL),
                 ttl_seconds=self._alignment_ttl,
                 tags=frozenset({"value_alignment", "ethics", "alignment"}),
                 metadata={"avg_alignment_score": avg_score},
@@ -728,9 +723,7 @@ class AGIEconomicsBlackboardAdapter:
                                 },
                             )
                     except Exception:
-                        logger.debug(
-                            "Failed to execute negotiated transfer", exc_info=True
-                        )
+                        logger.debug("Failed to execute negotiated transfer", exc_info=True)
 
     def _consume_consciousness(self, entry: BlackboardEntry) -> None:
         """Adjust value alignment weights based on consciousness state.
@@ -743,9 +736,7 @@ class AGIEconomicsBlackboardAdapter:
         data = entry.data if isinstance(entry.data, dict) else {}
         phi = data.get("phi", data.get("phi_value"))
         if phi is not None:
-            logger.debug(
-                "Consciousness phi=%s noted for value alignment calibration", phi
-            )
+            logger.debug("Consciousness phi=%s noted for value alignment calibration", phi)
 
     def _consume_safety(self, entry: BlackboardEntry) -> None:
         """Apply safety constraints to economic actions.
@@ -780,9 +771,7 @@ class AGIEconomicsBlackboardAdapter:
         payload = event.payload or {}
         # If reasoning produced an optimization result, evaluate it
         if "strategy" in payload or "optimization" in payload:
-            logger.debug(
-                "Reasoning event with strategy content received for game-theory eval"
-            )
+            logger.debug("Reasoning event with strategy content received for game-theory eval")
 
     def _handle_comm_event(self, event: CognitiveEvent) -> None:
         """Handle communication events for economic position updates."""
@@ -790,8 +779,7 @@ class AGIEconomicsBlackboardAdapter:
             payload = event.payload or {}
             agreement_rate = payload.get("agreement_rate", 0.0)
             logger.debug(
-                "Negotiation completed (agreement_rate=%.2f) — "
-                "evaluating economic implications",
+                "Negotiation completed (agreement_rate=%.2f) — " "evaluating economic implications",
                 agreement_rate,
             )
 
@@ -818,9 +806,7 @@ class AGIEconomicsBlackboardAdapter:
                 "timestamp": time.time(),
             }
             self._safety_constraints[event.event_id] = constraint
-            logger.warning(
-                "Safety event constraint: %s", constraint.get("reason", "unknown")
-            )
+            logger.warning("Safety event constraint: %s", constraint.get("reason", "unknown"))
 
     # ── Snapshot ──────────────────────────────────────────────────────
 

@@ -156,9 +156,7 @@ class NeuromorphicBlackboardAdapter:
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
             capabilities=(
-                ModuleCapability.PRODUCER
-                | ModuleCapability.CONSUMER
-                | ModuleCapability.LEARNER
+                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.LEARNER
             ),
             description=(
                 "Neuromorphic computing module: spiking neural network simulation, "
@@ -373,9 +371,7 @@ class NeuromorphicBlackboardAdapter:
         try:
             perf = self._manager.get_performance_metrics()
         except Exception:
-            logger.debug(
-                "NeuromorphicManager.get_performance_metrics() failed", exc_info=True
-            )
+            logger.debug("NeuromorphicManager.get_performance_metrics() failed", exc_info=True)
             return None
 
         steps_per_second = getattr(perf, "steps_per_second", 0.0)
@@ -417,11 +413,7 @@ class NeuromorphicBlackboardAdapter:
         )
 
         # Emit degradation event if rate dropped significantly
-        if (
-            prev_sps is not None
-            and prev_sps > 0
-            and steps_per_second < prev_sps * 0.95
-        ):
+        if prev_sps is not None and prev_sps > 0 and steps_per_second < prev_sps * 0.95:
             self._emit(
                 "neuromorphic.performance.degraded",
                 {
@@ -530,12 +522,8 @@ class NeuromorphicBlackboardAdapter:
             event_data = {
                 "total_processed": total_processed,
                 "queue_sizes": stats.get("queue_sizes", stats.get("queue sizes", {})),
-                "processing_rate": stats.get(
-                    "processing_rate", stats.get("processing rate", 0.0)
-                ),
-                "events_by_type": stats.get(
-                    "events_by_type", stats.get("events by type", {})
-                ),
+                "processing_rate": stats.get("processing_rate", stats.get("processing rate", 0.0)),
+                "events_by_type": stats.get("events_by_type", stats.get("events by type", {})),
             }
         else:
             event_data = {
@@ -579,10 +567,7 @@ class NeuromorphicBlackboardAdapter:
             total_updates = getattr(stats, "total_updates", 0)
 
         # Change detection: total updates must differ
-        if (
-            self._last_total_updates is not None
-            and total_updates == self._last_total_updates
-        ):
+        if self._last_total_updates is not None and total_updates == self._last_total_updates:
             return None
 
         prev_updates = self._last_total_updates
@@ -604,9 +589,7 @@ class NeuromorphicBlackboardAdapter:
             }
 
         # Higher priority when learning is active (many recent updates)
-        update_burst = (
-            total_updates - prev_updates if prev_updates is not None else total_updates
-        )
+        update_burst = total_updates - prev_updates if prev_updates is not None else total_updates
         priority = EntryPriority.HIGH if update_burst > 100 else EntryPriority.NORMAL
 
         entry = BlackboardEntry(
@@ -663,6 +646,7 @@ class NeuromorphicBlackboardAdapter:
                     from asi_build.neuromorphic.core.event_processor import (
                         NeuromorphicEvent,
                     )
+
                     EventClass = NeuromorphicEvent
                 except (ImportError, AttributeError):
                     EventClass = None
@@ -696,9 +680,7 @@ class NeuromorphicBlackboardAdapter:
                     high_priority=True,
                 )
             except Exception:
-                logger.debug(
-                    "Failed to submit BCI dict event to EventProcessor", exc_info=True
-                )
+                logger.debug("Failed to submit BCI dict event to EventProcessor", exc_info=True)
 
     def _consume_consciousness(self, entry: BlackboardEntry) -> None:
         """Modulate simulation parameters based on consciousness state.
@@ -730,13 +712,9 @@ class NeuromorphicBlackboardAdapter:
         if broadcast_strength is not None and hasattr(self._manager, "set_parameter"):
             try:
                 # Broadcast strength modulates simulation gain
-                self._manager.set_parameter(
-                    "input_gain", 0.5 + float(broadcast_strength) * 0.5
-                )
+                self._manager.set_parameter("input_gain", 0.5 + float(broadcast_strength) * 0.5)
             except Exception:
-                logger.debug(
-                    "Failed to set input_gain from broadcast_strength", exc_info=True
-                )
+                logger.debug("Failed to set input_gain from broadcast_strength", exc_info=True)
 
         if state_name is not None and hasattr(self._manager, "set_parameter"):
             try:
@@ -902,9 +880,7 @@ class NeuromorphicBlackboardAdapter:
                         "total_processed", stats.get("total processed")
                     )
                 else:
-                    snap["current_events_processed"] = getattr(
-                        stats, "total_processed", None
-                    )
+                    snap["current_events_processed"] = getattr(stats, "total_processed", None)
             except Exception:
                 pass
 

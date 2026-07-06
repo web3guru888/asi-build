@@ -20,9 +20,22 @@ from __future__ import annotations
 
 import time
 import types
-import pytest
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+from asi_build.integration.adapters import (
+    AGICommunicationBlackboardAdapter,
+    AGIEconomicsBlackboardAdapter,
+    BCIBlackboardAdapter,
+    FederatedLearningBlackboardAdapter,
+    HolographicBlackboardAdapter,
+    NeuromorphicBlackboardAdapter,
+    QuantumBlackboardAdapter,
+    SafetyBlackboardAdapter,
+    production_sweep,
+    wire_all,
+)
 from asi_build.integration.protocols import (
     BlackboardEntry,
     CognitiveEvent,
@@ -31,19 +44,6 @@ from asi_build.integration.protocols import (
     ModuleCapability,
     ModuleInfo,
 )
-from asi_build.integration.adapters import (
-    QuantumBlackboardAdapter,
-    HolographicBlackboardAdapter,
-    BCIBlackboardAdapter,
-    NeuromorphicBlackboardAdapter,
-    AGICommunicationBlackboardAdapter,
-    AGIEconomicsBlackboardAdapter,
-    FederatedLearningBlackboardAdapter,
-    SafetyBlackboardAdapter,
-    wire_all,
-    production_sweep,
-)
-
 
 # ============================================================================
 # Mock Components
@@ -52,6 +52,7 @@ from asi_build.integration.adapters import (
 
 class MockQuantumSimulator:
     """Mock for QuantumSimulator — provides state vector + probabilities."""
+
     def __init__(self, state_vector=None):
         self._sv = state_vector or [0.707, 0.0, 0.0, 0.707]
         self.measurement_results = [{"00": 500, "11": 500}]
@@ -68,6 +69,7 @@ class MockQuantumSimulator:
 
 class MockHybridML:
     """Mock for HybridMLProcessor — provides metrics and quantum advantage."""
+
     def __init__(self, advantage=1.2):
         self.metrics = {
             "quantum_advantage_scores": [advantage],
@@ -84,17 +86,20 @@ class MockHybridML:
 
 class MockQAOA:
     """Mock QAOA optimizer."""
+
     optimal_params = [0.1, 0.2, 0.3]
     optimization_history = [{"cost": -2.5}, {"cost": -3.1}]
 
 
 class MockVQE:
     """Mock VQE optimizer."""
+
     optimal_params = [0.4, 0.5]
 
 
 class MockHolographicEngine:
     """Mock for HolographicEngine."""
+
     def __init__(self, state="running", fps=60.0, frame_count=100):
         self._state = state
         self._fps = fps
@@ -124,6 +129,7 @@ class MockHolographicEngine:
 
 class MockLightField:
     """Mock for LightFieldProcessor."""
+
     def __init__(self, capture_count=5):
         self._cc = capture_count
 
@@ -133,6 +139,7 @@ class MockLightField:
 
 class MockVolumetricDisplay:
     """Mock for VolumetricDisplay."""
+
     def __init__(self, render_count=10):
         self._rc = render_count
 
@@ -142,6 +149,7 @@ class MockVolumetricDisplay:
 
 class MockBCIManager:
     """Mock for BCIManager."""
+
     def __init__(self, active_sessions=2, cal_ts=1000.0):
         self._active = active_sessions
         self._cal_ts = cal_ts
@@ -161,6 +169,7 @@ class MockBCIManager:
 
 class MockProcessedSignal:
     """Mock processed neural signal."""
+
     def __init__(self, ts=None, quality=0.85, artifacts=False):
         self.timestamp = ts or time.time()
         self.quality_score = quality
@@ -171,6 +180,7 @@ class MockProcessedSignal:
 
 class MockSignalProcessor:
     """Mock for SignalProcessor."""
+
     def __init__(self, quality=0.85, ts=None):
         self._signal = MockProcessedSignal(ts=ts, quality=quality)
 
@@ -180,6 +190,7 @@ class MockSignalProcessor:
 
 class MockDecodingResult:
     """Mock neural decoding result."""
+
     def __init__(self, cls="left_hand", confidence=0.9):
         self.decoded_class = cls
         self.confidence = confidence
@@ -190,6 +201,7 @@ class MockDecodingResult:
 
 class MockNeuralDecoder:
     """Mock for NeuralDecoder."""
+
     def __init__(self, cls="left_hand", confidence=0.9):
         self._result = MockDecodingResult(cls, confidence)
 
@@ -202,6 +214,7 @@ class MockNeuralDecoder:
 
 class MockNeuromorphicStatus:
     """Mock NeuromorphicManager system status."""
+
     def __init__(self, running=True, steps=100):
         self.is_initialized = True
         self.is_running = running
@@ -215,6 +228,7 @@ class MockNeuromorphicStatus:
 
 class MockNeuromorphicPerf:
     """Mock NeuromorphicManager performance metrics."""
+
     def __init__(self, sps=500.0):
         self.avg_step_time = 0.002
         self.steps_per_second = sps
@@ -225,6 +239,7 @@ class MockNeuromorphicPerf:
 
 class MockNeuromorphicManager:
     """Mock for NeuromorphicManager."""
+
     def __init__(self, running=True, steps=100, sps=500.0):
         self._status = MockNeuromorphicStatus(running, steps)
         self._perf = MockNeuromorphicPerf(sps)
@@ -238,6 +253,7 @@ class MockNeuromorphicManager:
 
 class MockSpikeStats:
     """Mock spike monitor statistics."""
+
     def __init__(self, total=5000):
         self.total_spikes = total
         self.active_neurons = 200
@@ -249,6 +265,7 @@ class MockSpikeStats:
 
 class MockSpikeMonitor:
     """Mock for SpikeMonitor."""
+
     def __init__(self, total=5000):
         self._stats = MockSpikeStats(total)
 
@@ -258,6 +275,7 @@ class MockSpikeMonitor:
 
 class MockEventProcessor:
     """Mock for EventProcessor."""
+
     def __init__(self, total=100):
         self._total = total
 
@@ -270,6 +288,7 @@ class MockEventProcessor:
 
 class MockSTDP:
     """Mock for STDPLearning."""
+
     def __init__(self, total_updates=50, avg_change=0.02):
         self._stats = {
             "total_updates": total_updates,
@@ -284,6 +303,7 @@ class MockSTDP:
 
 class MockAGIProtocol:
     """Mock for AGICommunicationProtocol."""
+
     def __init__(self, sessions=3, messages=10):
         self._sessions = sessions
         self._messages = messages
@@ -304,6 +324,7 @@ class MockAGIProtocol:
 
 class MockNegotiation:
     """Mock for GoalNegotiationProtocol."""
+
     def get_negotiation_statistics(self):
         return {
             "active_negotiations": 2,
@@ -318,6 +339,7 @@ class MockNegotiation:
 
 class MockCollaboration:
     """Mock for CollaborativeProblemSolver."""
+
     efficiency_factor = 1.0
 
     def get_collaboration_statistics(self):
@@ -337,6 +359,7 @@ class MockCollaboration:
 
 class MockKGMerger:
     """Mock for KnowledgeGraphMerger."""
+
     def __init__(self, total_merges=3):
         self._total = total_merges
 
@@ -354,6 +377,7 @@ class MockKGMerger:
 
 class MockTokenEngine:
     """Mock for TokenEconomicsEngine."""
+
     def get_token_metrics(self, token_type):
         return {
             "price": 1.25,
@@ -372,12 +396,14 @@ class MockTokenEngine:
 
 class MockBondingEngine:
     """Mock for BondingCurveEngine."""
+
     def get_all_market_data(self):
         return {"ASI": {"price": 1.5}, "COMPUTE": {"price": 0.5}}
 
 
 class MockReputationSystem:
     """Mock for ReputationSystem."""
+
     def get_system_reputation_metrics(self):
         return {
             "total_agents": 10,
@@ -397,6 +423,7 @@ class MockReputationSystem:
 
 class MockMarketplace:
     """Mock for MarketplaceDynamics."""
+
     def get_market_data(self, service_type):
         return {
             "best_bid": 1.2,
@@ -409,6 +436,7 @@ class MockMarketplace:
 
 class MockValueAlignment:
     """Mock for ValueAlignmentEngine."""
+
     def get_system_value_metrics(self):
         return {
             "avg_alignment_score": 0.72,
@@ -420,6 +448,7 @@ class MockValueAlignment:
 
 class MockFederatedManager:
     """Mock for FederatedManager."""
+
     def __init__(self, training=True, round_num=5, clients=3):
         self._training = training
         self._round = round_num
@@ -446,6 +475,7 @@ class MockFederatedManager:
 
 class MockFederatedServer:
     """Mock for FederatedServer."""
+
     def check_convergence(self, threshold=0.001):
         return False
 
@@ -455,6 +485,7 @@ class MockFederatedServer:
 
 class MockFedAvgAggregator:
     """Mock for FedAvgAggregator."""
+
     def get_fedavg_specific_stats(self):
         return {
             "total_aggregations": 5,
@@ -465,6 +496,7 @@ class MockFedAvgAggregator:
 
 class MockFederatedMetrics:
     """Mock for FederatedMetrics."""
+
     def get_performance_summary(self):
         return {
             "total_rounds": 5,
@@ -481,6 +513,7 @@ class MockFederatedMetrics:
 
 class MockConstitutionalAI:
     """Mock for ConstitutionalAI."""
+
     def __init__(self, aligned=True):
         self._aligned = aligned
 
@@ -493,6 +526,7 @@ class MockConstitutionalAI:
 
 class MockEthicalVerifier:
     """Mock for EthicalVerificationEngine."""
+
     def __init__(self, ethical=True, confidence=0.9):
         self._ethical = ethical
         self._confidence = confidence
@@ -519,6 +553,7 @@ class MockEthicalVerifier:
 
 class MockTheoremProver:
     """Mock for TheoremProver."""
+
     def prove_theorem(self, hypothesis, conclusion, method="resolution"):
         result = MagicMock()
         result.is_valid = True
@@ -639,9 +674,9 @@ class TestQuantumAdapter:
 
     def test_consume_kg(self):
         adapter = QuantumBlackboardAdapter(kenny_integration=MagicMock())
-        entry = _entry("knowledge_graph.triple", {
-            "subject": "A", "predicate": "causes", "object": "B"
-        })
+        entry = _entry(
+            "knowledge_graph.triple", {"subject": "A", "predicate": "causes", "object": "B"}
+        )
         adapter.consume([entry])
         assert len(adapter._graph_optimization_queue) == 1
 
@@ -768,9 +803,9 @@ class TestHolographicAdapter:
 
     def test_consume_kg(self):
         adapter = HolographicBlackboardAdapter()
-        entry = _entry("knowledge_graph.triple", {
-            "subject": "A", "predicate": "causes", "object": "B"
-        })
+        entry = _entry(
+            "knowledge_graph.triple", {"subject": "A", "predicate": "causes", "object": "B"}
+        )
         adapter.consume([entry])
         assert len(adapter._pending_kg_updates) == 1
 
@@ -1175,9 +1210,9 @@ class TestAGICommunicationAdapter:
     def test_consume_kg(self):
         merger = MockKGMerger()
         adapter = AGICommunicationBlackboardAdapter(kg_merger=merger)
-        entry = _entry("knowledge_graph.triple", {
-            "subject": "A", "predicate": "causes", "object": "B"
-        })
+        entry = _entry(
+            "knowledge_graph.triple", {"subject": "A", "predicate": "causes", "object": "B"}
+        )
         adapter.consume([entry])
         # No crash
 
@@ -1198,9 +1233,9 @@ class TestAGICommunicationAdapter:
     def test_handle_event_kg(self):
         merger = MockKGMerger()
         adapter = AGICommunicationBlackboardAdapter(kg_merger=merger)
-        event = _event("knowledge_graph.triple.added", {
-            "subject": "X", "predicate": "has", "object": "Y"
-        })
+        event = _event(
+            "knowledge_graph.triple.added", {"subject": "X", "predicate": "has", "object": "Y"}
+        )
         adapter.handle_event(event)
         # No crash
 
@@ -1324,11 +1359,14 @@ class TestAGIEconomicsAdapter:
 
     def test_consume_safety(self):
         adapter = AGIEconomicsBlackboardAdapter()
-        entry = _entry("safety.ethics.verification", {
-            "is_ethical": False,
-            "blocked_actions": ["transfer"],
-            "verification_summary": "blocked",
-        })
+        entry = _entry(
+            "safety.ethics.verification",
+            {
+                "is_ethical": False,
+                "blocked_actions": ["transfer"],
+                "verification_summary": "blocked",
+            },
+        )
         adapter.consume([entry])
         assert len(adapter._safety_constraints) == 1
 
@@ -1341,11 +1379,14 @@ class TestAGIEconomicsAdapter:
 
     def test_handle_event_safety(self):
         adapter = AGIEconomicsBlackboardAdapter()
-        event = _event("safety.ethics.verification.failed", {
-            "is_ethical": False,
-            "blocked_actions": ["stake"],
-            "reason": "unsafe",
-        })
+        event = _event(
+            "safety.ethics.verification.failed",
+            {
+                "is_ethical": False,
+                "blocked_actions": ["stake"],
+                "reason": "unsafe",
+            },
+        )
         adapter.handle_event(event)
         assert len(adapter._safety_constraints) == 1
 
@@ -1468,7 +1509,9 @@ class TestFederatedAdapter:
     def test_consume_reasoning(self):
         mgr = MockFederatedManager()
         adapter = FederatedLearningBlackboardAdapter(manager=mgr)
-        entry = _entry("reasoning.inference", {"hyperparameter_suggestion": {"learning_rate": 0.01}})
+        entry = _entry(
+            "reasoning.inference", {"hyperparameter_suggestion": {"learning_rate": 0.01}}
+        )
         adapter.consume([entry])
         # No crash — config updated
 
@@ -1591,11 +1634,13 @@ class TestSafetyAdapter:
         verifier = MockEthicalVerifier(ethical=True, confidence=0.9)
         adapter = SafetyBlackboardAdapter(verifier=verifier)
         # Manually add a pending verification
-        adapter._pending_verifications.append({
-            "is_ethical": True,
-            "overall_confidence": 0.9,
-            "verification_summary": "Passed",
-        })
+        adapter._pending_verifications.append(
+            {
+                "is_ethical": True,
+                "overall_confidence": 0.9,
+                "verification_summary": "Passed",
+            }
+        )
         events = []
         adapter.set_event_handler(lambda e: events.append(e))
         entries = adapter.produce()
@@ -1606,12 +1651,14 @@ class TestSafetyAdapter:
 
     def test_produce_flushes_pending_proofs(self):
         adapter = SafetyBlackboardAdapter()
-        adapter._pending_proofs.append({
-            "is_valid": True,
-            "confidence": 0.95,
-            "method": "resolution",
-            "steps": ["step1"],
-        })
+        adapter._pending_proofs.append(
+            {
+                "is_valid": True,
+                "confidence": 0.95,
+                "method": "resolution",
+                "steps": ["step1"],
+            }
+        )
         events = []
         adapter.set_event_handler(lambda e: events.append(e))
         entries = adapter.produce()
@@ -1630,9 +1677,9 @@ class TestSafetyAdapter:
     def test_consume_economics_auto_verify(self):
         verifier = MockEthicalVerifier(ethical=False, confidence=0.3)
         adapter = SafetyBlackboardAdapter(verifier=verifier)
-        entry = _entry("economics.token.transfer", {
-            "from_agent": "A", "to_agent": "B", "amount": 100
-        })
+        entry = _entry(
+            "economics.token.transfer", {"from_agent": "A", "to_agent": "B", "amount": 100}
+        )
         adapter.consume([entry])
         assert len(adapter._pending_verifications) == 1
         assert adapter._pending_verifications[0]["is_ethical"] is False
@@ -1653,9 +1700,10 @@ class TestSafetyAdapter:
     def test_handle_event_reasoning(self):
         verifier = MockEthicalVerifier()
         adapter = SafetyBlackboardAdapter(verifier=verifier)
-        event = _event("reasoning.inference.completed", {
-            "action": "dangerous_action", "proposal": {"action": "test"}
-        })
+        event = _event(
+            "reasoning.inference.completed",
+            {"action": "dangerous_action", "proposal": {"action": "test"}},
+        )
         adapter.handle_event(event)
         assert len(adapter._pending_verifications) == 1
 
@@ -1670,9 +1718,9 @@ class TestSafetyAdapter:
         adapter = SafetyBlackboardAdapter(constitutional=const)
         events = []
         adapter.set_event_handler(lambda e: events.append(e))
-        event = _event("economics.token.transfer.completed", {
-            "transfer": {"token_type": "ASI", "amount": 100}
-        })
+        event = _event(
+            "economics.token.transfer.completed", {"transfer": {"token_type": "ASI", "amount": 100}}
+        )
         adapter.handle_event(event)
         assert any(e.event_type == "safety.constitution.violated" for e in events)
 
@@ -1719,7 +1767,11 @@ class TestSafetyAdapter:
         adapter.consume([entry])
         # Flush pending verifications
         produced = adapter.produce()
-        ver_entries = [e for e in produced if e.topic == "safety.ethics.verification" and "is_ethical" in (e.metadata or {})]
+        ver_entries = [
+            e
+            for e in produced
+            if e.topic == "safety.ethics.verification" and "is_ethical" in (e.metadata or {})
+        ]
         for ve in ver_entries:
             if ve.metadata.get("is_ethical") is False:
                 assert ve.priority == EntryPriority.CRITICAL
@@ -1731,10 +1783,13 @@ class TestSafetyAdapter:
         verifier = MockEthicalVerifier(ethical=True, confidence=0.95)
         const = MockConstitutionalAI(aligned=True)
         adapter = SafetyBlackboardAdapter(verifier=verifier, constitutional=const)
-        entry = _entry("reasoning.inference", {
-            "inference": "increase learning rate",
-            "affected_parties": ["model"],
-        })
+        entry = _entry(
+            "reasoning.inference",
+            {
+                "inference": "increase learning rate",
+                "affected_parties": ["model"],
+            },
+        )
         adapter.consume([entry])
         assert len(adapter._pending_verifications) == 1
         assert adapter._pending_verifications[0]["is_ethical"] is True
@@ -1789,11 +1844,13 @@ class TestSafetyAdapter:
         adapter.set_event_handler(lambda e: events.append(e))
 
         # Simulate auto-verify failure
-        adapter._pending_verifications.append({
-            "is_ethical": False,
-            "overall_confidence": 0.1,
-            "verification_summary": "FAILED",
-        })
+        adapter._pending_verifications.append(
+            {
+                "is_ethical": False,
+                "overall_confidence": 0.1,
+                "verification_summary": "FAILED",
+            }
+        )
         entries = adapter.produce()
         report_entries = [e for e in entries if e.topic == "safety.ethics.report"]
         assert len(report_entries) == 1
@@ -1868,9 +1925,9 @@ class TestCrossAdapterIntegration:
         verifier = MockEthicalVerifier(ethical=True)
         adapter = SafetyBlackboardAdapter(verifier=verifier)
         reasoning_entry = _entry("reasoning.inference", {"inference": "action A"})
-        economics_entry = _entry("economics.token.transfer", {
-            "from_agent": "A", "to_agent": "B", "amount": 50
-        })
+        economics_entry = _entry(
+            "economics.token.transfer", {"from_agent": "A", "to_agent": "B", "amount": 50}
+        )
         adapter.consume([reasoning_entry, economics_entry])
         assert len(adapter._pending_verifications) == 2
 

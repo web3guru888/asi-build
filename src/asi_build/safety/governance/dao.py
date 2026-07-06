@@ -623,7 +623,9 @@ class DAOGovernance:
         return {
             "total_proposals": len(self.proposals),
             "active_proposals": sum(
-                1 for p in self.proposals.values() if datetime.now(tz=timezone.utc) <= p.voting_ends_at
+                1
+                for p in self.proposals.values()
+                if datetime.now(tz=timezone.utc) <= p.voting_ends_at
             ),
             "total_stakeholders": len(self.tokens),
             "treasury_balances": self.treasury.balances,

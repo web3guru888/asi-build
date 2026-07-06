@@ -417,7 +417,9 @@ class ProposalContract(SmartContract):
         proposal_id = self.storage["proposal_counter"] + 1
         self.storage["proposal_counter"] = proposal_id
 
-        voting_end = datetime.now(tz=timezone.utc) + timedelta(seconds=self.storage["voting_period"])
+        voting_end = datetime.now(tz=timezone.utc) + timedelta(
+            seconds=self.storage["voting_period"]
+        )
 
         proposal = {
             "id": proposal_id,

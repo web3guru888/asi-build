@@ -30,7 +30,6 @@ from asi_build.rings.bridge.relayer import (
     RelayerDB,
 )
 
-
 # ===========================================================================
 # OperationStatus Tests (2)
 # ===========================================================================
@@ -115,9 +114,7 @@ class TestRelayerConfig:
             if "/shared/rings-cluster/node-" in p:
                 idx = p.split("node-")[1].split(".")[0]
                 try:
-                    return original_open(
-                        str(cluster_dir / f"node-{idx}.url"), *args, **kwargs
-                    )
+                    return original_open(str(cluster_dir / f"node-{idx}.url"), *args, **kwargs)
                 except FileNotFoundError:
                     raise FileNotFoundError(p)
             return original_open(path, *args, **kwargs)
@@ -316,10 +313,13 @@ class TestBridgeRelayer:
 
     def test_init_default_config(self, tmp_path):
         """BridgeRelayer should load config from env when none is provided."""
-        with patch.dict(os.environ, {
-            "RELAYER_DB_PATH": str(tmp_path / "env.db"),
-            "RELAYER_LOG_FILE": str(tmp_path / "env.log"),
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "RELAYER_DB_PATH": str(tmp_path / "env.db"),
+                "RELAYER_LOG_FILE": str(tmp_path / "env.log"),
+            },
+        ):
             relayer = BridgeRelayer()
         assert relayer.config.db_path == str(tmp_path / "env.db")
 

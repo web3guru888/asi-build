@@ -57,6 +57,7 @@ _METRIC_PREDICATES: Dict[str, str] = {
 
 # ── Data class for transition records ──────────────────────────────────
 
+
 @dataclass
 class TransitionRecord:
     """Immutable snapshot of a single state transition and its KG artefacts."""
@@ -69,6 +70,7 @@ class TransitionRecord:
 
 
 # ── Bridge class ───────────────────────────────────────────────────────
+
 
 class CognitiveStateKGBridge:
     """Records BioCognitiveArchitecture state transitions in a KG.
@@ -160,9 +162,7 @@ class CognitiveStateKGBridge:
         if self._current_state_triple_id is not None:
             self.kg.invalidate_triple(
                 triple_id=self._current_state_triple_id,
-                reason=(
-                    f"State changed: {old_state.value} → {new_state.value}"
-                ),
+                reason=(f"State changed: {old_state.value} → {new_state.value}"),
                 agent=AGENT,
             )
 
@@ -240,6 +240,7 @@ class CognitiveStateKGBridge:
 
 
 # ── Wrapper installer ─────────────────────────────────────────────────
+
 
 def enable_kg_logging(
     arch: BioCognitiveArchitecture,

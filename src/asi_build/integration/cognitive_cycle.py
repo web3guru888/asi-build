@@ -201,9 +201,9 @@ class CycleMetrics:
             "total_errors": self.total_errors,
             "avg_tick_time_ms": round(self.avg_tick_time_ms, 3),
             "max_tick_time_ms": round(self.max_tick_time_ms, 3),
-            "min_tick_time_ms": round(self.min_tick_time_ms, 3)
-            if self.min_tick_time_ms != float("inf")
-            else 0.0,
+            "min_tick_time_ms": (
+                round(self.min_tick_time_ms, 3) if self.min_tick_time_ms != float("inf") else 0.0
+            ),
             "uptime_seconds": round(self.uptime_seconds, 2),
             "ticks_per_second": round(self.ticks_per_second, 3),
             "adapter_produce_counts": dict(self.adapter_produce_counts),
@@ -457,9 +457,7 @@ class CognitiveCycle:
 
             # Safety gate check
             if self._safety_required:
-                has_safety = any(
-                    role == AdapterRole.SAFETY for _, role in self._adapters.values()
-                )
+                has_safety = any(role == AdapterRole.SAFETY for _, role in self._adapters.values())
                 if not has_safety:
                     raise RuntimeError(
                         "safety_required=True but no adapter registered with role='safety'. "
@@ -728,7 +726,10 @@ class CognitiveCycle:
 
                         for se in safety_entries:
                             data = se.data if isinstance(se.data, dict) else {}
-                            if data.get("is_ethical") is False or se.priority == EntryPriority.CRITICAL:
+                            if (
+                                data.get("is_ethical") is False
+                                or se.priority == EntryPriority.CRITICAL
+                            ):
                                 result.safety_vetoes += 1
                                 self._metrics.total_safety_vetoes += 1
 
@@ -919,9 +920,7 @@ class CognitiveCycle:
 
         # Running average
         if m.total_ticks > 0:
-            m.avg_tick_time_ms = (
-                m.avg_tick_time_ms * (m.total_ticks - 1) + t
-            ) / m.total_ticks
+            m.avg_tick_time_ms = (m.avg_tick_time_ms * (m.total_ticks - 1) + t) / m.total_ticks
 
         if self._started_at:
             elapsed = time.time() - self._started_at
@@ -1004,8 +1003,8 @@ def create_default_cycle(
         ReproducibilityBlackboardAdapter,
         RingsNetworkAdapter,
         SafetyBlackboardAdapter,
-        VLABlackboardAdapter,
         VectorDBBlackboardAdapter,
+        VLABlackboardAdapter,
     )
 
     bb = CognitiveBlackboard()

@@ -213,9 +213,7 @@ class BeaconAPILightClient(EthLightClient):
     ) -> None:
         self._beacon_url = beacon_url.rstrip("/")
         self._execution_url = execution_url.rstrip("/")
-        self._fallback_beacon_url = (
-            fallback_beacon_url.rstrip("/") if fallback_beacon_url else None
-        )
+        self._fallback_beacon_url = fallback_beacon_url.rstrip("/") if fallback_beacon_url else None
         self._genesis_time = genesis_time
         self._timeout = aiohttp.ClientTimeout(total=timeout)
         self._max_retries = max_retries
@@ -266,9 +264,7 @@ class BeaconAPILightClient(EthLightClient):
 
     # ── HTTP helpers with retry ─────────────────────────────────────────
 
-    async def _beacon_get(
-        self, path: str, *, use_fallback: bool = True
-    ) -> dict:
+    async def _beacon_get(self, path: str, *, use_fallback: bool = True) -> dict:
         """GET a Beacon API endpoint with retries and optional fallback.
 
         Parameters
@@ -312,9 +308,7 @@ class BeaconAPILightClient(EthLightClient):
                         elif resp.status == 429:
                             # Rate limited — wait longer
                             delay = self._retry_base_delay * (2 ** (attempt + 1))
-                            logger.warning(
-                                "Rate limited on %s, retrying in %.1fs", url, delay
-                            )
+                            logger.warning("Rate limited on %s, retrying in %.1fs", url, delay)
                             await asyncio.sleep(delay)
                             continue
                         else:
@@ -324,19 +318,15 @@ class BeaconAPILightClient(EthLightClient):
                                 status_code=resp.status,
                                 url=url,
                             )
-                            logger.warning(
-                                "Beacon API error on %s: %s", url, last_error
-                            )
+                            logger.warning("Beacon API error on %s: %s", url, last_error)
                 except BeaconAPIError:
                     raise
                 except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
                     last_error = exc
-                    logger.warning(
-                        "Beacon API request failed (%s): %s", url, exc
-                    )
+                    logger.warning("Beacon API request failed (%s): %s", url, exc)
 
                 if attempt < self._max_retries - 1:
-                    delay = self._retry_base_delay * (2 ** attempt)
+                    delay = self._retry_base_delay * (2**attempt)
                     await asyncio.sleep(delay)
 
             logger.info("Beacon URL %s exhausted, trying next", url)
@@ -346,9 +336,7 @@ class BeaconAPILightClient(EthLightClient):
             url=urls[0],
         )
 
-    async def _execution_rpc(
-        self, method: str, params: list
-    ) -> Any:
+    async def _execution_rpc(self, method: str, params: list) -> Any:
         """Call an execution-layer JSON-RPC method with retries.
 
         Parameters
@@ -380,17 +368,11 @@ class BeaconAPILightClient(EthLightClient):
         for attempt in range(self._max_retries):
             try:
                 session = await self._get_session()
-                async with session.post(
-                    self._execution_url, json=payload
-                ) as resp:
+                async with session.post(self._execution_url, json=payload) as resp:
                     if resp.status != 200:
                         body = await resp.text()
-                        last_error = ExecutionRPCError(
-                            f"HTTP {resp.status}: {body[:200]}"
-                        )
-                        logger.warning(
-                            "Execution RPC HTTP error: %s", last_error
-                        )
+                        last_error = ExecutionRPCError(f"HTTP {resp.status}: {body[:200]}")
+                        logger.warning("Execution RPC HTTP error: %s", last_error)
                     else:
                         data = await resp.json(content_type=None)
                         if "error" in data:
@@ -407,12 +389,10 @@ class BeaconAPILightClient(EthLightClient):
                 logger.warning("Execution RPC failed: %s", exc)
 
             if attempt < self._max_retries - 1:
-                delay = self._retry_base_delay * (2 ** attempt)
+                delay = self._retry_base_delay * (2**attempt)
                 await asyncio.sleep(delay)
 
-        raise ExecutionRPCError(
-            f"All execution RPC attempts failed for {method}: {last_error}"
-        )
+        raise ExecutionRPCError(f"All execution RPC attempts failed for {method}: {last_error}")
 
     # ── Beacon API response parsing ─────────────────────────────────────
 
@@ -446,9 +426,7 @@ class BeaconAPILightClient(EthLightClient):
         )
 
     @staticmethod
-    def _parse_sync_committee(
-        sc_data: dict, period: int
-    ) -> SyncCommittee:
+    def _parse_sync_committee(sc_data: dict, period: int) -> SyncCommittee:
         """Parse sync committee JSON into a SyncCommittee.
 
         Parameters
@@ -517,12 +495,11 @@ class BeaconAPILightClient(EthLightClient):
             self._committee_cache[period] = committee
             logger.info(
                 "Bootstrapped sync committee: period=%d, %d pubkeys",
-                period, len(committee.pubkeys),
+                period,
+                len(committee.pubkeys),
             )
         except BeaconAPIError as exc:
-            logger.warning(
-                "Bootstrap failed (%s), trying light client updates", exc
-            )
+            logger.warning("Bootstrap failed (%s), trying light client updates", exc)
             # Fallback: fetch via light client updates
             period = slot_to_sync_committee_period(self._finalized_header.slot)
             await self._fetch_sync_committee_update(period)
@@ -557,9 +534,7 @@ class BeaconAPILightClient(EthLightClient):
         # Response is an array of updates
         updates = resp if isinstance(resp, list) else [resp]
         if not updates:
-            raise BeaconAPIError(
-                f"No light client updates for period {period}"
-            )
+            raise BeaconAPIError(f"No light client updates for period {period}")
 
         update = updates[0]
         # Handle both wrapped and unwrapped format
@@ -567,15 +542,14 @@ class BeaconAPILightClient(EthLightClient):
 
         sc_data = data.get("next_sync_committee")
         if sc_data is None:
-            raise BeaconAPIError(
-                f"No next_sync_committee in update for period {period}"
-            )
+            raise BeaconAPIError(f"No next_sync_committee in update for period {period}")
 
         committee = self._parse_sync_committee(sc_data, period)
         self._committee_cache[period] = committee
         logger.info(
             "Fetched sync committee: period=%d, %d pubkeys",
-            period, len(committee.pubkeys),
+            period,
+            len(committee.pubkeys),
         )
         return committee
 
@@ -680,9 +654,7 @@ class BeaconAPILightClient(EthLightClient):
         """
         # Fetch the proof from execution layer
         block_hex = hex(block)
-        raw = await self._execution_rpc(
-            "eth_getProof", [address, storage_keys, block_hex]
-        )
+        raw = await self._execution_rpc("eth_getProof", [address, storage_keys, block_hex])
 
         if raw is None:
             raise ExecutionRPCError(f"eth_getProof returned null for {address}")
@@ -753,42 +725,35 @@ class BeaconAPILightClient(EthLightClient):
         state_root_hex = await self._get_execution_state_root(block_number)
         if state_root_hex is None:
             logger.info(
-                "No state root available for block %d, skipping MPT "
-                "verification",
+                "No state root available for block %d, skipping MPT " "verification",
                 block_number,
             )
             return False
 
         try:
             state_root = bytes.fromhex(state_root_hex.removeprefix("0x"))
-            proof_nodes = [
-                bytes.fromhex(p.removeprefix("0x")) for p in account_proof_hex
-            ]
-            result = MerklePatriciaVerifier.verify_account_proof(
-                state_root, address, proof_nodes
-            )
+            proof_nodes = [bytes.fromhex(p.removeprefix("0x")) for p in account_proof_hex]
+            result = MerklePatriciaVerifier.verify_account_proof(state_root, address, proof_nodes)
             if result is not None:
                 logger.info(
-                    "Account proof verified: address=%s, nonce=%d, "
-                    "balance=%d",
-                    address, result.nonce, result.balance,
+                    "Account proof verified: address=%s, nonce=%d, " "balance=%d",
+                    address,
+                    result.nonce,
+                    result.balance,
                 )
                 return True
             else:
                 logger.warning(
                     "Account proof verification failed for %s at block %d",
-                    address, block_number,
+                    address,
+                    block_number,
                 )
                 return False
         except Exception as exc:
-            logger.warning(
-                "MPT verification error for %s: %s", address, exc
-            )
+            logger.warning("MPT verification error for %s: %s", address, exc)
             return False
 
-    async def _get_execution_state_root(
-        self, block_number: int
-    ) -> Optional[str]:
+    async def _get_execution_state_root(self, block_number: int) -> Optional[str]:
         """Get the execution-layer state root for a block number.
 
         Queries the execution layer via ``eth_getBlockByNumber`` to
@@ -806,15 +771,14 @@ class BeaconAPILightClient(EthLightClient):
         """
         try:
             block_hex = hex(block_number)
-            result = await self._execution_rpc(
-                "eth_getBlockByNumber", [block_hex, False]
-            )
+            result = await self._execution_rpc("eth_getBlockByNumber", [block_hex, False])
             if result and "stateRoot" in result:
                 return result["stateRoot"]
         except Exception as exc:
             logger.debug(
                 "Could not get state root for block %d: %s",
-                block_number, exc,
+                block_number,
+                exc,
             )
         return None
 
@@ -845,9 +809,7 @@ class BeaconAPILightClient(EthLightClient):
             If the transaction or log index doesn't exist.
         """
         # Fetch receipt
-        receipt = await self._execution_rpc(
-            "eth_getTransactionReceipt", [tx_hash]
-        )
+        receipt = await self._execution_rpc("eth_getTransactionReceipt", [tx_hash])
         if receipt is None:
             raise KeyError(f"No receipt for tx {tx_hash}")
 
@@ -862,8 +824,7 @@ class BeaconAPILightClient(EthLightClient):
 
         if target_log is None:
             raise KeyError(
-                f"No log at index {log_index} in tx {tx_hash} "
-                f"(receipt has {len(logs)} logs)"
+                f"No log at index {log_index} in tx {tx_hash} " f"(receipt has {len(logs)} logs)"
             )
 
         block_number = int(receipt.get("blockNumber", "0x0"), 16)
@@ -904,9 +865,7 @@ class BeaconAPILightClient(EthLightClient):
         try:
             return await self._fetch_sync_committee_update(period)
         except BeaconAPIError as exc:
-            raise KeyError(
-                f"No sync committee for period {period}: {exc}"
-            ) from exc
+            raise KeyError(f"No sync committee for period {period}: {exc}") from exc
 
     async def get_latest_slot(self) -> int:
         """Get the latest verified (finalized) slot number.
@@ -964,13 +923,9 @@ class BeaconAPILightClient(EthLightClient):
         if storage_keys is None:
             storage_keys = []
 
-        result = await self._execution_rpc(
-            "eth_getProof", [address, storage_keys, block]
-        )
+        result = await self._execution_rpc("eth_getProof", [address, storage_keys, block])
         if result is None:
-            raise ExecutionRPCError(
-                f"eth_getProof returned null for {address}"
-            )
+            raise ExecutionRPCError(f"eth_getProof returned null for {address}")
         return result
 
     async def get_finality_update(self) -> dict:
@@ -981,9 +936,7 @@ class BeaconAPILightClient(EthLightClient):
         dict
             Raw finality update data.
         """
-        resp = await self._beacon_get(
-            "/eth/v1/beacon/light_client/finality_update"
-        )
+        resp = await self._beacon_get("/eth/v1/beacon/light_client/finality_update")
         return resp
 
     async def get_chain_config(self) -> dict:
@@ -1026,9 +979,7 @@ class BeaconAPILightClient(EthLightClient):
         str
             Hex-encoded state root.
         """
-        resp = await self._beacon_get(
-            f"/eth/v1/beacon/states/{state_id}/root"
-        )
+        resp = await self._beacon_get(f"/eth/v1/beacon/states/{state_id}/root")
         return resp["data"]["root"]
 
     @property

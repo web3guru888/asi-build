@@ -28,7 +28,6 @@ from asi_build.rings.bridge.protocol import (
 )
 from asi_build.rings.client import InMemoryTransport, RingsClient
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -144,9 +143,13 @@ class TestBridgeMessage:
 
     def test_all_message_types_accessible(self):
         expected = {
-            "deposit_observed", "deposit_attested",
-            "withdrawal_request", "withdrawal_approved",
-            "committee_update", "heartbeat", "emergency_halt",
+            "deposit_observed",
+            "deposit_attested",
+            "withdrawal_request",
+            "withdrawal_approved",
+            "committee_update",
+            "heartbeat",
+            "emergency_halt",
         }
         actual = {m.value for m in BridgeMessage}
         assert actual == expected
@@ -162,8 +165,11 @@ class TestDataRecords:
 
     def test_deposit_record_defaults(self):
         dr = DepositRecord(
-            tx_hash="0x1", block_number=100, amount=1000,
-            sender_eth="0xsender", recipient_did="did:r:1",
+            tx_hash="0x1",
+            block_number=100,
+            amount=1000,
+            sender_eth="0xsender",
+            recipient_did="did:r:1",
         )
         assert dr.finalized is False
         assert dr.attestations == {}
@@ -171,7 +177,9 @@ class TestDataRecords:
 
     def test_withdrawal_record_defaults(self):
         wr = WithdrawalRecord(
-            nonce=0, amount=500, requester_did="did:r:1",
+            nonce=0,
+            amount=500,
+            requester_did="did:r:1",
             recipient_eth="0xrecipient",
         )
         assert wr.executed is False
@@ -179,8 +187,11 @@ class TestDataRecords:
 
     def test_deposit_to_dict(self):
         dr = DepositRecord(
-            tx_hash="0x1", block_number=10, amount=100,
-            sender_eth="0xa", recipient_did="did:x",
+            tx_hash="0x1",
+            block_number=10,
+            amount=100,
+            sender_eth="0xa",
+            recipient_did="did:x",
             attestations={"did:v": b"\x01\x02"},
         )
         d = dr.to_dict()
@@ -189,7 +200,9 @@ class TestDataRecords:
 
     def test_withdrawal_to_dict(self):
         wr = WithdrawalRecord(
-            nonce=5, amount=200, requester_did="did:x",
+            nonce=5,
+            amount=200,
+            requester_did="did:x",
             recipient_eth="0xb",
             approvals={"did:v": b"\xab\xcd"},
         )
@@ -228,6 +241,7 @@ class TestBridgeValidator:
             assert v.state == BridgeState.INITIALIZING
             await v.join_bridge()
             assert v.state == BridgeState.ACTIVE
+
         run(_test())
 
     def test_observe_deposit_stores_locally_and_dht(self):
@@ -241,6 +255,7 @@ class TestBridgeValidator:
             raw = await v.client.dht_get(BridgeProtocol.bridge_deposit_key("0xaaa"))
             assert raw is not None
             assert raw["amount"] == 1000
+
         run(_test())
 
     def test_observe_deposit_record_fields(self):
@@ -253,6 +268,7 @@ class TestBridgeValidator:
             assert rec.sender_eth == "0xsender2"
             assert rec.recipient_did == "did:r:2"
             assert rec.finalized is False
+
         run(_test())
 
     def test_attest_deposit_signs(self):
@@ -264,6 +280,7 @@ class TestBridgeValidator:
             assert isinstance(sig, bytes)
             assert len(sig) == 32  # HMAC-SHA256
             assert v.did in v.deposits["0xc"].attestations
+
         run(_test())
 
     def test_attest_deposit_unknown_raises(self):
@@ -272,6 +289,7 @@ class TestBridgeValidator:
             await v.join_bridge()
             with pytest.raises(KeyError, match="Unknown deposit"):
                 await v.attest_deposit("0xnonexistent")
+
         run(_test())
 
     def test_collect_attestations_below_threshold(self):
@@ -283,6 +301,7 @@ class TestBridgeValidator:
             met, sigs = await v.collect_attestations("0xd")
             assert met is False
             assert len(sigs) == 1
+
         run(_test())
 
     def test_collect_attestations_above_threshold(self):
@@ -301,6 +320,7 @@ class TestBridgeValidator:
             met, sigs = await v1.collect_attestations("0xe")
             assert met is True
             assert len(sigs) >= 2
+
         run(_test())
 
     def test_request_withdrawal_creates_record(self):
@@ -312,6 +332,7 @@ class TestBridgeValidator:
             assert rec.amount == 500
             assert rec.recipient_eth == "0xeth"
             assert rec.requester_did == v.did
+
         run(_test())
 
     def test_request_withdrawal_increments_nonce(self):
@@ -322,6 +343,7 @@ class TestBridgeValidator:
             r2 = await v.request_withdrawal(200, "0x2")
             assert r1.nonce == 0
             assert r2.nonce == 1
+
         run(_test())
 
     def test_approve_withdrawal_signs(self):
@@ -335,6 +357,7 @@ class TestBridgeValidator:
             sig = await v2.approve_withdrawal(rec.nonce)
             assert isinstance(sig, bytes)
             assert len(sig) == 32
+
         run(_test())
 
     def test_approve_withdrawal_unknown_raises(self):
@@ -343,6 +366,7 @@ class TestBridgeValidator:
             await v.join_bridge()
             with pytest.raises(KeyError, match="Unknown withdrawal"):
                 await v.approve_withdrawal(999)
+
         run(_test())
 
     def test_collect_approvals_threshold(self):
@@ -358,6 +382,7 @@ class TestBridgeValidator:
             met, sigs = await v1.collect_approvals(rec.nonce)
             assert met is True
             assert len(sigs) >= 2
+
         run(_test())
 
     def test_send_heartbeat_no_crash(self):
@@ -370,6 +395,7 @@ class TestBridgeValidator:
             raw = await v.client.dht_get(key)
             assert raw is not None
             assert raw["state"] == "active"
+
         run(_test())
 
     def test_emergency_halt_sets_state(self):
@@ -378,6 +404,7 @@ class TestBridgeValidator:
             await v.join_bridge()
             await v.emergency_halt("test reason")
             assert v.state == BridgeState.HALTED
+
         run(_test())
 
     def test_emergency_halt_prevents_operations(self):
@@ -389,6 +416,7 @@ class TestBridgeValidator:
                 await v.observe_deposit("0xf", 1, 100, "0xs", "did:r")
             with pytest.raises(RuntimeError, match="halted"):
                 await v.request_withdrawal(100, "0xeth")
+
         run(_test())
 
     def test_multiple_validators_attest_same_deposit(self):
@@ -407,10 +435,12 @@ class TestBridgeValidator:
             met, sigs = await validators[0].collect_attestations("0xmulti")
             assert met is True
             assert len(sigs) == 3
+
         run(_test())
 
     def test_full_deposit_flow(self):
         """Full flow: observe → attest → collect (finalized)."""
+
         async def _test():
             transport = InMemoryTransport()
             v1 = await _make_validator("v1", transport, threshold=2, total=2)
@@ -430,4 +460,5 @@ class TestBridgeValidator:
             met, sigs = await v1.collect_attestations("0xfull")
             assert met is True
             assert v1.deposits["0xfull"].finalized is True
+
         run(_test())

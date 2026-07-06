@@ -132,9 +132,7 @@ class DistributedTrainingAdapter:
         return ModuleInfo(
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
-            capabilities=(
-                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER
-            ),
+            capabilities=(ModuleCapability.PRODUCER | ModuleCapability.CONSUMER),
             description=(
                 "Distributed training: federated learning orchestration, "
                 "Byzantine-tolerant aggregation, and training metrics."
@@ -265,9 +263,10 @@ class DistributedTrainingAdapter:
         if hasattr(current_round, "__dict__"):
             try:
                 from dataclasses import asdict
+
                 round_data = asdict(current_round)
             except (TypeError, Exception):
-                round_data = vars(current_round) if hasattr(current_round, '__dict__') else {}
+                round_data = vars(current_round) if hasattr(current_round, "__dict__") else {}
         elif isinstance(current_round, dict):
             round_data = current_round
         else:
@@ -289,10 +288,10 @@ class DistributedTrainingAdapter:
         nodes = getattr(self._orchestrator, "nodes", None)
         active_nodes = getattr(self._orchestrator, "active_nodes", None)
         if nodes is not None:
-            round_data["total_nodes"] = len(nodes) if hasattr(nodes, '__len__') else nodes
+            round_data["total_nodes"] = len(nodes) if hasattr(nodes, "__len__") else nodes
         if active_nodes is not None:
             round_data["active_nodes"] = (
-                len(active_nodes) if hasattr(active_nodes, '__len__') else active_nodes
+                len(active_nodes) if hasattr(active_nodes, "__len__") else active_nodes
             )
 
         is_completed = status in ("completed", "finished", "aggregated", "done")
@@ -341,9 +340,10 @@ class DistributedTrainingAdapter:
         try:
             last_result = getattr(self._aggregator, "last_result", None)
             if last_result is not None:
-                if hasattr(last_result, '__dict__'):
+                if hasattr(last_result, "__dict__"):
                     try:
                         from dataclasses import asdict
+
                         agg_data["last_aggregation"] = asdict(last_result)
                     except (TypeError, Exception):
                         agg_data["last_aggregation"] = str(last_result)
@@ -361,8 +361,10 @@ class DistributedTrainingAdapter:
 
         # Change detection: only post if aggregation round changed or Byzantine count changed
         agg_round = agg_data.get("round_id", agg_data.get("aggregation_round", ""))
-        if (str(agg_round) == str(self._last_aggregation_round)
-                and byzantine_count == self._last_byzantine_count):
+        if (
+            str(agg_round) == str(self._last_aggregation_round)
+            and byzantine_count == self._last_byzantine_count
+        ):
             return None
 
         new_byzantine = byzantine_count > self._last_byzantine_count
@@ -501,8 +503,10 @@ class DistributedTrainingAdapter:
             return
         payload = event.payload or {}
         new_state = payload.get("new_state", "")
-        if new_state and hasattr(self._orchestrator, "config") and isinstance(
-            self._orchestrator.config, dict
+        if (
+            new_state
+            and hasattr(self._orchestrator, "config")
+            and isinstance(self._orchestrator.config, dict)
         ):
             self._orchestrator.config["consciousness_state"] = str(new_state)
 
@@ -525,7 +529,7 @@ class DistributedTrainingAdapter:
         if self._orchestrator is not None:
             try:
                 nodes = getattr(self._orchestrator, "nodes", {})
-                snap["total_nodes"] = len(nodes) if hasattr(nodes, '__len__') else 0
+                snap["total_nodes"] = len(nodes) if hasattr(nodes, "__len__") else 0
                 snap["is_running"] = getattr(self._orchestrator, "is_running", False)
             except Exception:
                 pass

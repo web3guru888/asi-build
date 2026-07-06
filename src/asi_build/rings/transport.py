@@ -239,7 +239,9 @@ class WebSocketTransport:
             self._connected = False
             self._stats["errors"] += 1
             logger.error("WebSocket connection failed: %s", exc)
-            raise ConnectionError(f"Failed to connect to {self._endpoint or self._url}: {exc}") from exc
+            raise ConnectionError(
+                f"Failed to connect to {self._endpoint or self._url}: {exc}"
+            ) from exc
 
     async def _receive_loop(self) -> None:
         """Read messages from the WebSocket, dispatch responses / queue events."""
@@ -441,9 +443,7 @@ class HTTPTransport:
                 if "error" in body:
                     self._stats["errors"] += 1
                     err = body["error"]
-                    raise RuntimeError(
-                        f"RPC error: {err.get('message', err)}"
-                    )
+                    raise RuntimeError(f"RPC error: {err.get('message', err)}")
                 return body.get("result")
         except RuntimeError:
             raise
@@ -573,9 +573,7 @@ class MultiNodeTransport:
                     )
             tried += 1
 
-        raise ConnectionError(
-            f"All {n} nodes failed. Last error: {last_exc}"
-        )
+        raise ConnectionError(f"All {n} nodes failed. Last error: {last_exc}")
 
     # ── Public helpers ────────────────────────────────────────────────────
 
@@ -598,10 +596,7 @@ class MultiNodeTransport:
         return list(self._transports)
 
     def __repr__(self) -> str:
-        return (
-            f"MultiNodeTransport(nodes={len(self._urls)}, "
-            f"connected={self.connected_count})"
-        )
+        return f"MultiNodeTransport(nodes={len(self._urls)}, " f"connected={self.connected_count})"
 
 
 # ---------------------------------------------------------------------------
@@ -664,6 +659,5 @@ def create_transport(
         return WebSocketTransport(url, **kwargs)
 
     raise ValueError(
-        f"Unknown URL scheme in {url!r}. "
-        "Supported: ws://, wss://, http://, https://, memory://"
+        f"Unknown URL scheme in {url!r}. " "Supported: ws://, wss://, http://, https://, memory://"
     )

@@ -179,9 +179,7 @@ class RLPDecoder:
             len_start = offset + 1
             len_end = len_start + len_of_len
             if len_end > len(data):
-                raise ValueError(
-                    f"RLP: long string length bytes at {offset} exceed data"
-                )
+                raise ValueError(f"RLP: long string length bytes at {offset} exceed data")
             str_len = int.from_bytes(data[len_start:len_end], "big")
             start = len_end
             end = start + str_len
@@ -215,9 +213,7 @@ class RLPDecoder:
             len_start = offset + 1
             len_end = len_start + len_of_len
             if len_end > len(data):
-                raise ValueError(
-                    f"RLP: long list length bytes at {offset} exceed data"
-                )
+                raise ValueError(f"RLP: long list length bytes at {offset} exceed data")
             list_len = int.from_bytes(data[len_start:len_end], "big")
             start = len_end
             end = start + list_len
@@ -257,9 +253,7 @@ class RLPDecoder:
         elif prefix <= 0xBF:
             len_of_len = prefix - 0xB7
             len_start = offset + 1
-            str_len = int.from_bytes(
-                data[len_start : len_start + len_of_len], "big"
-            )
+            str_len = int.from_bytes(data[len_start : len_start + len_of_len], "big")
             return len_start + len_of_len, str_len, "str"
 
         elif prefix <= 0xF7:
@@ -269,9 +263,7 @@ class RLPDecoder:
         else:
             len_of_len = prefix - 0xF7
             len_start = offset + 1
-            list_len = int.from_bytes(
-                data[len_start : len_start + len_of_len], "big"
-            )
+            list_len = int.from_bytes(data[len_start : len_start + len_of_len], "big")
             return len_start + len_of_len, list_len, "list"
 
 
@@ -443,7 +435,9 @@ class MerklePatriciaVerifier:
                 # Nodes shorter than 32 bytes may be inlined (not hashed)
                 logger.debug(
                     "Proof node %d: hash mismatch (expected %s, got %s)",
-                    i, expected_hash.hex(), node_hash.hex(),
+                    i,
+                    expected_hash.hex(),
+                    node_hash.hex(),
                 )
                 return None
 
@@ -486,9 +480,7 @@ class MerklePatriciaVerifier:
                     logger.debug("Proof node %d: path not bytes", i)
                     return None
 
-                path_nibbles, is_leaf = (
-                    MerklePatriciaVerifier._decode_compact_path(encoded_path)
-                )
+                path_nibbles, is_leaf = MerklePatriciaVerifier._decode_compact_path(encoded_path)
 
                 # Check that the path matches the remaining key nibbles
                 remaining = key_nibbles[nibble_idx:]
@@ -519,9 +511,7 @@ class MerklePatriciaVerifier:
                     expected_hash = b""
 
             else:
-                logger.debug(
-                    "Proof node %d: unexpected length %d", i, len(decoded)
-                )
+                logger.debug("Proof node %d: unexpected length %d", i, len(decoded))
                 return None
 
         # Exhausted proof without finding the value

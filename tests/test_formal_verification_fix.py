@@ -11,9 +11,10 @@ Verifies that:
 7. Model checking enumerates all truth assignments
 """
 
+from datetime import datetime, timezone
+
 import pytest
 import sympy as sp
-from datetime import datetime, timezone
 from sympy.logic.boolalg import And, Implies, Not, Or
 
 from asi_build.safety.formal_verification import (
@@ -25,10 +26,9 @@ from asi_build.safety.formal_verification import (
     FormulaParseError,
     LogicalPredicate,
     TheoremProver,
-    parse_logic_formula,
     _get_symbol,
+    parse_logic_formula,
 )
-
 
 # ============================================================
 # Section 1: parse_logic_formula — the root-cause fix
@@ -379,9 +379,9 @@ class TestAxiomParsing:
         engine = EthicalVerificationEngine()
         for axiom in engine.theorem_prover.axioms:
             expr = axiom.to_sympy()
-            assert len(expr.free_symbols) > 0, (
-                f"Axiom {axiom.name!r} has no free symbols — probably parsed wrong"
-            )
+            assert (
+                len(expr.free_symbols) > 0
+            ), f"Axiom {axiom.name!r} has no free symbols — probably parsed wrong"
 
     def test_axiom_autonomy_is_implication(self):
         axiom = EthicalAxiom("test", "respects_autonomy -> ~violates_autonomy", "")
@@ -466,10 +466,12 @@ class TestEthicalEngineActuallyChecks:
                 "harm", "No Harm", EthicalPrinciple.NON_MALEFICENCE, "~causes_harm"
             )
         )
-        result = engine.verify_proposal_ethics({
-            "causes_harm": True,
-            "impact_assessment": {"harm_level": 0.9},
-        })
+        result = engine.verify_proposal_ethics(
+            {
+                "causes_harm": True,
+                "impact_assessment": {"harm_level": 0.9},
+            }
+        )
         assert result["overall_valid"] is False
         assert result["constraint_results"]["harm"]["valid"] is False
 
@@ -481,10 +483,12 @@ class TestEthicalEngineActuallyChecks:
                 "harm", "No Harm", EthicalPrinciple.NON_MALEFICENCE, "~causes_harm"
             )
         )
-        result = engine.verify_proposal_ethics({
-            "causes_harm": False,
-            "impact_assessment": {"harm_level": 0},
-        })
+        result = engine.verify_proposal_ethics(
+            {
+                "causes_harm": False,
+                "impact_assessment": {"harm_level": 0},
+            }
+        )
         assert result["overall_valid"] is True
         assert result["constraint_results"]["harm"]["valid"] is True
 
@@ -496,10 +500,12 @@ class TestEthicalEngineActuallyChecks:
                 "trans", "Transparency", EthicalPrinciple.TRANSPARENCY, "is_transparent"
             )
         )
-        result = engine.verify_proposal_ethics({
-            "is_transparent": False,
-            "impact_assessment": {"affected_parties": ["users"]},
-        })
+        result = engine.verify_proposal_ethics(
+            {
+                "is_transparent": False,
+                "impact_assessment": {"affected_parties": ["users"]},
+            }
+        )
         assert result["overall_valid"] is False
 
     def test_transparency_constraint_passes_when_transparent(self):
@@ -509,10 +515,12 @@ class TestEthicalEngineActuallyChecks:
                 "trans", "Transparency", EthicalPrinciple.TRANSPARENCY, "is_transparent"
             )
         )
-        result = engine.verify_proposal_ethics({
-            "is_transparent": True,
-            "impact_assessment": {"affected_parties": ["users"]},
-        })
+        result = engine.verify_proposal_ethics(
+            {
+                "is_transparent": True,
+                "impact_assessment": {"affected_parties": ["users"]},
+            }
+        )
         assert result["overall_valid"] is True
 
     def test_multiple_constraints_all_must_pass(self):
@@ -524,14 +532,14 @@ class TestEthicalEngineActuallyChecks:
             )
         )
         engine.add_constraint(
-            self._make_constraint(
-                "fair", "Fairness", EthicalPrinciple.FAIRNESS, "is_fair"
-            )
+            self._make_constraint("fair", "Fairness", EthicalPrinciple.FAIRNESS, "is_fair")
         )
-        result = engine.verify_proposal_ethics({
-            "causes_harm": False,
-            "is_fair": False,  # fails fairness
-        })
+        result = engine.verify_proposal_ethics(
+            {
+                "causes_harm": False,
+                "is_fair": False,  # fails fairness
+            }
+        )
         assert result["overall_valid"] is False
         assert result["constraint_results"]["harm"]["valid"] is True
         assert result["constraint_results"]["fair"]["valid"] is False
@@ -544,23 +552,23 @@ class TestEthicalEngineActuallyChecks:
             )
         )
         engine.add_constraint(
-            self._make_constraint(
-                "fair", "Fairness", EthicalPrinciple.FAIRNESS, "is_fair"
-            )
+            self._make_constraint("fair", "Fairness", EthicalPrinciple.FAIRNESS, "is_fair")
         )
-        result = engine.verify_proposal_ethics({
-            "causes_harm": False,
-            "is_fair": True,
-        })
+        result = engine.verify_proposal_ethics(
+            {
+                "causes_harm": False,
+                "is_fair": True,
+            }
+        )
         assert result["overall_valid"] is True
 
     def test_complex_constraint_with_axiom_interaction(self):
         """Test that axioms interact with constraints.
-        
+
         Axiom: is_beneficial -> promotes_wellbeing
         Constraint: requires promotes_wellbeing
         Proposal: is_beneficial=True
-        
+
         The axiom should enable deriving promotes_wellbeing from is_beneficial.
         """
         engine = EthicalVerificationEngine()
@@ -569,9 +577,11 @@ class TestEthicalEngineActuallyChecks:
                 "benefit", "Benefit", EthicalPrinciple.BENEFICENCE, "promotes_wellbeing"
             )
         )
-        result = engine.verify_proposal_ethics({
-            "is_beneficial": True,
-        })
+        result = engine.verify_proposal_ethics(
+            {
+                "is_beneficial": True,
+            }
+        )
         # The "beneficence" axiom says: is_beneficial -> promotes_wellbeing
         # So from is_beneficial=True, we should derive promotes_wellbeing=True
         assert result["constraint_results"]["benefit"]["valid"] is True
@@ -585,9 +595,11 @@ class TestEthicalEngineActuallyChecks:
                 "benefit", "Benefit", EthicalPrinciple.BENEFICENCE, "promotes_wellbeing"
             )
         )
-        result = engine.verify_proposal_ethics({
-            "is_beneficial": False,
-        })
+        result = engine.verify_proposal_ethics(
+            {
+                "is_beneficial": False,
+            }
+        )
         # is_beneficial=False, so axiom antecedent is false,
         # promotes_wellbeing is unconstrained → not provable
         assert result["constraint_results"]["benefit"]["valid"] is False

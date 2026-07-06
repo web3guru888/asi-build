@@ -286,7 +286,7 @@ class ReputationClient:
             # Exponential decay: more recent observations weigh more
             age_seconds = max(0, now - obs.timestamp)
             age_hours = age_seconds / 3600.0
-            decay = LOCAL_SCORE_DECAY ** age_hours
+            decay = LOCAL_SCORE_DECAY**age_hours
 
             weighted_sum += obs.score * decay
             weight_total += decay
@@ -313,11 +313,7 @@ class ReputationClient:
         avg_score = weighted_sum / weight_total if weight_total > 0 else 0.5
 
         # Three-factor composite: the paper's local scoring formula
-        composite = (
-            0.4 * success_rate
-            + 0.3 * validity_rate
-            + 0.3 * avg_score
-        )
+        composite = 0.4 * success_rate + 0.3 * validity_rate + 0.3 * avg_score
 
         self._local_ranks[peer_did] = LocalRankRecord(
             peer_did=peer_did,

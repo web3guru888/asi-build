@@ -146,9 +146,7 @@ class IntegrationsBlackboardBridge:
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
             capabilities=(
-                ModuleCapability.PRODUCER
-                | ModuleCapability.CONSUMER
-                | ModuleCapability.TRANSFORMER
+                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.TRANSFORMER
             ),
             description=(
                 "Integrations bridge: SQL-to-graph migration, Cypher query "
@@ -216,7 +214,9 @@ class IntegrationsBlackboardBridge:
 
     # ── Public API: execute queries ───────────────────────────────────
 
-    def execute_query(self, query: str, params: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    def execute_query(
+        self, query: str, params: Optional[Dict[str, Any]] = None
+    ) -> Optional[Dict[str, Any]]:
         """Execute a Cypher query and queue the result for the next production sweep.
 
         Parameters
@@ -332,8 +332,9 @@ class IntegrationsBlackboardBridge:
             return None
 
         try:
-            status = getattr(self._migration_agent, "status",
-                           getattr(self._migration_agent, "get_status", None))
+            status = getattr(
+                self._migration_agent, "status", getattr(self._migration_agent, "get_status", None)
+            )
             if callable(status):
                 status = status()
         except Exception:
@@ -414,10 +415,14 @@ class IntegrationsBlackboardBridge:
                     confidence=0.9 if success else 0.3,
                     priority=EntryPriority.NORMAL if success else EntryPriority.HIGH,
                     ttl_seconds=self._query_result_ttl,
-                    tags=frozenset({
-                        "integrations", "cypher", "query",
-                        "success" if success else "error",
-                    }),
+                    tags=frozenset(
+                        {
+                            "integrations",
+                            "cypher",
+                            "query",
+                            "success" if success else "error",
+                        }
+                    ),
                     metadata={
                         "success": success,
                         "query_preview": result_data.get("query", "")[:50],
@@ -434,8 +439,7 @@ class IntegrationsBlackboardBridge:
 
         try:
             # Try to get current graph model
-            model = getattr(self._hygm, "current_model",
-                          getattr(self._hygm, "graph_model", None))
+            model = getattr(self._hygm, "current_model", getattr(self._hygm, "graph_model", None))
             if model is None:
                 get_model_fn = getattr(self._hygm, "get_model", None)
                 if get_model_fn is not None:
@@ -454,12 +458,10 @@ class IntegrationsBlackboardBridge:
         elif hasattr(model, "__dict__"):
             try:
                 from dataclasses import asdict
+
                 model_data = asdict(model)
             except (TypeError, Exception):
-                model_data = {
-                    k: v for k, v in vars(model).items()
-                    if not k.startswith("_")
-                }
+                model_data = {k: v for k, v in vars(model).items() if not k.startswith("_")}
         elif isinstance(model, dict):
             model_data = model
         else:
@@ -467,9 +469,8 @@ class IntegrationsBlackboardBridge:
 
         # Change detection: hash the model
         import hashlib
-        model_hash = hashlib.md5(
-            str(sorted(str(model_data).encode())).encode()
-        ).hexdigest()[:16]
+
+        model_hash = hashlib.md5(str(sorted(str(model_data).encode())).encode()).hexdigest()[:16]
 
         if model_hash == self._last_model_hash:
             return None
@@ -517,10 +518,13 @@ class IntegrationsBlackboardBridge:
             f"MERGE (o:Entity {{name: $object}}) "
             f"MERGE (s)-[:`{predicate}`]->(o)"
         )
-        self.execute_query(cypher, {
-            "subject": str(subject),
-            "object": str(obj),
-        })
+        self.execute_query(
+            cypher,
+            {
+                "subject": str(subject),
+                "object": str(obj),
+            },
+        )
 
     def _consume_graph_intelligence(self, entry: BlackboardEntry) -> None:
         """Enrich graph model with community detection results."""
@@ -553,8 +557,11 @@ class IntegrationsBlackboardBridge:
 
         # Try to generate a Cypher query from the inference
         try:
-            generate_fn = getattr(self._cypher_generator, "generate",
-                                getattr(self._cypher_generator, "generate_cypher", None))
+            generate_fn = getattr(
+                self._cypher_generator,
+                "generate",
+                getattr(self._cypher_generator, "generate_cypher", None),
+            )
             if generate_fn is not None:
                 cypher = generate_fn(conclusion)
                 if cypher and isinstance(cypher, str):
@@ -582,10 +589,13 @@ class IntegrationsBlackboardBridge:
                 f"MERGE (o:Entity {{name: $object}}) "
                 f"MERGE (s)-[:`{predicate}`]->(o)"
             )
-            self.execute_query(cypher, {
-                "subject": str(subject),
-                "object": str(obj),
-            })
+            self.execute_query(
+                cypher,
+                {
+                    "subject": str(subject),
+                    "object": str(obj),
+                },
+            )
 
     def _handle_graph_intelligence_event(self, event: CognitiveEvent) -> None:
         """Update graph model when community detection fires."""
@@ -632,8 +642,9 @@ class IntegrationsBlackboardBridge:
 
         if self._hygm is not None:
             try:
-                model = getattr(self._hygm, "current_model",
-                              getattr(self._hygm, "graph_model", None))
+                model = getattr(
+                    self._hygm, "current_model", getattr(self._hygm, "graph_model", None)
+                )
                 snap["has_graph_model"] = model is not None
             except Exception:
                 snap["has_graph_model"] = None

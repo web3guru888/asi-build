@@ -19,17 +19,13 @@ import time
 
 import pytest
 
-from src.asi_build.rings.bridge.zk.coordinator import (
-    BridgeProofCoordinator,
-    ProofCache,
-    ProofStats,
-)
-from src.asi_build.rings.bridge.zk.prover import (
-    SimulatedProver,
-    ZKProof,
-    ProofGenerationError,
-    GAS_ESTIMATE_SIMULATED,
-    PROOF_SIZE,
+from src.asi_build.rings.bridge.zk.bls import (
+    BLS12381,
+    G1_SIZE,
+    G2_SIZE,
+    BLSKeyPair,
+    SyncCommitteeBLS,
+    _clear_registries,
 )
 from src.asi_build.rings.bridge.zk.circuits import (
     BLSVerificationCircuit,
@@ -37,13 +33,17 @@ from src.asi_build.rings.bridge.zk.circuits import (
     MerklePatriciaCircuit,
     SyncCommitteeRotationCircuit,
 )
-from src.asi_build.rings.bridge.zk.bls import (
-    BLS12381,
-    BLSKeyPair,
-    SyncCommitteeBLS,
-    _clear_registries,
-    G1_SIZE,
-    G2_SIZE,
+from src.asi_build.rings.bridge.zk.coordinator import (
+    BridgeProofCoordinator,
+    ProofCache,
+    ProofStats,
+)
+from src.asi_build.rings.bridge.zk.prover import (
+    GAS_ESTIMATE_SIMULATED,
+    PROOF_SIZE,
+    ProofGenerationError,
+    SimulatedProver,
+    ZKProof,
 )
 from src.asi_build.rings.bridge.zk.ssz import (
     SSZ,
@@ -51,7 +51,6 @@ from src.asi_build.rings.bridge.zk.ssz import (
     LightClientUpdate,
     SyncCommitteeSSZ,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -99,8 +98,9 @@ def _make_mpt_proof_nodes(state_root: bytes, address: bytes, account_state: dict
     - child hash embedded in parent for chaining
     - value hash embedded in leaf
     """
-    from src.asi_build.rings.bridge.zk.circuits import _sha256, _to_bytes20, _to_bytes32
     import struct
+
+    from src.asi_build.rings.bridge.zk.circuits import _sha256, _to_bytes20, _to_bytes32
 
     address_b = _to_bytes20(address)
 
@@ -109,12 +109,14 @@ def _make_mpt_proof_nodes(state_root: bytes, address: bytes, account_state: dict
     balance = account_state.get("balance", 0)
     storage_root = _to_bytes32(account_state.get("storage_root", b"\x00" * 32))
     code_hash = _to_bytes32(account_state.get("code_hash", b"\x00" * 32))
-    account_bytes = b"".join([
-        struct.pack(">Q", nonce),
-        balance.to_bytes(32, "big"),
-        storage_root,
-        code_hash,
-    ])
+    account_bytes = b"".join(
+        [
+            struct.pack(">Q", nonce),
+            balance.to_bytes(32, "big"),
+            storage_root,
+            code_hash,
+        ]
+    )
     value_hash = _sha256(account_bytes)
 
     # Build from leaf up:
@@ -151,7 +153,9 @@ def _make_withdrawal_params() -> dict:
         "storage_root": os.urandom(32),
         "code_hash": os.urandom(32),
     }
-    proof_nodes, state_root = _make_mpt_proof_nodes(state_root=b"", address=address, account_state=account_state)
+    proof_nodes, state_root = _make_mpt_proof_nodes(
+        state_root=b"", address=address, account_state=account_state
+    )
 
     return {
         "recipient": "0x" + "de" * 20,
@@ -245,7 +249,7 @@ class TestProofCache:
         # Insert a new entry — should evict p1 (LRU), not p0
         cache.put("c", {"i": 3}, self._dummy_proof())
         assert cache.get("c", {"i": 0}) is not None  # promoted, still alive
-        assert cache.get("c", {"i": 1}) is None       # evicted
+        assert cache.get("c", {"i": 1}) is None  # evicted
 
     def test_cache_invalidate_circuit(self):
         """Invalidate by circuit_id clears entries (all, since keys are hashed)."""
@@ -342,10 +346,12 @@ class TestProofStats:
     def test_record_multiple_proofs(self):
         """Running averages computed correctly after multiple proofs."""
         stats = ProofStats()
-        for i, (size, time_ms, gas) in enumerate([
-            (256, 40, 200_000),
-            (512, 60, 240_000),
-        ]):
+        for i, (size, time_ms, gas) in enumerate(
+            [
+                (256, 40, 200_000),
+                (512, 60, 240_000),
+            ]
+        ):
             proof = ZKProof(
                 proof_bytes=b"\x00" * size,
                 public_inputs=[],
@@ -455,9 +461,7 @@ class TestBridgeProofCoordinator:
         """Lists all 4 circuit IDs."""
         coord = BridgeProofCoordinator(SimulatedProver())
         circuits = coord.available_circuits
-        assert sorted(circuits) == [
-            "bls_verify", "committee_rotation", "mpt_verify", "withdrawal"
-        ]
+        assert sorted(circuits) == ["bls_verify", "committee_rotation", "mpt_verify", "withdrawal"]
 
     def test_get_circuit(self):
         """Returns correct circuit by ID."""
@@ -978,10 +982,18 @@ class TestBLSSSZCircuitsIntegration:
 
         # 2. MPT
         address = "0x" + "ab" * 20
-        acct = {"nonce": 1, "balance": 10**18, "storage_root": os.urandom(32), "code_hash": os.urandom(32)}
+        acct = {
+            "nonce": 1,
+            "balance": 10**18,
+            "storage_root": os.urandom(32),
+            "code_hash": os.urandom(32),
+        }
         nodes, sr = _make_mpt_proof_nodes(b"", address, acct)
         mpt_proof = await coord.prove_deposit_inclusion(
-            state_root=sr, address=address, proof_nodes=nodes, account_state=acct,
+            state_root=sr,
+            address=address,
+            proof_nodes=nodes,
+            account_state=acct,
         )
         assert mpt_proof.circuit_id == "MerklePatriciaCircuit"
 
@@ -1079,7 +1091,13 @@ class MockContractClient:
         return self._deposits
 
     async def withdraw(
-        self, recipient, rings_did, amount, nonce, proof, public_inputs,
+        self,
+        recipient,
+        rings_did,
+        amount,
+        nonce,
+        proof,
+        public_inputs,
     ):
         self._withdrawals[nonce] = {
             "recipient": recipient,
@@ -1280,7 +1298,9 @@ class TestOrchestratorWithCoordinator:
         client = MockRingsClient()
         identity = MockIdentity()
         validator = BridgeValidator(
-            client=client, identity=identity, threshold=1,
+            client=client,
+            identity=identity,
+            threshold=1,
         )
         await validator.join_bridge()
 

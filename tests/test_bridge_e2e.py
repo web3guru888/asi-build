@@ -135,7 +135,10 @@ async def _make_orchestrator(
 
     identity = MockIdentity(seed)
     validator = BridgeValidator(
-        identity, client, threshold=threshold, total=total,
+        identity,
+        client,
+        threshold=threshold,
+        total=total,
     )
     await validator.join_bridge()
 
@@ -147,7 +150,10 @@ async def _make_orchestrator(
     cc = _make_contract_client(**contract_overrides)
 
     orch = BridgeOrchestrator(
-        validator, cc, lc, max_deposits_per_batch=max_deposits,
+        validator,
+        cc,
+        lc,
+        max_deposits_per_batch=max_deposits,
     )
     return orch, validator, lc, cc
 
@@ -180,10 +186,7 @@ class TestDepositFlow:
     @pytest.mark.asyncio
     async def test_process_multiple_deposits(self):
         """Multiple deposit events in one batch are all processed."""
-        events = [
-            _make_deposit_event(tx_hash=f"0x{i:04x}", block=100 + i)
-            for i in range(5)
-        ]
+        events = [_make_deposit_event(tx_hash=f"0x{i:04x}", block=100 + i) for i in range(5)]
         orch, val, lc, cc = await _make_orchestrator(
             get_deposit_events=AsyncMock(return_value=events),
         )
@@ -248,10 +251,7 @@ class TestDepositFlow:
     @pytest.mark.asyncio
     async def test_stats_updated_after_processing(self):
         """deposits_processed stat incremented for each successful deposit."""
-        events = [
-            _make_deposit_event(tx_hash=f"0xstat{i}", block=100)
-            for i in range(3)
-        ]
+        events = [_make_deposit_event(tx_hash=f"0xstat{i}", block=100) for i in range(3)]
         orch, val, lc, cc = await _make_orchestrator(
             get_deposit_events=AsyncMock(return_value=events),
         )
@@ -348,9 +348,8 @@ class TestWithdrawalFlow:
             eth_address=_ETH_ADDR,
         )
         call_kwargs = cc.withdraw.call_args
-        public_inputs = (
-            call_kwargs.kwargs.get("public_inputs")
-            or call_kwargs[1].get("public_inputs")
+        public_inputs = call_kwargs.kwargs.get("public_inputs") or call_kwargs[1].get(
+            "public_inputs"
         )
         assert public_inputs[0] == amount  # amount
         assert public_inputs[1] == 0  # nonce (first withdrawal)
@@ -435,7 +434,9 @@ class TestMultiValidatorAttestation:
     """Tests with multiple BridgeValidators cooperating."""
 
     async def _make_multi_validators(
-        self, n: int = 6, threshold: int = 4,
+        self,
+        n: int = 6,
+        threshold: int = 4,
     ) -> tuple[list[BridgeValidator], InMemoryTransport]:
         """Create n validators sharing the same InMemoryTransport."""
         transport = InMemoryTransport()
@@ -445,7 +446,10 @@ class TestMultiValidatorAttestation:
             await client.connect()
             identity = MockIdentity(f"validator_{i}")
             v = BridgeValidator(
-                identity, client, threshold=threshold, total=n,
+                identity,
+                client,
+                threshold=threshold,
+                total=n,
             )
             await v.join_bridge()
             validators.append(v)
@@ -464,8 +468,11 @@ class TestMultiValidatorAttestation:
         validators, _ = await self._make_multi_validators(6, 4)
         for v in validators:
             await v.observe_deposit(
-                tx_hash="0xshared", block=100, amount=10**18,
-                sender_eth="0xSender", recipient_did="did:rings:ed25519:recv",
+                tx_hash="0xshared",
+                block=100,
+                amount=10**18,
+                sender_eth="0xSender",
+                recipient_did="did:rings:ed25519:recv",
             )
         assert all("0xshared" in v.deposits for v in validators)
 
@@ -479,8 +486,11 @@ class TestMultiValidatorAttestation:
         validators, _ = await self._make_multi_validators(6, 4)
         # Single observer so DHT record isn't overwritten by later observe()
         await validators[0].observe_deposit(
-            tx_hash="0xthresh", block=100, amount=100,
-            sender_eth="0xS", recipient_did="did:x",
+            tx_hash="0xthresh",
+            block=100,
+            amount=100,
+            sender_eth="0xS",
+            recipient_did="did:x",
         )
         for v in validators[:4]:
             await v.attest_deposit("0xthresh")
@@ -494,8 +504,11 @@ class TestMultiValidatorAttestation:
         """Deposit is marked finalized once threshold attestations exist."""
         validators, _ = await self._make_multi_validators(4, 4)
         await validators[0].observe_deposit(
-            tx_hash="0xfin", block=100, amount=100,
-            sender_eth="0xS", recipient_did="did:x",
+            tx_hash="0xfin",
+            block=100,
+            amount=100,
+            sender_eth="0xS",
+            recipient_did="did:x",
         )
         for v in validators:
             await v.attest_deposit("0xfin")
@@ -510,8 +523,11 @@ class TestMultiValidatorAttestation:
         validators, _ = await self._make_multi_validators(6, 4)
         # Only 2 validators attest (threshold=4)
         await validators[0].observe_deposit(
-            tx_hash="0xbelow", block=100, amount=100,
-            sender_eth="0xS", recipient_did="did:x",
+            tx_hash="0xbelow",
+            block=100,
+            amount=100,
+            sender_eth="0xS",
+            recipient_did="did:x",
         )
         for v in validators[:2]:
             await v.attest_deposit("0xbelow")
@@ -543,8 +559,11 @@ class TestMultiValidatorAttestation:
         # Only one observe, then all attest — each _fetch_deposit reads
         # DHT and merges, so all attestations accumulate.
         await validators[0].observe_deposit(
-            tx_hash="0xmerge", block=100, amount=100,
-            sender_eth="0xS", recipient_did="did:x",
+            tx_hash="0xmerge",
+            block=100,
+            amount=100,
+            sender_eth="0xS",
+            recipient_did="did:x",
         )
         for v in validators:
             await v.attest_deposit("0xmerge")
@@ -558,8 +577,11 @@ class TestMultiValidatorAttestation:
         """5 out of 6 validators (threshold=4) is sufficient."""
         validators, _ = await self._make_multi_validators(6, 4)
         await validators[0].observe_deposit(
-            tx_hash="0x5of6", block=100, amount=100,
-            sender_eth="0xS", recipient_did="did:x",
+            tx_hash="0x5of6",
+            block=100,
+            amount=100,
+            sender_eth="0xS",
+            recipient_did="did:x",
         )
         for v in validators[:5]:
             await v.attest_deposit("0x5of6")
@@ -580,11 +602,13 @@ class TestSyncCommitteeUpdates:
     def _add_committee(self, lc: MockLightClient, period: int, slot: int):
         """Add a header and committee at the given slot/period."""
         lc.add_header(_make_header(slot))
-        lc.add_sync_committee(SyncCommittee(
-            period=period,
-            pubkeys=["0xpub1", "0xpub2"],
-            aggregate_pubkey=f"0xagg_{period}",
-        ))
+        lc.add_sync_committee(
+            SyncCommittee(
+                period=period,
+                pubkeys=["0xpub1", "0xpub2"],
+                aggregate_pubkey=f"0xagg_{period}",
+            )
+        )
 
     @pytest.mark.asyncio
     async def test_committee_rotation_detected_and_submitted(self):
@@ -688,10 +712,16 @@ class TestHealthCheck:
         orch, val, lc, cc = await _make_orchestrator()
         health = await orch.health_check()
         expected_keys = {
-            "validator_did", "validator_state", "light_client_synced",
-            "last_processed_block", "stats", "paused",
-            "remaining_daily_limit", "latest_verified_slot",
-            "deposit_nonce", "withdrawal_nonce",
+            "validator_did",
+            "validator_state",
+            "light_client_synced",
+            "last_processed_block",
+            "stats",
+            "paused",
+            "remaining_daily_limit",
+            "latest_verified_slot",
+            "deposit_nonce",
+            "withdrawal_nonce",
         }
         assert expected_keys.issubset(health.keys())
 
@@ -880,10 +910,7 @@ class TestRateLimitAndEmergency:
     async def test_rate_limit_enforcement(self):
         """Batch size limit applies across repeated calls."""
         orch, val, lc, cc = await _make_orchestrator(max_deposits=3)
-        events = [
-            _make_deposit_event(tx_hash=f"0xrl{i}", block=100)
-            for i in range(10)
-        ]
+        events = [_make_deposit_event(tx_hash=f"0xrl{i}", block=100) for i in range(10)]
         cc.get_deposit_events = AsyncMock(return_value=events)
         results = await orch.process_deposits(from_block=90)
         assert len(results) == 3

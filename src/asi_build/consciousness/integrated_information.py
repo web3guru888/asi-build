@@ -316,14 +316,10 @@ class IntegratedInformationTheory(BaseConsciousness):
                 node_set_b = {sorted_nodes[i] for i in indices_b}
 
                 # Try both unidirectional cut directions
-                for cut_from, cut_to in [(node_set_a, node_set_b),
-                                         (node_set_b, node_set_a)]:
+                for cut_from, cut_to in [(node_set_a, node_set_b), (node_set_b, node_set_a)]:
                     # Build a TPM with the cut applied (sever cut_from → cut_to)
-                    tpm_cut = self._build_tpm(sorted_nodes,
-                                              cut_from=cut_from, cut_to=cut_to)
-                    cut_dist = self._effect_distribution_from_sbn_tpm(
-                        tpm_cut, current_state, n
-                    )
+                    tpm_cut = self._build_tpm(sorted_nodes, cut_from=cut_from, cut_to=cut_to)
+                    cut_dist = self._effect_distribution_from_sbn_tpm(tpm_cut, current_state, n)
 
                     kl = self._kl_divergence(whole_dist, cut_dist)
                     if kl < min_phi:
@@ -497,11 +493,7 @@ class IntegratedInformationTheory(BaseConsciousness):
         # Build adjacency matrix (undirected: max of both directions)
         adj = np.zeros((n, n), dtype=np.float64)
         for conn in self.connections:
-            if (
-                conn.active
-                and conn.from_element in node_set
-                and conn.to_element in node_set
-            ):
+            if conn.active and conn.from_element in node_set and conn.to_element in node_set:
                 i = node_idx[conn.from_element]
                 j = node_idx[conn.to_element]
                 w = abs(conn.weight)

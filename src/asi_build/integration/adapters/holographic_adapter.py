@@ -160,9 +160,7 @@ class HolographicBlackboardAdapter:
         return ModuleInfo(
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
-            capabilities=(
-                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER
-            ),
+            capabilities=(ModuleCapability.PRODUCER | ModuleCapability.CONSUMER),
             description=(
                 "Holographic subsystem: 3-D engine telemetry, light-field "
                 "capture, and volumetric display rendering.  Consumes "
@@ -335,9 +333,7 @@ class HolographicBlackboardAdapter:
             },
             source_module=self.MODULE_NAME,
             confidence=0.95,
-            priority=(
-                EntryPriority.HIGH if state_changed else EntryPriority.NORMAL
-            ),
+            priority=(EntryPriority.HIGH if state_changed else EntryPriority.NORMAL),
             ttl_seconds=self._status_ttl,
             tags=frozenset({"engine", "status", "holographic"}),
             metadata={
@@ -398,11 +394,7 @@ class HolographicBlackboardAdapter:
             },
             source_module=self.MODULE_NAME,
             confidence=0.9,
-            priority=(
-                EntryPriority.HIGH
-                if current_fps < 10.0
-                else EntryPriority.NORMAL
-            ),
+            priority=(EntryPriority.HIGH if current_fps < 10.0 else EntryPriority.NORMAL),
             ttl_seconds=self._performance_ttl,
             tags=frozenset({"engine", "performance", "holographic", "metrics"}),
             metadata={"fps": current_fps},
@@ -437,9 +429,7 @@ class HolographicBlackboardAdapter:
             return None
 
         # Track captures via stats dict — look for a counter key
-        current_count = int(
-            stats.get("capture_count", stats.get("total_captures", 0))
-        )
+        current_count = int(stats.get("capture_count", stats.get("total_captures", 0)))
         if current_count <= self._capture_count:
             return None  # No new captures
 
@@ -489,9 +479,7 @@ class HolographicBlackboardAdapter:
         if not isinstance(stats, dict):
             return None
 
-        current_count = int(
-            stats.get("render_count", stats.get("total_renders", 0))
-        )
+        current_count = int(stats.get("render_count", stats.get("total_renders", 0)))
         if current_count <= self._render_count:
             return None  # No new renders
 
@@ -613,17 +601,13 @@ class HolographicBlackboardAdapter:
         # Detect the kind of quantum data
         if "state_vector" in data or "amplitudes" in data:
             viz_update["viz_mode"] = "bloch_sphere"
-            viz_update["state_vector"] = data.get(
-                "state_vector", data.get("amplitudes")
-            )
+            viz_update["state_vector"] = data.get("state_vector", data.get("amplitudes"))
         elif "density_matrix" in data:
             viz_update["viz_mode"] = "density_matrix"
             viz_update["density_matrix"] = data["density_matrix"]
         elif "entanglement" in data or "concurrence" in data:
             viz_update["viz_mode"] = "entanglement_links"
-            viz_update["entanglement"] = data.get(
-                "entanglement", data.get("concurrence")
-            )
+            viz_update["entanglement"] = data.get("entanglement", data.get("concurrence"))
         elif "gate" in data or "circuit" in data:
             viz_update["viz_mode"] = "circuit_diagram"
             viz_update["circuit"] = data.get("circuit", data.get("gate"))
@@ -696,9 +680,7 @@ class HolographicBlackboardAdapter:
                                 exc_info=True,
                             )
         except Exception:
-            logger.debug(
-                "HolographicAdapter: failed to push viz update", exc_info=True
-            )
+            logger.debug("HolographicAdapter: failed to push viz update", exc_info=True)
 
     # ── Convenience: diagnostic snapshot ──────────────────────────────
 

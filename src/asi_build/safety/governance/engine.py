@@ -155,7 +155,9 @@ class GovernanceEngine:
                 raise ValueError(f"Unknown proposer: {proposal.proposer_id}")
 
             # Set voting deadline
-            proposal.voting_deadline = datetime.now(tz=timezone.utc) + timedelta(days=self.voting_period_days)
+            proposal.voting_deadline = datetime.now(tz=timezone.utc) + timedelta(
+                days=self.voting_period_days
+            )
             proposal.status = ProposalStatus.SUBMITTED
 
             # Store proposal

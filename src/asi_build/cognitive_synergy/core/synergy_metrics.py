@@ -573,6 +573,7 @@ class SynergyMetrics:
 
             # Normalize: theoretical max for binary string is n/log2(n)
             import math
+
             if n > 1:
                 normalizer = n / math.log2(n)
                 return min(1.0, complexity / normalizer)
@@ -588,8 +589,8 @@ class SynergyMetrics:
         i = 0
         k = 1
         while i + k <= n:
-            substring = s[i:i + k]
-            prefix = s[:i + k - 1]
+            substring = s[i : i + k]
+            prefix = s[: i + k - 1]
             if substring in prefix:
                 k += 1
             else:

@@ -152,9 +152,7 @@ class RingsNetworkAdapter:
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
             capabilities=(
-                ModuleCapability.PRODUCER
-                | ModuleCapability.CONSUMER
-                | ModuleCapability.TRANSFORMER
+                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.TRANSFORMER
             ),
             description=(
                 "Rings Network P2P adapter: DID authentication, Chord DHT, "
@@ -182,8 +180,7 @@ class RingsNetworkAdapter:
         """Called when registered with a blackboard.  Store the reference."""
         self._blackboard = blackboard
         logger.info(
-            "RingsNetworkAdapter registered with blackboard "
-            "(client=%s, did=%s, reputation=%s)",
+            "RingsNetworkAdapter registered with blackboard " "(client=%s, did=%s, reputation=%s)",
             self._client is not None,
             self._did_manager is not None,
             self._reputation is not None,
@@ -221,12 +218,15 @@ class RingsNetworkAdapter:
             prefix = event.event_type.split(".")[0]
             subring = self._topic_map.get(prefix)
             if subring and subring in self._joined_subrings:
-                self._schedule_broadcast(subring, {
-                    "event_type": event.event_type,
-                    "payload": event.payload,
-                    "source": event.source,
-                    "timestamp": event.timestamp,
-                })
+                self._schedule_broadcast(
+                    subring,
+                    {
+                        "event_type": event.event_type,
+                        "payload": event.payload,
+                        "source": event.source,
+                        "timestamp": event.timestamp,
+                    },
+                )
         except Exception:
             logger.debug(
                 "RingsNetworkAdapter: failed to relay event %s",
@@ -332,10 +332,13 @@ class RingsNetworkAdapter:
             tags=frozenset({"peer", "discovery", "rings"}),
         )
 
-        self._emit("rings.peer.discovered", {
-            "peer_did": peer_did,
-            "entry_id": entry.entry_id,
-        })
+        self._emit(
+            "rings.peer.discovered",
+            {
+                "peer_did": peer_did,
+                "entry_id": entry.entry_id,
+            },
+        )
         return entry
 
     def record_did_authentication(
@@ -388,11 +391,14 @@ class RingsNetworkAdapter:
         )
 
         event_type = "rings.did.authenticated" if success else "rings.did.failed"
-        self._emit(event_type, {
-            "peer_did": peer_did,
-            "success": success,
-            "entry_id": entry.entry_id,
-        })
+        self._emit(
+            event_type,
+            {
+                "peer_did": peer_did,
+                "success": success,
+                "entry_id": entry.entry_id,
+            },
+        )
         return entry
 
     def record_reputation_update(
@@ -442,12 +448,15 @@ class RingsNetworkAdapter:
             crossed_up = old_score < threshold <= score
             crossed_down = score < threshold <= old_score
             if crossed_up or crossed_down:
-                self._emit("rings.reputation.threshold_crossed", {
-                    "peer_did": peer_did,
-                    "score": score,
-                    "direction": "up" if crossed_up else "down",
-                    "threshold": threshold,
-                })
+                self._emit(
+                    "rings.reputation.threshold_crossed",
+                    {
+                        "peer_did": peer_did,
+                        "score": score,
+                        "direction": "up" if crossed_up else "down",
+                        "threshold": threshold,
+                    },
+                )
 
         return entry
 
@@ -550,9 +559,7 @@ class RingsNetworkAdapter:
         }
 
         if self._client is not None:
-            status["client_state"] = getattr(
-                self._client, "state", "unknown"
-            )
+            status["client_state"] = getattr(self._client, "state", "unknown")
             if hasattr(self._client.state, "value"):
                 status["client_state"] = self._client.state.value
             status["endpoint"] = getattr(self._client, "endpoint", "")

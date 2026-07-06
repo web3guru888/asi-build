@@ -458,8 +458,9 @@ class TestIntegratedInformationTheory:
         """For n=3 binary elements the TPM should be 8×3."""
         iit = self._make_clean_iit()
         for name in ("x", "y", "z"):
-            iit.add_element(SystemElement(name, state=0.0, activation_function="threshold",
-                                          threshold=0.5))
+            iit.add_element(
+                SystemElement(name, state=0.0, activation_function="threshold", threshold=0.5)
+            )
         # Add some connections so it's not trivial
         iit.add_connection(Connection("x", "y", weight=1.0))
         iit.add_connection(Connection("y", "z", weight=1.0))
@@ -483,8 +484,9 @@ class TestIntegratedInformationTheory:
         """The effect distribution derived from the TPM sums to 1."""
         iit = self._make_clean_iit()
         for name in ("a", "b"):
-            iit.add_element(SystemElement(name, state=1.0, activation_function="threshold",
-                                          threshold=0.5))
+            iit.add_element(
+                SystemElement(name, state=1.0, activation_function="threshold", threshold=0.5)
+            )
         iit.add_connection(Connection("a", "b", weight=1.0))
         iit.add_connection(Connection("b", "a", weight=1.0))
 
@@ -511,11 +513,9 @@ class TestIntegratedInformationTheory:
         """
         iit = self._make_clean_iit()
         for name in ("a", "b", "c"):
-            iit.add_element(SystemElement(name, state=1.0,
-                                          activation_function="sigmoid"))
+            iit.add_element(SystemElement(name, state=1.0, activation_function="sigmoid"))
         # Strong bidirectional connections ensure integration
-        for src, dst in [("a", "b"), ("b", "a"), ("b", "c"),
-                         ("c", "b"), ("a", "c"), ("c", "a")]:
+        for src, dst in [("a", "b"), ("b", "a"), ("b", "c"), ("c", "b"), ("a", "c"), ("c", "a")]:
             iit.add_connection(Connection(src, dst, weight=2.0))
 
         phi = iit.calculate_phi({"a", "b", "c"})
@@ -527,16 +527,19 @@ class TestIntegratedInformationTheory:
         by A alone.
         """
         iit = self._make_clean_iit()
-        iit.add_element(SystemElement("a", state=1.0, activation_function="threshold",
-                                      threshold=0.5))
-        iit.add_element(SystemElement("b", state=0.0, activation_function="threshold",
-                                      threshold=0.5))
+        iit.add_element(
+            SystemElement("a", state=1.0, activation_function="threshold", threshold=0.5)
+        )
+        iit.add_element(
+            SystemElement("b", state=0.0, activation_function="threshold", threshold=0.5)
+        )
         # One-way: A copies to B, no feedback
         iit.add_connection(Connection("a", "b", weight=1.0))
 
         phi = iit.calculate_phi({"a", "b"})
-        assert phi == pytest.approx(0.0, abs=1e-6), \
-            f"Feed-forward COPY should have Φ ≈ 0, got {phi}"
+        assert phi == pytest.approx(
+            0.0, abs=1e-6
+        ), f"Feed-forward COPY should have Φ ≈ 0, got {phi}"
 
     def test_phi_increases_with_connectivity(self):
         """More recurrent connections → higher Φ (general trend).
@@ -546,11 +549,11 @@ class TestIntegratedInformationTheory:
         activation with strong weights so that connections create genuine
         causal influence between nodes.
         """
+
         def make_system(connections):
             iit = self._make_clean_iit()
             for name in ("p", "q", "r"):
-                iit.add_element(SystemElement(name, state=1.0,
-                                              activation_function="sigmoid"))
+                iit.add_element(SystemElement(name, state=1.0, activation_function="sigmoid"))
             for src, dst, w in connections:
                 iit.add_connection(Connection(src, dst, weight=w))
             return iit.calculate_phi({"p", "q", "r"})
@@ -558,12 +561,19 @@ class TestIntegratedInformationTheory:
         # Sparse: only p↔q connected, r isolated → partition {r}|{p,q} costs nothing
         phi_sparse = make_system([("p", "q", 2.0), ("q", "p", 2.0)])
         # Dense: full bidirectional connectivity
-        phi_dense = make_system([
-            ("p", "q", 2.0), ("q", "r", 2.0), ("r", "p", 2.0),
-            ("q", "p", 2.0), ("r", "q", 2.0), ("p", "r", 2.0),
-        ])
-        assert phi_dense >= phi_sparse, \
-            f"Dense ({phi_dense:.6f}) should be ≥ sparse ({phi_sparse:.6f})"
+        phi_dense = make_system(
+            [
+                ("p", "q", 2.0),
+                ("q", "r", 2.0),
+                ("r", "p", 2.0),
+                ("q", "p", 2.0),
+                ("r", "q", 2.0),
+                ("p", "r", 2.0),
+            ]
+        )
+        assert (
+            phi_dense >= phi_sparse
+        ), f"Dense ({phi_dense:.6f}) should be ≥ sparse ({phi_sparse:.6f})"
 
     def test_phi_disconnected_still_zero(self):
         """Reiteration: two disconnected elements must still have Φ = 0.
@@ -612,8 +622,9 @@ class TestIntegratedInformationTheory:
         iit = self._make_clean_iit(max_partition_size=3)
         names = [f"n{i}" for i in range(5)]
         for name in names:
-            iit.add_element(SystemElement(name, state=1.0,
-                                          activation_function="threshold", threshold=0.5))
+            iit.add_element(
+                SystemElement(name, state=1.0, activation_function="threshold", threshold=0.5)
+            )
         # Create a ring: n0→n1→n2→n3→n4→n0
         for i in range(5):
             iit.add_connection(Connection(names[i], names[(i + 1) % 5], weight=0.8))

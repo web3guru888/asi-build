@@ -15,18 +15,17 @@ import struct
 import pytest
 
 from src.asi_build.rings.bridge.zk.ssz import (
+    BYTES_PER_CHUNK,
     SSZ,
-    SSZType,
+    SYNC_COMMITTEE_SIZE,
+    ZERO_HASH,
     BeaconBlockHeader,
     LightClientUpdate,
+    SSZType,
     SyncCommitteeSSZ,
-    ZERO_HASH,
-    BYTES_PER_CHUNK,
-    SYNC_COMMITTEE_SIZE,
     _next_power_of_two,
     _sha256,
 )
-
 
 # ---------------------------------------------------------------------------
 # SSZ encode / decode tests
@@ -301,7 +300,8 @@ class TestBeaconBlockHeader:
 
     def test_creation(self):
         h = BeaconBlockHeader(
-            slot=100, proposer_index=7,
+            slot=100,
+            proposer_index=7,
             parent_root=b"\xaa" * 32,
             state_root=b"\xbb" * 32,
             body_root=b"\xcc" * 32,
@@ -322,7 +322,8 @@ class TestBeaconBlockHeader:
 
     def test_serialize(self):
         h = BeaconBlockHeader(
-            slot=1, proposer_index=2,
+            slot=1,
+            proposer_index=2,
             parent_root=b"\x01" * 32,
             state_root=b"\x02" * 32,
             body_root=b"\x03" * 32,
@@ -332,7 +333,8 @@ class TestBeaconBlockHeader:
 
     def test_deserialize_roundtrip(self):
         h = BeaconBlockHeader(
-            slot=9999, proposer_index=42,
+            slot=9999,
+            proposer_index=42,
             parent_root=os.urandom(32),
             state_root=os.urandom(32),
             body_root=os.urandom(32),
@@ -347,7 +349,8 @@ class TestBeaconBlockHeader:
 
     def test_hash_tree_root_deterministic(self):
         h = BeaconBlockHeader(
-            slot=100, proposer_index=7,
+            slot=100,
+            proposer_index=7,
             parent_root=b"\xaa" * 32,
             state_root=b"\xbb" * 32,
             body_root=b"\xcc" * 32,
@@ -399,7 +402,8 @@ class TestBeaconBlockHeader:
     def test_hash_tree_root_manual(self):
         """Manually compute expected hash-tree-root and compare."""
         h = BeaconBlockHeader(
-            slot=100, proposer_index=7,
+            slot=100,
+            proposer_index=7,
             parent_root=b"\xaa" * 32,
             state_root=b"\xbb" * 32,
             body_root=b"\xcc" * 32,
@@ -467,7 +471,8 @@ class TestLightClientUpdate:
     def test_serialize_with_next_committee(self):
         pubkeys = [os.urandom(48) for _ in range(10)]
         sc = SyncCommitteeSSZ(
-            pubkeys=pubkeys, aggregate_pubkey=os.urandom(48),
+            pubkeys=pubkeys,
+            aggregate_pubkey=os.urandom(48),
         )
         lcu = LightClientUpdate(next_sync_committee=sc)
         data = lcu.serialize()
@@ -576,8 +581,17 @@ class TestSSZType:
 
     def test_all_types_exist(self):
         expected = [
-            "UINT8", "UINT16", "UINT32", "UINT64", "UINT128", "UINT256",
-            "BOOL", "BYTES4", "BYTES32", "BYTES48", "BYTES96",
+            "UINT8",
+            "UINT16",
+            "UINT32",
+            "UINT64",
+            "UINT128",
+            "UINT256",
+            "BOOL",
+            "BYTES4",
+            "BYTES32",
+            "BYTES48",
+            "BYTES96",
         ]
         for name in expected:
             assert hasattr(SSZType, name)

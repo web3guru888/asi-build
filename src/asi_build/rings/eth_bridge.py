@@ -67,10 +67,11 @@ import logging
 import struct
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from Crypto.Hash import keccak as _pycryptodome_keccak
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, utils
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from Crypto.Hash import keccak as _pycryptodome_keccak
+
 try:
     from eth_keys import keys as eth_keys_mod
 except ImportError:  # pragma: no cover
@@ -79,9 +80,7 @@ except ImportError:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 if eth_keys_mod is None:
-    logger.warning(
-        "eth_keys is not installed — install with: pip install asi-build[rings]"
-    )
+    logger.warning("eth_keys is not installed — install with: pip install asi-build[rings]")
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -157,7 +156,10 @@ def _encode_eip712_type(type_name: str, types: Dict[str, List[Dict[str, str]]]) 
     """
     # Collect all referenced types (excluding primary built-in Solidity types)
     BUILTIN_TYPES = {
-        "address", "bool", "string", "bytes",
+        "address",
+        "bool",
+        "string",
+        "bytes",
         *(f"uint{i}" for i in range(8, 257, 8)),
         *(f"int{i}" for i in range(8, 257, 8)),
         *(f"bytes{i}" for i in range(1, 33)),
@@ -208,7 +210,10 @@ def _hash_eip712_struct(
         32-byte keccak256 hash of the encoded struct.
     """
     BUILTIN_TYPES = {
-        "address", "bool", "string", "bytes",
+        "address",
+        "bool",
+        "string",
+        "bytes",
         *(f"uint{i}" for i in range(8, 257, 8)),
         *(f"int{i}" for i in range(8, 257, 8)),
         *(f"bytes{i}" for i in range(1, 33)),
@@ -231,7 +236,7 @@ def _hash_eip712_struct(
         if is_array:
             # Array: keccak256(concat(encode(element) for element in value))
             elements = b""
-            for item in (value or []):
+            for item in value or []:
                 if base_type in types:
                     elements += _hash_eip712_struct(base_type, item, types)
                 elif base_type == "string":
@@ -243,9 +248,7 @@ def _hash_eip712_struct(
             encoded_values.append(_keccak256(elements))
         elif field_type in types:
             # Nested struct
-            encoded_values.append(
-                _hash_eip712_struct(field_type, value or {}, types)
-            )
+            encoded_values.append(_hash_eip712_struct(field_type, value or {}, types))
         elif field_type == "string":
             encoded_values.append(
                 _keccak256(value.encode("utf-8") if isinstance(value, str) else (value or b""))
@@ -327,16 +330,12 @@ class RingsEthIdentity:
 
     def __init__(self, private_key: ec.EllipticCurvePrivateKey) -> None:
         if not isinstance(private_key.curve, ec.SECP256K1):
-            raise ValueError(
-                f"Expected secp256k1 key, got {type(private_key.curve).__name__}"
-            )
+            raise ValueError(f"Expected secp256k1 key, got {type(private_key.curve).__name__}")
         self._private_key = private_key
         self._public_key = private_key.public_key()
 
         # Cache raw bytes
-        self._private_bytes = (
-            private_key.private_numbers().private_value.to_bytes(32, "big")
-        )
+        self._private_bytes = private_key.private_numbers().private_value.to_bytes(32, "big")
         self._public_uncompressed = self._public_key.public_bytes(
             serialization.Encoding.X962,
             serialization.PublicFormat.UncompressedPoint,
@@ -389,9 +388,7 @@ class RingsEthIdentity:
         """
         hex_key = hex_key.removeprefix("0x").removeprefix("0X")
         if len(hex_key) != 64:
-            raise ValueError(
-                f"Private key must be 64 hex chars, got {len(hex_key)}"
-            )
+            raise ValueError(f"Private key must be 64 hex chars, got {len(hex_key)}")
 
         key_int = int(hex_key, 16)
         if key_int < 1 or key_int >= SECP256K1_ORDER:
@@ -728,11 +725,7 @@ class RingsEthIdentity:
         }
 
     def __repr__(self) -> str:
-        return (
-            f"RingsEthIdentity("
-            f"eth={self._eth_address[:10]}…, "
-            f"did={self._rings_did})"
-        )
+        return f"RingsEthIdentity(" f"eth={self._eth_address[:10]}…, " f"did={self._rings_did})"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, RingsEthIdentity):

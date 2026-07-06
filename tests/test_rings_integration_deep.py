@@ -24,9 +24,33 @@ from typing import Any, Dict, List, Optional
 import pytest
 
 # ---------------------------------------------------------------------------
+# Imports — Adapters
+# ---------------------------------------------------------------------------
+from asi_build.integration.adapters import production_sweep, wire_all
+from asi_build.integration.adapters.consciousness_adapter import ConsciousnessAdapter
+from asi_build.integration.adapters.knowledge_graph_adapter import KnowledgeGraphAdapter
+from asi_build.integration.adapters.rings_adapter import RingsNetworkAdapter
+
+# ---------------------------------------------------------------------------
+# Imports — Integration Layer
+# ---------------------------------------------------------------------------
+from asi_build.integration.blackboard import CognitiveBlackboard
+from asi_build.integration.events import EventBus
+from asi_build.integration.protocols import (
+    BlackboardEntry,
+    BlackboardQuery,
+    CognitiveEvent,
+    EntryPriority,
+    EntryStatus,
+    ModuleCapability,
+    ModuleInfo,
+)
+
+# ---------------------------------------------------------------------------
 # Imports — SDK
 # ---------------------------------------------------------------------------
 from asi_build.rings.client import (
+    RING_MODULUS,
     ConnectionState,
     DHTOperator,
     FingerEntry,
@@ -37,7 +61,6 @@ from asi_build.rings.client import (
     SubRingInfo,
     _compute_vid,
     _did_to_position,
-    RING_MODULUS,
 )
 from asi_build.rings.did import (
     DIDDocument,
@@ -56,29 +79,6 @@ from asi_build.rings.reputation import (
     SlashReport,
     TrustTier,
 )
-
-# ---------------------------------------------------------------------------
-# Imports — Integration Layer
-# ---------------------------------------------------------------------------
-from asi_build.integration.blackboard import CognitiveBlackboard
-from asi_build.integration.events import EventBus
-from asi_build.integration.protocols import (
-    BlackboardEntry,
-    BlackboardQuery,
-    CognitiveEvent,
-    EntryPriority,
-    EntryStatus,
-    ModuleCapability,
-    ModuleInfo,
-)
-
-# ---------------------------------------------------------------------------
-# Imports — Adapters
-# ---------------------------------------------------------------------------
-from asi_build.integration.adapters import wire_all, production_sweep
-from asi_build.integration.adapters.rings_adapter import RingsNetworkAdapter
-from asi_build.integration.adapters.consciousness_adapter import ConsciousnessAdapter
-from asi_build.integration.adapters.knowledge_graph_adapter import KnowledgeGraphAdapter
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -192,9 +192,7 @@ class TestEndToEndFlow:
         client, did_mgr, rep, adapter, bb, bus, evts = _make_full_stack()
         _wire_and_capture(bb, adapter, evts)
 
-        entry = adapter.record_did_authentication(
-            "did:rings:secp256k1:bad", success=False
-        )
+        entry = adapter.record_did_authentication("did:rings:secp256k1:bad", success=False)
         bb.post(entry)
 
         results = bb.get_by_topic("rings.did.failed")
@@ -506,9 +504,7 @@ class TestMultiAdapterIntegration:
         ids = production_sweep(bb, rings_adapter, cons_adapter, kg_adapter)
 
         # Rings should produce network status
-        assert any(
-            bb.get(eid).topic.startswith("rings.") for eid in ids if bb.get(eid)
-        )
+        assert any(bb.get(eid).topic.startswith("rings.") for eid in ids if bb.get(eid))
 
     def test_adapter_consume_from_another_adapter(self):
         """Rings adapter consumes entries posted by another adapter."""
@@ -667,7 +663,9 @@ class TestDIDReputationDeep:
         """DIDDocument → dict → from_dict roundtrip preserves all fields."""
         did_mgr = RingsDID()
         did_id, doc = did_mgr.create_did(
-            services=[{"id": "svc1", "type": "LinkedDomains", "serviceEndpoint": "https://example.com"}]
+            services=[
+                {"id": "svc1", "type": "LinkedDomains", "serviceEndpoint": "https://example.com"}
+            ]
         )
         did_mgr.add_service(did_id, "svc2", "DIDCommMessaging", "wss://relay.example.com")
 
@@ -700,9 +698,12 @@ class TestDIDReputationDeep:
         rep = ReputationClient(local_did="self")
 
         peers = {
-            "did:p:good": [(BehaviourType.REQUEST_SUCCESS, 0.9)] * 5 + [(BehaviourType.VALID_REQUEST, 0.85)] * 3,
-            "did:p:average": [(BehaviourType.REQUEST_SUCCESS, 0.6)] * 3 + [(BehaviourType.REQUEST_FAILURE, 0.3)] * 2,
-            "did:p:bad": [(BehaviourType.REQUEST_FAILURE, 0.2)] * 4 + [(BehaviourType.INVALID_REQUEST, 0.1)] * 2,
+            "did:p:good": [(BehaviourType.REQUEST_SUCCESS, 0.9)] * 5
+            + [(BehaviourType.VALID_REQUEST, 0.85)] * 3,
+            "did:p:average": [(BehaviourType.REQUEST_SUCCESS, 0.6)] * 3
+            + [(BehaviourType.REQUEST_FAILURE, 0.3)] * 2,
+            "did:p:bad": [(BehaviourType.REQUEST_FAILURE, 0.2)] * 4
+            + [(BehaviourType.INVALID_REQUEST, 0.1)] * 2,
             "did:p:byzantine": [(BehaviourType.BYZANTINE, 0.0)] * 3,
             "did:p:new": [(BehaviourType.CONTRIBUTION, 0.7)],
         }
@@ -848,6 +849,7 @@ class TestSubRingDHTIntegration:
 
     def test_dht_put_get_complex_object(self):
         """DHT stores and retrieves nested dict."""
+
         async def _run():
             async with RingsClient() as c:
                 data = {
@@ -866,6 +868,7 @@ class TestSubRingDHTIntegration:
 
     def test_dht_extend_operator(self):
         """DHT EXTEND appends to existing value."""
+
         async def _run():
             async with RingsClient() as c:
                 await c.dht_put("log:events", ["event1"])
@@ -878,6 +881,7 @@ class TestSubRingDHTIntegration:
 
     def test_dht_overwrite_replaces(self):
         """DHT OVERWRITE replaces existing value."""
+
         async def _run():
             async with RingsClient() as c:
                 await c.dht_put("key1", "value_a")
@@ -889,6 +893,7 @@ class TestSubRingDHTIntegration:
 
     def test_dht_get_nonexistent_returns_none(self):
         """DHT get for missing key returns None."""
+
         async def _run():
             async with RingsClient() as c:
                 return await c.dht_get("nonexistent_key_12345")
@@ -897,6 +902,7 @@ class TestSubRingDHTIntegration:
 
     def test_dht_delete(self):
         """DHT delete removes a key."""
+
         async def _run():
             async with RingsClient() as c:
                 await c.dht_put("to_delete", "value")
@@ -941,6 +947,7 @@ class TestSubRingDHTIntegration:
 
     def test_session_lifecycle(self):
         """Create session → send → receive → close."""
+
         async def _run():
             async with RingsClient() as c:
                 session = await c.create_session("did:peer:remote")
@@ -972,6 +979,7 @@ class TestSubRingDHTIntegration:
 
     def test_subring_leave(self):
         """SubRing leave succeeds."""
+
         async def _run():
             async with RingsClient() as c:
                 await c.create_sub_ring("temp-ring")
@@ -982,6 +990,7 @@ class TestSubRingDHTIntegration:
 
     def test_ring_join_and_finger_table(self):
         """Join ring and get finger table."""
+
         async def _run():
             async with RingsClient() as c:
                 peer = await c.join_ring()
@@ -1085,9 +1094,7 @@ class TestErrorHandlingEdgeCases:
             try:
                 for i in range(50):
                     peer = f"did:p:{thread_id}_{i % 5}"
-                    rep.report_behaviour(
-                        peer, BehaviourType.REQUEST_SUCCESS, random.random()
-                    )
+                    rep.report_behaviour(peer, BehaviourType.REQUEST_SUCCESS, random.random())
             except Exception as ex:
                 errors.append(ex)
 
@@ -1126,6 +1133,7 @@ class TestErrorHandlingEdgeCases:
 
     def test_production_sweep_with_failing_adapter(self):
         """production_sweep tolerates adapter that raises in produce()."""
+
         class BrokenAdapter:
             MODULE_NAME = "broken"
             _info = ModuleInfo(
@@ -1169,11 +1177,13 @@ class TestStressPerformance:
 
         for i in range(1000):
             score = random.random()
-            btype = random.choice([
-                BehaviourType.REQUEST_SUCCESS,
-                BehaviourType.REQUEST_FAILURE,
-                BehaviourType.VALID_REQUEST,
-            ])
+            btype = random.choice(
+                [
+                    BehaviourType.REQUEST_SUCCESS,
+                    BehaviourType.REQUEST_FAILURE,
+                    BehaviourType.VALID_REQUEST,
+                ]
+            )
             rep.report_behaviour(f"did:p:{i}", btype, score)
 
         assert rep.peer_count == 1000
@@ -1215,6 +1225,7 @@ class TestStressPerformance:
 
     def test_large_dht_value(self):
         """Store a large value in DHT (1MB-ish string)."""
+
         async def _run():
             async with RingsClient() as c:
                 large_value = "x" * (1024 * 1024)
@@ -1232,16 +1243,19 @@ class TestStressPerformance:
         bus.subscribe("rings.*", handler=lambda e: received.append(e))
 
         for i in range(1000):
-            bus.emit(CognitiveEvent(
-                event_type=f"rings.peer.discovered",
-                payload={"i": i},
-                source="test",
-            ))
+            bus.emit(
+                CognitiveEvent(
+                    event_type=f"rings.peer.discovered",
+                    payload={"i": i},
+                    source="test",
+                )
+            )
 
         assert len(received) == 1000
 
     def test_many_dht_operations(self):
         """500 DHT put/get cycles."""
+
         async def _run():
             async with RingsClient() as c:
                 for i in range(500):
@@ -1271,22 +1285,26 @@ class TestStressPerformance:
 
         # Fill with low priority
         for i in range(50):
-            bb.post(BlackboardEntry(
-                topic="rings.peer.discovered",
-                data={"i": i},
-                source_module="test",
-                priority=EntryPriority.LOW,
-            ))
+            bb.post(
+                BlackboardEntry(
+                    topic="rings.peer.discovered",
+                    data={"i": i},
+                    source_module="test",
+                    priority=EntryPriority.LOW,
+                )
+            )
 
         assert bb.entry_count == 50
 
         # Post high priority — should evict a low priority entry
-        bb.post(BlackboardEntry(
-            topic="rings.critical",
-            data={"critical": True},
-            source_module="test",
-            priority=EntryPriority.HIGH,
-        ))
+        bb.post(
+            BlackboardEntry(
+                topic="rings.critical",
+                data={"critical": True},
+                source_module="test",
+                priority=EntryPriority.HIGH,
+            )
+        )
 
         # Should still be at capacity, not over
         assert bb.entry_count <= 51  # post may or may not trigger eviction pre/post
@@ -1343,13 +1361,17 @@ class TestStressPerformance:
 
         for idx in range(50):
             local_idx = idx
-            bus.subscribe("rings.*", handler=lambda e, i=local_idx: counters.__setitem__(i, counters[i] + 1))
+            bus.subscribe(
+                "rings.*", handler=lambda e, i=local_idx: counters.__setitem__(i, counters[i] + 1)
+            )
 
-        bus.emit(CognitiveEvent(
-            event_type="rings.peer.discovered",
-            payload={"test": True},
-            source="test",
-        ))
+        bus.emit(
+            CognitiveEvent(
+                event_type="rings.peer.discovered",
+                payload={"test": True},
+                source="test",
+            )
+        )
 
         assert all(c == 1 for c in counters)
 
@@ -1464,10 +1486,12 @@ class TestStatePersistenceRecovery:
         new_id = bb.supersede(old_id, new)
 
         # Default query should only show active
-        results = bb.query(BlackboardQuery(
-            topics=["rings.peer.discovered"],
-            statuses={EntryStatus.ACTIVE},
-        ))
+        results = bb.query(
+            BlackboardQuery(
+                topics=["rings.peer.discovered"],
+                statuses={EntryStatus.ACTIVE},
+            )
+        )
         assert all(r.entry_id != old_id for r in results)
         assert any(r.entry_id == new_id for r in results)
 
@@ -1543,17 +1567,21 @@ class TestStatePersistenceRecovery:
         bb.retract(eid)
 
         # Active query excludes
-        active = bb.query(BlackboardQuery(
-            topics=["rings.peer.discovered"],
-            statuses={EntryStatus.ACTIVE},
-        ))
+        active = bb.query(
+            BlackboardQuery(
+                topics=["rings.peer.discovered"],
+                statuses={EntryStatus.ACTIVE},
+            )
+        )
         assert all(r.entry_id != eid for r in active)
 
         # Explicit retracted query includes
-        retracted = bb.query(BlackboardQuery(
-            topics=["rings.peer.discovered"],
-            statuses={EntryStatus.RETRACTED},
-        ))
+        retracted = bb.query(
+            BlackboardQuery(
+                topics=["rings.peer.discovered"],
+                statuses={EntryStatus.RETRACTED},
+            )
+        )
         assert any(r.entry_id == eid for r in retracted)
 
 
@@ -1579,9 +1607,7 @@ class TestAdditionalIntegration:
         assert verified
 
         # 3. Record auth via adapter
-        entry = adapter.record_did_authentication(
-            did_id, success=verified, trust_tier="MEDIUM"
-        )
+        entry = adapter.record_did_authentication(did_id, success=verified, trust_tier="MEDIUM")
         bb.post(entry)
 
         # 4. Build reputation
@@ -1601,6 +1627,7 @@ class TestAdditionalIntegration:
 
     def test_dht_store_did_document(self):
         """Store DID document in DHT and retrieve."""
+
         async def _run():
             client = RingsClient()
             did_mgr = RingsDID(client=client)

@@ -604,9 +604,7 @@ class TestKeyGeneration:
         q = keygen.parameters.coefficient_modulus[0]
         valid = {x % q for x in (-1, 0, 1)}
         for i, c in enumerate(sk.polynomial.coefficients):
-            assert c in valid, (
-                f"coeff[{i}]={c} not in {valid} (expected ternary reduced mod {q})"
-            )
+            assert c in valid, f"coeff[{i}]={c} not in {valid} (expected ternary reduced mod {q})"
 
     def test_secret_key_metadata(self, keygen):
         sk = keygen.generate_secret_key()

@@ -41,12 +41,16 @@ from asi_build.rings.bridge.chains import (
     get_enabled_chains,
     update_deployed_addresses,
 )
+from asi_build.rings.bridge.contract_client import (
+    BridgeContractClient,
+    BridgeDeployer,
+)
 from asi_build.rings.bridge.ledger import (
     LedgerKeys,
     LedgerMessage,
     RingsTokenLedger,
-    TransferRecord,
     TransferReceipt,
+    TransferRecord,
     TransferStatus,
     WithdrawalLock,
     _normalize_token,
@@ -58,11 +62,6 @@ from asi_build.rings.bridge.relayer import (
     RelayerConfig,
     RelayerDB,
 )
-from asi_build.rings.bridge.contract_client import (
-    BridgeContractClient,
-    BridgeDeployer,
-)
-
 
 # ===========================================================================
 # Fixtures
@@ -93,6 +92,7 @@ class MockIdentity:
 
     def sign_rings(self, data: bytes) -> bytes:
         import hashlib
+
         return hashlib.sha256(data + b":signed").digest()
 
 
@@ -430,9 +430,13 @@ class TestMultiChainContractClient:
     def _patch_contract_interface(self):
         """Return a context-manager that mocks the ContractInterface import."""
         ci_mock = MagicMock()
-        ci_mock.ContractInterface = type("ContractInterface", (), {
-            "__init__": lambda self, **kw: None,
-        })
+        ci_mock.ContractInterface = type(
+            "ContractInterface",
+            (),
+            {
+                "__init__": lambda self, **kw: None,
+            },
+        )
         return patch(
             "asi_build.rings.bridge.contract_client.ContractInterface",
             ci_mock.ContractInterface,
@@ -445,12 +449,19 @@ class TestMultiChainContractClient:
         cm = self._make_mock_cm()
         # Patch the import that BridgeContractClient.__init__ triggers
         mock_module = MagicMock()
-        mock_module.ContractInterface = type("CI", (), {
-            "__init__": lambda self, **kw: self.__dict__.update(kw),
-        })
-        with patch.dict("sys.modules", {
-            "asi_build.blockchain.web3_integration.contract_manager": mock_module,
-        }):
+        mock_module.ContractInterface = type(
+            "CI",
+            (),
+            {
+                "__init__": lambda self, **kw: self.__dict__.update(kw),
+            },
+        )
+        with patch.dict(
+            "sys.modules",
+            {
+                "asi_build.blockchain.web3_integration.contract_manager": mock_module,
+            },
+        ):
             return BridgeContractClient.for_chain(chain_name, web3, cm), web3, cm
 
     def test_client_for_chain_sepolia(self):
@@ -474,7 +485,9 @@ class TestMultiChainContractClient:
 
     def test_client_for_chain_after_deploy(self):
         """for_chain works after addresses are updated."""
-        update_deployed_addresses("bsc_testnet", bridge="0x1234567890abcdef1234567890abcdef12345678")
+        update_deployed_addresses(
+            "bsc_testnet", bridge="0x1234567890abcdef1234567890abcdef12345678"
+        )
         client, _, _ = self._make_client_for_chain("bsc_testnet")
         assert client.bridge_address == "0x1234567890abcdef1234567890abcdef12345678"
 
@@ -505,7 +518,9 @@ class TestMultiChainContractClient:
         web3 = self._make_mock_web3()
         cm = self._make_mock_cm()
         deployer = BridgeDeployer.for_chain(
-            "base_sepolia", web3, cm,
+            "base_sepolia",
+            web3,
+            cm,
             verifier_bytecode="0xdead",
         )
         assert deployer._verifier_bytecode == "0xdead"
@@ -647,9 +662,7 @@ class TestMultiChainRelayer:
     def test_separate_db_per_chain(self):
         """Each chain relayer gets its own database file."""
         mcr = MultiChainRelayer(["ethereum_sepolia", "bsc_testnet"])
-        configs = {
-            name: r.config for name, r in mcr.relayers.items()
-        }
+        configs = {name: r.config for name, r in mcr.relayers.items()}
         assert "ethereum_sepolia" in configs["ethereum_sepolia"].db_path
         assert "bsc_testnet" in configs["bsc_testnet"].db_path
         assert configs["ethereum_sepolia"].db_path != configs["bsc_testnet"].db_path
@@ -748,14 +761,17 @@ class TestCrossChainLedger:
 
         # Agent deposits 100 USDC on BSC
         await ledger.credit_from_bridge(
-            did=did, token="USDC", amount=100_000_000,
+            did=did,
+            token="USDC",
+            amount=100_000_000,
             source_chain="bsc_testnet",
         )
 
         # Agent transfers 50 USDC to another agent on Rings
         await ledger.credit_from_bridge(
             did="did:rings:secp256k1:agent_y",
-            token="USDC", amount=50_000_000,
+            token="USDC",
+            amount=50_000_000,
             source_chain="bsc_testnet",
         )
 
@@ -776,12 +792,16 @@ class TestCrossChainLedger:
 
         # Deposit from Sepolia
         await ledger.credit_from_bridge(
-            did=did, token="ETH", amount=1000,
+            did=did,
+            token="ETH",
+            amount=1000,
             source_chain="ethereum_sepolia",
         )
         # Deposit from Base
         await ledger.credit_from_bridge(
-            did=did, token="ETH", amount=2000,
+            did=did,
+            token="ETH",
+            amount=2000,
             source_chain="base_sepolia",
         )
 
@@ -795,14 +815,14 @@ class TestCrossChainLedger:
         await ledger.credit_from_bridge(did, "ETH", 5000)
 
         lock = await ledger.debit_for_withdrawal(
-            did=did, token="ETH", amount=1000,
+            did=did,
+            token="ETH",
+            amount=1000,
             target_chain="arc_testnet",
         )
 
         # Verify DHT persistence
-        stored = await ledger.client.dht_get(
-            LedgerKeys.withdrawal_lock_key(lock.lock_id)
-        )
+        stored = await ledger.client.dht_get(LedgerKeys.withdrawal_lock_key(lock.lock_id))
         assert stored is not None
         assert stored["target_chain"] == "arc_testnet"
 
@@ -813,15 +833,21 @@ class TestCrossChainLedger:
         await ledger.credit_from_bridge(did, "ETH", 10000)
 
         lock1 = await ledger.debit_for_withdrawal(
-            did=did, token="ETH", amount=2000,
+            did=did,
+            token="ETH",
+            amount=2000,
             target_chain="ethereum_sepolia",
         )
         lock2 = await ledger.debit_for_withdrawal(
-            did=did, token="ETH", amount=3000,
+            did=did,
+            token="ETH",
+            amount=3000,
             target_chain="bsc_testnet",
         )
         lock3 = await ledger.debit_for_withdrawal(
-            did=did, token="ETH", amount=1000,
+            did=did,
+            token="ETH",
+            amount=1000,
             target_chain="arc_testnet",
         )
 
@@ -840,7 +866,9 @@ class TestCrossChainLedger:
         await ledger.credit_from_bridge(did, "ETH", 5000)
 
         lock = await ledger.debit_for_withdrawal(
-            did=did, token="ETH", amount=2000,
+            did=did,
+            token="ETH",
+            amount=2000,
             target_chain="base_sepolia",
         )
 
@@ -857,7 +885,9 @@ class TestCrossChainLedger:
         await ledger.credit_from_bridge(did, "ETH", 5000)
 
         lock = await ledger.debit_for_withdrawal(
-            did=did, token="ETH", amount=2000,
+            did=did,
+            token="ETH",
+            amount=2000,
             target_chain="bsc_testnet",
         )
 
@@ -875,14 +905,18 @@ class TestCrossChainLedger:
 
         # Alice deposits on Sepolia
         await ledger.credit_from_bridge(
-            alice, "ETH", 10000,
+            alice,
+            "ETH",
+            10000,
             source_chain="ethereum_sepolia",
         )
 
         # Alice transfers to Bob on Rings
         receipt = await ledger.transfer(
-            from_did=alice, to_did=bob,
-            token="ETH", amount=5000,
+            from_did=alice,
+            to_did=bob,
+            token="ETH",
+            amount=5000,
             signature=b"\x00" * 64,
         )
         assert receipt.status == TransferStatus.PROPOSED
@@ -897,7 +931,9 @@ class TestCrossChainLedger:
         assert bob_bal == 5000
 
         lock = await ledger.debit_for_withdrawal(
-            did=bob, token="ETH", amount=3000,
+            did=bob,
+            token="ETH",
+            amount=3000,
             target_chain="bsc_testnet",
         )
         assert lock.target_chain == "bsc_testnet"
@@ -914,7 +950,10 @@ class TestCrossChainLedger:
             ("arc_testnet", 400),
         ]:
             await ledger.credit_from_bridge(
-                did, "ETH", amt, source_chain=chain,
+                did,
+                "ETH",
+                amt,
+                source_chain=chain,
             )
 
         bal = await ledger.balance(did, "ETH")
@@ -928,7 +967,9 @@ class TestCrossChainLedger:
 
         with pytest.raises(ValueError, match="insufficient"):
             await ledger.debit_for_withdrawal(
-                did=did, token="ETH", amount=200,
+                did=did,
+                token="ETH",
+                amount=200,
                 target_chain="bsc_testnet",
             )
 
@@ -940,7 +981,9 @@ class TestCrossChainLedger:
 
         with pytest.raises(ValueError, match="must be > 0"):
             await ledger.debit_for_withdrawal(
-                did=did, token="ETH", amount=0,
+                did=did,
+                token="ETH",
+                amount=0,
                 target_chain="arc_testnet",
             )
 
@@ -951,13 +994,17 @@ class TestCrossChainLedger:
 
         # Deposit USDC on Arc
         await ledger.credit_from_bridge(
-            did, "USDC", 50_000_000,  # 50 USDC in 6 decimals
+            did,
+            "USDC",
+            50_000_000,  # 50 USDC in 6 decimals
             source_chain="arc_testnet",
         )
 
         # Withdraw to Ethereum Sepolia
         lock = await ledger.debit_for_withdrawal(
-            did=did, token="USDC", amount=25_000_000,
+            did=did,
+            token="USDC",
+            amount=25_000_000,
             target_chain="ethereum_sepolia",
         )
         assert lock.target_chain == "ethereum_sepolia"
@@ -1135,6 +1182,7 @@ class TestWithdrawalLockSerialization:
     def test_to_dict_type_safety(self):
         """to_dict returns JSON-serializable types."""
         import json
+
         lock = WithdrawalLock(
             lock_id="json-lock",
             did="did:test",
@@ -1234,14 +1282,19 @@ class TestCrossChainIntegration:
 
         # 1. Agent A deposits 100 USDC on BSC
         await ledger.credit_from_bridge(
-            agent_a, "USDC", 100_000_000,
+            agent_a,
+            "USDC",
+            100_000_000,
             source_chain="bsc_testnet",
         )
         assert await ledger.balance(agent_a, "USDC") == 100_000_000
 
         # 2. Agent A transfers 50 USDC to Agent B on Rings
         receipt = await ledger.transfer(
-            agent_a, agent_b, "USDC", 50_000_000,
+            agent_a,
+            agent_b,
+            "USDC",
+            50_000_000,
             signature=b"\x00" * 64,
         )
         await ledger.attest_transfer(receipt.transfer_id)
@@ -1250,7 +1303,9 @@ class TestCrossChainIntegration:
 
         # 3. Agent B withdraws 50 USDC to Base (different chain!)
         lock = await ledger.debit_for_withdrawal(
-            agent_b, "USDC", 50_000_000,
+            agent_b,
+            "USDC",
+            50_000_000,
             target_chain="base_sepolia",
         )
         assert lock.target_chain == "base_sepolia"
@@ -1272,7 +1327,10 @@ class TestCrossChainIntegration:
         assert await ledger.balance(did, "ETH") == 600
 
         lock = await ledger.debit_for_withdrawal(
-            did, "ETH", 500, target_chain="arc_testnet",
+            did,
+            "ETH",
+            500,
+            target_chain="arc_testnet",
         )
         assert lock.amount == 500
         assert await ledger.available_balance(did, "ETH") == 100
@@ -1285,14 +1343,20 @@ class TestCrossChainIntegration:
 
         # Withdraw 4000 to BSC
         lock1 = await ledger.debit_for_withdrawal(
-            did, "ETH", 4000, target_chain="bsc_testnet",
+            did,
+            "ETH",
+            4000,
+            target_chain="bsc_testnet",
         )
         await ledger.release_withdrawal_lock(lock1.lock_id)
         assert await ledger.balance(did, "ETH") == 6000
 
         # Withdraw 3000 to Base
         lock2 = await ledger.debit_for_withdrawal(
-            did, "ETH", 3000, target_chain="base_sepolia",
+            did,
+            "ETH",
+            3000,
+            target_chain="base_sepolia",
         )
         await ledger.release_withdrawal_lock(lock2.lock_id)
         assert await ledger.balance(did, "ETH") == 3000
@@ -1305,14 +1369,20 @@ class TestCrossChainIntegration:
 
         # Try to withdraw to BSC
         lock1 = await ledger.debit_for_withdrawal(
-            did, "ETH", 3000, target_chain="bsc_testnet",
+            did,
+            "ETH",
+            3000,
+            target_chain="bsc_testnet",
         )
         # Change mind — cancel
         await ledger.cancel_withdrawal_lock(lock1.lock_id)
 
         # Withdraw to Base instead
         lock2 = await ledger.debit_for_withdrawal(
-            did, "ETH", 3000, target_chain="base_sepolia",
+            did,
+            "ETH",
+            3000,
+            target_chain="base_sepolia",
         )
         assert lock2.target_chain == "base_sepolia"
         assert await ledger.available_balance(did, "ETH") == 2000
@@ -1326,7 +1396,10 @@ class TestCrossChainIntegration:
         locks = []
         for chain in ["ethereum_sepolia", "bsc_testnet", "base_sepolia", "arc_testnet"]:
             lock = await ledger.debit_for_withdrawal(
-                did, "ETH", 3000, target_chain=chain,
+                did,
+                "ETH",
+                3000,
+                target_chain=chain,
             )
             locks.append(lock)
 
@@ -1353,10 +1426,12 @@ class TestCrossChainIntegration:
 
         # Mock get_health on each relayer
         for name, relayer in mcr.relayers.items():
-            relayer.get_health = AsyncMock(return_value={
-                "status": "healthy",
-                "chain": name,
-            })
+            relayer.get_health = AsyncMock(
+                return_value={
+                    "status": "healthy",
+                    "chain": name,
+                }
+            )
 
         health = await mcr.get_health()
         assert health["total_chains"] == 2
@@ -1370,12 +1445,8 @@ class TestCrossChainIntegration:
         """MultiChainRelayer reports degraded if one chain is unhealthy."""
         mcr = MultiChainRelayer(["ethereum_sepolia", "bsc_testnet"])
 
-        mcr.relayers["ethereum_sepolia"].get_health = AsyncMock(
-            return_value={"status": "healthy"}
-        )
-        mcr.relayers["bsc_testnet"].get_health = AsyncMock(
-            side_effect=Exception("RPC down")
-        )
+        mcr.relayers["ethereum_sepolia"].get_health = AsyncMock(return_value={"status": "healthy"})
+        mcr.relayers["bsc_testnet"].get_health = AsyncMock(side_effect=Exception("RPC down"))
 
         health = await mcr.get_health()
         assert health["status"] == "degraded"
@@ -1441,10 +1512,16 @@ class TestCrossChainIntegration:
 
         # Withdraw to different chains
         lock_eth = await ledger.debit_for_withdrawal(
-            did, "ETH", 2000, target_chain="bsc_testnet",
+            did,
+            "ETH",
+            2000,
+            target_chain="bsc_testnet",
         )
         lock_usdc = await ledger.debit_for_withdrawal(
-            did, "USDC", 1000, target_chain="ethereum_sepolia",
+            did,
+            "USDC",
+            1000,
+            target_chain="ethereum_sepolia",
         )
 
         assert lock_eth.target_chain == "bsc_testnet"

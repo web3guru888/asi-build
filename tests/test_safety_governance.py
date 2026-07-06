@@ -272,7 +272,9 @@ class TestGovernanceEngine:
         assert ok is True
 
         # Move deadline into the past so finalize_proposal accepts it
-        engine.proposals["p1"].voting_deadline = datetime.now(tz=timezone.utc) - timedelta(seconds=1)
+        engine.proposals["p1"].voting_deadline = datetime.now(tz=timezone.utc) - timedelta(
+            seconds=1
+        )
         decision = engine.finalize_proposal("p1")
         assert decision is not None
         assert isinstance(decision, GovernanceDecision)
@@ -291,7 +293,9 @@ class TestGovernanceEngine:
         engine.cast_vote("p1", "s1", VoteType.FOR)
 
         # Move deadline to past
-        engine.proposals["p1"].voting_deadline = datetime.now(tz=timezone.utc) - timedelta(seconds=1)
+        engine.proposals["p1"].voting_deadline = datetime.now(tz=timezone.utc) - timedelta(
+            seconds=1
+        )
         decision = engine.finalize_proposal("p1")
         assert decision is not None
 
@@ -309,7 +313,9 @@ class TestGovernanceEngine:
         engine.cast_vote("p1", "s1", VoteType.FOR)
 
         # Move deadline to past
-        engine.proposals["p1"].voting_deadline = datetime.now(tz=timezone.utc) - timedelta(seconds=1)
+        engine.proposals["p1"].voting_deadline = datetime.now(tz=timezone.utc) - timedelta(
+            seconds=1
+        )
         decision = engine.finalize_proposal("p1")
         assert decision is not None
         # participation = 1/3 ≈ 0.33 < 0.8
@@ -327,7 +333,9 @@ class TestGovernanceEngine:
         engine.cast_vote("p1", "s1", VoteType.FOR)
 
         # Move deadline to past for finalization
-        engine.proposals["p1"].voting_deadline = datetime.now(tz=timezone.utc) - timedelta(seconds=1)
+        engine.proposals["p1"].voting_deadline = datetime.now(tz=timezone.utc) - timedelta(
+            seconds=1
+        )
         decision = engine.finalize_proposal("p1")
         assert decision is not None
         assert decision.decision == "approved"
@@ -372,7 +380,9 @@ class TestGovernanceEngine:
         engine.cast_vote("p1", "s3", VoteType.FOR)  # 5
 
         # Move deadline to past for finalization
-        engine.proposals["p1"].voting_deadline = datetime.now(tz=timezone.utc) - timedelta(seconds=1)
+        engine.proposals["p1"].voting_deadline = datetime.now(tz=timezone.utc) - timedelta(
+            seconds=1
+        )
         decision = engine.finalize_proposal("p1")
         assert decision is not None
         # for=15, against=5, approval_rate=15/20=0.75 >= 0.6 → approved

@@ -162,9 +162,7 @@ class BCIBlackboardAdapter:
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
             capabilities=(
-                ModuleCapability.PRODUCER
-                | ModuleCapability.CONSUMER
-                | ModuleCapability.TRANSFORMER
+                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.TRANSFORMER
             ),
             description=(
                 "Brain-Computer Interface module: real-time signal processing, "
@@ -529,9 +527,7 @@ class BCIBlackboardAdapter:
         if features_used is not None:
             try:
                 decode_data["features_used"] = (
-                    features_used.tolist()
-                    if hasattr(features_used, "tolist")
-                    else features_used
+                    features_used.tolist() if hasattr(features_used, "tolist") else features_used
                 )
             except Exception:
                 decode_data["features_used"] = str(features_used)
@@ -709,9 +705,7 @@ class BCIBlackboardAdapter:
 
         # Try to get more detailed calibration results
         try:
-            cal_result = self._bci_manager.calibrate(
-                task_type=None, duration=0, trials=0
-            )
+            cal_result = self._bci_manager.calibrate(task_type=None, duration=0, trials=0)
             if isinstance(cal_result, dict):
                 cal_data.update(cal_result)
         except Exception:
@@ -769,9 +763,7 @@ class BCIBlackboardAdapter:
             self._signal_processor, "set_neurofeedback_params"
         ):
             try:
-                self._signal_processor.set_neurofeedback_params(
-                    self._neurofeedback_params
-                )
+                self._signal_processor.set_neurofeedback_params(self._neurofeedback_params)
             except Exception:
                 logger.debug(
                     "Failed to set neurofeedback params on signal processor",
@@ -868,9 +860,7 @@ class BCIBlackboardAdapter:
         payload = event.payload or {}
         spike_rate = payload.get("spike_rate", payload.get("firing_rate"))
 
-        if spike_rate is not None and hasattr(
-            self._signal_processor, "adjust_sensitivity"
-        ):
+        if spike_rate is not None and hasattr(self._signal_processor, "adjust_sensitivity"):
             try:
                 # High spike rates suggest more neural activity →
                 # increase processing sensitivity
@@ -973,12 +963,8 @@ class BCIBlackboardAdapter:
             try:
                 processed = self._signal_processor.process_realtime(None)
                 if processed is not None:
-                    snap["current_quality"] = getattr(
-                        processed, "quality_score", None
-                    )
-                    snap["artifacts_detected"] = getattr(
-                        processed, "artifacts_detected", None
-                    )
+                    snap["current_quality"] = getattr(processed, "quality_score", None)
+                    snap["artifacts_detected"] = getattr(processed, "artifacts_detected", None)
             except Exception:
                 snap["current_quality"] = None
 

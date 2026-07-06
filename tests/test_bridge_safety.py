@@ -28,7 +28,6 @@ from asi_build.rings.bridge.safety import (
     ValidatorHealthMonitor,
 )
 
-
 # ===========================================================================
 # CircuitBreaker Tests (15)
 # ===========================================================================
@@ -122,7 +121,9 @@ class TestCircuitBreaker:
         cb3.record_success()  # reset consecutive (now 10 results, 5F, consec=0)
         for _ in range(4):
             cb3.record_failure()  # 14 results, 9F, consec=4
-        assert cb3.state == CircuitBreaker.State.CLOSED  # 9/14 = 64% but only 14 < 15 results needed
+        assert (
+            cb3.state == CircuitBreaker.State.CLOSED
+        )  # 9/14 = 64% but only 14 < 15 results needed
         cb3.record_failure()  # 15 results, 10F, consec=5: rate=66% > 50%, len=15 >= 15 ✓
         assert cb3.state == CircuitBreaker.State.OPEN
         assert cb3._consecutive_failures < cb3.failure_threshold  # confirms it wasn't consecutive
@@ -468,9 +469,7 @@ class TestValidatorHealthMonitor:
         )
         vhm._last_heartbeats["did:rings:v1"] = time.time() - 5  # 5s ago
         alerts = vhm.check_health()
-        timeout_alerts = [
-            a for a in alerts if "timeout" in a.message.lower()
-        ]
+        timeout_alerts = [a for a in alerts if "timeout" in a.message.lower()]
         assert len(timeout_alerts) >= 1
 
     def test_active_validator_count(self):
@@ -496,9 +495,7 @@ class TestValidatorHealthMonitor:
         vhm._last_heartbeats["v1"] = now
         vhm._last_heartbeats["v2"] = now
         alerts = vhm.check_health()
-        threshold_alerts = [
-            a for a in alerts if "below threshold" in a.message.lower()
-        ]
+        threshold_alerts = [a for a in alerts if "below threshold" in a.message.lower()]
         assert len(threshold_alerts) >= 1
         assert threshold_alerts[0].severity == AlertSeverity.CRITICAL
 
@@ -511,9 +508,7 @@ class TestValidatorHealthMonitor:
         for _ in range(8):
             vhm.record_attestation("v1", False)
         alerts = vhm.check_health()
-        rate_alerts = [
-            a for a in alerts if "success rate" in a.message.lower()
-        ]
+        rate_alerts = [a for a in alerts if "success rate" in a.message.lower()]
         assert len(rate_alerts) >= 1
 
     def test_multiple_validators_tracked_independently(self):
@@ -656,9 +651,7 @@ class TestBridgeSafetyManager:
     @pytest.mark.asyncio
     async def test_reset_all_works(self, manager):
         manager.deposit_breaker.trip("test")
-        manager._alerts.append(
-            SafetyAlert(time.time(), AlertSeverity.WARNING, "test", "x")
-        )
+        manager._alerts.append(SafetyAlert(time.time(), AlertSeverity.WARNING, "test", "x"))
         manager._paused_by_safety = True
 
         manager.reset_all()

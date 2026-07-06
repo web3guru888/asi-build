@@ -438,8 +438,12 @@ class TestEmitInternals:
 
         # Log different types
         al.log_deposit(
-            trace_id="e1", tx_hash="0x1", amount=1, sender="0xS",
-            recipient_did="did:x", status="confirmed",
+            trace_id="e1",
+            tx_hash="0x1",
+            amount=1,
+            sender="0xS",
+            recipient_did="did:x",
+            status="confirmed",
         )
         al.log_system("test_event")
         al.log_error(trace_id="e3", operation="test", error="oops")

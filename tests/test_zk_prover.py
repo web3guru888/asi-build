@@ -19,15 +19,14 @@ import secrets
 import time
 
 import pytest
-
 from py_ecc.bn128 import (
+    FQ,
+    FQ2,
+    FQ12,
     G1,
     G2,
     Z1,
     Z2,
-    FQ,
-    FQ2,
-    FQ12,
     add,
     curve_order,
     field_modulus,
@@ -35,7 +34,8 @@ from py_ecc.bn128 import (
     multiply,
     neg,
 )
-from py_ecc.bn128.bn128_curve import b as B_COEFF, b2 as B2_COEFF
+from py_ecc.bn128.bn128_curve import b as B_COEFF
+from py_ecc.bn128.bn128_curve import b2 as B2_COEFF
 
 from asi_build.rings.bridge.zk_prover import (
     BridgeWithdrawalCircuit,
@@ -55,10 +55,10 @@ from asi_build.rings.bridge.zk_prover import (
     vk_to_solidity_args,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module")
 def setup():
@@ -96,6 +96,7 @@ def valid_proof_bytes(valid_proof):
 # ---------------------------------------------------------------------------
 # 1. TrustedSetup Tests
 # ---------------------------------------------------------------------------
+
 
 class TestTrustedSetup:
     """Tests for key generation and setup consistency."""
@@ -188,6 +189,7 @@ class TestTrustedSetup:
 # 2. Scalar Utility Tests
 # ---------------------------------------------------------------------------
 
+
 class TestScalarUtils:
     """Tests for random_scalar and hash_to_scalar."""
 
@@ -225,6 +227,7 @@ class TestScalarUtils:
 # ---------------------------------------------------------------------------
 # 3. Proof Generation Tests
 # ---------------------------------------------------------------------------
+
 
 class TestProofGeneration:
     """Tests for Groth16Prover.prove()."""
@@ -282,6 +285,7 @@ class TestProofGeneration:
 # 4. Proof Verification Tests (slow — involve pairings)
 # ---------------------------------------------------------------------------
 
+
 class TestProofVerification:
     """Tests for Groth16Verifier.verify()."""
 
@@ -318,6 +322,7 @@ class TestProofVerification:
 # ---------------------------------------------------------------------------
 # 5. Serialisation Tests
 # ---------------------------------------------------------------------------
+
 
 class TestSerialisation:
     """Tests for proof serialisation/deserialisation."""
@@ -386,6 +391,7 @@ class TestSerialisation:
 # 6. VK-to-Solidity Export Tests
 # ---------------------------------------------------------------------------
 
+
 class TestVKToSolidity:
     """Tests for the Solidity constructor argument export."""
 
@@ -421,6 +427,7 @@ class TestVKToSolidity:
 # 7. Bridge Withdrawal Circuit Tests
 # ---------------------------------------------------------------------------
 
+
 class TestBridgeWithdrawalCircuit:
     """Tests for the withdrawal-specific circuit wrapper."""
 
@@ -435,16 +442,22 @@ class TestBridgeWithdrawalCircuit:
 
     def test_derive_public_inputs_deterministic(self):
         pub1 = BridgeWithdrawalCircuit.derive_public_inputs(
-            10**18, 1, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+            10**18,
+            1,
+            "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
         )
         pub2 = BridgeWithdrawalCircuit.derive_public_inputs(
-            10**18, 1, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+            10**18,
+            1,
+            "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
         )
         assert pub1 == pub2
 
     def test_derive_public_inputs_format(self):
         pub = BridgeWithdrawalCircuit.derive_public_inputs(
-            10**18, 1, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+            10**18,
+            1,
+            "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
         )
         assert len(pub) == 3
         assert all(isinstance(x, int) for x in pub)
@@ -453,7 +466,7 @@ class TestBridgeWithdrawalCircuit:
     def test_derive_public_inputs_amount(self):
         pub = BridgeWithdrawalCircuit.derive_public_inputs(42, 7, "0x" + "ab" * 20)
         assert pub[0] == 42  # amount
-        assert pub[1] == 7   # nonce
+        assert pub[1] == 7  # nonce
 
     def test_prove_withdrawal_returns_bytes_and_inputs(self, circuit):
         proof_bytes, pub = circuit.prove_withdrawal(
@@ -492,10 +505,18 @@ class TestBridgeWithdrawalCircuit:
 
     def test_different_recipients_different_proofs(self, circuit):
         pb1, _ = circuit.prove_withdrawal(
-            10**18, 1, "0x" + "11" * 20, [b"s"], b"\x00" * 32,
+            10**18,
+            1,
+            "0x" + "11" * 20,
+            [b"s"],
+            b"\x00" * 32,
         )
         pb2, _ = circuit.prove_withdrawal(
-            10**18, 1, "0x" + "22" * 20, [b"s"], b"\x00" * 32,
+            10**18,
+            1,
+            "0x" + "22" * 20,
+            [b"s"],
+            b"\x00" * 32,
         )
         assert pb1 != pb2
 
@@ -503,6 +524,7 @@ class TestBridgeWithdrawalCircuit:
 # ---------------------------------------------------------------------------
 # 8. Sync Committee Circuit Tests
 # ---------------------------------------------------------------------------
+
 
 class TestSyncCommitteeCircuit:
     """Tests for the sync committee rotation circuit."""
@@ -552,6 +574,7 @@ class TestSyncCommitteeCircuit:
 # 9. Point Validation Tests
 # ---------------------------------------------------------------------------
 
+
 class TestPointValidation:
     """Tests for _is_valid_g1 and _is_valid_g2."""
 
@@ -588,6 +611,7 @@ class TestPointValidation:
 # ---------------------------------------------------------------------------
 # 10. Curve Order Boundary Tests
 # ---------------------------------------------------------------------------
+
 
 class TestCurveOrderBoundary:
     """Edge cases around the curve order."""
@@ -626,6 +650,7 @@ class TestCurveOrderBoundary:
 # 11. Security Tests
 # ---------------------------------------------------------------------------
 
+
 class TestSecurity:
     """Tests that invalid/forged proofs are rejected."""
 
@@ -661,6 +686,7 @@ class TestSecurity:
 # ---------------------------------------------------------------------------
 # 12. E2E Integration Tests
 # ---------------------------------------------------------------------------
+
 
 class TestE2EIntegration:
     """End-to-end tests combining setup, prove, verify, and serialise."""

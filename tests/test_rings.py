@@ -17,11 +17,18 @@ from typing import Any, Dict, List, Optional
 
 import pytest
 
-# ---------------------------------------------------------------------------
-# Imports under test
-# ---------------------------------------------------------------------------
-
+from asi_build.integration.adapters.rings_adapter import (
+    DEFAULT_TOPIC_SUBRING_MAP,
+    RingsNetworkAdapter,
+)
+from asi_build.integration.protocols import (
+    BlackboardEntry,
+    CognitiveEvent,
+    EntryPriority,
+    ModuleCapability,
+)
 from asi_build.rings.client import (
+    RING_MODULUS,
     ConnectionState,
     DHTOperator,
     FingerEntry,
@@ -32,7 +39,6 @@ from asi_build.rings.client import (
     SubRingInfo,
     _compute_vid,
     _did_to_position,
-    RING_MODULUS,
 )
 from asi_build.rings.did import (
     DIDDocument,
@@ -51,16 +57,10 @@ from asi_build.rings.reputation import (
     SlashReport,
     TrustTier,
 )
-from asi_build.integration.adapters.rings_adapter import (
-    RingsNetworkAdapter,
-    DEFAULT_TOPIC_SUBRING_MAP,
-)
-from asi_build.integration.protocols import (
-    BlackboardEntry,
-    CognitiveEvent,
-    EntryPriority,
-    ModuleCapability,
-)
+
+# ---------------------------------------------------------------------------
+# Imports under test
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -119,11 +119,13 @@ class MockEventBus:
         return 1
 
     def subscribe(self, pattern: str, handler=None, source_filter=None, **kw):
-        self.subscriptions.append({
-            "pattern": pattern,
-            "handler": handler,
-            "source_filter": source_filter,
-        })
+        self.subscriptions.append(
+            {
+                "pattern": pattern,
+                "handler": handler,
+                "source_filter": source_filter,
+            }
+        )
         return "sub_mock"
 
 
@@ -171,6 +173,7 @@ class TestRingsClientConnection:
             async with RingsClient() as client:
                 assert client.is_connected
                 return client.state
+
         result = run(_run())
         assert result == ConnectionState.CONNECTED
 
@@ -198,12 +201,14 @@ class TestRingsClientDHT:
                 await c.dht_put("key1", {"value": 42})
                 result = await c.dht_get("key1")
                 return result
+
         assert run(_run()) == {"value": 42}
 
     def test_get_nonexistent_returns_none(self):
         async def _run():
             async with RingsClient() as c:
                 return await c.dht_get("nonexistent")
+
         assert run(_run()) is None
 
     def test_put_overwrite(self):
@@ -212,6 +217,7 @@ class TestRingsClientDHT:
                 await c.dht_put("key1", "v1")
                 await c.dht_put("key1", "v2")
                 return await c.dht_get("key1")
+
         assert run(_run()) == "v2"
 
     def test_put_extend(self):
@@ -221,6 +227,7 @@ class TestRingsClientDHT:
                 await c.dht_put("key1", "v2", operator=DHTOperator.EXTEND)
                 result = await c.dht_get("key1")
                 return result
+
         result = run(_run())
         assert isinstance(result, list)
         assert "v1" in result and "v2" in result
@@ -231,6 +238,7 @@ class TestRingsClientDHT:
                 await c.dht_put("key1", "v1")
                 await c.dht_delete("key1")
                 return await c.dht_get("key1")
+
         assert run(_run()) is None
 
 
@@ -242,6 +250,7 @@ class TestRingsClientRing:
             async with RingsClient() as c:
                 info = await c.join_ring()
                 return info
+
         info = run(_run())
         assert isinstance(info, PeerInfo)
         assert info.did != ""
@@ -251,6 +260,7 @@ class TestRingsClientRing:
             async with RingsClient() as c:
                 result = await c.find_successor(12345)
                 return result
+
         result = run(_run())
         assert isinstance(result, PeerInfo)
         assert result.position == 12345 % RING_MODULUS
@@ -260,6 +270,7 @@ class TestRingsClientRing:
             async with RingsClient() as c:
                 table = await c.get_finger_table()
                 return table
+
         table = run(_run())
         assert len(table) == 160
         assert all(isinstance(e, FingerEntry) for e in table)
@@ -270,6 +281,7 @@ class TestRingsClientRing:
             async with RingsClient() as c:
                 await c.join_ring()
                 return await c.get_peers()
+
         peers = run(_run())
         assert isinstance(peers, list)
 
@@ -282,6 +294,7 @@ class TestRingsClientSubRing:
             async with RingsClient() as c:
                 info = await c.create_sub_ring("test-topic")
                 return info
+
         info = run(_run())
         assert isinstance(info, SubRingInfo)
         assert info.topic == "test-topic"
@@ -293,6 +306,7 @@ class TestRingsClientSubRing:
             async with RingsClient() as c:
                 info = await c.join_sub_ring("test-topic")
                 return info
+
         info = run(_run())
         assert info.joined
         assert info.topic == "test-topic"
@@ -302,6 +316,7 @@ class TestRingsClientSubRing:
             async with RingsClient() as c:
                 await c.join_sub_ring("test-topic")
                 await c.leave_sub_ring("test-topic")
+
         run(_run())  # Should not raise
 
     def test_get_sub_ring_members(self):
@@ -310,6 +325,7 @@ class TestRingsClientSubRing:
                 await c.join_sub_ring("test-topic")
                 members = await c.get_sub_ring_members("test-topic")
                 return members
+
         members = run(_run())
         assert isinstance(members, list)
 
@@ -319,6 +335,7 @@ class TestRingsClientSubRing:
                 await c.create_sub_ring("news")
                 result = await c.broadcast("news", {"msg": "hello"})
                 return result
+
         result = run(_run())
         assert result["ok"] is True
         assert "recipients" in result
@@ -332,6 +349,7 @@ class TestRingsClientSession:
             async with RingsClient() as c:
                 session = await c.create_session("did:rings:peer1")
                 return session
+
         s = run(_run())
         assert isinstance(s, SessionInfo)
         assert s.peer_did == "did:rings:peer1"
@@ -345,6 +363,7 @@ class TestRingsClientSession:
                 # Mock transport stores outbound; receive returns None (no inbound)
                 result = await c.session_receive(s.session_id)
                 return result
+
         assert run(_run()) is None  # No inbound messages in mock
 
     def test_close_session(self):
@@ -352,6 +371,7 @@ class TestRingsClientSession:
             async with RingsClient() as c:
                 s = await c.create_session("did:rings:peer1")
                 await c.close_session(s.session_id)
+
         run(_run())  # Should not raise
 
 
@@ -362,6 +382,7 @@ class TestRingsClientDIDResolution:
         async def _run():
             async with RingsClient() as c:
                 return await c.resolve_did("did:rings:unknown")
+
         assert run(_run()) is None
 
     def test_resolve_known_did(self):
@@ -371,6 +392,7 @@ class TestRingsClientDIDResolution:
                 await c.join_ring()
                 doc = await c.resolve_did(c.local_did)
                 return doc
+
         doc = run(_run())
         assert doc is not None
         assert "verificationMethod" in doc
@@ -552,6 +574,7 @@ class TestRingsDIDResolution:
 
     def test_resolve_async_network_hit(self):
         """Test resolution via network (mock client)."""
+
         async def _run():
             async with RingsClient() as c:
                 # Register a peer so resolution works
@@ -559,6 +582,7 @@ class TestRingsDIDResolution:
                 mgr = RingsDID(client=c)
                 doc = await mgr.resolve(c.local_did)
                 return doc
+
         doc = run(_run())
         assert doc is not None
 

@@ -171,9 +171,7 @@ class KennyGraphBlackboardAdapter:
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
             capabilities=(
-                ModuleCapability.PRODUCER
-                | ModuleCapability.CONSUMER
-                | ModuleCapability.TRANSFORMER
+                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.TRANSFORMER
             ),
             description=(
                 "Kenny Graph SSE adapter: formats graph intelligence and "
@@ -197,8 +195,7 @@ class KennyGraphBlackboardAdapter:
         """Called when registered with a blackboard.  Store the reference."""
         self._blackboard = blackboard
         logger.info(
-            "KennyGraphBlackboardAdapter registered with blackboard "
-            "(graph_adapter=%s)",
+            "KennyGraphBlackboardAdapter registered with blackboard " "(graph_adapter=%s)",
             self._graph_adapter is not None,
         )
 
@@ -386,7 +383,9 @@ class KennyGraphBlackboardAdapter:
                     confidence=0.9,
                     priority=EntryPriority.NORMAL,
                     ttl_seconds=self._sse_event_ttl,
-                    tags=frozenset({"sse", "stream", "graph", sse_data.get("event_type", "message")}),
+                    tags=frozenset(
+                        {"sse", "stream", "graph", sse_data.get("event_type", "message")}
+                    ),
                     metadata={
                         "event_type": sse_data.get("event_type", "message"),
                         "event_id": sse_data.get("event_id"),
@@ -453,12 +452,14 @@ class KennyGraphBlackboardAdapter:
 
         pushed = self.push_event(sse_data, event_type=event_type)
         if pushed:
-            self._pending_sse_entries.append({
-                "event_type": event_type,
-                "event_id": self._last_event_id,
-                "source_topic": entry.topic,
-                "source_entry_id": entry.entry_id,
-            })
+            self._pending_sse_entries.append(
+                {
+                    "event_type": event_type,
+                    "event_id": self._last_event_id,
+                    "source_topic": entry.topic,
+                    "source_entry_id": entry.entry_id,
+                }
+            )
 
             self._emit(
                 "kenny_graph.stream.data",
@@ -492,12 +493,14 @@ class KennyGraphBlackboardAdapter:
 
         pushed = self.push_event(sse_data, event_type=event_type)
         if pushed:
-            self._pending_sse_entries.append({
-                "event_type": event_type,
-                "event_id": self._last_event_id,
-                "source_topic": entry.topic,
-                "source_entry_id": entry.entry_id,
-            })
+            self._pending_sse_entries.append(
+                {
+                    "event_type": event_type,
+                    "event_id": self._last_event_id,
+                    "source_topic": entry.topic,
+                    "source_entry_id": entry.entry_id,
+                }
+            )
 
             self._emit(
                 "kenny_graph.stream.data",

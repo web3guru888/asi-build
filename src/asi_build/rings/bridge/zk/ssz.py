@@ -102,9 +102,7 @@ class SSZ:
             raise ValueError(f"Unsupported uint width: {bits}")
         byte_len = bits // 8
         if value < 0 or value >= (1 << bits):
-            raise ValueError(
-                f"Value {value} out of range for uint{bits}"
-            )
+            raise ValueError(f"Value {value} out of range for uint{bits}")
         return value.to_bytes(byte_len, "little")
 
     @staticmethod
@@ -114,9 +112,7 @@ class SSZ:
             raise ValueError(f"Unsupported uint width: {bits}")
         byte_len = bits // 8
         if len(data) < byte_len:
-            raise ValueError(
-                f"Need {byte_len} bytes for uint{bits}, got {len(data)}"
-            )
+            raise ValueError(f"Need {byte_len} bytes for uint{bits}, got {len(data)}")
         return int.from_bytes(data[:byte_len], "little")
 
     @staticmethod
@@ -144,8 +140,7 @@ class SSZ:
         if fixed_length is not None:
             if len(value) > fixed_length:
                 raise ValueError(
-                    f"Value length {len(value)} exceeds fixed_length "
-                    f"{fixed_length}"
+                    f"Value length {len(value)} exceeds fixed_length " f"{fixed_length}"
                 )
             return value.ljust(fixed_length, b"\x00")
         return value  # variable-length
@@ -181,9 +176,7 @@ class SSZ:
                 variable_parts.append(data)
 
         # Calculate total fixed section size (4 bytes per offset slot)
-        fixed_size = sum(
-            len(p) if p is not None else 4 for p in fixed_parts
-        )
+        fixed_size = sum(len(p) if p is not None else 4 for p in fixed_parts)
 
         # Second pass: fill in offset values
         result = bytearray()
@@ -206,9 +199,7 @@ class SSZ:
     # -- Merkleization ------------------------------------------------------
 
     @staticmethod
-    def merkleize(
-        chunks: list[bytes], limit: int | None = None
-    ) -> bytes:
+    def merkleize(chunks: list[bytes], limit: int | None = None) -> bytes:
         """Compute the Merkle root of *chunks*.
 
         Pads the list to the next power-of-two length with ``ZERO_HASH``
@@ -267,9 +258,7 @@ class SSZ:
         return _sha256(root, length_bytes)
 
     @staticmethod
-    def pack(
-        values: list[bytes], element_size: int
-    ) -> list[bytes]:
+    def pack(values: list[bytes], element_size: int) -> list[bytes]:
         """Pack fixed-size serialized elements into 32-byte chunks.
 
         Concatenates all *values*, then splits into ``BYTES_PER_CHUNK``
@@ -316,9 +305,7 @@ class BeaconBlockHeader:
     body_root: bytes = field(default_factory=lambda: ZERO_HASH)
 
     # SSZ field schema (name, type, bits_or_len)
-    _SCHEMA: list[tuple[str, SSZType]] = field(
-        default=None, init=False, repr=False, compare=False
-    )
+    _SCHEMA: list[tuple[str, SSZType]] = field(default=None, init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         self._SCHEMA = [
@@ -351,10 +338,7 @@ class BeaconBlockHeader:
     def deserialize(cls, data: bytes) -> "BeaconBlockHeader":
         """Decode a 112-byte SSZ-encoded header."""
         if len(data) < cls.FIXED_SIZE:
-            raise ValueError(
-                f"BeaconBlockHeader needs {cls.FIXED_SIZE} bytes, "
-                f"got {len(data)}"
-            )
+            raise ValueError(f"BeaconBlockHeader needs {cls.FIXED_SIZE} bytes, " f"got {len(data)}")
         slot = SSZ.decode_uint(data[0:8], 64)
         proposer_index = SSZ.decode_uint(data[8:16], 64)
         parent_root = data[16:48]
@@ -404,9 +388,7 @@ class SyncCommitteeSSZ:
     """
 
     pubkeys: list[bytes] = field(default_factory=list)
-    aggregate_pubkey: bytes = field(
-        default_factory=lambda: b"\x00" * 48
-    )
+    aggregate_pubkey: bytes = field(default_factory=lambda: b"\x00" * 48)
 
     def hash_tree_root(self) -> bytes:
         """Hash-tree-root per the SyncCommittee container spec.
@@ -453,23 +435,13 @@ class LightClientUpdate:
     for period transitions.
     """
 
-    attested_header: BeaconBlockHeader = field(
-        default_factory=BeaconBlockHeader
-    )
-    sync_committee_bits: list[bool] = field(
-        default_factory=lambda: [False] * SYNC_COMMITTEE_SIZE
-    )
-    sync_committee_signature: bytes = field(
-        default_factory=lambda: b"\x00" * 96
-    )
-    finalized_header: BeaconBlockHeader = field(
-        default_factory=BeaconBlockHeader
-    )
+    attested_header: BeaconBlockHeader = field(default_factory=BeaconBlockHeader)
+    sync_committee_bits: list[bool] = field(default_factory=lambda: [False] * SYNC_COMMITTEE_SIZE)
+    sync_committee_signature: bytes = field(default_factory=lambda: b"\x00" * 96)
+    finalized_header: BeaconBlockHeader = field(default_factory=BeaconBlockHeader)
     finality_branch: list[bytes] = field(default_factory=list)
     next_sync_committee: Optional[SyncCommitteeSSZ] = None
-    next_sync_committee_branch: list[bytes] = field(
-        default_factory=list
-    )
+    next_sync_committee_branch: list[bytes] = field(default_factory=list)
 
     # -- helpers ------------------------------------------------------------
 
@@ -513,12 +485,10 @@ class LightClientUpdate:
             next_sync_committee_branch (variable)
         """
         fixed = bytearray()
-        fixed.extend(self.attested_header.serialize())         # 112
-        fixed.extend(self._encode_bitvector())                 # 64
-        fixed.extend(
-            SSZ.encode_bytes(self.sync_committee_signature, 96)  # 96
-        )
-        fixed.extend(self.finalized_header.serialize())        # 112
+        fixed.extend(self.attested_header.serialize())  # 112
+        fixed.extend(self._encode_bitvector())  # 64
+        fixed.extend(SSZ.encode_bytes(self.sync_committee_signature, 96))  # 96
+        fixed.extend(self.finalized_header.serialize())  # 112
 
         # Variable parts: finality_branch, next_sync_committee,
         # next_sync_committee_branch
@@ -532,9 +502,7 @@ class LightClientUpdate:
         if self.next_sync_committee is not None:
             # Serialize as concatenated pubkeys + agg key
             sc_data = b"".join(self.next_sync_committee.pubkeys)
-            sc_data += SSZ.encode_bytes(
-                self.next_sync_committee.aggregate_pubkey, 48
-            )
+            sc_data += SSZ.encode_bytes(self.next_sync_committee.aggregate_pubkey, 48)
         else:
             sc_data = b""
         var_parts.append(sc_data)

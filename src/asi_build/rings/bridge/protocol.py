@@ -381,13 +381,16 @@ class BridgeValidator:
 
         # Register in DHT
         key = BridgeProtocol.bridge_validator_key(self.did)
-        await self.client.dht_put(key, {
-            "did": self.did,
-            "state": BridgeState.ACTIVE.value,
-            "joined_at": time.time(),
-            "threshold": self.threshold,
-            "total": self.total,
-        })
+        await self.client.dht_put(
+            key,
+            {
+                "did": self.did,
+                "state": BridgeState.ACTIVE.value,
+                "joined_at": time.time(),
+                "threshold": self.threshold,
+                "total": self.total,
+            },
+        )
 
         self.state = BridgeState.ACTIVE
         logger.info("Validator %s joined bridge Sub-Ring", self.did)
@@ -530,8 +533,13 @@ class BridgeValidator:
         # Broadcast to Sub-Ring
         msg = BridgeProtocol.encode_message(
             BridgeMessage.DEPOSIT_OBSERVED,
-            {"tx_hash": tx_hash, "block": block, "amount": amount,
-             "sender_eth": sender_eth, "recipient_did": recipient_did},
+            {
+                "tx_hash": tx_hash,
+                "block": block,
+                "amount": amount,
+                "sender_eth": sender_eth,
+                "recipient_did": recipient_did,
+            },
         )
         await self.client.broadcast(BridgeProtocol.BRIDGE_SUBRING, msg)
 
@@ -573,8 +581,7 @@ class BridgeValidator:
 
         # Sign: H(tx_hash | block | amount | recipient)
         data = (
-            f"{record.tx_hash}|{record.block_number}|"
-            f"{record.amount}|{record.recipient_did}"
+            f"{record.tx_hash}|{record.block_number}|" f"{record.amount}|{record.recipient_did}"
         ).encode()
         digest = hashlib.sha256(data).digest()
         signature = self.identity.sign_rings(digest)
@@ -589,8 +596,7 @@ class BridgeValidator:
         # Broadcast attestation
         msg = BridgeProtocol.encode_message(
             BridgeMessage.DEPOSIT_ATTESTED,
-            {"tx_hash": tx_hash, "validator": self.did,
-             "signature": signature.hex()},
+            {"tx_hash": tx_hash, "validator": self.did, "signature": signature.hex()},
         )
         await self.client.broadcast(BridgeProtocol.BRIDGE_SUBRING, msg)
 
@@ -614,9 +620,7 @@ class BridgeValidator:
             ``(threshold_met, list_of_signatures)``.
         """
         # Refresh from DHT
-        raw = await self.client.dht_get(
-            BridgeProtocol.bridge_deposit_key(tx_hash)
-        )
+        raw = await self.client.dht_get(BridgeProtocol.bridge_deposit_key(tx_hash))
         if raw is None:
             return False, []
 
@@ -638,16 +642,16 @@ class BridgeValidator:
             )
             logger.info(
                 "Deposit finalized: %s (%d/%d attestations)",
-                tx_hash, len(signatures), self.threshold,
+                tx_hash,
+                len(signatures),
+                self.threshold,
             )
 
         return threshold_met, signatures
 
     # ── Withdrawal flow ──────────────────────────────────────────────────
 
-    async def request_withdrawal(
-        self, amount: int, eth_address: str
-    ) -> WithdrawalRecord:
+    async def request_withdrawal(self, amount: int, eth_address: str) -> WithdrawalRecord:
         """Create a new withdrawal request.
 
         The requester is this validator's DID. A ``WITHDRAWAL_REQUEST``
@@ -686,13 +690,11 @@ class BridgeValidator:
         # Broadcast
         msg = BridgeProtocol.encode_message(
             BridgeMessage.WITHDRAWAL_REQUEST,
-            {"nonce": nonce, "amount": amount, "eth_address": eth_address,
-             "requester": self.did},
+            {"nonce": nonce, "amount": amount, "eth_address": eth_address, "requester": self.did},
         )
         await self.client.broadcast(BridgeProtocol.BRIDGE_SUBRING, msg)
 
-        logger.info("Withdrawal requested: nonce=%d, %d wei → %s",
-                     nonce, amount, eth_address)
+        logger.info("Withdrawal requested: nonce=%d, %d wei → %s", nonce, amount, eth_address)
         return record
 
     async def approve_withdrawal(self, nonce: int) -> bytes:
@@ -729,8 +731,7 @@ class BridgeValidator:
 
         # Sign: H(nonce | amount | requester | recipient)
         data = (
-            f"{record.nonce}|{record.amount}|"
-            f"{record.requester_did}|{record.recipient_eth}"
+            f"{record.nonce}|{record.amount}|" f"{record.requester_did}|{record.recipient_eth}"
         ).encode()
         digest = hashlib.sha256(data).digest()
         signature = self.identity.sign_rings(digest)
@@ -745,8 +746,7 @@ class BridgeValidator:
         # Broadcast
         msg = BridgeProtocol.encode_message(
             BridgeMessage.WITHDRAWAL_APPROVED,
-            {"nonce": nonce, "validator": self.did,
-             "signature": signature.hex()},
+            {"nonce": nonce, "validator": self.did, "signature": signature.hex()},
         )
         await self.client.broadcast(BridgeProtocol.BRIDGE_SUBRING, msg)
 
@@ -766,9 +766,7 @@ class BridgeValidator:
         tuple of (bool, list of bytes)
             ``(threshold_met, list_of_signatures)``.
         """
-        raw = await self.client.dht_get(
-            BridgeProtocol.bridge_withdrawal_key(nonce)
-        )
+        raw = await self.client.dht_get(BridgeProtocol.bridge_withdrawal_key(nonce))
         if raw is None:
             return False, []
 
@@ -790,7 +788,9 @@ class BridgeValidator:
             )
             logger.info(
                 "Withdrawal executable: nonce=%d (%d/%d approvals)",
-                nonce, len(signatures), self.threshold,
+                nonce,
+                len(signatures),
+                self.threshold,
             )
 
         return threshold_met, signatures
@@ -807,13 +807,16 @@ class BridgeValidator:
 
         # Update DHT record
         key = BridgeProtocol.bridge_validator_key(self.did)
-        await self.client.dht_put(key, {
-            "did": self.did,
-            "state": self.state.value,
-            "last_heartbeat": now,
-            "deposits_observed": len(self.deposits),
-            "withdrawals_processed": len(self.withdrawals),
-        })
+        await self.client.dht_put(
+            key,
+            {
+                "did": self.did,
+                "state": self.state.value,
+                "last_heartbeat": now,
+                "deposits_observed": len(self.deposits),
+                "withdrawals_processed": len(self.withdrawals),
+            },
+        )
 
         # Broadcast
         msg = BridgeProtocol.encode_message(
@@ -839,12 +842,15 @@ class BridgeValidator:
 
         # Update DHT
         key = BridgeProtocol.bridge_validator_key(self.did)
-        await self.client.dht_put(key, {
-            "did": self.did,
-            "state": BridgeState.HALTED.value,
-            "halt_reason": reason,
-            "halted_at": time.time(),
-        })
+        await self.client.dht_put(
+            key,
+            {
+                "did": self.did,
+                "state": BridgeState.HALTED.value,
+                "halt_reason": reason,
+                "halted_at": time.time(),
+            },
+        )
 
         # Broadcast emergency halt
         msg = BridgeProtocol.encode_message(

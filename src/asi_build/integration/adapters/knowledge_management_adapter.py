@@ -135,9 +135,7 @@ class KnowledgeManagementAdapter:
         return ModuleInfo(
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
-            capabilities=(
-                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER
-            ),
+            capabilities=(ModuleCapability.PRODUCER | ModuleCapability.CONSUMER),
             description=(
                 "Knowledge management: engine-driven querying, predictive "
                 "synthesis, and contextual pattern learning."
@@ -459,9 +457,7 @@ class KnowledgeManagementAdapter:
         if self._engine is None:
             return
         try:
-            self._engine.ingest_graph_insight(
-                event.payload, source=f"event:{event.event_id}"
-            )
+            self._engine.ingest_graph_insight(event.payload, source=f"event:{event.event_id}")
         except (AttributeError, TypeError):
             pass
 

@@ -11,23 +11,23 @@ import pytest
 
 from src.asi_build.rings.bridge.zk.bls import (
     BLS12381,
-    BLSKeyPair,
-    BLSPublicKey,
-    BLSSignature,
     DOMAIN_SEPARATOR,
     FIELD_MODULUS,
     G1_SIZE,
     G2_SIZE,
     GROUP_ORDER,
     SYNC_COMMITTEE_SIZE,
+    BLSKeyPair,
+    BLSPublicKey,
+    BLSSignature,
     SyncCommitteeBLS,
     _clear_registries,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixture — clear registries between every test
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def clear_bls_registries():
@@ -40,6 +40,7 @@ def clear_bls_registries():
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _gen_committee(n: int = 512) -> list[BLSKeyPair]:
     """Generate *n* deterministic key pairs."""
     return [BLSKeyPair.generate(seed=i.to_bytes(4, "big")) for i in range(n)]
@@ -48,6 +49,7 @@ def _gen_committee(n: int = 512) -> list[BLSKeyPair]:
 # ===================================================================
 # BLSKeyPair
 # ===================================================================
+
 
 class TestBLSKeyPair:
 
@@ -122,6 +124,7 @@ class TestBLSKeyPair:
 # BLSPublicKey
 # ===================================================================
 
+
 class TestBLSPublicKey:
 
     def test_from_secret(self):
@@ -165,6 +168,7 @@ class TestBLSPublicKey:
 # BLSSignature
 # ===================================================================
 
+
 class TestBLSSignature:
 
     def test_sig_bytes_96(self):
@@ -201,6 +205,7 @@ class TestBLSSignature:
 # ===================================================================
 # BLS12381 static methods
 # ===================================================================
+
 
 class TestBLS12381:
 
@@ -367,6 +372,7 @@ class TestBLS12381:
 # SyncCommitteeBLS
 # ===================================================================
 
+
 class TestSyncCommitteeBLS:
 
     def _make_committee(self, n: int = 512, period: int = 1) -> SyncCommitteeBLS:
@@ -484,6 +490,7 @@ class TestSyncCommitteeBLS:
 # ===================================================================
 # Constants
 # ===================================================================
+
 
 class TestConstants:
 

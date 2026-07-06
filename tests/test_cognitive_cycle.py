@@ -7,21 +7,21 @@ metrics & history, multi-tick / background, and error handling.
 
 from __future__ import annotations
 
-import time
 import threading
-from typing import Any, Dict, List, Optional, Sequence
+import time
 from dataclasses import field
+from typing import Any, Dict, List, Optional, Sequence
 
 import pytest
 
 from asi_build.integration import (
+    AdapterRole,
     CognitiveBlackboard,
     CognitiveCycle,
+    CycleMetrics,
     CyclePhase,
     CycleState,
-    CycleMetrics,
     TickResult,
-    AdapterRole,
 )
 from asi_build.integration.protocols import (
     BlackboardEntry,
@@ -30,7 +30,6 @@ from asi_build.integration.protocols import (
     ModuleCapability,
     ModuleInfo,
 )
-
 
 # ============================================================================
 # Mock adapters
@@ -156,9 +155,7 @@ class MockTransformerAdapter(MockAdapter):
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
             capabilities=(
-                ModuleCapability.PRODUCER
-                | ModuleCapability.CONSUMER
-                | ModuleCapability.TRANSFORMER
+                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.TRANSFORMER
             ),
             topics_produced=frozenset({"transformed.data"}),
             topics_consumed=frozenset({"mock"}),
@@ -204,7 +201,9 @@ def cycle_with_safety(bb: CognitiveBlackboard) -> CognitiveCycle:
     return CognitiveCycle(blackboard=bb, safety_required=True, tick_rate_hz=0)
 
 
-def _make_entry(topic: str = "mock.data", data: Any = None, source: str = "mock") -> BlackboardEntry:
+def _make_entry(
+    topic: str = "mock.data", data: Any = None, source: str = "mock"
+) -> BlackboardEntry:
     """Helper: create a BlackboardEntry with defaults."""
     return BlackboardEntry(
         topic=topic,
@@ -231,7 +230,10 @@ class TestLifecycle:
     def test_02_start_running(self, bb: CognitiveBlackboard) -> None:
         """start() transitions to RUNNING."""
         cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=100, max_ticks=1,
+            blackboard=bb,
+            safety_required=False,
+            tick_rate_hz=100,
+            max_ticks=1,
         )
         cycle.start()
         assert cycle.state in (CycleState.RUNNING, CycleState.STOPPED)
@@ -241,7 +243,10 @@ class TestLifecycle:
     def test_03_stop_from_running(self, bb: CognitiveBlackboard) -> None:
         """stop() transitions from RUNNING to STOPPED."""
         cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=100, max_ticks=2,
+            blackboard=bb,
+            safety_required=False,
+            tick_rate_hz=100,
+            max_ticks=2,
         )
         cycle.start()
         cycle.stop(timeout=2)
@@ -250,7 +255,9 @@ class TestLifecycle:
     def test_04_pause(self, bb: CognitiveBlackboard) -> None:
         """pause() sets state to PAUSED."""
         cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=10,
+            blackboard=bb,
+            safety_required=False,
+            tick_rate_hz=10,
         )
         cycle.start()
         time.sleep(0.05)
@@ -262,7 +269,9 @@ class TestLifecycle:
     def test_05_resume_from_paused(self, bb: CognitiveBlackboard) -> None:
         """resume() moves from PAUSED back to RUNNING."""
         cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=10,
+            blackboard=bb,
+            safety_required=False,
+            tick_rate_hz=10,
         )
         cycle.start()
         time.sleep(0.05)
@@ -360,7 +369,9 @@ class TestTickExecution:
         # Entry should be on the blackboard
         assert cycle.blackboard.entry_count >= 1
 
-    def test_12_tick_consumer_receives(self, cycle: CognitiveCycle, bb: CognitiveBlackboard) -> None:
+    def test_12_tick_consumer_receives(
+        self, cycle: CognitiveCycle, bb: CognitiveBlackboard
+    ) -> None:
         """Consumer receives entries matching its topics during cognize phase."""
         # Pre-post an entry matching the consumer's topic
         entry = _make_entry(topic="mock.data")
@@ -423,7 +434,10 @@ class TestSafety:
     def test_17_safety_not_required(self, bb: CognitiveBlackboard) -> None:
         """safety_required=False allows starting without a safety adapter."""
         cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=100, max_ticks=1,
+            blackboard=bb,
+            safety_required=False,
+            tick_rate_hz=100,
+            max_ticks=1,
         )
         cycle.start()
         cycle.stop(timeout=2)
@@ -578,7 +592,9 @@ class TestMultiTickBackground:
     def test_25_tick_rate_hz_adjustable(self, bb: CognitiveBlackboard) -> None:
         """tick_rate_hz property can be adjusted after construction."""
         cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=10,
+            blackboard=bb,
+            safety_required=False,
+            tick_rate_hz=10,
         )
         assert cycle.tick_rate_hz == 10
         cycle.tick_rate_hz = 50
@@ -646,7 +662,9 @@ class TestErrorHandling:
         # Good adapter's entry was still produced
         assert result.entries_produced >= 1
 
-    def test_27_consume_error_recorded(self, cycle: CognitiveCycle, bb: CognitiveBlackboard) -> None:
+    def test_27_consume_error_recorded(
+        self, cycle: CognitiveCycle, bb: CognitiveBlackboard
+    ) -> None:
         """If consume() raises, the error is recorded."""
         # Put an entry on the blackboard matching consumer topic
         bb.post(_make_entry(topic="mock.data"))
@@ -708,7 +726,9 @@ class TestAdapterRoles:
         # Its entries should still appear in entries_produced
         assert result.entries_produced >= 1
 
-    def test_perception_adapter_skipped_in_cognize(self, cycle: CognitiveCycle, bb: CognitiveBlackboard) -> None:
+    def test_perception_adapter_skipped_in_cognize(
+        self, cycle: CognitiveCycle, bb: CognitiveBlackboard
+    ) -> None:
         """PERCEPTION-role adapter is NOT called during cognize (consume) phase."""
         bb.post(_make_entry(topic="mock.data"))
 
@@ -728,7 +748,9 @@ class TestAdapterRoles:
     def test_register_while_running_raises(self, bb: CognitiveBlackboard) -> None:
         """Cannot register adapters while cycle is RUNNING."""
         cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=10,
+            blackboard=bb,
+            safety_required=False,
+            tick_rate_hz=10,
         )
         cycle.start()
         time.sleep(0.05)
@@ -745,7 +767,9 @@ class TestAdapterRoles:
 class TestTransformer:
     """Tests for the transform phase within cognize."""
 
-    def test_transformer_enriches_entries(self, cycle: CognitiveCycle, bb: CognitiveBlackboard) -> None:
+    def test_transformer_enriches_entries(
+        self, cycle: CognitiveCycle, bb: CognitiveBlackboard
+    ) -> None:
         """A transformer adapter produces transformed entries on the blackboard."""
         # Seed the blackboard with an entry matching the transformer's consumed topic
         original = _make_entry(topic="mock.data", data={"x": 1})
@@ -757,7 +781,9 @@ class TestTransformer:
         result = cycle.tick()
         assert result.entries_transformed >= 1
 
-    def test_transformer_entries_on_blackboard(self, cycle: CognitiveCycle, bb: CognitiveBlackboard) -> None:
+    def test_transformer_entries_on_blackboard(
+        self, cycle: CognitiveCycle, bb: CognitiveBlackboard
+    ) -> None:
         """Transformed entries are actually posted to the blackboard."""
         bb.post(_make_entry(topic="mock.data", data={"x": 42}))
         transformer = MockTransformerAdapter(name="tformer", tag="done")
@@ -798,7 +824,10 @@ class TestCycleEvents:
             handler=lambda e: events.append(e),
         )
         cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=1,
+            blackboard=bb,
+            safety_required=False,
+            tick_rate_hz=0,
+            max_ticks=1,
         )
         cycle.start()
         cycle.wait(timeout=5.0)
@@ -827,7 +856,9 @@ class TestEdgeCases:
     def test_double_start_raises(self, bb: CognitiveBlackboard) -> None:
         """Starting an already-running cycle raises RuntimeError."""
         cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=10,
+            blackboard=bb,
+            safety_required=False,
+            tick_rate_hz=10,
         )
         cycle.start()
         time.sleep(0.05)

@@ -157,9 +157,7 @@ class FederatedLearningBlackboardAdapter:
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
             capabilities=(
-                ModuleCapability.PRODUCER
-                | ModuleCapability.CONSUMER
-                | ModuleCapability.LEARNER
+                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.LEARNER
             ),
             description=(
                 "Federated Learning module: round orchestration, server "
@@ -340,9 +338,7 @@ class FederatedLearningBlackboardAdapter:
             },
             source_module=self.MODULE_NAME,
             confidence=0.95,
-            priority=(
-                EntryPriority.HIGH if is_training else EntryPriority.NORMAL
-            ),
+            priority=(EntryPriority.HIGH if is_training else EntryPriority.NORMAL),
             ttl_seconds=self._status_ttl,
             tags=frozenset({"training", "status", "lifecycle"}),
             metadata={
@@ -442,9 +438,7 @@ class FederatedLearningBlackboardAdapter:
                 "strategy": "fedavg",
                 "total_aggregations": stats.get("total_aggregations", 0),
                 "avg_weight_divergence": stats.get("avg_weight_divergence", 0.0),
-                "client_contribution_weights": stats.get(
-                    "client_contribution_weights", {}
-                ),
+                "client_contribution_weights": stats.get("client_contribution_weights", {}),
                 "timestamp": time.time(),
             },
             source_module=self.MODULE_NAME,
@@ -501,9 +495,7 @@ class FederatedLearningBlackboardAdapter:
             data=convergence_data,
             source_module=self.MODULE_NAME,
             confidence=0.85 if converged else 0.7,
-            priority=(
-                EntryPriority.HIGH if converged else EntryPriority.NORMAL
-            ),
+            priority=(EntryPriority.HIGH if converged else EntryPriority.NORMAL),
             ttl_seconds=self._convergence_ttl,
             tags=frozenset({"convergence", "analysis"}),
             metadata={"converged": converged},
@@ -618,9 +610,7 @@ class FederatedLearningBlackboardAdapter:
         data = entry.data if isinstance(entry.data, dict) else {}
         optimal_weights = data.get("optimal_weights", data.get("weights"))
 
-        if optimal_weights is not None and hasattr(
-            self._aggregator, "quantum_weights"
-        ):
+        if optimal_weights is not None and hasattr(self._aggregator, "quantum_weights"):
             try:
                 self._aggregator.quantum_weights = optimal_weights
                 logger.debug(
@@ -660,9 +650,7 @@ class FederatedLearningBlackboardAdapter:
         """Handle quantum optimization events for aggregation."""
         payload = event.payload or {}
         if "optimization_result" in payload or "energy" in payload:
-            logger.debug(
-                "Quantum optimization event received for aggregation tuning"
-            )
+            logger.debug("Quantum optimization event received for aggregation tuning")
 
     # ── Snapshot ──────────────────────────────────────────────────────
 

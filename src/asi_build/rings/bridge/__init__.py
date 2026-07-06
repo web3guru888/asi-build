@@ -36,10 +36,35 @@ Modules
   with rotation, trace IDs, and audit trail.
 """
 
+from .audit_log import AuditLogger
 from .beacon_client import (
     BeaconAPIError,
     BeaconAPILightClient,
     ExecutionRPCError,
+)
+from .chains import (
+    CHAINS,
+    ChainConfig,
+    GasStrategy,
+    chain_rpc_url,
+    get_chain,
+    get_chain_by_id,
+    get_deployed_chains,
+    get_enabled_chains,
+    update_deployed_addresses,
+)
+from .circuit_breaker import (
+    AddressRateLimiter,
+    CooldownGuard,
+    EnhancedSafetyManager,
+    ProofFailureBreaker,
+    VolumeThresholdBreaker,
+    WithdrawalAnomalyDetector,
+)
+from .consensus import (
+    ProposalStatus,
+    ValidatorConsensus,
+    WithdrawalProposal,
 )
 from .contract_client import (
     BRIDGE_ABI,
@@ -51,6 +76,15 @@ from .contract_client import (
 from .e2e import (
     BridgeOrchestrator,
     ProcessedDeposit,
+)
+from .ledger import (
+    LedgerKeys,
+    LedgerMessage,
+    RingsTokenLedger,
+    TransferReceipt,
+    TransferRecord,
+    TransferStatus,
+    WithdrawalLock,
 )
 from .light_client import (
     BeaconHeader,
@@ -75,6 +109,13 @@ from .protocol import (
     DepositRecord,
     WithdrawalRecord,
 )
+from .relayer import (
+    BridgeRelayer,
+    MultiChainRelayer,
+    OperationStatus,
+    RelayerConfig,
+    RelayerDB,
+)
 from .safety import (
     AlertSeverity,
     AnomalyDetector,
@@ -96,48 +137,6 @@ from .zk_prover import (
     g1_to_uint256,
     g2_to_uint256,
     vk_to_solidity_args,
-)
-
-from .audit_log import AuditLogger
-from .circuit_breaker import (
-    AddressRateLimiter,
-    CooldownGuard,
-    EnhancedSafetyManager,
-    ProofFailureBreaker,
-    VolumeThresholdBreaker,
-    WithdrawalAnomalyDetector,
-)
-from .consensus import (
-    ProposalStatus,
-    ValidatorConsensus,
-    WithdrawalProposal,
-)
-from .ledger import (
-    LedgerKeys,
-    LedgerMessage,
-    RingsTokenLedger,
-    TransferRecord,
-    TransferReceipt,
-    TransferStatus,
-    WithdrawalLock,
-)
-from .relayer import (
-    BridgeRelayer,
-    MultiChainRelayer,
-    OperationStatus,
-    RelayerConfig,
-    RelayerDB,
-)
-from .chains import (
-    ChainConfig,
-    CHAINS,
-    GasStrategy,
-    get_chain,
-    get_chain_by_id,
-    get_deployed_chains,
-    get_enabled_chains,
-    chain_rpc_url,
-    update_deployed_addresses,
 )
 
 __all__ = [

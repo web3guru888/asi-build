@@ -143,9 +143,7 @@ class BlockchainBlackboardAdapter:
         return ModuleInfo(
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
-            capabilities=(
-                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER
-            ),
+            capabilities=(ModuleCapability.PRODUCER | ModuleCapability.CONSUMER),
             description=(
                 "Blockchain integrity: hash verification, Merkle proofs, "
                 "hash chain audit trails, and digital signatures."
@@ -283,7 +281,11 @@ class BlockchainBlackboardAdapter:
 
             # Get chain length
             chain_blocks = getattr(self._hash_chain, "chain", None)
-            chain_length = len(chain_blocks) if chain_blocks is not None and hasattr(chain_blocks, '__len__') else 0
+            chain_length = (
+                len(chain_blocks)
+                if chain_blocks is not None and hasattr(chain_blocks, "__len__")
+                else 0
+            )
             chain_data["chain_length"] = chain_length
 
         except Exception:
@@ -366,12 +368,12 @@ class BlockchainBlackboardAdapter:
 
         # Try to get leaf count
         leaves = getattr(self._merkle_tree, "leaves", None)
-        if leaves is not None and hasattr(leaves, '__len__'):
+        if leaves is not None and hasattr(leaves, "__len__"):
             merkle_data["leaf_count"] = len(leaves)
 
         # Try to get tree depth
         nodes = getattr(self._merkle_tree, "nodes", None)
-        if nodes is not None and hasattr(nodes, '__len__'):
+        if nodes is not None and hasattr(nodes, "__len__"):
             merkle_data["node_count"] = len(nodes)
 
         entry = BlackboardEntry(
@@ -405,7 +407,9 @@ class BlockchainBlackboardAdapter:
                     confidence=0.95,
                     priority=EntryPriority.LOW,
                     ttl_seconds=self._audit_log_ttl,
-                    tags=frozenset({"blockchain", "audit", "log", audit_item.get("operation", "unknown")}),
+                    tags=frozenset(
+                        {"blockchain", "audit", "log", audit_item.get("operation", "unknown")}
+                    ),
                     metadata={"operation": audit_item.get("operation", "unknown")},
                 )
             )
@@ -426,10 +430,13 @@ class BlockchainBlackboardAdapter:
                 hash_fn = getattr(self._hash_manager, "hash_data", None)
                 if hash_fn is not None:
                     result = hash_fn(triple_text)
-                    self._record_audit("hash_kg_triple", {
-                        "entry_id": entry.entry_id,
-                        "hash": getattr(result, "hash_value", str(result)),
-                    })
+                    self._record_audit(
+                        "hash_kg_triple",
+                        {
+                            "entry_id": entry.entry_id,
+                            "hash": getattr(result, "hash_value", str(result)),
+                        },
+                    )
             except Exception:
                 logger.debug("Failed to hash KG triple", exc_info=True)
 
@@ -456,24 +463,30 @@ class BlockchainBlackboardAdapter:
         if self._hash_chain is None:
             return
         data = entry.data if isinstance(entry.data, dict) else {}
-        audit_data = json.dumps({
-            "type": "reasoning_inference",
-            "entry_id": entry.entry_id,
-            "confidence": entry.confidence,
-            "data_hash": hashlib.sha256(
-                json.dumps(data, sort_keys=True, default=str).encode()
-            ).hexdigest()[:16],
-            "timestamp": time.time(),
-        }, sort_keys=True)
+        audit_data = json.dumps(
+            {
+                "type": "reasoning_inference",
+                "entry_id": entry.entry_id,
+                "confidence": entry.confidence,
+                "data_hash": hashlib.sha256(
+                    json.dumps(data, sort_keys=True, default=str).encode()
+                ).hexdigest()[:16],
+                "timestamp": time.time(),
+            },
+            sort_keys=True,
+        )
 
         try:
             add_fn = getattr(self._hash_chain, "add_block", None)
             if add_fn is not None:
                 block_hash = add_fn(audit_data)
-                self._record_audit("chain_reasoning", {
-                    "entry_id": entry.entry_id,
-                    "block_hash": str(block_hash) if block_hash else None,
-                })
+                self._record_audit(
+                    "chain_reasoning",
+                    {
+                        "entry_id": entry.entry_id,
+                        "block_hash": str(block_hash) if block_hash else None,
+                    },
+                )
         except Exception:
             logger.debug("Failed to chain reasoning output", exc_info=True)
 
@@ -487,9 +500,12 @@ class BlockchainBlackboardAdapter:
             add_data_fn = getattr(self._merkle_tree, "add_data", None)
             if add_data_fn is not None:
                 add_data_fn(compute_text)
-                self._record_audit("merkle_compute", {
-                    "entry_id": entry.entry_id,
-                })
+                self._record_audit(
+                    "merkle_compute",
+                    {
+                        "entry_id": entry.entry_id,
+                    },
+                )
         except Exception:
             logger.debug("Failed to add compute result to Merkle tree", exc_info=True)
 
@@ -515,13 +531,16 @@ class BlockchainBlackboardAdapter:
         if self._hash_chain is None:
             return
         payload = event.payload or {}
-        audit_data = json.dumps({
-            "type": "reasoning_event",
-            "event_id": event.event_id,
-            "payload_hash": hashlib.sha256(
-                json.dumps(payload, sort_keys=True, default=str).encode()
-            ).hexdigest()[:16],
-        }, sort_keys=True)
+        audit_data = json.dumps(
+            {
+                "type": "reasoning_event",
+                "event_id": event.event_id,
+                "payload_hash": hashlib.sha256(
+                    json.dumps(payload, sort_keys=True, default=str).encode()
+                ).hexdigest()[:16],
+            },
+            sort_keys=True,
+        )
 
         try:
             add_fn = getattr(self._hash_chain, "add_block", None)
@@ -537,12 +556,14 @@ class BlockchainBlackboardAdapter:
         with self._lock:
             if len(self._audit_buffer) >= self._max_audit_buffer:
                 # Evict oldest entries
-                self._audit_buffer = self._audit_buffer[-(self._max_audit_buffer // 2):]
-            self._audit_buffer.append({
-                "operation": operation,
-                "timestamp": time.time(),
-                **details,
-            })
+                self._audit_buffer = self._audit_buffer[-(self._max_audit_buffer // 2) :]
+            self._audit_buffer.append(
+                {
+                    "operation": operation,
+                    "timestamp": time.time(),
+                    **details,
+                }
+            )
 
     # ── Convenience: pull snapshot on demand ──────────────────────────
 

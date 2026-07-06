@@ -55,8 +55,8 @@ DEFAULT_ADMIN_ROLE = "0x" + "00" * 32
 
 # Wei constants
 ETHER = 10**18
-DAILY_LIMIT = 100 * ETHER      # 100 ETH
-PER_TX_LIMIT = 10 * ETHER      # 10 ETH
+DAILY_LIMIT = 100 * ETHER  # 100 ETH
+PER_TX_LIMIT = 10 * ETHER  # 10 ETH
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -135,8 +135,13 @@ def _cast_send_json(
 ) -> dict:
     """Like ``_cast_send`` but returns a parsed JSON receipt."""
     cmd_args = [
-        "send", "--json", target, sig, *args,
-        "--private-key", private_key,
+        "send",
+        "--json",
+        target,
+        sig,
+        *args,
+        "--private-key",
+        private_key,
     ]
     if value is not None:
         cmd_args += ["--value", value]
@@ -209,13 +214,17 @@ def anvil_rpc() -> Generator[str, None, None]:
     # Start anvil with Sepolia fork
     cmd = [
         "anvil",
-        "--fork-url", SEPOLIA_RPC,
-        "--port", str(port),
-        "--accounts", "1",
-        "--balance", "0",          # We'll set balances explicitly
-        "--no-mining",             # Mine on demand for determinism
-        "--auto-impersonate",      # Allow impersonation without setup
-        "--silent",                # Reduce noise
+        "--fork-url",
+        SEPOLIA_RPC,
+        "--port",
+        str(port),
+        "--accounts",
+        "1",
+        "--balance",
+        "0",  # We'll set balances explicitly
+        "--no-mining",  # Mine on demand for determinism
+        "--auto-impersonate",  # Allow impersonation without setup
+        "--silent",  # Reduce noise
     ]
 
     proc = subprocess.Popen(
@@ -357,9 +366,9 @@ class TestBridgeConfig:
         """The bridge's verifier should point to our Groth16Verifier."""
         raw = _cast_call(BRIDGE, "verifier()(address)", rpc=rpc)
         addr = _parse_address(raw)
-        assert addr.lower() == VERIFIER.lower(), (
-            f"Verifier address mismatch: expected {VERIFIER}, got {addr}"
-        )
+        assert (
+            addr.lower() == VERIFIER.lower()
+        ), f"Verifier address mismatch: expected {VERIFIER}, got {addr}"
 
     def test_not_paused(self, rpc: str) -> None:
         """The bridge should not be paused initially."""
@@ -441,9 +450,7 @@ class TestDepositETH:
         rpc = snapshot
 
         # Read nonce before
-        nonce_before = _parse_uint(
-            _cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc)
-        )
+        nonce_before = _parse_uint(_cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc))
 
         # Deposit 0.01 ETH
         _cast_send(
@@ -455,13 +462,11 @@ class TestDepositETH:
         )
 
         # Read nonce after
-        nonce_after = _parse_uint(
-            _cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc)
-        )
+        nonce_after = _parse_uint(_cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc))
 
-        assert nonce_after == nonce_before + 1, (
-            f"Nonce did not increment: {nonce_before} → {nonce_after}"
-        )
+        assert (
+            nonce_after == nonce_before + 1
+        ), f"Nonce did not increment: {nonce_before} → {nonce_after}"
 
     def test_deposit_increases_bridge_balance(self, snapshot: str) -> None:
         """The bridge contract's ETH balance should increase after deposit."""
@@ -488,9 +493,7 @@ class TestDepositETH:
         """The DepositInfo struct should be correctly populated."""
         rpc = snapshot
 
-        nonce = _parse_uint(
-            _cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc)
-        )
+        nonce = _parse_uint(_cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc))
 
         _cast_send(
             BRIDGE,
@@ -510,9 +513,7 @@ class TestDepositETH:
         lines = [l.strip() for l in raw.strip().splitlines() if l.strip()]
 
         # First field is depositor address
-        assert lines[0].lower() == DEPLOYER.lower(), (
-            f"Depositor mismatch: {lines[0]}"
-        )
+        assert lines[0].lower() == DEPLOYER.lower(), f"Depositor mismatch: {lines[0]}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -538,7 +539,11 @@ class TestDepositERC20:
 
         # Deal USDC to deployer
         _cast(
-            "rpc", "anvil_setBalance", DEPLOYER, hex(100 * ETHER), rpc=rpc,
+            "rpc",
+            "anvil_setBalance",
+            DEPLOYER,
+            hex(100 * ETHER),
+            rpc=rpc,
         )
 
         # Use cast send to impersonate and deal tokens
@@ -548,7 +553,10 @@ class TestDepositERC20:
         # First, let's see the deployer's USDC balance
         try:
             usdc_balance_raw = _cast_call(
-                USDC, "balanceOf(address)(uint256)", DEPLOYER, rpc=rpc,
+                USDC,
+                "balanceOf(address)(uint256)",
+                DEPLOYER,
+                rpc=rpc,
             )
             usdc_balance = _parse_uint(usdc_balance_raw)
         except Exception:
@@ -560,7 +568,11 @@ class TestDepositERC20:
             # For Circle's USDC, balances are at slot 9
             deployer_balance_slot = subprocess.run(
                 [
-                    "cast", "index", "address", DEPLOYER, "9",
+                    "cast",
+                    "index",
+                    "address",
+                    DEPLOYER,
+                    "9",
                 ],
                 capture_output=True,
                 text=True,
@@ -571,13 +583,18 @@ class TestDepositERC20:
                 # Set 1000 USDC (1000 * 10^6 = 1_000_000_000)
                 deal_amount = hex(1_000_000_000)
                 _cast(
-                    "rpc", "anvil_setStorageAt",
-                    USDC, slot,
+                    "rpc",
+                    "anvil_setStorageAt",
+                    USDC,
+                    slot,
                     "0x" + deal_amount[2:].zfill(64),
                     rpc=rpc,
                 )
                 usdc_balance_raw = _cast_call(
-                    USDC, "balanceOf(address)(uint256)", DEPLOYER, rpc=rpc,
+                    USDC,
+                    "balanceOf(address)(uint256)",
+                    DEPLOYER,
+                    rpc=rpc,
                 )
                 usdc_balance = _parse_uint(usdc_balance_raw)
 
@@ -595,9 +612,7 @@ class TestDepositERC20:
             rpc=rpc,
         )
 
-        nonce_before = _parse_uint(
-            _cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc)
-        )
+        nonce_before = _parse_uint(_cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc))
 
         # Deposit USDC
         _cast_send(
@@ -609,13 +624,11 @@ class TestDepositERC20:
             rpc=rpc,
         )
 
-        nonce_after = _parse_uint(
-            _cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc)
-        )
+        nonce_after = _parse_uint(_cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc))
 
-        assert nonce_after == nonce_before + 1, (
-            f"ERC20 deposit did not increment nonce: {nonce_before} → {nonce_after}"
-        )
+        assert (
+            nonce_after == nonce_before + 1
+        ), f"ERC20 deposit did not increment nonce: {nonce_before} → {nonce_after}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -630,9 +643,7 @@ class TestDepositEmitsEvent:
         """Depositing ETH should emit a Deposited event with correct data."""
         rpc = snapshot
 
-        nonce_before = _parse_uint(
-            _cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc)
-        )
+        nonce_before = _parse_uint(_cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc))
 
         receipt = _cast_send_json(
             BRIDGE,
@@ -642,9 +653,7 @@ class TestDepositEmitsEvent:
             value="0.01ether",
         )
 
-        assert receipt["status"] == "0x1", (
-            f"Transaction reverted: {receipt}"
-        )
+        assert receipt["status"] == "0x1", f"Transaction reverted: {receipt}"
 
         # Check logs
         logs = receipt.get("logs", [])
@@ -658,7 +667,9 @@ class TestDepositEmitsEvent:
         # Note: cast keccak does not take --rpc-url, so call directly.
         deposited_topic = subprocess.run(
             ["cast", "keccak", "Deposited(uint256,address,bytes32,uint256,address,uint256)"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         ).stdout.strip()
 
         found = False
@@ -668,24 +679,19 @@ class TestDepositEmitsEvent:
                 found = True
                 # topic[1] = nonce (indexed)
                 log_nonce = int(topics[1], 16)
-                assert log_nonce == nonce_before, (
-                    f"Event nonce mismatch: expected {nonce_before}, got {log_nonce}"
-                )
+                assert (
+                    log_nonce == nonce_before
+                ), f"Event nonce mismatch: expected {nonce_before}, got {log_nonce}"
                 # topic[2] = depositor (indexed, zero-padded address)
                 log_depositor = "0x" + topics[2][-40:]
-                assert log_depositor.lower() == DEPLOYER.lower(), (
-                    f"Event depositor mismatch: {log_depositor}"
-                )
+                assert (
+                    log_depositor.lower() == DEPLOYER.lower()
+                ), f"Event depositor mismatch: {log_depositor}"
                 # topic[3] = ringsDID (indexed)
-                assert topics[3] == TEST_DID, (
-                    f"Event DID mismatch: {topics[3]}"
-                )
+                assert topics[3] == TEST_DID, f"Event DID mismatch: {topics[3]}"
                 break
 
-        assert found, (
-            f"Deposited event not found in logs. "
-            f"Topics searched: {deposited_topic}"
-        )
+        assert found, f"Deposited event not found in logs. " f"Topics searched: {deposited_topic}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -732,17 +738,21 @@ class TestPerTxLimit:
         try:
             result = subprocess.run(
                 [
-                    "cast", "send", "--json",
+                    "cast",
+                    "send",
+                    "--json",
                     BRIDGE,
                     "withdraw(address,bytes32,uint256,uint256,bytes,bytes32[])",
-                    DEPLOYER,   # recipient
-                    TEST_DID,   # ringsDID
+                    DEPLOYER,  # recipient
+                    TEST_DID,  # ringsDID
                     str(11 * ETHER),  # amount > perTxLimit
-                    "0",        # nonce
+                    "0",  # nonce
                     "0x" + "00" * 256,  # dummy proof
-                    "[]",       # empty public inputs (wrong, will revert)
-                    "--private-key", DEPLOYER_KEY,
-                    "--rpc-url", rpc,
+                    "[]",  # empty public inputs (wrong, will revert)
+                    "--private-key",
+                    DEPLOYER_KEY,
+                    "--rpc-url",
+                    rpc,
                 ],
                 capture_output=True,
                 text=True,
@@ -751,9 +761,9 @@ class TestPerTxLimit:
             # Should revert — if it succeeds, that's a problem
             if result.returncode == 0:
                 receipt = json.loads(result.stdout)
-                assert receipt.get("status") == "0x0", (
-                    "Withdrawal above per-tx limit should have reverted"
-                )
+                assert (
+                    receipt.get("status") == "0x0"
+                ), "Withdrawal above per-tx limit should have reverted"
             # Otherwise, the revert is expected (cast exits non-zero)
         except subprocess.TimeoutExpired:
             pytest.skip("cast timed out")
@@ -786,13 +796,18 @@ class TestPauseUnpause:
         # Attempt a deposit — should revert
         result = subprocess.run(
             [
-                "cast", "send", "--json",
+                "cast",
+                "send",
+                "--json",
                 BRIDGE,
                 "deposit(bytes32)",
                 TEST_DID,
-                "--value", "0.01ether",
-                "--private-key", DEPLOYER_KEY,
-                "--rpc-url", rpc,
+                "--value",
+                "0.01ether",
+                "--private-key",
+                DEPLOYER_KEY,
+                "--rpc-url",
+                rpc,
             ],
             capture_output=True,
             text=True,
@@ -801,9 +816,7 @@ class TestPauseUnpause:
 
         if result.returncode == 0:
             receipt = json.loads(result.stdout)
-            assert receipt.get("status") == "0x0", (
-                "Deposit should revert when paused"
-            )
+            assert receipt.get("status") == "0x0", "Deposit should revert when paused"
         # Non-zero exit (revert) is the expected outcome
 
     def test_admin_can_unpause(self, snapshot: str) -> None:
@@ -812,9 +825,7 @@ class TestPauseUnpause:
 
         # Pause
         _cast_send(BRIDGE, "emergencyPause()", rpc=rpc)
-        assert _parse_bool(
-            _cast_call(BRIDGE, "paused()(bool)", rpc=rpc)
-        )
+        assert _parse_bool(_cast_call(BRIDGE, "paused()(bool)", rpc=rpc))
 
         # Unpause (deployer has DEFAULT_ADMIN_ROLE)
         _cast_send(BRIDGE, "unpause()", rpc=rpc)
@@ -837,9 +848,7 @@ class TestPauseUnpause:
             rpc=rpc,
             value="0.01ether",
         )
-        assert receipt["status"] == "0x1", (
-            f"Deposit failed after unpause: {receipt}"
-        )
+        assert receipt["status"] == "0x1", f"Deposit failed after unpause: {receipt}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -854,8 +863,8 @@ class TestRateLimitUpdate:
         """GUARDIAN_ROLE can change daily and per-tx limits."""
         rpc = snapshot
 
-        new_daily = 50 * ETHER    # 50 ETH
-        new_per_tx = 5 * ETHER    # 5 ETH
+        new_daily = 50 * ETHER  # 50 ETH
+        new_per_tx = 5 * ETHER  # 5 ETH
 
         _cast_send(
             BRIDGE,
@@ -865,19 +874,11 @@ class TestRateLimitUpdate:
             rpc=rpc,
         )
 
-        actual_daily = _parse_uint(
-            _cast_call(BRIDGE, "dailyLimit()(uint256)", rpc=rpc)
-        )
-        actual_per_tx = _parse_uint(
-            _cast_call(BRIDGE, "perTxLimit()(uint256)", rpc=rpc)
-        )
+        actual_daily = _parse_uint(_cast_call(BRIDGE, "dailyLimit()(uint256)", rpc=rpc))
+        actual_per_tx = _parse_uint(_cast_call(BRIDGE, "perTxLimit()(uint256)", rpc=rpc))
 
-        assert actual_daily == new_daily, (
-            f"Daily limit not updated: {actual_daily}"
-        )
-        assert actual_per_tx == new_per_tx, (
-            f"Per-tx limit not updated: {actual_per_tx}"
-        )
+        assert actual_daily == new_daily, f"Daily limit not updated: {actual_daily}"
+        assert actual_per_tx == new_per_tx, f"Per-tx limit not updated: {actual_per_tx}"
 
     def test_invalid_limits_revert(self, snapshot: str) -> None:
         """Setting per-tx > daily limit should revert."""
@@ -886,22 +887,25 @@ class TestRateLimitUpdate:
         # per-tx (20 ETH) > daily (10 ETH) → should revert
         result = subprocess.run(
             [
-                "cast", "send",
+                "cast",
+                "send",
                 BRIDGE,
                 "updateRateLimits(uint256,uint256)",
-                str(10 * ETHER),   # daily
-                str(20 * ETHER),   # per-tx > daily
-                "--private-key", DEPLOYER_KEY,
-                "--rpc-url", rpc,
+                str(10 * ETHER),  # daily
+                str(20 * ETHER),  # per-tx > daily
+                "--private-key",
+                DEPLOYER_KEY,
+                "--rpc-url",
+                rpc,
             ],
             capture_output=True,
             text=True,
             timeout=30,
         )
         # Should revert
-        assert result.returncode != 0 or "revert" in result.stderr.lower(), (
-            "Setting per-tx > daily should revert"
-        )
+        assert (
+            result.returncode != 0 or "revert" in result.stderr.lower()
+        ), "Setting per-tx > daily should revert"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -960,17 +964,20 @@ class TestWithdrawInvalidProof:
 
         result = subprocess.run(
             [
-                "cast", "send",
+                "cast",
+                "send",
                 BRIDGE,
                 "withdraw(address,bytes32,uint256,uint256,bytes,bytes32[])",
-                DEPLOYER,           # recipient
-                TEST_DID,           # ringsDID
-                str(1 * ETHER),     # amount
-                "0",                # nonce
-                fake_proof,         # proof
+                DEPLOYER,  # recipient
+                TEST_DID,  # ringsDID
+                str(1 * ETHER),  # amount
+                "0",  # nonce
+                fake_proof,  # proof
                 f"[{fake_input}]",  # publicInputs array
-                "--private-key", DEPLOYER_KEY,
-                "--rpc-url", rpc,
+                "--private-key",
+                DEPLOYER_KEY,
+                "--rpc-url",
+                rpc,
             ],
             capture_output=True,
             text=True,
@@ -978,9 +985,9 @@ class TestWithdrawInvalidProof:
         )
 
         # Should revert (non-zero exit code from cast)
-        assert result.returncode != 0 or "revert" in result.stderr.lower(), (
-            "Withdrawal with invalid proof should revert"
-        )
+        assert (
+            result.returncode != 0 or "revert" in result.stderr.lower()
+        ), "Withdrawal with invalid proof should revert"
 
     def test_random_proof_reverts(self, snapshot: str) -> None:
         """A random (non-zero) proof should also be rejected."""
@@ -990,6 +997,7 @@ class TestWithdrawInvalidProof:
 
         # Build a random-looking proof
         import hashlib
+
         seed = hashlib.sha256(b"test_random_proof").digest()
         fake_proof = "0x" + (seed * 8).hex()  # 256 bytes
 
@@ -997,7 +1005,8 @@ class TestWithdrawInvalidProof:
 
         result = subprocess.run(
             [
-                "cast", "send",
+                "cast",
+                "send",
                 BRIDGE,
                 "withdraw(address,bytes32,uint256,uint256,bytes,bytes32[])",
                 DEPLOYER,
@@ -1006,17 +1015,19 @@ class TestWithdrawInvalidProof:
                 "0",
                 fake_proof,
                 f"[{fake_input}]",
-                "--private-key", DEPLOYER_KEY,
-                "--rpc-url", rpc,
+                "--private-key",
+                DEPLOYER_KEY,
+                "--rpc-url",
+                rpc,
             ],
             capture_output=True,
             text=True,
             timeout=30,
         )
 
-        assert result.returncode != 0 or "revert" in result.stderr.lower(), (
-            "Withdrawal with random proof should revert"
-        )
+        assert (
+            result.returncode != 0 or "revert" in result.stderr.lower()
+        ), "Withdrawal with random proof should revert"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1040,11 +1051,14 @@ class TestGuardianAccessControl:
 
         result = subprocess.run(
             [
-                "cast", "send",
+                "cast",
+                "send",
                 BRIDGE,
                 "emergencyPause()",
-                "--private-key", self.RANDOM_KEY,
-                "--rpc-url", rpc,
+                "--private-key",
+                self.RANDOM_KEY,
+                "--rpc-url",
+                rpc,
             ],
             capture_output=True,
             text=True,
@@ -1052,9 +1066,7 @@ class TestGuardianAccessControl:
         )
 
         # Should revert with AccessControl error
-        assert result.returncode != 0, (
-            "Non-guardian should not be able to pause"
-        )
+        assert result.returncode != 0, "Non-guardian should not be able to pause"
 
     def test_non_guardian_cannot_update_limits(self, snapshot: str) -> None:
         """An account without GUARDIAN_ROLE cannot update rate limits."""
@@ -1064,22 +1076,23 @@ class TestGuardianAccessControl:
 
         result = subprocess.run(
             [
-                "cast", "send",
+                "cast",
+                "send",
                 BRIDGE,
                 "updateRateLimits(uint256,uint256)",
                 str(1 * ETHER),
                 str(1 * ETHER),
-                "--private-key", self.RANDOM_KEY,
-                "--rpc-url", rpc,
+                "--private-key",
+                self.RANDOM_KEY,
+                "--rpc-url",
+                rpc,
             ],
             capture_output=True,
             text=True,
             timeout=30,
         )
 
-        assert result.returncode != 0, (
-            "Non-guardian should not be able to update rate limits"
-        )
+        assert result.returncode != 0, "Non-guardian should not be able to update rate limits"
 
     def test_non_admin_cannot_unpause(self, snapshot: str) -> None:
         """An account without DEFAULT_ADMIN_ROLE cannot call unpause."""
@@ -1094,20 +1107,21 @@ class TestGuardianAccessControl:
         # Try to unpause as non-admin
         result = subprocess.run(
             [
-                "cast", "send",
+                "cast",
+                "send",
                 BRIDGE,
                 "unpause()",
-                "--private-key", self.RANDOM_KEY,
-                "--rpc-url", rpc,
+                "--private-key",
+                self.RANDOM_KEY,
+                "--rpc-url",
+                rpc,
             ],
             capture_output=True,
             text=True,
             timeout=30,
         )
 
-        assert result.returncode != 0, (
-            "Non-admin should not be able to unpause"
-        )
+        assert result.returncode != 0, "Non-admin should not be able to unpause"
 
         # Unpause properly for cleanup (via snapshot revert)
 
@@ -1125,9 +1139,7 @@ class TestMultipleDeposits:
         rpc = snapshot
         num_deposits = 10
 
-        nonce_start = _parse_uint(
-            _cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc)
-        )
+        nonce_start = _parse_uint(_cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc))
 
         for i in range(num_deposits):
             receipt = _cast_send_json(
@@ -1137,13 +1149,9 @@ class TestMultipleDeposits:
                 rpc=rpc,
                 value="0.001ether",
             )
-            assert receipt["status"] == "0x1", (
-                f"Deposit {i} failed: {receipt}"
-            )
+            assert receipt["status"] == "0x1", f"Deposit {i} failed: {receipt}"
 
-        nonce_end = _parse_uint(
-            _cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc)
-        )
+        nonce_end = _parse_uint(_cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc))
 
         assert nonce_end == nonce_start + num_deposits, (
             f"Expected nonce {nonce_start + num_deposits}, got {nonce_end} "
@@ -1155,9 +1163,7 @@ class TestMultipleDeposits:
         rpc = snapshot
         num_deposits = 10
 
-        nonce_start = _parse_uint(
-            _cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc)
-        )
+        nonce_start = _parse_uint(_cast_call(BRIDGE, "depositNonce()(uint256)", rpc=rpc))
 
         for i in range(num_deposits):
             _cast_send(
@@ -1177,9 +1183,7 @@ class TestMultipleDeposits:
                 str(nonce),
                 rpc=rpc,
             )
-            assert _parse_bool(raw), (
-                f"Deposit nonce {nonce} not marked as processed"
-            )
+            assert _parse_bool(raw), f"Deposit nonce {nonce} not marked as processed"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1197,11 +1201,11 @@ class TestBridgeHoldsFunds:
         bal_before = int(_cast("balance", BRIDGE, rpc=rpc))
 
         deposits = [
-            10**15,     # 0.001 ETH
-            5 * 10**15, # 0.005 ETH
-            10**16,     # 0.01 ETH
-            2 * 10**16, # 0.02 ETH
-            10**17,     # 0.1 ETH
+            10**15,  # 0.001 ETH
+            5 * 10**15,  # 0.005 ETH
+            10**16,  # 0.01 ETH
+            2 * 10**16,  # 0.02 ETH
+            10**17,  # 0.1 ETH
         ]
         total_deposited = sum(deposits)
 
@@ -1232,15 +1236,17 @@ class TestBridgeHoldsFunds:
         _cast(
             "send",
             BRIDGE,
-            "--value", str(send_amount),
-            "--private-key", DEPLOYER_KEY,
+            "--value",
+            str(send_amount),
+            "--private-key",
+            DEPLOYER_KEY,
             rpc=rpc,
         )
 
         bal_after = int(_cast("balance", BRIDGE, rpc=rpc))
-        assert bal_after == bal_before + send_amount, (
-            f"receive() did not credit: {bal_before} + {send_amount} ≠ {bal_after}"
-        )
+        assert (
+            bal_after == bal_before + send_amount
+        ), f"receive() did not credit: {bal_before} + {send_amount} ≠ {bal_after}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1257,22 +1263,24 @@ class TestEdgeCases:
 
         result = subprocess.run(
             [
-                "cast", "send",
+                "cast",
+                "send",
                 BRIDGE,
                 "deposit(bytes32)",
                 TEST_DID,
-                "--value", "0",
-                "--private-key", DEPLOYER_KEY,
-                "--rpc-url", rpc,
+                "--value",
+                "0",
+                "--private-key",
+                DEPLOYER_KEY,
+                "--rpc-url",
+                rpc,
             ],
             capture_output=True,
             text=True,
             timeout=30,
         )
 
-        assert result.returncode != 0, (
-            "Zero-value deposit should revert"
-        )
+        assert result.returncode != 0, "Zero-value deposit should revert"
 
     def test_zero_did_deposit_reverts(self, snapshot: str) -> None:
         """A deposit with ringsDID == bytes32(0) should revert."""
@@ -1282,22 +1290,24 @@ class TestEdgeCases:
 
         result = subprocess.run(
             [
-                "cast", "send",
+                "cast",
+                "send",
                 BRIDGE,
                 "deposit(bytes32)",
                 zero_did,
-                "--value", "0.01ether",
-                "--private-key", DEPLOYER_KEY,
-                "--rpc-url", rpc,
+                "--value",
+                "0.01ether",
+                "--private-key",
+                DEPLOYER_KEY,
+                "--rpc-url",
+                rpc,
             ],
             capture_output=True,
             text=True,
             timeout=30,
         )
 
-        assert result.returncode != 0, (
-            "Deposit with zero DID should revert"
-        )
+        assert result.returncode != 0, "Deposit with zero DID should revert"
 
     def test_deposit_token_zero_address_reverts(self, snapshot: str) -> None:
         """depositToken with token == address(0) should revert."""
@@ -1307,32 +1317,33 @@ class TestEdgeCases:
 
         result = subprocess.run(
             [
-                "cast", "send",
+                "cast",
+                "send",
                 BRIDGE,
                 "depositToken(address,uint256,bytes32)",
                 zero_addr,
                 "1000000",
                 TEST_DID,
-                "--private-key", DEPLOYER_KEY,
-                "--rpc-url", rpc,
+                "--private-key",
+                DEPLOYER_KEY,
+                "--rpc-url",
+                rpc,
             ],
             capture_output=True,
             text=True,
             timeout=30,
         )
 
-        assert result.returncode != 0, (
-            "depositToken with zero token address should revert"
-        )
+        assert result.returncode != 0, "depositToken with zero token address should revert"
 
     def test_remaining_daily_limit(self, rpc: str) -> None:
         """getRemainingDailyLimit should return dailyLimit when no withdrawals."""
         raw = _cast_call(BRIDGE, "getRemainingDailyLimit()(uint256)", rpc=rpc)
         remaining = _parse_uint(raw)
         # Should be equal to dailyLimit since no withdrawals processed
-        assert remaining == DAILY_LIMIT, (
-            f"Remaining daily limit should be {DAILY_LIMIT}, got {remaining}"
-        )
+        assert (
+            remaining == DAILY_LIMIT
+        ), f"Remaining daily limit should be {DAILY_LIMIT}, got {remaining}"
 
     def test_withdrawal_nonce_starts_at_zero(self, rpc: str) -> None:
         """The withdrawal nonce should be 0 (no withdrawals processed yet)."""
@@ -1352,9 +1363,7 @@ class TestSyncCommittee:
         """The sync committee root should be bytes32(0) initially."""
         raw = _cast_call(BRIDGE, "syncCommitteeRoot()(bytes32)", rpc=rpc)
         root = raw.strip()
-        assert root == "0x" + "00" * 32, (
-            f"Initial sync committee root should be zero: {root}"
-        )
+        assert root == "0x" + "00" * 32, f"Initial sync committee root should be zero: {root}"
 
     def test_latest_verified_slot_is_zero(self, rpc: str) -> None:
         """The latest verified slot should be 0 initially."""

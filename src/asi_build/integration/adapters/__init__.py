@@ -89,31 +89,31 @@ from __future__ import annotations
 import logging
 from typing import Any, List, Sequence
 
-from .cognitive_synergy_adapter import CognitiveSynergyAdapter
-from .consciousness_adapter import ConsciousnessAdapter
-from .knowledge_graph_adapter import KnowledgeGraphAdapter
-from .reasoning_adapter import ReasoningAdapter
-from .bio_inspired_adapter import BioInspiredAdapter
-from .graph_intelligence_adapter import GraphIntelligenceAdapter
-from .knowledge_management_adapter import KnowledgeManagementAdapter
-from .quantum_adapter import QuantumBlackboardAdapter
-from .holographic_adapter import HolographicBlackboardAdapter
-from .neuromorphic_adapter import NeuromorphicBlackboardAdapter
-from .bci_adapter import BCIBlackboardAdapter
-from .rings_adapter import RingsNetworkAdapter
-from .compute_adapter import ComputeBlackboardAdapter
-from .distributed_training_adapter import DistributedTrainingAdapter
-from .vectordb_adapter import VectorDBBlackboardAdapter
-from .blockchain_adapter import BlockchainBlackboardAdapter
-from .reproducibility_adapter import ReproducibilityBlackboardAdapter
-from .vla_adapter import VLABlackboardAdapter
-from .kenny_graph_adapter import KennyGraphBlackboardAdapter
-from .integrations_bridge_adapter import IntegrationsBlackboardBridge
 from .agi_communication_adapter import AGICommunicationBlackboardAdapter
 from .agi_economics_adapter import AGIEconomicsBlackboardAdapter
-from .federated_adapter import FederatedLearningBlackboardAdapter
-from .safety_adapter import SafetyBlackboardAdapter
 from .async_adapter_base import AsyncAdapterBase
+from .bci_adapter import BCIBlackboardAdapter
+from .bio_inspired_adapter import BioInspiredAdapter
+from .blockchain_adapter import BlockchainBlackboardAdapter
+from .cognitive_synergy_adapter import CognitiveSynergyAdapter
+from .compute_adapter import ComputeBlackboardAdapter
+from .consciousness_adapter import ConsciousnessAdapter
+from .distributed_training_adapter import DistributedTrainingAdapter
+from .federated_adapter import FederatedLearningBlackboardAdapter
+from .graph_intelligence_adapter import GraphIntelligenceAdapter
+from .holographic_adapter import HolographicBlackboardAdapter
+from .integrations_bridge_adapter import IntegrationsBlackboardBridge
+from .kenny_graph_adapter import KennyGraphBlackboardAdapter
+from .knowledge_graph_adapter import KnowledgeGraphAdapter
+from .knowledge_management_adapter import KnowledgeManagementAdapter
+from .neuromorphic_adapter import NeuromorphicBlackboardAdapter
+from .quantum_adapter import QuantumBlackboardAdapter
+from .reasoning_adapter import ReasoningAdapter
+from .reproducibility_adapter import ReproducibilityBlackboardAdapter
+from .rings_adapter import RingsNetworkAdapter
+from .safety_adapter import SafetyBlackboardAdapter
+from .vectordb_adapter import VectorDBBlackboardAdapter
+from .vla_adapter import VLABlackboardAdapter
 
 logger = logging.getLogger(__name__)
 

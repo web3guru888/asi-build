@@ -48,8 +48,8 @@ from asi_build.rings.bridge.ledger import (
     LedgerKeys,
     LedgerMessage,
     RingsTokenLedger,
-    TransferRecord,
     TransferReceipt,
+    TransferRecord,
     TransferStatus,
     WithdrawalLock,
     _compute_attestation_digest,
@@ -57,7 +57,6 @@ from asi_build.rings.bridge.ledger import (
     _normalize_token,
 )
 from asi_build.rings.client import InMemoryTransport, RingsClient
-
 
 # ---------------------------------------------------------------------------
 # Fixtures & helpers
@@ -78,10 +77,7 @@ class MockIdentity:
 
 def make_identities(n: int = 6) -> List[MockIdentity]:
     """Create n distinct mock identities."""
-    return [
-        MockIdentity(did=f"did:rings:secp256k1:validator{i}", seed=100 + i)
-        for i in range(n)
-    ]
+    return [MockIdentity(did=f"did:rings:secp256k1:validator{i}", seed=100 + i) for i in range(n)]
 
 
 @pytest.fixture
@@ -1001,14 +997,13 @@ class TestExpiry:
     @pytest.mark.asyncio
     async def test_expired_transfer_rejected(self, client):
         identity = MockIdentity()
-        ledger = RingsTokenLedger(
-            client, identity, threshold=1, total=1, transfer_ttl=0.01
-        )
+        ledger = RingsTokenLedger(client, identity, threshold=1, total=1, transfer_ttl=0.01)
         await ledger.credit_from_bridge(DID_ALICE, "ETH", 1000)
         r = await ledger.transfer(DID_ALICE, DID_BOB, "ETH", 100, MOCK_SIG)
 
         # Wait for expiry
         import time as _time
+
         _time.sleep(0.02)
 
         sig = await ledger.attest_transfer(r.transfer_id)
@@ -1020,15 +1015,14 @@ class TestExpiry:
     @pytest.mark.asyncio
     async def test_expire_stale_transfers(self, client):
         identity = MockIdentity()
-        ledger = RingsTokenLedger(
-            client, identity, threshold=4, total=6, transfer_ttl=0.01
-        )
+        ledger = RingsTokenLedger(client, identity, threshold=4, total=6, transfer_ttl=0.01)
         await ledger.credit_from_bridge(DID_ALICE, "ETH", 10000)
 
         for _ in range(5):
             await ledger.transfer(DID_ALICE, DID_BOB, "ETH", 1, MOCK_SIG)
 
         import time as _time
+
         _time.sleep(0.02)
 
         count = await ledger.expire_stale_transfers()
@@ -1041,13 +1035,12 @@ class TestExpiry:
     @pytest.mark.asyncio
     async def test_expired_collect_returns_false(self, client):
         identity = MockIdentity()
-        ledger = RingsTokenLedger(
-            client, identity, threshold=4, total=6, transfer_ttl=0.01
-        )
+        ledger = RingsTokenLedger(client, identity, threshold=4, total=6, transfer_ttl=0.01)
         await ledger.credit_from_bridge(DID_ALICE, "ETH", 1000)
         r = await ledger.transfer(DID_ALICE, DID_BOB, "ETH", 100, MOCK_SIG)
 
         import time as _time
+
         _time.sleep(0.02)
 
         met, sigs = await ledger.collect_transfer_attestations(r.transfer_id)
@@ -1056,9 +1049,7 @@ class TestExpiry:
     @pytest.mark.asyncio
     async def test_non_expired_not_affected(self, client):
         identity = MockIdentity()
-        ledger = RingsTokenLedger(
-            client, identity, threshold=4, total=6, transfer_ttl=300
-        )
+        ledger = RingsTokenLedger(client, identity, threshold=4, total=6, transfer_ttl=300)
         await ledger.credit_from_bridge(DID_ALICE, "ETH", 10000)
         await ledger.transfer(DID_ALICE, DID_BOB, "ETH", 100, MOCK_SIG)
 
@@ -1183,9 +1174,7 @@ class TestSignatureVerification:
         assert ledger.verify_transfer_signature(rec) is True
 
     def test_no_pubkey_attestation_returns_true(self, ledger):
-        assert ledger.verify_attestation_signature(
-            "tx-1", DID_ALICE, 100, "deadbeef"
-        ) is True
+        assert ledger.verify_attestation_signature("tx-1", DID_ALICE, 100, "deadbeef") is True
 
     def test_invalid_signature_hex(self, ledger):
         """Invalid hex in signature should return False when pubkey given."""
@@ -1211,6 +1200,7 @@ class TestSignatureVerification:
         digest = _compute_transfer_digest(DID_ALICE, DID_BOB, "ETH", 100, 0)
         from cryptography.hazmat.primitives import hashes
         from cryptography.hazmat.primitives.asymmetric import ec
+
         sig = kp._private_key_obj.sign(digest, ec.ECDSA(hashes.SHA256()))
 
         rec = TransferRecord(
@@ -1241,6 +1231,7 @@ class TestSignatureVerification:
         digest = _compute_transfer_digest(DID_ALICE, DID_BOB, "ETH", 100, 0)
         from cryptography.hazmat.primitives import hashes
         from cryptography.hazmat.primitives.asymmetric import ec
+
         sig = other._private_key_obj.sign(digest, ec.ECDSA(hashes.SHA256()))
 
         rec = TransferRecord(

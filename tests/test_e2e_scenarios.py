@@ -25,6 +25,32 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 import pytest
 
 from asi_build.integration import CognitiveBlackboard
+from asi_build.integration.adapters import (
+    AGICommunicationBlackboardAdapter,
+    AGIEconomicsBlackboardAdapter,
+    BCIBlackboardAdapter,
+    BioInspiredAdapter,
+    BlockchainBlackboardAdapter,
+    CognitiveSynergyAdapter,
+    ComputeBlackboardAdapter,
+    ConsciousnessAdapter,
+    DistributedTrainingAdapter,
+    FederatedLearningBlackboardAdapter,
+    GraphIntelligenceAdapter,
+    HolographicBlackboardAdapter,
+    IntegrationsBlackboardBridge,
+    KennyGraphBlackboardAdapter,
+    KnowledgeGraphAdapter,
+    KnowledgeManagementAdapter,
+    NeuromorphicBlackboardAdapter,
+    QuantumBlackboardAdapter,
+    ReasoningAdapter,
+    ReproducibilityBlackboardAdapter,
+    RingsNetworkAdapter,
+    SafetyBlackboardAdapter,
+    VectorDBBlackboardAdapter,
+    VLABlackboardAdapter,
+)
 from asi_build.integration.cognitive_cycle import (
     AdapterRole,
     CognitiveCycle,
@@ -41,33 +67,6 @@ from asi_build.integration.protocols import (
     ModuleCapability,
     ModuleInfo,
 )
-from asi_build.integration.adapters import (
-    ConsciousnessAdapter,
-    KnowledgeGraphAdapter,
-    CognitiveSynergyAdapter,
-    ReasoningAdapter,
-    SafetyBlackboardAdapter,
-    BCIBlackboardAdapter,
-    QuantumBlackboardAdapter,
-    AGICommunicationBlackboardAdapter,
-    FederatedLearningBlackboardAdapter,
-    BioInspiredAdapter,
-    ComputeBlackboardAdapter,
-    VectorDBBlackboardAdapter,
-    BlockchainBlackboardAdapter,
-    HolographicBlackboardAdapter,
-    NeuromorphicBlackboardAdapter,
-    AGIEconomicsBlackboardAdapter,
-    RingsNetworkAdapter,
-    KnowledgeManagementAdapter,
-    GraphIntelligenceAdapter,
-    KennyGraphBlackboardAdapter,
-    IntegrationsBlackboardBridge,
-    ReproducibilityBlackboardAdapter,
-    VLABlackboardAdapter,
-    DistributedTrainingAdapter,
-)
-
 
 # ============================================================================
 # Mock adapters for controlled data-flow testing
@@ -637,7 +636,9 @@ class TestDataFlow:
         def make_critical():
             return {"critical": True}
 
-        producer = MockProducer(name="critical_prod", topic="urgent.alert", data_factory=make_critical)
+        producer = MockProducer(
+            name="critical_prod", topic="urgent.alert", data_factory=make_critical
+        )
         # Override produce to set CRITICAL priority
         original_produce = producer.produce
 
@@ -717,9 +718,7 @@ class TestSafetyGate:
 
     def test_safety_required_false_allows_start_without_safety(self, bb):
         """start() succeeds when safety_required=False even without safety adapter."""
-        cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=1
-        )
+        cycle = CognitiveCycle(blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=1)
 
         # Should not raise
         cycle.start()
@@ -803,9 +802,7 @@ class TestMultiTickConvergence:
 
     def test_max_ticks_stops_automatically(self, bb):
         """Cycle with max_ticks=5 stops after exactly 5 ticks."""
-        cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=5
-        )
+        cycle = CognitiveCycle(blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=5)
         producer = MockProducer()
         cycle.register_adapter(producer)
 
@@ -831,9 +828,7 @@ class TestMultiTickConvergence:
 
     def test_uptime_seconds_increases(self, bb):
         """uptime_seconds > 0 after running."""
-        cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=3
-        )
+        cycle = CognitiveCycle(blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=3)
         cycle.register_adapter(MockProducer())
 
         cycle.start()
@@ -845,9 +840,7 @@ class TestMultiTickConvergence:
 
     def test_ticks_per_second_metric(self, bb):
         """ticks_per_second is > 0 after background run."""
-        cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=10
-        )
+        cycle = CognitiveCycle(blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=10)
         cycle.register_adapter(MockProducer())
 
         cycle.start()
@@ -868,11 +861,21 @@ class TestMultiTickConvergence:
 
         d = cycle.metrics.to_dict()
         expected_keys = {
-            "total_ticks", "total_entries_produced", "total_entries_consumed",
-            "total_entries_transformed", "total_safety_checks", "total_safety_vetoes",
-            "total_errors", "avg_tick_time_ms", "max_tick_time_ms", "min_tick_time_ms",
-            "uptime_seconds", "ticks_per_second", "adapter_produce_counts",
-            "adapter_consume_counts", "adapter_error_counts",
+            "total_ticks",
+            "total_entries_produced",
+            "total_entries_consumed",
+            "total_entries_transformed",
+            "total_safety_checks",
+            "total_safety_vetoes",
+            "total_errors",
+            "avg_tick_time_ms",
+            "max_tick_time_ms",
+            "min_tick_time_ms",
+            "uptime_seconds",
+            "ticks_per_second",
+            "adapter_produce_counts",
+            "adapter_consume_counts",
+            "adapter_error_counts",
         }
         assert expected_keys <= set(d.keys())
         assert d["total_ticks"] == 3
@@ -1064,9 +1067,7 @@ class TestComplexScenarios:
 
     def test_pause_resume_preserves_state(self, bb):
         """Pause and resume mid-cycle preserves tick count and state."""
-        cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=20
-        )
+        cycle = CognitiveCycle(blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=20)
         producer = MockProducer()
         cycle.register_adapter(producer)
 
@@ -1097,9 +1098,7 @@ class TestComplexScenarios:
     def test_tick_rate_limiting_works(self, bb):
         """With tick_rate_hz set, ticks are rate-limited (roughly)."""
         # Use 50Hz = 20ms per tick
-        cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=50, max_ticks=3
-        )
+        cycle = CognitiveCycle(blackboard=bb, safety_required=False, tick_rate_hz=50, max_ticks=3)
         producer = MockProducer()
         cycle.register_adapter(producer)
 
@@ -1116,9 +1115,7 @@ class TestComplexScenarios:
 
     def test_background_start_stop_lifecycle(self, bb):
         """start() → run N ticks → stop() lifecycle in background thread."""
-        cycle = CognitiveCycle(
-            blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=5
-        )
+        cycle = CognitiveCycle(blackboard=bb, safety_required=False, tick_rate_hz=0, max_ticks=5)
         cycle.register_adapter(MockProducer())
 
         assert cycle.state == CycleState.CREATED

@@ -66,9 +66,7 @@ def did_to_bytes32(did: Union[str, bytes, bytearray]) -> bytes:
     if isinstance(did, (bytes, bytearray)):
         raw = bytes(did)
         if len(raw) != 32:
-            raise ValueError(
-                f"Raw DID bytes must be exactly 32 bytes, got {len(raw)}"
-            )
+            raise ValueError(f"Raw DID bytes must be exactly 32 bytes, got {len(raw)}")
         return raw
     if did.startswith("0x") and len(did) == 66:
         return bytes.fromhex(did[2:])
@@ -538,7 +536,9 @@ class BridgeContractClient:
     async def _call(self, fn: str, args: Optional[list] = None) -> Any:
         """Read-only contract call."""
         return await self.cm.call_contract_function(
-            self.CONTRACT_NAME, fn, args=args or [],
+            self.CONTRACT_NAME,
+            fn,
+            args=args or [],
         )
 
     async def _send(
@@ -549,7 +549,10 @@ class BridgeContractClient:
     ) -> str:
         """State-changing contract transaction.  Returns tx hash."""
         return await self.cm.send_contract_transaction(
-            self.CONTRACT_NAME, fn, args=args or [], value=value,
+            self.CONTRACT_NAME,
+            fn,
+            args=args or [],
+            value=value,
         )
 
     async def _events(
@@ -585,7 +588,9 @@ class BridgeContractClient:
         """
         logger.info("Depositing %d wei for %s", amount_wei, rings_did)
         return await self._send(
-            "deposit", [did_to_bytes32(rings_did)], value=amount_wei,
+            "deposit",
+            [did_to_bytes32(rings_did)],
+            value=amount_wei,
         )
 
     async def deposit_token(
@@ -615,7 +620,9 @@ class BridgeContractClient:
         """
         logger.info(
             "Depositing %d of token %s for %s",
-            amount, token_address, rings_did,
+            amount,
+            token_address,
+            rings_did,
         )
         return await self._send(
             "depositToken",
@@ -659,7 +666,10 @@ class BridgeContractClient:
             Transaction hash.
         """
         logger.info(
-            "Withdrawing %d wei to %s (nonce=%d)", amount, recipient, nonce,
+            "Withdrawing %d wei to %s (nonce=%d)",
+            amount,
+            recipient,
+            nonce,
         )
         return await self._send(
             "withdraw",
@@ -709,7 +719,10 @@ class BridgeContractClient:
         """
         logger.info(
             "Withdrawing %d of token %s to %s (nonce=%d)",
-            amount, token_address, recipient, nonce,
+            amount,
+            token_address,
+            recipient,
+            nonce,
         )
         return await self._send(
             "withdrawToken",
@@ -753,7 +766,8 @@ class BridgeContractClient:
         """
         logger.info("Updating sync committee at slot %d", slot)
         return await self._send(
-            "updateSyncCommittee", [new_root, slot, proof, public_inputs],
+            "updateSyncCommittee",
+            [new_root, slot, proof, public_inputs],
         )
 
     # ── Query (view) functions ───────────────────────────────────────────
@@ -838,7 +852,9 @@ class BridgeContractClient:
     # ── Event fetching ───────────────────────────────────────────────────
 
     async def get_deposit_events(
-        self, from_block: int, to_block: Optional[int] = None,
+        self,
+        from_block: int,
+        to_block: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Fetch ``Deposited`` events in a block range.
 
@@ -848,13 +864,17 @@ class BridgeContractClient:
         return await self._events("Deposited", from_block, to_block)
 
     async def get_withdrawal_events(
-        self, from_block: int, to_block: Optional[int] = None,
+        self,
+        from_block: int,
+        to_block: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Fetch ``Withdrawn`` events in a block range."""
         return await self._events("Withdrawn", from_block, to_block)
 
     async def get_sync_committee_events(
-        self, from_block: int, to_block: Optional[int] = None,
+        self,
+        from_block: int,
+        to_block: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Fetch ``SyncCommitteeUpdated`` events in a block range."""
         return await self._events("SyncCommitteeUpdated", from_block, to_block)
@@ -888,7 +908,8 @@ class BridgeContractClient:
         """
         logger.info(
             "Setting rate limits: daily=%d, per_tx=%d",
-            daily_limit, per_tx_limit,
+            daily_limit,
+            per_tx_limit,
         )
         return await self._send("updateRateLimits", [daily_limit, per_tx_limit])
 
@@ -1051,8 +1072,12 @@ class BridgeDeployer:
             Deployed contract address.
         """
         admin = initial_admin or self.web3.get_account_address()
-        logger.info("Deploying RingsBridge (admin=%s, guardian=%s, verifier=%s)...",
-                     admin, guardian, verifier_address)
+        logger.info(
+            "Deploying RingsBridge (admin=%s, guardian=%s, verifier=%s)...",
+            admin,
+            guardian,
+            verifier_address,
+        )
         # Constructor: (initialAdmin, guardian, dailyLimit_, perTxLimit_, verifierAddress)
         ci = await self.cm.deploy_contract(
             contract_name="RingsBridge",
@@ -1101,8 +1126,9 @@ class BridgeDeployer:
             "grantRole",
             args=[bridge_role, bridge_address],
         )
-        logger.info("BridgedToken deployed at %s, BRIDGE_ROLE granted to %s",
-                     ci.address, bridge_address)
+        logger.info(
+            "BridgedToken deployed at %s, BRIDGE_ROLE granted to %s", ci.address, bridge_address
+        )
         return ci.address
 
     async def deploy_full_suite(
@@ -1174,6 +1200,7 @@ class BridgeDeployer:
         # Update chain registry if deploying to a specific chain
         if hasattr(self, "_chain_name"):
             from .chains import update_deployed_addresses
+
             update_deployed_addresses(
                 self._chain_name,
                 verifier=verifier_addr,

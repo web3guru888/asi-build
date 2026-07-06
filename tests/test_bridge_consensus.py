@@ -31,7 +31,6 @@ from asi_build.rings.bridge.consensus import (
     WithdrawalProposal,
 )
 
-
 # ===========================================================================
 # ProposalStatus Tests (1)
 # ===========================================================================
@@ -153,9 +152,7 @@ class TestValidatorConsensusInit:
 
     def test_explicit_validator_id(self):
         """An explicit validator_id should be used."""
-        vc = ValidatorConsensus(
-            node_urls=[], threshold=1, total=1, validator_id="my-node"
-        )
+        vc = ValidatorConsensus(node_urls=[], threshold=1, total=1, validator_id="my-node")
         assert vc.validator_id == "my-node"
 
 
@@ -168,9 +165,7 @@ class TestValidateWithdrawal:
     """Tests for withdrawal validation logic."""
 
     def setup_method(self):
-        self.vc = ValidatorConsensus(
-            node_urls=[], threshold=1, total=1, validator_id="test-val"
-        )
+        self.vc = ValidatorConsensus(node_urls=[], threshold=1, total=1, validator_id="test-val")
         self.valid_addr = "0x" + "aB" * 20
 
     def test_valid_withdrawal(self):
@@ -257,9 +252,7 @@ class TestSubmitApproval:
 
     def _make_consensus_with_mock_account(self):
         """Create a ValidatorConsensus with a mocked signing key."""
-        vc = ValidatorConsensus(
-            node_urls=[], threshold=1, total=1, validator_id="mock-signer"
-        )
+        vc = ValidatorConsensus(node_urls=[], threshold=1, total=1, validator_id="mock-signer")
         # Mock the account and signing
         mock_account = MagicMock()
         mock_account.address = "0xMockAddress"
@@ -299,9 +292,7 @@ class TestSubmitApproval:
     @pytest.mark.asyncio
     async def test_submit_approval_no_key_returns_none(self):
         """submit_approval should return None when no signing key is configured."""
-        vc = ValidatorConsensus(
-            node_urls=[], threshold=1, total=1, validator_id="no-key"
-        )
+        vc = ValidatorConsensus(node_urls=[], threshold=1, total=1, validator_id="no-key")
         addr = "0x" + "ab" * 20
         sig = await vc.submit_approval("wd-nokey", 1000, addr)
         assert sig is None
@@ -333,9 +324,7 @@ class TestRequestApproval:
             return {"validator_id": vid, "signature": f"sig-{vid}"}
 
         with patch.object(vc, "_send_to_validator", side_effect=mock_send):
-            approved, signatures = await vc.request_approval(
-                "wd-thresh", 1000, "0x" + "ab" * 20
-            )
+            approved, signatures = await vc.request_approval("wd-thresh", 1000, "0x" + "ab" * 20)
 
         assert approved is True
         assert len(signatures) == 3
@@ -358,9 +347,7 @@ class TestRequestApproval:
             return None
 
         with patch.object(vc, "_send_to_validator", side_effect=mock_send):
-            approved, signatures = await vc.request_approval(
-                "wd-insuf", 1000, "0x" + "ab" * 20
-            )
+            approved, signatures = await vc.request_approval("wd-insuf", 1000, "0x" + "ab" * 20)
 
         assert approved is False
         assert len(signatures) == 2
@@ -377,9 +364,7 @@ class TestCheckThreshold:
     @pytest.mark.asyncio
     async def test_threshold_met(self):
         """check_threshold should return True when enough approvals exist."""
-        vc = ValidatorConsensus(
-            node_urls=[], threshold=4, total=6, validator_id="checker"
-        )
+        vc = ValidatorConsensus(node_urls=[], threshold=4, total=6, validator_id="checker")
         # Manually insert a proposal with 4 approvals
         proposal = WithdrawalProposal(
             withdrawal_id="wd-met",
@@ -397,9 +382,7 @@ class TestCheckThreshold:
     @pytest.mark.asyncio
     async def test_threshold_not_met(self):
         """check_threshold should return False when not enough approvals."""
-        vc = ValidatorConsensus(
-            node_urls=[], threshold=4, total=6, validator_id="checker"
-        )
+        vc = ValidatorConsensus(node_urls=[], threshold=4, total=6, validator_id="checker")
         proposal = WithdrawalProposal(
             withdrawal_id="wd-notmet",
             amount=100,
@@ -424,9 +407,7 @@ class TestRateLimit:
 
     def test_rate_limit_sliding_window(self):
         """Rate limit should prune old timestamps and enforce limit."""
-        vc = ValidatorConsensus(
-            node_urls=[], threshold=1, total=1, rate_limit=3
-        )
+        vc = ValidatorConsensus(node_urls=[], threshold=1, total=1, rate_limit=3)
 
         now = time.time()
         # 3 approvals within the window — should all be allowed
@@ -450,9 +431,7 @@ class TestExpireStaleProposals:
     @pytest.mark.asyncio
     async def test_expire_stale(self):
         """Proposals older than TTL should be expired."""
-        vc = ValidatorConsensus(
-            node_urls=[], threshold=1, total=1, proposal_ttl=60.0
-        )
+        vc = ValidatorConsensus(node_urls=[], threshold=1, total=1, proposal_ttl=60.0)
 
         # Fresh proposal — should NOT be expired
         fresh = WithdrawalProposal(

@@ -93,7 +93,9 @@ class Circuit(ABC):
 
     @abstractmethod
     def verify_constraints(
-        self, witness: dict, public_inputs: dict,
+        self,
+        witness: dict,
+        public_inputs: dict,
     ) -> Tuple[bool, List[str]]:
         """Check all constraints.
 
@@ -116,6 +118,7 @@ class Circuit(ABC):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _sha256(data: bytes) -> bytes:
     """Compute SHA-256 digest.
@@ -147,13 +150,15 @@ def _hash_header_fields(
     body_root: bytes,
 ) -> bytes:
     """Deterministic SHA-256 of header fields (mock SSZ hash-tree-root)."""
-    payload = b"".join([
-        struct.pack(">Q", slot),
-        struct.pack(">Q", proposer_index),
-        parent_root[:32].ljust(32, b"\x00"),
-        state_root[:32].ljust(32, b"\x00"),
-        body_root[:32].ljust(32, b"\x00"),
-    ])
+    payload = b"".join(
+        [
+            struct.pack(">Q", slot),
+            struct.pack(">Q", proposer_index),
+            parent_root[:32].ljust(32, b"\x00"),
+            state_root[:32].ljust(32, b"\x00"),
+            body_root[:32].ljust(32, b"\x00"),
+        ]
+    )
     return _sha256(payload)
 
 
@@ -279,7 +284,9 @@ class BLSVerificationCircuit(Circuit):
     # -- constraint verification -------------------------------------------
 
     def verify_constraints(
-        self, witness: dict, public_inputs: dict,
+        self,
+        witness: dict,
+        public_inputs: dict,
     ) -> Tuple[bool, List[str]]:
         """Check all BLS verification constraints.
 
@@ -300,8 +307,7 @@ class BLSVerificationCircuit(Circuit):
         )
         if computed_root != _to_bytes32(public_inputs["sync_committee_root"]):
             violations.append(
-                "committee_root_mismatch: "
-                "SHA256(committee_pubkeys) != sync_committee_root"
+                "committee_root_mismatch: " "SHA256(committee_pubkeys) != sync_committee_root"
             )
 
         # 2. Participation count matches bitmap
@@ -341,10 +347,7 @@ class BLSVerificationCircuit(Circuit):
         if computed_header_hash != _to_bytes32(
             public_inputs["block_header_hash"],
         ):
-            violations.append(
-                "header_hash_mismatch: "
-                "hash(header_fields) != block_header_hash"
-            )
+            violations.append("header_hash_mismatch: " "hash(header_fields) != block_header_hash")
 
         # 6. Signature length
         if len(witness["aggregate_signature"]) != 96:
@@ -445,7 +448,9 @@ class MerklePatriciaCircuit(Circuit):
     # -- constraint verification -------------------------------------------
 
     def verify_constraints(
-        self, witness: dict, public_inputs: dict,
+        self,
+        witness: dict,
+        public_inputs: dict,
     ) -> Tuple[bool, List[str]]:
         """Check all Merkle Patricia proof constraints.
 
@@ -471,16 +476,12 @@ class MerklePatriciaCircuit(Circuit):
         # 1. Proof path root check
         computed_root = _sha256(proof_nodes[0])
         if computed_root != _to_bytes32(public_inputs["state_root"]):
-            violations.append(
-                "root_mismatch: SHA256(proof_nodes[0]) != state_root"
-            )
+            violations.append("root_mismatch: SHA256(proof_nodes[0]) != state_root")
 
         # 2. Address hash
         computed_addr_hash = _sha256(witness["address"])
         if computed_addr_hash != _to_bytes32(public_inputs["address_hash"]):
-            violations.append(
-                "address_hash_mismatch: SHA256(address) != address_hash"
-            )
+            violations.append("address_hash_mismatch: SHA256(address) != address_hash")
 
         # 3. Account state value hash
         account_bytes = self._encode_account_state(witness["account_state"])
@@ -489,8 +490,7 @@ class MerklePatriciaCircuit(Circuit):
             public_inputs["expected_value_hash"],
         ):
             violations.append(
-                "value_hash_mismatch: "
-                "SHA256(account_state) != expected_value_hash"
+                "value_hash_mismatch: " "SHA256(account_state) != expected_value_hash"
             )
 
         # 4. Proof node chaining — each node's hash appears in its parent
@@ -507,8 +507,7 @@ class MerklePatriciaCircuit(Circuit):
         leaf_node = proof_nodes[-1]
         if computed_value_hash not in self._extract_hashes(leaf_node):
             violations.append(
-                "leaf_value_mismatch: "
-                "account_state hash not found in leaf proof node"
+                "leaf_value_mismatch: " "account_state hash not found in leaf proof node"
             )
 
         return (len(violations) == 0, violations)
@@ -527,12 +526,14 @@ class MerklePatriciaCircuit(Circuit):
         storage_root = _to_bytes32(account_state.get("storage_root", b"\x00" * 32))
         code_hash = _to_bytes32(account_state.get("code_hash", b"\x00" * 32))
 
-        return b"".join([
-            struct.pack(">Q", nonce),
-            balance.to_bytes(32, "big"),
-            storage_root,
-            code_hash,
-        ])
+        return b"".join(
+            [
+                struct.pack(">Q", nonce),
+                balance.to_bytes(32, "big"),
+                storage_root,
+                code_hash,
+            ]
+        )
 
     @staticmethod
     def _extract_hashes(node: bytes) -> set:
@@ -685,7 +686,9 @@ class BridgeWithdrawalCircuit(Circuit):
     # -- constraint verification -------------------------------------------
 
     def verify_constraints(
-        self, witness: dict, public_inputs: dict,
+        self,
+        witness: dict,
+        public_inputs: dict,
     ) -> Tuple[bool, List[str]]:
         """Check all bridge withdrawal constraints.
 
@@ -706,7 +709,8 @@ class BridgeWithdrawalCircuit(Circuit):
             witness["bls_witness"],
         )
         bls_ok, bls_violations = self.bls_circuit.verify_constraints(
-            witness["bls_witness"], bls_pub,
+            witness["bls_witness"],
+            bls_pub,
         )
         for v in bls_violations:
             violations.append(f"bls:{v}")
@@ -716,7 +720,8 @@ class BridgeWithdrawalCircuit(Circuit):
             witness["mpt_witness"],
         )
         mpt_ok, mpt_violations = self.mpt_circuit.verify_constraints(
-            witness["mpt_witness"], mpt_pub,
+            witness["mpt_witness"],
+            mpt_pub,
         )
         for v in mpt_violations:
             violations.append(f"mpt:{v}")
@@ -726,8 +731,7 @@ class BridgeWithdrawalCircuit(Circuit):
         threshold = witness["validator_threshold"]
         if len(sigs) < threshold:
             violations.append(
-                f"validator_threshold: "
-                f"len(signatures)={len(sigs)} < threshold={threshold}"
+                f"validator_threshold: " f"len(signatures)={len(sigs)} < threshold={threshold}"
             )
 
         # 4. Non-empty signatures
@@ -737,25 +741,19 @@ class BridgeWithdrawalCircuit(Circuit):
 
         # 5. Positive amount
         if public_inputs["amount"] <= 0:
-            violations.append(
-                f"non_positive_amount: amount={public_inputs['amount']}"
-            )
+            violations.append(f"non_positive_amount: amount={public_inputs['amount']}")
 
         # 6. Non-negative nonce
         if public_inputs["nonce"] < 0:
-            violations.append(
-                f"negative_nonce: nonce={public_inputs['nonce']}"
-            )
+            violations.append(f"negative_nonce: nonce={public_inputs['nonce']}")
 
         # 7. Deposit log data encodes (recipient, amount)
-        expected_log_data = (
-            _to_bytes20(public_inputs["recipient"])
-            + public_inputs["amount"].to_bytes(32, "big")
-        )
+        expected_log_data = _to_bytes20(public_inputs["recipient"]) + public_inputs[
+            "amount"
+        ].to_bytes(32, "big")
         if witness["deposit_log_data"] != expected_log_data:
             violations.append(
-                "deposit_log_mismatch: "
-                "deposit_log_data != encode(recipient, amount)"
+                "deposit_log_mismatch: " "deposit_log_data != encode(recipient, amount)"
             )
 
         return (len(violations) == 0, violations)
@@ -785,12 +783,14 @@ class BridgeWithdrawalCircuit(Circuit):
         else:
             did_hash = _sha256(rings_did)
 
-        payload = b"".join([
-            recipient_b,
-            amount.to_bytes(32, "big"),
-            nonce.to_bytes(32, "big"),
-            did_hash,
-        ])
+        payload = b"".join(
+            [
+                recipient_b,
+                amount.to_bytes(32, "big"),
+                nonce.to_bytes(32, "big"),
+                did_hash,
+            ]
+        )
         return _sha256(payload)
 
 
@@ -891,7 +891,9 @@ class SyncCommitteeRotationCircuit(Circuit):
     # -- constraint verification -------------------------------------------
 
     def verify_constraints(
-        self, witness: dict, public_inputs: dict,
+        self,
+        witness: dict,
+        public_inputs: dict,
     ) -> Tuple[bool, List[str]]:
         """Check all sync committee rotation constraints.
 
@@ -914,8 +916,7 @@ class SyncCommitteeRotationCircuit(Circuit):
             public_inputs["current_committee_root"],
         ):
             violations.append(
-                "current_root_mismatch: "
-                "SHA256(current_pubkeys) != current_committee_root"
+                "current_root_mismatch: " "SHA256(current_pubkeys) != current_committee_root"
             )
 
         # 2. New committee root
@@ -923,10 +924,7 @@ class SyncCommitteeRotationCircuit(Circuit):
             _concat_bytes_list(witness["new_pubkeys"]),
         )
         if computed_new != _to_bytes32(public_inputs["new_committee_root"]):
-            violations.append(
-                "new_root_mismatch: "
-                "SHA256(new_pubkeys) != new_committee_root"
-            )
+            violations.append("new_root_mismatch: " "SHA256(new_pubkeys) != new_committee_root")
 
         # 3. Supermajority attestation
         attestation_count = sum(witness["attestation_bitmap"])

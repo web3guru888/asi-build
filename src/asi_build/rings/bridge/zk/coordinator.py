@@ -158,15 +158,9 @@ class ProofStats:
 
         # Running averages (incremental Welford-style)
         n = self.successful_proofs
-        self.avg_proof_size_bytes += (
-            (proof.proof_size_bytes - self.avg_proof_size_bytes) / n
-        )
-        self.avg_generation_time_ms += (
-            (generation_time_ms - self.avg_generation_time_ms) / n
-        )
-        self.avg_verify_gas += (
-            (proof.estimated_verify_gas - self.avg_verify_gas) / n
-        )
+        self.avg_proof_size_bytes += (proof.proof_size_bytes - self.avg_proof_size_bytes) / n
+        self.avg_generation_time_ms += (generation_time_ms - self.avg_generation_time_ms) / n
+        self.avg_verify_gas += (proof.estimated_verify_gas - self.avg_verify_gas) / n
 
         # Per-circuit / per-type counters
         cid = proof.circuit_id
@@ -185,9 +179,7 @@ class ProofStats:
         self.total_proofs += 1
         self.failed_proofs += 1
         # Count failures in the circuit distribution too
-        self.proofs_by_circuit[circuit_id] = (
-            self.proofs_by_circuit.get(circuit_id, 0) + 1
-        )
+        self.proofs_by_circuit[circuit_id] = self.proofs_by_circuit.get(circuit_id, 0) + 1
 
     def record_cache_hit(self) -> None:
         """Record that a cached proof was returned."""
@@ -213,9 +205,7 @@ class ProofStats:
             "total_generation_time_ms": self.total_generation_time_ms,
             "cache_hits": self.cache_hits,
             "cache_misses": self.cache_misses,
-            "cache_hit_rate": (
-                self.cache_hits / total_lookups if total_lookups > 0 else 0.0
-            ),
+            "cache_hit_rate": (self.cache_hits / total_lookups if total_lookups > 0 else 0.0),
             "avg_proof_size_bytes": round(self.avg_proof_size_bytes, 2),
             "avg_generation_time_ms": round(self.avg_generation_time_ms, 2),
             "avg_verify_gas": round(self.avg_verify_gas, 2),
@@ -223,9 +213,7 @@ class ProofStats:
             "proofs_by_type": dict(self.proofs_by_type),
             "last_proof_time": self.last_proof_time,
             "success_rate": (
-                self.successful_proofs / self.total_proofs
-                if self.total_proofs > 0
-                else 0.0
+                self.successful_proofs / self.total_proofs if self.total_proofs > 0 else 0.0
             ),
         }
 
@@ -323,9 +311,7 @@ class ProofCache:
         self._misses += 1
         return None
 
-    def put(
-        self, circuit_id: str, public_inputs: dict, proof: ZKProof
-    ) -> None:
+    def put(self, circuit_id: str, public_inputs: dict, proof: ZKProof) -> None:
         """Insert or update a cached proof.
 
         Evicts the least-recently used entry if the cache is full.
@@ -433,9 +419,7 @@ class BridgeProofCoordinator:
         max_batch_size: int = 10,
     ) -> None:
         self.prover = prover
-        self.cache: Optional[ProofCache] = (
-            ProofCache(cache_size) if enable_caching else None
-        )
+        self.cache: Optional[ProofCache] = ProofCache(cache_size) if enable_caching else None
         self.stats = ProofStats()
         self._enable_batching = enable_batching
         self._max_batch_size = max_batch_size
@@ -586,13 +570,14 @@ class BridgeProofCoordinator:
         public_inputs = circuit.public_inputs_from_witness(witness)
 
         logger.info(
-            "Proving sync committee rotation at slot %d "
-            "(current_root=%s, new_root=%s)",
+            "Proving sync committee rotation at slot %d " "(current_root=%s, new_root=%s)",
             slot,
             current_root[:8].hex() if current_root else "N/A",
-            public_inputs.get("new_committee_root", b"")[:8].hex()
-            if isinstance(public_inputs.get("new_committee_root"), bytes)
-            else "N/A",
+            (
+                public_inputs.get("new_committee_root", b"")[:8].hex()
+                if isinstance(public_inputs.get("new_committee_root"), bytes)
+                else "N/A"
+            ),
         )
 
         return await self._generate_with_cache(
@@ -697,9 +682,7 @@ class BridgeProofCoordinator:
 
     # -- batching -----------------------------------------------------------
 
-    async def batch_prove(
-        self, operations: List[dict]
-    ) -> List[ZKProof]:
+    async def batch_prove(self, operations: List[dict]) -> List[ZKProof]:
         """Batch-prove multiple operations concurrently.
 
         Each operation is a dict with a ``'type'`` key indicating the
@@ -735,8 +718,7 @@ class BridgeProofCoordinator:
 
         if len(operations) > self._max_batch_size:
             raise ValueError(
-                f"Batch size {len(operations)} exceeds maximum "
-                f"{self._max_batch_size}"
+                f"Batch size {len(operations)} exceeds maximum " f"{self._max_batch_size}"
             )
 
         if not operations:
@@ -751,9 +733,7 @@ class BridgeProofCoordinator:
         proofs: List[ZKProof] = []
         for i, result in enumerate(results):
             if isinstance(result, BaseException):
-                logger.error(
-                    "Batch operation %d failed: %s", i, result
-                )
+                logger.error("Batch operation %d failed: %s", i, result)
                 raise result
             proofs.append(result)
 
@@ -805,9 +785,7 @@ class BridgeProofCoordinator:
         """
         circuit_id = proof.circuit_id
         if circuit_id not in self.circuits:
-            logger.warning(
-                "Cannot verify proof: unknown circuit_id=%r", circuit_id
-            )
+            logger.warning("Cannot verify proof: unknown circuit_id=%r", circuit_id)
             return False
 
         circuit = self.circuits[circuit_id]
@@ -855,8 +833,7 @@ class BridgeProofCoordinator:
         """
         if circuit_id not in self.circuits:
             raise KeyError(
-                f"Unknown circuit_id={circuit_id!r}. "
-                f"Available: {self.available_circuits}"
+                f"Unknown circuit_id={circuit_id!r}. " f"Available: {self.available_circuits}"
             )
         return self.circuits[circuit_id]
 
@@ -905,22 +882,19 @@ class BridgeProofCoordinator:
             cached = self.cache.get(circuit_id, public_inputs)
             if cached is not None:
                 self.stats.record_cache_hit()
-                logger.debug(
-                    "Cache hit for circuit=%s", circuit_id
-                )
+                logger.debug("Cache hit for circuit=%s", circuit_id)
                 return cached
             self.stats.record_cache_miss()
 
         # 2. Generate proof
         t_start = time.monotonic()
         try:
-            proof = await self.prover.generate_proof(
-                circuit, witness, public_inputs
-            )
+            proof = await self.prover.generate_proof(circuit, witness, public_inputs)
         except Exception:
             self.stats.record_failure(circuit_id)
             logger.error(
-                "Proof generation failed for circuit=%s", circuit_id,
+                "Proof generation failed for circuit=%s",
+                circuit_id,
                 exc_info=True,
             )
             raise

@@ -494,9 +494,7 @@ class RingsTokenLedger:
         transfer_ttl: float = DEFAULT_TRANSFER_TTL,
     ) -> None:
         if threshold > total:
-            raise ValueError(
-                f"threshold ({threshold}) cannot exceed total ({total})"
-            )
+            raise ValueError(f"threshold ({threshold}) cannot exceed total ({total})")
         if threshold < 1:
             raise ValueError("threshold must be ≥ 1")
 
@@ -508,9 +506,9 @@ class RingsTokenLedger:
 
         # Local mirrors for fast access (also written to DHT)
         self._balances: Dict[str, Dict[str, int]] = {}  # did → {token → amount}
-        self._locks: Dict[str, Dict[str, int]] = {}     # did → {token → locked}
+        self._locks: Dict[str, Dict[str, int]] = {}  # did → {token → locked}
         self._transfers: Dict[str, TransferRecord] = {}  # transfer_id → record
-        self._nonces: Dict[str, int] = {}                # did → next nonce
+        self._nonces: Dict[str, int] = {}  # did → next nonce
         self._withdrawal_locks: Dict[str, WithdrawalLock] = {}  # lock_id → lock
         self._lock = asyncio.Lock()
 
@@ -702,10 +700,7 @@ class RingsTokenLedger:
             return TransferReceipt(
                 transfer_id="",
                 status=TransferStatus.FAILED,
-                error=(
-                    f"insufficient balance: available={available}, "
-                    f"requested={amount}"
-                ),
+                error=(f"insufficient balance: available={available}, " f"requested={amount}"),
             )
 
         # --- Create transfer ---
@@ -740,14 +735,23 @@ class RingsTokenLedger:
 
         logger.info(
             "Transfer proposed: id=%s, %s → %s, %d %s",
-            transfer_id, from_did[:30], to_did[:30], amount, token,
+            transfer_id,
+            from_did[:30],
+            to_did[:30],
+            amount,
+            token,
         )
 
         # Broadcast to Sub-Ring
         await self._broadcast_ledger_message(
             LedgerMessage.TRANSFER_PROPOSED,
-            {"transfer_id": transfer_id, "from_did": from_did,
-             "to_did": to_did, "token": token, "amount": amount},
+            {
+                "transfer_id": transfer_id,
+                "from_did": from_did,
+                "to_did": to_did,
+                "token": token,
+                "amount": amount,
+            },
         )
 
         return TransferReceipt(
@@ -878,19 +882,28 @@ class RingsTokenLedger:
 
         logger.info(
             "Bridge credit: %s +%d %s from %s (new balance: %d)",
-            did[:30], amount, token, source_chain, new_balance,
+            did[:30],
+            amount,
+            token,
+            source_chain,
+            new_balance,
         )
 
         # Broadcast notification
         await self._broadcast_ledger_message(
             LedgerMessage.BALANCE_CREDITED,
-            {"did": did, "token": token, "amount": amount,
-             "new_balance": new_balance,
-             "source_chain": source_chain,
-             "deposit_tx": (
-                 deposit_proof.tx_hash if deposit_proof
-                 and hasattr(deposit_proof, "tx_hash") else None
-             )},
+            {
+                "did": did,
+                "token": token,
+                "amount": amount,
+                "new_balance": new_balance,
+                "source_chain": source_chain,
+                "deposit_tx": (
+                    deposit_proof.tx_hash
+                    if deposit_proof and hasattr(deposit_proof, "tx_hash")
+                    else None
+                ),
+            },
         )
 
     async def debit_for_withdrawal(
@@ -969,14 +982,23 @@ class RingsTokenLedger:
 
         logger.info(
             "Withdrawal lock: %s locked %d %s → %s (lock_id=%s)",
-            did[:30], amount, token, target_chain, lock_id,
+            did[:30],
+            amount,
+            token,
+            target_chain,
+            lock_id,
         )
 
         # Broadcast notification
         await self._broadcast_ledger_message(
             LedgerMessage.BALANCE_DEBITED,
-            {"did": did, "token": token, "amount": amount,
-             "lock_id": lock_id, "target_chain": target_chain},
+            {
+                "did": did,
+                "token": token,
+                "amount": amount,
+                "lock_id": lock_id,
+                "target_chain": target_chain,
+            },
         )
 
         return lock
@@ -1002,9 +1024,7 @@ class RingsTokenLedger:
         lock = self._withdrawal_locks.get(lock_id)
         if lock is None:
             # Try DHT
-            raw = await self.client.dht_get(
-                LedgerKeys.withdrawal_lock_key(lock_id)
-            )
+            raw = await self.client.dht_get(LedgerKeys.withdrawal_lock_key(lock_id))
             if raw is not None and isinstance(raw, dict):
                 lock = WithdrawalLock.from_dict(raw)
                 self._withdrawal_locks[lock_id] = lock
@@ -1036,7 +1056,11 @@ class RingsTokenLedger:
 
         logger.info(
             "Withdrawal lock released: %s, %s -%d %s (new balance: %d)",
-            lock_id, did[:30], amount, token, new_balance,
+            lock_id,
+            did[:30],
+            amount,
+            token,
+            new_balance,
         )
 
     async def cancel_withdrawal_lock(self, lock_id: str) -> None:
@@ -1059,9 +1083,7 @@ class RingsTokenLedger:
         """
         lock = self._withdrawal_locks.get(lock_id)
         if lock is None:
-            raw = await self.client.dht_get(
-                LedgerKeys.withdrawal_lock_key(lock_id)
-            )
+            raw = await self.client.dht_get(LedgerKeys.withdrawal_lock_key(lock_id))
             if raw is not None and isinstance(raw, dict):
                 lock = WithdrawalLock.from_dict(raw)
                 self._withdrawal_locks[lock_id] = lock
@@ -1087,7 +1109,10 @@ class RingsTokenLedger:
 
         logger.info(
             "Withdrawal lock cancelled: %s, %s gets back %d %s",
-            lock_id, did[:30], amount, token,
+            lock_id,
+            did[:30],
+            amount,
+            token,
         )
 
     # ==================================================================
@@ -1115,7 +1140,8 @@ class RingsTokenLedger:
         await self._persist_transfer(transfer)
 
         logger.info(
-            "Transfer proposed for attestation: %s", transfer.transfer_id,
+            "Transfer proposed for attestation: %s",
+            transfer.transfer_id,
         )
         return transfer.transfer_id
 
@@ -1162,7 +1188,8 @@ class RingsTokenLedger:
         if record.status not in (TransferStatus.PROPOSED, TransferStatus.ATTESTING):
             logger.warning(
                 "Cannot attest transfer %s in state %s",
-                transfer_id, record.status.value,
+                transfer_id,
+                record.status.value,
             )
             return None
 
@@ -1170,7 +1197,8 @@ class RingsTokenLedger:
         validator_did = self.validator_did
         if validator_did and validator_did in record.attestations:
             logger.debug(
-                "Already attested transfer %s", transfer_id,
+                "Already attested transfer %s",
+                transfer_id,
             )
             return bytes.fromhex(record.attestations[validator_did])
 
@@ -1180,11 +1208,11 @@ class RingsTokenLedger:
         # so we check that the lock exists (balance ≥ locked ≥ amount)
         total_bal = await self.balance(record.from_did, record.token)
         if total_bal < record.amount:
-            reason = (
-                f"sender balance {total_bal} < transfer amount {record.amount}"
-            )
+            reason = f"sender balance {total_bal} < transfer amount {record.amount}"
             logger.warning(
-                "Rejecting transfer %s: %s", transfer_id, reason,
+                "Rejecting transfer %s: %s",
+                transfer_id,
+                reason,
             )
             if validator_did:
                 record.rejection_reasons[validator_did] = reason
@@ -1193,7 +1221,9 @@ class RingsTokenLedger:
 
         # Sign attestation
         digest = _compute_attestation_digest(
-            transfer_id, record.from_did, record.amount,
+            transfer_id,
+            record.from_did,
+            record.amount,
         )
         signature = self.identity.sign_rings(digest)
 
@@ -1207,22 +1237,24 @@ class RingsTokenLedger:
 
         logger.info(
             "Attested transfer %s (attestation %d/%d)",
-            transfer_id, len(record.attestations), self.threshold,
+            transfer_id,
+            len(record.attestations),
+            self.threshold,
         )
 
         # Broadcast attestation
         await self._broadcast_ledger_message(
             LedgerMessage.TRANSFER_ATTESTED,
-            {"transfer_id": transfer_id,
-             "validator": validator_did,
-             "attestation_count": len(record.attestations)},
+            {
+                "transfer_id": transfer_id,
+                "validator": validator_did,
+                "attestation_count": len(record.attestations),
+            },
         )
 
         return signature
 
-    async def collect_transfer_attestations(
-        self, transfer_id: str
-    ) -> Tuple[bool, List[bytes]]:
+    async def collect_transfer_attestations(self, transfer_id: str) -> Tuple[bool, List[bytes]]:
         """Collect attestations for a transfer.  Finalize if threshold met.
 
         Reads the latest attestations from the DHT, merges with local
@@ -1323,25 +1355,29 @@ class RingsTokenLedger:
             self._stats["transfers_finalized"] += 1
 
         logger.info(
-            "Transfer finalized: %s, %s → %s, %d %s "
-            "(sender_bal=%d, recipient_bal=%d)",
+            "Transfer finalized: %s, %s → %s, %d %s " "(sender_bal=%d, recipient_bal=%d)",
             record.transfer_id,
-            from_did[:30], to_did[:30],
-            amount, token,
-            new_sender_balance, new_recipient_balance,
+            from_did[:30],
+            to_did[:30],
+            amount,
+            token,
+            new_sender_balance,
+            new_recipient_balance,
         )
 
         # Broadcast finalization
         await self._broadcast_ledger_message(
             LedgerMessage.TRANSFER_FINALIZED,
-            {"transfer_id": record.transfer_id,
-             "from_did": from_did, "to_did": to_did,
-             "token": token, "amount": amount},
+            {
+                "transfer_id": record.transfer_id,
+                "from_did": from_did,
+                "to_did": to_did,
+                "token": token,
+                "amount": amount,
+            },
         )
 
-    async def fail_transfer(
-        self, transfer_id: str, reason: str = ""
-    ) -> None:
+    async def fail_transfer(self, transfer_id: str, reason: str = "") -> None:
         """Mark a transfer as failed and release the lock.
 
         Parameters
@@ -1372,7 +1408,9 @@ class RingsTokenLedger:
             self._stats["transfers_failed"] += 1
 
         logger.warning(
-            "Transfer failed: %s — %s", transfer_id, reason,
+            "Transfer failed: %s — %s",
+            transfer_id,
+            reason,
         )
 
         await self._broadcast_ledger_message(
@@ -1457,10 +1495,10 @@ class RingsTokenLedger:
 
         async with self._lock:
             for tid, record in list(self._transfers.items()):
-                if (
-                    record.status in (TransferStatus.PROPOSED, TransferStatus.ATTESTING)
-                    and self._is_expired(record)
-                ):
+                if record.status in (
+                    TransferStatus.PROPOSED,
+                    TransferStatus.ATTESTING,
+                ) and self._is_expired(record):
                     # Release lock
                     token = _normalize_token(record.token)
                     self._remove_lock(record.from_did, token, record.amount)
@@ -1487,13 +1525,13 @@ class RingsTokenLedger:
             **self._stats,
             "known_dids": len(self._balances),
             "active_transfers": sum(
-                1 for r in self._transfers.values()
+                1
+                for r in self._transfers.values()
                 if r.status in (TransferStatus.PROPOSED, TransferStatus.ATTESTING)
             ),
             "total_transfers": len(self._transfers),
             "active_withdrawal_locks": sum(
-                1 for l in self._withdrawal_locks.values()
-                if not l.released
+                1 for l in self._withdrawal_locks.values() if not l.released
             ),
             "threshold": self.threshold,
             "total_validators": self.total,
@@ -1617,7 +1655,10 @@ class RingsTokenLedger:
             except Exception as exc:
                 logger.error(
                     "Failed to credit %s %d %s: %s",
-                    did[:30], amount, token, exc,
+                    did[:30],
+                    amount,
+                    token,
+                    exc,
                 )
         return count
 
@@ -1652,13 +1693,16 @@ class RingsTokenLedger:
             return True
 
         try:
+            from cryptography.exceptions import InvalidSignature
             from cryptography.hazmat.primitives import hashes
             from cryptography.hazmat.primitives.asymmetric import ec
-            from cryptography.exceptions import InvalidSignature
 
             digest = _compute_transfer_digest(
-                record.from_did, record.to_did,
-                record.token, record.amount, record.nonce,
+                record.from_did,
+                record.to_did,
+                record.token,
+                record.amount,
+                record.nonce,
             )
             sig_bytes = bytes.fromhex(record.signature)
 
@@ -1705,9 +1749,9 @@ class RingsTokenLedger:
             return True
 
         try:
+            from cryptography.exceptions import InvalidSignature
             from cryptography.hazmat.primitives import hashes
             from cryptography.hazmat.primitives.asymmetric import ec
-            from cryptography.exceptions import InvalidSignature
 
             digest = _compute_attestation_digest(transfer_id, from_did, amount)
             sig_bytes = bytes.fromhex(signature_hex)

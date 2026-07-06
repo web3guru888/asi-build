@@ -179,9 +179,7 @@ class ZKProof:
         """
         return {
             "proof_bytes": "0x" + self.proof_bytes.hex(),
-            "public_inputs": [
-                "0x" + pi.hex() for pi in self.public_inputs
-            ],
+            "public_inputs": ["0x" + pi.hex() for pi in self.public_inputs],
             "proof_type": self.proof_type,
             "circuit_id": self.circuit_id,
             "generation_time_ms": self.generation_time_ms,
@@ -205,9 +203,7 @@ class ZKProof:
         public_inputs: List[bytes] = []
         for pi in data["public_inputs"]:
             if isinstance(pi, str):
-                public_inputs.append(
-                    bytes.fromhex(pi.replace("0x", ""))
-                )
+                public_inputs.append(bytes.fromhex(pi.replace("0x", "")))
             else:
                 public_inputs.append(pi)
 
@@ -363,8 +359,7 @@ class SimulatedProver(ZKProofEngine):
         ok, violations = circuit.verify_constraints(witness, public_inputs)
         if not ok:
             raise ProofGenerationError(
-                f"Circuit constraint violations in "
-                f"{circuit.metadata().name}: {violations}",
+                f"Circuit constraint violations in " f"{circuit.metadata().name}: {violations}",
                 violations=violations,
             )
 
@@ -374,17 +369,13 @@ class SimulatedProver(ZKProofEngine):
         pi_ser = self._canonical_serialize(public_inputs)
 
         # [0:32] — HMAC-SHA256(key, witness_serialized)
-        witness_commitment = hmac.new(
-            self._commitment_key, witness_ser, hashlib.sha256
-        ).digest()
+        witness_commitment = hmac.new(self._commitment_key, witness_ser, hashlib.sha256).digest()
 
         # [32:64] — SHA-256(public_inputs_serialized)
         pi_commitment = hashlib.sha256(pi_ser).digest()
 
         # [64:96] — SHA-256(circuit_id)
-        circuit_binding = hashlib.sha256(
-            circuit_id.encode("utf-8")
-        ).digest()
+        circuit_binding = hashlib.sha256(circuit_id.encode("utf-8")).digest()
 
         # [96:128] — random nonce (32 bytes)
         nonce = os.urandom(32)
@@ -398,16 +389,11 @@ class SimulatedProver(ZKProofEngine):
         padding = b"\x00" * (PROOF_SIZE - 160)
 
         proof_bytes = (
-            witness_commitment
-            + pi_commitment
-            + circuit_binding
-            + nonce
-            + integrity
-            + padding
+            witness_commitment + pi_commitment + circuit_binding + nonce + integrity + padding
         )
-        assert len(proof_bytes) == PROOF_SIZE, (
-            f"Proof size mismatch: {len(proof_bytes)} != {PROOF_SIZE}"
-        )
+        assert (
+            len(proof_bytes) == PROOF_SIZE
+        ), f"Proof size mismatch: {len(proof_bytes)} != {PROOF_SIZE}"
 
         # 3. Encode public inputs as bytes32
         encoded_public_inputs = self._encode_public_inputs(public_inputs)
@@ -426,17 +412,14 @@ class SimulatedProver(ZKProofEngine):
             estimated_verify_gas=GAS_ESTIMATE_SIMULATED,
             metadata={
                 "prover": "SimulatedProver",
-                "commitment_key_hash": hashlib.sha256(
-                    self._commitment_key
-                ).hexdigest()[:16],
+                "commitment_key_hash": hashlib.sha256(self._commitment_key).hexdigest()[:16],
                 "constraint_count": circuit.estimate_constraints(),
                 "proofs_generated": self._proofs_generated,
             },
         )
 
         logger.info(
-            "SimulatedProver: generated proof for %s in %dms "
-            "(constraints=%d)",
+            "SimulatedProver: generated proof for %s in %dms " "(constraints=%d)",
             circuit_id,
             elapsed_ms,
             circuit.estimate_constraints(),
@@ -465,8 +448,7 @@ class SimulatedProver(ZKProofEngine):
         # 1. Proof type check
         if proof.proof_type != "simulated":
             logger.debug(
-                "SimulatedProver.verify: expected proof_type='simulated', "
-                "got %r",
+                "SimulatedProver.verify: expected proof_type='simulated', " "got %r",
                 proof.proof_type,
             )
             return False
@@ -475,8 +457,7 @@ class SimulatedProver(ZKProofEngine):
         circuit_id = circuit.metadata().name
         if proof.circuit_id != circuit_id:
             logger.debug(
-                "SimulatedProver.verify: circuit_id mismatch: "
-                "proof=%r, circuit=%r",
+                "SimulatedProver.verify: circuit_id mismatch: " "proof=%r, circuit=%r",
                 proof.circuit_id,
                 circuit_id,
             )
@@ -500,19 +481,13 @@ class SimulatedProver(ZKProofEngine):
         pi_ser = self._canonical_serialize(public_inputs)
         expected_pi_commitment = hashlib.sha256(pi_ser).digest()
         if pi_commitment != expected_pi_commitment:
-            logger.debug(
-                "SimulatedProver.verify: public_input commitment mismatch"
-            )
+            logger.debug("SimulatedProver.verify: public_input commitment mismatch")
             return False
 
         # 5. Recompute circuit-id binding
-        expected_circuit_binding = hashlib.sha256(
-            circuit_id.encode("utf-8")
-        ).digest()
+        expected_circuit_binding = hashlib.sha256(circuit_id.encode("utf-8")).digest()
         if circuit_binding != expected_circuit_binding:
-            logger.debug(
-                "SimulatedProver.verify: circuit binding mismatch"
-            )
+            logger.debug("SimulatedProver.verify: circuit binding mismatch")
             return False
 
         # 6. Verify integrity digest
@@ -521,9 +496,7 @@ class SimulatedProver(ZKProofEngine):
             witness_commitment + pi_commitment + circuit_binding + nonce
         ).digest()
         if integrity != expected_integrity:
-            logger.debug(
-                "SimulatedProver.verify: integrity digest mismatch"
-            )
+            logger.debug("SimulatedProver.verify: integrity digest mismatch")
             return False
 
         logger.debug(
@@ -551,8 +524,7 @@ class SimulatedProver(ZKProofEngine):
                 return [_normalise(v) for v in obj]
             if isinstance(obj, dict):
                 return {
-                    str(k): _normalise(v)
-                    for k, v in sorted(obj.items(), key=lambda kv: str(kv[0]))
+                    str(k): _normalise(v) for k, v in sorted(obj.items(), key=lambda kv: str(kv[0]))
                 }
             if isinstance(obj, bool):
                 return obj
@@ -564,9 +536,7 @@ class SimulatedProver(ZKProofEngine):
             return {"__repr__": repr(obj)}
 
         normalised = _normalise(data)
-        return json.dumps(
-            normalised, sort_keys=True, separators=(",", ":")
-        ).encode("utf-8")
+        return json.dumps(normalised, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
     @staticmethod
     def _encode_public_inputs(public_inputs: dict) -> List[bytes]:
@@ -586,18 +556,12 @@ class SimulatedProver(ZKProofEngine):
                     encoded.append(val.to_bytes(32, "big", signed=False))
                 except OverflowError:
                     # Negative or > 2^256: hash the repr
-                    encoded.append(
-                        hashlib.sha256(str(val).encode()).digest()
-                    )
+                    encoded.append(hashlib.sha256(str(val).encode()).digest())
             elif isinstance(val, str):
-                encoded.append(
-                    hashlib.sha256(val.encode("utf-8")).digest()
-                )
+                encoded.append(hashlib.sha256(val.encode("utf-8")).digest())
             else:
                 # Fallback: hash the repr
-                encoded.append(
-                    hashlib.sha256(repr(val).encode("utf-8")).digest()
-                )
+                encoded.append(hashlib.sha256(repr(val).encode("utf-8")).digest())
         return encoded
 
     # -- stats ----------------------------------------------------------------
@@ -731,9 +695,7 @@ class SP1ProverInterface(ZKProofEngine):
             if os.path.isfile(self.sp1_binary_path):
                 status["installed"] = True
             else:
-                status["errors"].append(
-                    f"sp1_binary_path does not exist: {self.sp1_binary_path}"
-                )
+                status["errors"].append(f"sp1_binary_path does not exist: {self.sp1_binary_path}")
 
         # Check PATH
         sp1_on_path = shutil.which("sp1-prover") or shutil.which("sp1")
@@ -747,9 +709,7 @@ class SP1ProverInterface(ZKProofEngine):
             status["network_available"] = True  # would ping in production
 
         if not status["installed"] and not self.prover_network_url:
-            status["errors"].append(
-                "Neither local SP1 binary nor prover network URL configured"
-            )
+            status["errors"].append("Neither local SP1 binary nor prover network URL configured")
 
         self._available = status["installed"] or bool(self.prover_network_url)
         return status
@@ -944,8 +904,7 @@ class DistributedProver(ZKProofEngine):
         # 2. Discover prover nodes
         provers = await self.discover_provers()
         logger.info(
-            "DistributedProver: discovered %d prover nodes "
-            "(min=%d) for circuit %s",
+            "DistributedProver: discovered %d prover nodes " "(min=%d) for circuit %s",
             len(provers),
             self._min_provers,
             circuit_id,
@@ -954,7 +913,10 @@ class DistributedProver(ZKProofEngine):
         # 3. Fallback if not enough provers
         if len(provers) < self._min_provers:
             return await self._fallback_generate(
-                circuit, witness, public_inputs, t0,
+                circuit,
+                witness,
+                public_inputs,
+                t0,
                 reason=f"only {len(provers)}/{self._min_provers} provers",
             )
 
@@ -964,8 +926,7 @@ class DistributedProver(ZKProofEngine):
             segments = [witness]  # Single segment fallback
 
         logger.info(
-            "DistributedProver: split %s into %d segments "
-            "(%d constraints each)",
+            "DistributedProver: split %s into %d segments " "(%d constraints each)",
             circuit_id,
             len(segments),
             self._segment_size,
@@ -997,12 +958,12 @@ class DistributedProver(ZKProofEngine):
                 timeout=self._task_timeout,
             )
         except asyncio.TimeoutError:
-            logger.warning(
-                "DistributedProver: timeout collecting fold proofs, "
-                "falling back"
-            )
+            logger.warning("DistributedProver: timeout collecting fold proofs, " "falling back")
             return await self._fallback_generate(
-                circuit, witness, public_inputs, t0,
+                circuit,
+                witness,
+                public_inputs,
+                t0,
                 reason="timeout collecting fold proofs",
             )
 
@@ -1018,13 +979,15 @@ class DistributedProver(ZKProofEngine):
 
         # Override timing metadata
         proof.generation_time_ms = elapsed_ms
-        proof.metadata.update({
-            "prover": "DistributedProver",
-            "prover_nodes": len(provers),
-            "segments": len(segments),
-            "segment_size": self._segment_size,
-            "distributed_proofs": self._completed_proofs,
-        })
+        proof.metadata.update(
+            {
+                "prover": "DistributedProver",
+                "prover_nodes": len(provers),
+                "segments": len(segments),
+                "segment_size": self._segment_size,
+                "distributed_proofs": self._completed_proofs,
+            }
+        )
 
         return proof
 
@@ -1043,7 +1006,9 @@ class DistributedProver(ZKProofEngine):
         # If it's a simulated proof (from fallback), delegate
         if proof.proof_type == "simulated" and self._fallback_prover:
             return await self._fallback_prover.verify_proof(
-                circuit, proof, public_inputs,
+                circuit,
+                proof,
+                public_inputs,
             )
 
         # For distributed_nova type: verify the commitment structure
@@ -1069,9 +1034,7 @@ class DistributedProver(ZKProofEngine):
         integrity = proof.proof_bytes[128:160]
 
         # Verify circuit binding
-        expected_circuit_binding = hashlib.sha256(
-            circuit_id.encode("utf-8")
-        ).digest()
+        expected_circuit_binding = hashlib.sha256(circuit_id.encode("utf-8")).digest()
         if circuit_binding != expected_circuit_binding:
             return False
 
@@ -1122,7 +1085,8 @@ class DistributedProver(ZKProofEngine):
             return []
 
     async def assign_proving_tasks(
-        self, tasks: List[ProvingTask],
+        self,
+        tasks: List[ProvingTask],
     ) -> Dict[str, str]:
         """Assign proving tasks to discovered prover nodes.
 
@@ -1149,9 +1113,7 @@ class DistributedProver(ZKProofEngine):
             if self._rings_client is not None:
                 try:
                     dht_key = f"proving_task:{task.task_id}"
-                    await self._rings_client.dht_put(
-                        dht_key, task.to_dict()
-                    )
+                    await self._rings_client.dht_put(dht_key, task.to_dict())
                 except Exception as exc:
                     logger.warning(
                         "Failed to publish task %s to DHT: %s",
@@ -1195,7 +1157,8 @@ class DistributedProver(ZKProofEngine):
             return [os.urandom(64)]
 
         batch_tasks = [
-            t for t in self._active_tasks.values()
+            t
+            for t in self._active_tasks.values()
             if t.circuit_id == coord_task.circuit_id
             and abs(t.created_at - coord_task.created_at) < 1.0
         ]
@@ -1212,9 +1175,7 @@ class DistributedProver(ZKProofEngine):
                     if self._rings_client is not None:
                         try:
                             result_key = f"proving_result:{task.task_id}"
-                            result = await self._rings_client.dht_get(
-                                result_key
-                            )
+                            result = await self._rings_client.dht_get(result_key)
                             if result is not None:
                                 if isinstance(result, bytes):
                                     task.complete(result)
@@ -1298,14 +1259,10 @@ class DistributedProver(ZKProofEngine):
 
         # Public-input commitment (from fold structure)
         pi_data = b"".join(fold_proofs)
-        pi_commitment = hashlib.sha256(
-            b"nova_pi:" + pi_data
-        ).digest()  # [32:64]
+        pi_commitment = hashlib.sha256(b"nova_pi:" + pi_data).digest()  # [32:64]
 
         # Circuit binding
-        circuit_binding = hashlib.sha256(
-            circuit_id.encode("utf-8")
-        ).digest()  # [64:96]
+        circuit_binding = hashlib.sha256(circuit_id.encode("utf-8")).digest()  # [64:96]
 
         # Nonce
         nonce = os.urandom(32)  # [96:128]
@@ -1319,12 +1276,7 @@ class DistributedProver(ZKProofEngine):
         padding = b"\x00" * (PROOF_SIZE - 160)  # [160:256]
 
         proof_bytes = (
-            witness_commitment
-            + pi_commitment
-            + circuit_binding
-            + nonce
-            + integrity
-            + padding
+            witness_commitment + pi_commitment + circuit_binding + nonce + integrity + padding
         )
 
         return ZKProof(
@@ -1342,7 +1294,9 @@ class DistributedProver(ZKProofEngine):
         )
 
     def split_circuit(
-        self, circuit: Circuit, witness: dict,
+        self,
+        circuit: Circuit,
+        witness: dict,
     ) -> List[Dict[str, Any]]:
         """Split a circuit witness into segments for parallel proving.
 
@@ -1416,8 +1370,7 @@ class DistributedProver(ZKProofEngine):
         """
         if self._fallback_prover is None:
             raise ProofGenerationError(
-                f"Distributed proving unavailable ({reason}) "
-                f"and no fallback prover configured",
+                f"Distributed proving unavailable ({reason}) " f"and no fallback prover configured",
             )
 
         logger.warning(
@@ -1427,7 +1380,9 @@ class DistributedProver(ZKProofEngine):
         )
         self._fallback_count += 1
         proof = await self._fallback_prover.generate_proof(
-            circuit, witness, public_inputs,
+            circuit,
+            witness,
+            public_inputs,
         )
         proof.metadata["fallback"] = True
         proof.metadata["fallback_reason"] = reason

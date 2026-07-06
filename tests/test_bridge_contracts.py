@@ -14,9 +14,11 @@ roots—mirroring the logic that ``RingsBridge.sol`` would enforce.
 
 from __future__ import annotations
 
-import time
 import asyncio
-from dataclasses import dataclass, field
+import time
+from dataclasses import dataclass
+from dataclasses import dataclass as _dc
+from dataclasses import field
 from typing import Any, Dict, List, Optional, Set
 from unittest.mock import MagicMock
 
@@ -27,8 +29,6 @@ import pytest
 # provide a lightweight stand-in so the import succeeds even without the
 # full blockchain stack.
 
-from dataclasses import dataclass as _dc
-
 
 @_dc
 class _FakeContractInterface:
@@ -37,25 +37,24 @@ class _FakeContractInterface:
     abi: list = field(default_factory=list)
 
 
-import sys, types
+import sys
+import types
 
-_cm_mod = types.ModuleType(
-    "asi_build.blockchain.web3_integration.contract_manager"
-)
+_cm_mod = types.ModuleType("asi_build.blockchain.web3_integration.contract_manager")
 _cm_mod.ContractInterface = _FakeContractInterface  # type: ignore[attr-defined]
 sys.modules.setdefault(
-    "asi_build.blockchain.web3_integration.contract_manager", _cm_mod,
+    "asi_build.blockchain.web3_integration.contract_manager",
+    _cm_mod,
 )
 
 from asi_build.rings.bridge.contract_client import (  # noqa: E402
+    BRIDGE_ABI,
+    TOKEN_ABI,
+    VERIFIER_ABI,
     BridgeContractClient,
     BridgeDeployer,
-    BRIDGE_ABI,
-    VERIFIER_ABI,
-    TOKEN_ABI,
     did_to_bytes32,
 )
-
 
 # ======================================================================
 # MockContractManager — simulates RingsBridge.sol state
@@ -135,12 +134,14 @@ class MockContractManager:
             self.last_reset_ts = now
 
     def _emit(self, name: str, data: Dict[str, Any]) -> None:
-        self.events.append({
-            "event": name,
-            "blockNumber": self.block_number,
-            "transactionHash": f"0xtx{self.block_number:04d}",
-            **data,
-        })
+        self.events.append(
+            {
+                "event": name,
+                "blockNumber": self.block_number,
+                "transactionHash": f"0xtx{self.block_number:04d}",
+                **data,
+            }
+        )
         self.block_number += 1
 
     def _require_not_paused(self) -> None:
@@ -150,9 +151,7 @@ class MockContractManager:
     def _check_rate_limit(self, amount: int) -> None:
         self._maybe_reset_daily()
         if amount > self.per_tx_limit:
-            raise RuntimeError(
-                f"Exceeds per-tx limit: {amount} > {self.per_tx_limit}"
-            )
+            raise RuntimeError(f"Exceeds per-tx limit: {amount} > {self.per_tx_limit}")
         if self.daily_volume + amount > self.daily_limit:
             raise RuntimeError(
                 f"Exceeds daily limit: {self.daily_volume + amount} > {self.daily_limit}"
@@ -161,7 +160,11 @@ class MockContractManager:
     # ── call_contract_function (view calls) ─────────────────────────
 
     async def call_contract_function(
-        self, contract_name: str, fn: str, *, args: list = None,
+        self,
+        contract_name: str,
+        fn: str,
+        *,
+        args: list = None,
     ) -> Any:
         args = args or []
         if fn == "depositNonce":
@@ -202,12 +205,14 @@ class MockContractManager:
         value: int = 0,
     ) -> str:
         args = args or []
-        self.sent_transactions.append({
-            "contract": contract_name,
-            "fn": fn,
-            "args": args,
-            "value": value,
-        })
+        self.sent_transactions.append(
+            {
+                "contract": contract_name,
+                "fn": fn,
+                "args": args,
+                "value": value,
+            }
+        )
         tx_hash = f"0xtx{self.block_number:04d}"
 
         # ── deposit (native ETH) ─────────────────────────────────
@@ -230,12 +235,15 @@ class MockContractManager:
             )
             self.daily_volume += amount
             self.deposit_nonce += 1
-            self._emit("Deposited", {
-                "nonce": nonce,
-                "depositor": self.caller,
-                "ringsDID": rings_did,
-                "amount": amount,
-            })
+            self._emit(
+                "Deposited",
+                {
+                    "nonce": nonce,
+                    "depositor": self.caller,
+                    "ringsDID": rings_did,
+                    "amount": amount,
+                },
+            )
             return tx_hash
 
         # ── depositToken (ERC-20) ────────────────────────────────
@@ -257,19 +265,27 @@ class MockContractManager:
             )
             self.daily_volume += amount
             self.deposit_nonce += 1
-            self._emit("Deposited", {
-                "nonce": nonce,
-                "depositor": self.caller,
-                "ringsDID": rings_did,
-                "amount": amount,
-            })
+            self._emit(
+                "Deposited",
+                {
+                    "nonce": nonce,
+                    "depositor": self.caller,
+                    "ringsDID": rings_did,
+                    "amount": amount,
+                },
+            )
             return tx_hash
 
         # ── withdraw (native ETH) ────────────────────────────────
         if fn == "withdraw":
             self._require_not_paused()
             recipient, rings_did, amount, nonce, proof, public_inputs = (
-                args[0], args[1], args[2], args[3], args[4], args[5],
+                args[0],
+                args[1],
+                args[2],
+                args[3],
+                args[4],
+                args[5],
             )
             if amount <= 0:
                 raise RuntimeError("Zero amount withdrawal")
@@ -290,18 +306,27 @@ class MockContractManager:
             self.processed_withdrawals.add(nonce)
             self.daily_volume += amount
             self.withdrawal_nonce = max(self.withdrawal_nonce, nonce + 1)
-            self._emit("Withdrawn", {
-                "nonce": nonce,
-                "recipient": recipient,
-                "amount": amount,
-            })
+            self._emit(
+                "Withdrawn",
+                {
+                    "nonce": nonce,
+                    "recipient": recipient,
+                    "amount": amount,
+                },
+            )
             return tx_hash
 
         # ── withdrawToken (ERC-20) ───────────────────────────────
         if fn == "withdrawToken":
             self._require_not_paused()
             token_addr, recipient, rings_did, amount, nonce, proof, public_inputs = (
-                args[0], args[1], args[2], args[3], args[4], args[5], args[6],
+                args[0],
+                args[1],
+                args[2],
+                args[3],
+                args[4],
+                args[5],
+                args[6],
             )
             if amount <= 0:
                 raise RuntimeError("Zero amount withdrawal")
@@ -322,32 +347,37 @@ class MockContractManager:
             self.processed_withdrawals.add(nonce)
             self.daily_volume += amount
             self.withdrawal_nonce = max(self.withdrawal_nonce, nonce + 1)
-            self._emit("Withdrawn", {
-                "nonce": nonce,
-                "recipient": recipient,
-                "amount": amount,
-            })
+            self._emit(
+                "Withdrawn",
+                {
+                    "nonce": nonce,
+                    "recipient": recipient,
+                    "amount": amount,
+                },
+            )
             return tx_hash
 
         # ── updateSyncCommittee ──────────────────────────────────
         if fn == "updateSyncCommittee":
             new_root, slot, proof, public_inputs = (
-                args[0], args[1], args[2], args[3],
+                args[0],
+                args[1],
+                args[2],
+                args[3],
             )
             if not proof or len(proof) == 0:
                 raise RuntimeError("Invalid sync committee proof")
             if slot <= self.latest_verified_slot:
-                raise RuntimeError(
-                    f"Slot must advance: {slot} <= {self.latest_verified_slot}"
-                )
-            self.sync_committee_root = (
-                new_root if isinstance(new_root, bytes) else bytes(new_root)
-            )
+                raise RuntimeError(f"Slot must advance: {slot} <= {self.latest_verified_slot}")
+            self.sync_committee_root = new_root if isinstance(new_root, bytes) else bytes(new_root)
             self.latest_verified_slot = slot
-            self._emit("SyncCommitteeUpdated", {
-                "slot": slot,
-                "newRoot": new_root,
-            })
+            self._emit(
+                "SyncCommitteeUpdated",
+                {
+                    "slot": slot,
+                    "newRoot": new_root,
+                },
+            )
             return tx_hash
 
         # ── emergencyPause / unpause ─────────────────────────────
@@ -369,10 +399,13 @@ class MockContractManager:
         if fn == "updateRateLimits":
             self.daily_limit = args[0]
             self.per_tx_limit = args[1]
-            self._emit("RateLimitUpdated", {
-                "newDailyLimit": args[0],
-                "newPerTxLimit": args[1],
-            })
+            self._emit(
+                "RateLimitUpdated",
+                {
+                    "newDailyLimit": args[0],
+                    "newPerTxLimit": args[1],
+                },
+            )
             return tx_hash
 
         # ── grantRole (for deployer token tests) ────────────────
@@ -394,9 +427,9 @@ class MockContractManager:
     ) -> List[Dict[str, Any]]:
         end = self.block_number if to_block == "latest" else to_block
         return [
-            e for e in self.events
-            if e["event"] == event_name
-            and from_block <= e["blockNumber"] <= end
+            e
+            for e in self.events
+            if e["event"] == event_name and from_block <= e["blockNumber"] <= end
         ]
 
     # ── deploy_contract ─────────────────────────────────────────────
@@ -410,15 +443,19 @@ class MockContractManager:
     ) -> Any:
         self._deploy_counter += 1
         addr = f"0xDeployed{self._deploy_counter:04d}"
-        self.deployed.append({
-            "name": contract_name,
-            "abi": abi,
-            "bytecode": bytecode,
-            "constructor_args": constructor_args or [],
-            "address": addr,
-        })
+        self.deployed.append(
+            {
+                "name": contract_name,
+                "abi": abi,
+                "bytecode": bytecode,
+                "constructor_args": constructor_args or [],
+                "address": addr,
+            }
+        )
         ci = _FakeContractInterface(
-            name=contract_name, address=addr, abi=abi,
+            name=contract_name,
+            address=addr,
+            abi=abi,
         )
         self.contracts[contract_name] = ci
         return ci
@@ -565,7 +602,12 @@ class TestWithdrawals:
         mock_cm.per_tx_limit = ONE_ETH
         with pytest.raises(RuntimeError, match="per-tx limit"):
             await client.withdraw(
-                RECIPIENT, DID_BYTES, 2 * ONE_ETH, 0, VALID_PROOF, VALID_INPUTS,
+                RECIPIENT,
+                DID_BYTES,
+                2 * ONE_ETH,
+                0,
+                VALID_PROOF,
+                VALID_INPUTS,
             )
 
     @pytest.mark.asyncio
@@ -613,7 +655,13 @@ class TestWithdrawals:
     @pytest.mark.asyncio
     async def test_erc20_withdrawal(self, client, mock_cm):
         tx = await client.withdraw_token(
-            TOKEN_ADDR, RECIPIENT, DID_BYTES, ONE_ETH, 0, VALID_PROOF, VALID_INPUTS,
+            TOKEN_ADDR,
+            RECIPIENT,
+            DID_BYTES,
+            ONE_ETH,
+            0,
+            VALID_PROOF,
+            VALID_INPUTS,
         )
         assert tx.startswith("0xtx")
         assert 0 in mock_cm.processed_withdrawals
@@ -622,7 +670,12 @@ class TestWithdrawals:
     async def test_multiple_withdrawals(self, client, mock_cm):
         for i in range(5):
             await client.withdraw(
-                f"0xRecip{i}", DID_BYTES, ONE_ETH, i, VALID_PROOF, VALID_INPUTS,
+                f"0xRecip{i}",
+                DID_BYTES,
+                ONE_ETH,
+                i,
+                VALID_PROOF,
+                VALID_INPUTS,
             )
         assert len(mock_cm.processed_withdrawals) == 5
         evts = await client.get_withdrawal_events(from_block=0)
@@ -647,7 +700,10 @@ class TestSyncCommittee:
         await client.update_sync_committee(b"\xaa" * 32, 100, VALID_PROOF, VALID_INPUTS)
         with pytest.raises(RuntimeError, match="Slot must advance"):
             await client.update_sync_committee(
-                b"\xbb" * 32, 50, VALID_PROOF, VALID_INPUTS,
+                b"\xbb" * 32,
+                50,
+                VALID_PROOF,
+                VALID_INPUTS,
             )
 
     @pytest.mark.asyncio
@@ -884,25 +940,21 @@ class TestDeployer:
             guardian="0xG",
             verifier_address="0xV",
         )
-        bridge_deploy = next(
-            d for d in mock_cm.deployed if d["name"] == "RingsBridge"
-        )
+        bridge_deploy = next(d for d in mock_cm.deployed if d["name"] == "RingsBridge")
         args = bridge_deploy["constructor_args"]
         # Constructor: (initialAdmin, guardian, dailyLimit, perTxLimit, verifier)
         assert len(args) == 5
         # args[0] is the auto-resolved admin (MagicMock in tests)
-        assert args[1] == "0xG"          # guardian
-        assert args[2] == 50 * ONE_ETH   # daily limit
-        assert args[3] == 5 * ONE_ETH    # per-tx limit
-        assert args[4] == "0xV"          # verifier
+        assert args[1] == "0xG"  # guardian
+        assert args[2] == 50 * ONE_ETH  # daily limit
+        assert args[3] == 5 * ONE_ETH  # per-tx limit
+        assert args[4] == "0xV"  # verifier
 
     @pytest.mark.asyncio
     async def test_role_granting(self, deployer, mock_cm):
         """deploy_bridged_token sends a grantRole transaction."""
         await deployer.deploy_bridged_token("T", "TT", "0xBridge")
-        grant_txs = [
-            t for t in mock_cm.sent_transactions if t["fn"] == "grantRole"
-        ]
+        grant_txs = [t for t in mock_cm.sent_transactions if t["fn"] == "grantRole"]
         assert len(grant_txs) == 1
         assert grant_txs[0]["args"][1] == "0xBridge"
 
@@ -944,11 +996,21 @@ class TestABI:
         """All expected functions are in the ABI."""
         fn_names = {e["name"] for e in BRIDGE_ABI if e["type"] == "function"}
         expected = {
-            "deposit", "depositToken", "withdraw", "withdrawToken",
-            "updateSyncCommittee", "emergencyPause", "unpause",
-            "updateRateLimits", "getDepositInfo", "getWithdrawalInfo",
-            "getRemainingDailyLimit", "latestVerifiedSlot",
-            "syncCommitteeRoot", "paused", "depositNonce",
+            "deposit",
+            "depositToken",
+            "withdraw",
+            "withdrawToken",
+            "updateSyncCommittee",
+            "emergencyPause",
+            "unpause",
+            "updateRateLimits",
+            "getDepositInfo",
+            "getWithdrawalInfo",
+            "getRemainingDailyLimit",
+            "latestVerifiedSlot",
+            "syncCommitteeRoot",
+            "paused",
+            "depositNonce",
             "withdrawalNonce",
         }
         assert expected.issubset(fn_names)
@@ -957,8 +1019,13 @@ class TestABI:
         """All expected events are in the ABI."""
         evt_names = {e["name"] for e in BRIDGE_ABI if e["type"] == "event"}
         expected = {
-            "Deposited", "Withdrawn", "SyncCommitteeUpdated",
-            "Paused", "Unpaused", "EmergencyPaused", "RateLimitUpdated",
+            "Deposited",
+            "Withdrawn",
+            "SyncCommitteeUpdated",
+            "Paused",
+            "Unpaused",
+            "EmergencyPaused",
+            "RateLimitUpdated",
         }
         assert expected == evt_names
 
@@ -973,7 +1040,6 @@ class TestABI:
     def test_deposit_abi_has_payable(self):
         """The deposit function must be payable (accepts msg.value)."""
         deposit_fn = next(
-            e for e in BRIDGE_ABI
-            if e["name"] == "deposit" and e["type"] == "function"
+            e for e in BRIDGE_ABI if e["name"] == "deposit" and e["type"] == "function"
         )
         assert deposit_fn["stateMutability"] == "payable"

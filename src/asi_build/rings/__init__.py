@@ -78,12 +78,6 @@ from .did import (
     VerificationType,
 )
 from .eth_bridge import RingsEthIdentity
-from .transport import (
-    HTTPTransport,
-    MultiNodeTransport,
-    WebSocketTransport,
-    create_transport,
-)
 from .reputation import (
     BehaviourType,
     GlobalRankRecord,
@@ -92,6 +86,12 @@ from .reputation import (
     ReputationClient,
     SlashReport,
     TrustTier,
+)
+from .transport import (
+    HTTPTransport,
+    MultiNodeTransport,
+    WebSocketTransport,
+    create_transport,
 )
 
 __all__ = [

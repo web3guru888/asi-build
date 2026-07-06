@@ -143,9 +143,7 @@ class VLABlackboardAdapter:
         return ModuleInfo(
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
-            capabilities=(
-                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER
-            ),
+            capabilities=(ModuleCapability.PRODUCER | ModuleCapability.CONSUMER),
             description=(
                 "VLA++ multi-modal model: training progress, model metrics, "
                 "and optimization pipeline (quantization, pruning, distillation)."
@@ -266,16 +264,21 @@ class VLABlackboardAdapter:
 
         progress: Dict[str, Any] = {}
         try:
-            progress["current_epoch"] = getattr(self._trainer, "current_epoch",
-                                                 getattr(self._trainer, "epoch", -1))
-            progress["current_step"] = getattr(self._trainer, "global_step",
-                                                getattr(self._trainer, "step", -1))
-            progress["train_loss"] = getattr(self._trainer, "train_loss",
-                                             getattr(self._trainer, "current_loss", None))
-            progress["val_loss"] = getattr(self._trainer, "val_loss",
-                                           getattr(self._trainer, "best_val_loss", None))
-            progress["learning_rate"] = getattr(self._trainer, "learning_rate",
-                                                getattr(self._trainer, "lr", None))
+            progress["current_epoch"] = getattr(
+                self._trainer, "current_epoch", getattr(self._trainer, "epoch", -1)
+            )
+            progress["current_step"] = getattr(
+                self._trainer, "global_step", getattr(self._trainer, "step", -1)
+            )
+            progress["train_loss"] = getattr(
+                self._trainer, "train_loss", getattr(self._trainer, "current_loss", None)
+            )
+            progress["val_loss"] = getattr(
+                self._trainer, "val_loss", getattr(self._trainer, "best_val_loss", None)
+            )
+            progress["learning_rate"] = getattr(
+                self._trainer, "learning_rate", getattr(self._trainer, "lr", None)
+            )
             progress["is_training"] = getattr(self._trainer, "is_training", False)
         except Exception:
             logger.debug("VLATrainer progress read failed", exc_info=True)
@@ -352,7 +355,9 @@ class VLABlackboardAdapter:
                 # Fallback: try PyTorch parameters()
                 params = getattr(self._model, "parameters", None)
                 if params is not None and callable(params):
-                    param_count = sum(p.numel() for p in params() if getattr(p, "requires_grad", True))
+                    param_count = sum(
+                        p.numel() for p in params() if getattr(p, "requires_grad", True)
+                    )
                 else:
                     param_count = None
             metrics["parameter_count"] = param_count
@@ -480,12 +485,17 @@ class VLABlackboardAdapter:
             config = getattr(self._trainer, "config", None)
             if config is not None:
                 current_batch = getattr(config, "batch_size", None)
-                if current_batch is not None and isinstance(current_batch, int) and current_batch > 1:
+                if (
+                    current_batch is not None
+                    and isinstance(current_batch, int)
+                    and current_batch > 1
+                ):
                     try:
                         config.batch_size = max(1, current_batch // 2)
                         logger.info(
                             "VLA: reduced batch_size from %d to %d due to resource pressure",
-                            current_batch, config.batch_size,
+                            current_batch,
+                            config.batch_size,
                         )
                     except (AttributeError, Exception):
                         pass
@@ -590,8 +600,9 @@ class VLABlackboardAdapter:
         if self._trainer is not None:
             try:
                 snap["trainer_active"] = getattr(self._trainer, "is_training", False)
-                snap["current_lr"] = getattr(self._trainer, "learning_rate",
-                                             getattr(self._trainer, "lr", None))
+                snap["current_lr"] = getattr(
+                    self._trainer, "learning_rate", getattr(self._trainer, "lr", None)
+                )
             except Exception:
                 pass
 

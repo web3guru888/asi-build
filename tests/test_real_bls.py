@@ -33,10 +33,10 @@ from asi_build.rings.bridge.zk.real_bls import (
     get_bls_backend,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def deterministic_keypair():
@@ -77,6 +77,7 @@ def medium_committee():
 # ===================================================================
 # TestRealBLSKeyPair
 # ===================================================================
+
 
 class TestRealBLSKeyPair:
     """Tests for :class:`RealBLSKeyPair`."""
@@ -195,9 +196,7 @@ class TestRealBLSKeyPair:
         assert isinstance(pop, bytes)
         assert len(pop) == G2_SIZE
         # Verify PoP
-        assert RealBLSKeyPair.pop_verify(
-            deterministic_keypair.public_key, pop
-        ) is True
+        assert RealBLSKeyPair.pop_verify(deterministic_keypair.public_key, pop) is True
 
     def test_proof_of_possession_cached(self, deterministic_keypair):
         """PoP is computed once and cached."""
@@ -208,9 +207,7 @@ class TestRealBLSKeyPair:
     def test_pop_verify_wrong_key(self, deterministic_keypair, second_keypair):
         """PoP fails verification against wrong public key."""
         pop = deterministic_keypair.pop_prove()
-        assert RealBLSKeyPair.pop_verify(
-            second_keypair.public_key, pop
-        ) is False
+        assert RealBLSKeyPair.pop_verify(second_keypair.public_key, pop) is False
 
     def test_repr(self, deterministic_keypair):
         """repr includes truncated pubkey hex."""
@@ -223,6 +220,7 @@ class TestRealBLSKeyPair:
 # TestRealBLS12381
 # ===================================================================
 
+
 class TestRealBLS12381:
     """Tests for :class:`RealBLS12381` static operations."""
 
@@ -234,9 +232,7 @@ class TestRealBLS12381:
         agg = RealBLS12381.aggregate_signatures([sig])
         assert agg == sig
 
-    def test_aggregate_multiple_signatures(
-        self, deterministic_keypair, second_keypair
-    ):
+    def test_aggregate_multiple_signatures(self, deterministic_keypair, second_keypair):
         """Aggregating multiple signatures produces valid output."""
         msg = b"same message"
         sig1 = deterministic_keypair.sign(msg)
@@ -255,35 +251,37 @@ class TestRealBLS12381:
 
     # ---- FastAggregateVerify (same message) --------------------------------
 
-    def test_fast_aggregate_verify_valid(
-        self, deterministic_keypair, second_keypair
-    ):
+    def test_fast_aggregate_verify_valid(self, deterministic_keypair, second_keypair):
         """FastAggregateVerify succeeds for valid same-message aggregate."""
         msg = b"beacon block root"
         sig1 = deterministic_keypair.sign(msg)
         sig2 = second_keypair.sign(msg)
         agg = RealBLS12381.aggregate_signatures([sig1, sig2])
 
-        assert RealBLS12381.fast_aggregate_verify(
-            [deterministic_keypair.public_key, second_keypair.public_key],
-            msg,
-            agg,
-        ) is True
+        assert (
+            RealBLS12381.fast_aggregate_verify(
+                [deterministic_keypair.public_key, second_keypair.public_key],
+                msg,
+                agg,
+            )
+            is True
+        )
 
-    def test_fast_aggregate_verify_wrong_message(
-        self, deterministic_keypair, second_keypair
-    ):
+    def test_fast_aggregate_verify_wrong_message(self, deterministic_keypair, second_keypair):
         """FastAggregateVerify fails for wrong message."""
         msg = b"correct"
         sig1 = deterministic_keypair.sign(msg)
         sig2 = second_keypair.sign(msg)
         agg = RealBLS12381.aggregate_signatures([sig1, sig2])
 
-        assert RealBLS12381.fast_aggregate_verify(
-            [deterministic_keypair.public_key, second_keypair.public_key],
-            b"wrong",
-            agg,
-        ) is False
+        assert (
+            RealBLS12381.fast_aggregate_verify(
+                [deterministic_keypair.public_key, second_keypair.public_key],
+                b"wrong",
+                agg,
+            )
+            is False
+        )
 
     def test_fast_aggregate_verify_missing_signer(
         self, deterministic_keypair, second_keypair, third_keypair
@@ -295,11 +293,14 @@ class TestRealBLS12381:
         agg = RealBLS12381.aggregate_signatures([sig1, sig2])
 
         # Use third_keypair instead of second_keypair — should fail
-        assert RealBLS12381.fast_aggregate_verify(
-            [deterministic_keypair.public_key, third_keypair.public_key],
-            msg,
-            agg,
-        ) is False
+        assert (
+            RealBLS12381.fast_aggregate_verify(
+                [deterministic_keypair.public_key, third_keypair.public_key],
+                msg,
+                agg,
+            )
+            is False
+        )
 
     def test_fast_aggregate_verify_empty_pubkeys(self):
         """FastAggregateVerify returns False for empty pubkeys."""
@@ -309,15 +310,13 @@ class TestRealBLS12381:
         """FastAggregateVerify works with a single signer."""
         msg = b"solo"
         sig = deterministic_keypair.sign(msg)
-        assert RealBLS12381.fast_aggregate_verify(
-            [deterministic_keypair.public_key], msg, sig
-        ) is True
+        assert (
+            RealBLS12381.fast_aggregate_verify([deterministic_keypair.public_key], msg, sig) is True
+        )
 
     # ---- AggregateVerify (different messages) ------------------------------
 
-    def test_aggregate_verify_valid(
-        self, deterministic_keypair, second_keypair
-    ):
+    def test_aggregate_verify_valid(self, deterministic_keypair, second_keypair):
         """AggregateVerify succeeds for different messages."""
         msg1 = b"message one"
         msg2 = b"message two"
@@ -325,15 +324,16 @@ class TestRealBLS12381:
         sig2 = second_keypair.sign(msg2)
         agg = RealBLS12381.aggregate_signatures([sig1, sig2])
 
-        assert RealBLS12381.verify_aggregate(
-            [deterministic_keypair.public_key, second_keypair.public_key],
-            [msg1, msg2],
-            agg,
-        ) is True
+        assert (
+            RealBLS12381.verify_aggregate(
+                [deterministic_keypair.public_key, second_keypair.public_key],
+                [msg1, msg2],
+                agg,
+            )
+            is True
+        )
 
-    def test_aggregate_verify_wrong_message(
-        self, deterministic_keypair, second_keypair
-    ):
+    def test_aggregate_verify_wrong_message(self, deterministic_keypair, second_keypair):
         """AggregateVerify fails when a message is swapped."""
         msg1 = b"message one"
         msg2 = b"message two"
@@ -342,11 +342,14 @@ class TestRealBLS12381:
         agg = RealBLS12381.aggregate_signatures([sig1, sig2])
 
         # Swap messages
-        assert RealBLS12381.verify_aggregate(
-            [deterministic_keypair.public_key, second_keypair.public_key],
-            [msg2, msg1],
-            agg,
-        ) is False
+        assert (
+            RealBLS12381.verify_aggregate(
+                [deterministic_keypair.public_key, second_keypair.public_key],
+                [msg2, msg1],
+                agg,
+            )
+            is False
+        )
 
     def test_aggregate_verify_length_mismatch(self, deterministic_keypair):
         """AggregateVerify raises on pubkeys/messages length mismatch."""
@@ -366,10 +369,12 @@ class TestRealBLS12381:
 
     def test_aggregate_pubkeys(self, deterministic_keypair, second_keypair):
         """Aggregating pubkeys produces a 48-byte result."""
-        agg = RealBLS12381.aggregate_pubkeys([
-            deterministic_keypair.public_key,
-            second_keypair.public_key,
-        ])
+        agg = RealBLS12381.aggregate_pubkeys(
+            [
+                deterministic_keypair.public_key,
+                second_keypair.public_key,
+            ]
+        )
         assert isinstance(agg, bytes)
         assert len(agg) == G1_SIZE
 
@@ -384,14 +389,14 @@ class TestRealBLS12381:
         ]
 
         # Only first and third
-        agg_partial = RealBLS12381.aggregate_pubkeys(
-            all_pks, bitmap=[True, False, True]
-        )
+        agg_partial = RealBLS12381.aggregate_pubkeys(all_pks, bitmap=[True, False, True])
         # Compare with manual aggregate of just first and third
-        agg_manual = RealBLS12381.aggregate_pubkeys([
-            deterministic_keypair.public_key,
-            third_keypair.public_key,
-        ])
+        agg_manual = RealBLS12381.aggregate_pubkeys(
+            [
+                deterministic_keypair.public_key,
+                third_keypair.public_key,
+            ]
+        )
         assert agg_partial == agg_manual
 
     def test_aggregate_pubkeys_bitmap_mismatch(self, deterministic_keypair):
@@ -407,9 +412,7 @@ class TestRealBLS12381:
         with pytest.raises(ValueError, match="Cannot aggregate"):
             RealBLS12381.aggregate_pubkeys([])
 
-    def test_aggregate_pubkeys_all_false_bitmap(
-        self, deterministic_keypair, second_keypair
-    ):
+    def test_aggregate_pubkeys_all_false_bitmap(self, deterministic_keypair, second_keypair):
         """All-False bitmap results in zero selected — raises."""
         with pytest.raises(ValueError, match="Cannot aggregate"):
             RealBLS12381.aggregate_pubkeys(
@@ -423,31 +426,33 @@ class TestRealBLS12381:
         """Valid sync committee signature verifies."""
         block_root = hashlib.sha256(b"block 42").digest()
         # All 4 members sign
-        agg_sig, bits = small_committee.sign_beacon_block_root(
-            block_root, [0, 1, 2, 3]
+        agg_sig, bits = small_committee.sign_beacon_block_root(block_root, [0, 1, 2, 3])
+        assert (
+            RealBLS12381.verify_sync_committee(
+                committee_pubkeys=small_committee.pubkeys,
+                signature=agg_sig,
+                header_root=block_root,
+                participation_bitmap=bits,
+                threshold=3,
+            )
+            is True
         )
-        assert RealBLS12381.verify_sync_committee(
-            committee_pubkeys=small_committee.pubkeys,
-            signature=agg_sig,
-            header_root=block_root,
-            participation_bitmap=bits,
-            threshold=3,
-        ) is True
 
     def test_verify_sync_committee_below_threshold(self, small_committee):
         """Below-threshold participation fails."""
         block_root = hashlib.sha256(b"block 42").digest()
         # Only 2 of 4 sign, threshold is 3
-        agg_sig, bits = small_committee.sign_beacon_block_root(
-            block_root, [0, 1]
+        agg_sig, bits = small_committee.sign_beacon_block_root(block_root, [0, 1])
+        assert (
+            RealBLS12381.verify_sync_committee(
+                committee_pubkeys=small_committee.pubkeys,
+                signature=agg_sig,
+                header_root=block_root,
+                participation_bitmap=bits,
+                threshold=3,
+            )
+            is False
         )
-        assert RealBLS12381.verify_sync_committee(
-            committee_pubkeys=small_committee.pubkeys,
-            signature=agg_sig,
-            header_root=block_root,
-            participation_bitmap=bits,
-            threshold=3,
-        ) is False
 
     def test_verify_sync_committee_bitmap_mismatch(self, small_committee):
         """Bitmap length mismatch raises."""
@@ -483,6 +488,7 @@ class TestRealBLS12381:
 # ===================================================================
 # TestRealSyncCommitteeBLS
 # ===================================================================
+
 
 class TestRealSyncCommitteeBLS:
     """Tests for :class:`RealSyncCommitteeBLS`."""
@@ -547,61 +553,48 @@ class TestRealSyncCommitteeBLS:
     def test_sign_and_verify_all_participants(self, small_committee):
         """All members sign → verify succeeds."""
         block_root = os.urandom(32)
-        agg_sig, bits = small_committee.sign_beacon_block_root(
-            block_root, [0, 1, 2, 3]
-        )
+        agg_sig, bits = small_committee.sign_beacon_block_root(block_root, [0, 1, 2, 3])
         assert len(agg_sig) == G2_SIZE
         assert bits == [True, True, True, True]
-        assert small_committee.verify_sync_committee_signature(
-            block_root, agg_sig, bits
-        ) is True
+        assert small_committee.verify_sync_committee_signature(block_root, agg_sig, bits) is True
 
     def test_sign_and_verify_threshold_exactly(self, small_committee):
         """Exactly threshold members sign → verify succeeds."""
         block_root = os.urandom(32)
         # threshold=3, so 3 out of 4 should pass
-        agg_sig, bits = small_committee.sign_beacon_block_root(
-            block_root, [0, 1, 2]
-        )
+        agg_sig, bits = small_committee.sign_beacon_block_root(block_root, [0, 1, 2])
         assert sum(bits) == 3
-        assert small_committee.verify_sync_committee_signature(
-            block_root, agg_sig, bits
-        ) is True
+        assert small_committee.verify_sync_committee_signature(block_root, agg_sig, bits) is True
 
     def test_sign_and_verify_below_threshold(self, small_committee):
         """Below-threshold participation → verify fails."""
         block_root = os.urandom(32)
         # threshold=3, only 2 sign
-        agg_sig, bits = small_committee.sign_beacon_block_root(
-            block_root, [0, 1]
-        )
+        agg_sig, bits = small_committee.sign_beacon_block_root(block_root, [0, 1])
         assert sum(bits) == 2
-        assert small_committee.verify_sync_committee_signature(
-            block_root, agg_sig, bits
-        ) is False
+        assert small_committee.verify_sync_committee_signature(block_root, agg_sig, bits) is False
 
     def test_sign_wrong_block_root(self, small_committee):
         """Signature for one block root does not verify for another."""
         root1 = os.urandom(32)
         root2 = os.urandom(32)
-        agg_sig, bits = small_committee.sign_beacon_block_root(
-            root1, [0, 1, 2, 3]
-        )
-        assert small_committee.verify_sync_committee_signature(
-            root2, agg_sig, bits
-        ) is False
+        agg_sig, bits = small_committee.sign_beacon_block_root(root1, [0, 1, 2, 3])
+        assert small_committee.verify_sync_committee_signature(root2, agg_sig, bits) is False
 
     def test_sign_with_external_pubkeys(self, small_committee):
         """Verification works with explicitly provided pubkeys."""
         block_root = os.urandom(32)
-        agg_sig, bits = small_committee.sign_beacon_block_root(
-            block_root, [0, 1, 2, 3]
-        )
+        agg_sig, bits = small_committee.sign_beacon_block_root(block_root, [0, 1, 2, 3])
         # Pass pubkeys explicitly
-        assert small_committee.verify_sync_committee_signature(
-            block_root, agg_sig, bits,
-            committee_pubkeys=small_committee.pubkeys,
-        ) is True
+        assert (
+            small_committee.verify_sync_committee_signature(
+                block_root,
+                agg_sig,
+                bits,
+                committee_pubkeys=small_committee.pubkeys,
+            )
+            is True
+        )
 
     def test_sign_invalid_index(self, small_committee):
         """Out-of-range participant index raises ValueError."""
@@ -613,9 +606,7 @@ class TestRealSyncCommitteeBLS:
     def test_sign_negative_index(self, small_committee):
         """Negative participant index raises ValueError."""
         with pytest.raises(ValueError, match="out of range"):
-            small_committee.sign_beacon_block_root(
-                os.urandom(32), [0, -1]
-            )
+            small_committee.sign_beacon_block_root(os.urandom(32), [0, -1])
 
     def test_sign_not_initialized(self):
         """Signing without setup raises ValueError."""
@@ -691,71 +682,53 @@ class TestRealSyncCommitteeBLS:
 # TestMediumCommittee — more thorough with 8 members
 # ===================================================================
 
+
 class TestMediumCommittee:
     """Tests with an 8-member committee for broader coverage."""
 
     def test_supermajority_signs(self, medium_committee):
         """6 of 8 (exactly threshold) signs and verifies."""
         block_root = hashlib.sha256(b"slot 100").digest()
-        agg_sig, bits = medium_committee.sign_beacon_block_root(
-            block_root, [0, 1, 2, 3, 4, 5]
-        )
+        agg_sig, bits = medium_committee.sign_beacon_block_root(block_root, [0, 1, 2, 3, 4, 5])
         assert sum(bits) == 6
-        assert medium_committee.verify_sync_committee_signature(
-            block_root, agg_sig, bits
-        ) is True
+        assert medium_committee.verify_sync_committee_signature(block_root, agg_sig, bits) is True
 
     def test_five_of_eight_below_threshold(self, medium_committee):
         """5 of 8 (below threshold=6) fails."""
         block_root = hashlib.sha256(b"slot 101").digest()
-        agg_sig, bits = medium_committee.sign_beacon_block_root(
-            block_root, [0, 1, 2, 3, 4]
-        )
+        agg_sig, bits = medium_committee.sign_beacon_block_root(block_root, [0, 1, 2, 3, 4])
         assert sum(bits) == 5
-        assert medium_committee.verify_sync_committee_signature(
-            block_root, agg_sig, bits
-        ) is False
+        assert medium_committee.verify_sync_committee_signature(block_root, agg_sig, bits) is False
 
     def test_all_eight_sign(self, medium_committee):
         """All 8 members sign → verify succeeds."""
         block_root = hashlib.sha256(b"slot 102").digest()
-        agg_sig, bits = medium_committee.sign_beacon_block_root(
-            block_root, list(range(8))
-        )
+        agg_sig, bits = medium_committee.sign_beacon_block_root(block_root, list(range(8)))
         assert sum(bits) == 8
-        assert medium_committee.verify_sync_committee_signature(
-            block_root, agg_sig, bits
-        ) is True
+        assert medium_committee.verify_sync_committee_signature(block_root, agg_sig, bits) is True
 
     def test_different_participant_subsets(self, medium_committee):
         """Different subsets produce different signatures."""
         block_root = hashlib.sha256(b"slot 103").digest()
-        agg1, _ = medium_committee.sign_beacon_block_root(
-            block_root, [0, 1, 2, 3, 4, 5]
-        )
-        agg2, _ = medium_committee.sign_beacon_block_root(
-            block_root, [2, 3, 4, 5, 6, 7]
-        )
+        agg1, _ = medium_committee.sign_beacon_block_root(block_root, [0, 1, 2, 3, 4, 5])
+        agg2, _ = medium_committee.sign_beacon_block_root(block_root, [2, 3, 4, 5, 6, 7])
         assert agg1 != agg2
 
     def test_cross_verify_fails(self, medium_committee):
         """Signature from one subset doesn't verify for different bitmap."""
         block_root = hashlib.sha256(b"slot 104").digest()
         # Sign with [0,1,2,3,4,5]
-        agg_sig, bits1 = medium_committee.sign_beacon_block_root(
-            block_root, [0, 1, 2, 3, 4, 5]
-        )
+        agg_sig, bits1 = medium_committee.sign_beacon_block_root(block_root, [0, 1, 2, 3, 4, 5])
         # Create different bitmap — say [2,3,4,5,6,7]
         bits2 = [False, False, True, True, True, True, True, True]
         # Verification should fail because the aggregate doesn't match bits2
-        assert medium_committee.verify_sync_committee_signature(
-            block_root, agg_sig, bits2
-        ) is False
+        assert medium_committee.verify_sync_committee_signature(block_root, agg_sig, bits2) is False
 
 
 # ===================================================================
 # TestCrossCompatibility — simulated vs real
 # ===================================================================
+
 
 class TestCrossCompatibility:
     """Verify that real and simulated backends have matching interfaces."""
@@ -774,6 +747,7 @@ class TestCrossCompatibility:
             BLSKeyPair,
             SyncCommitteeBLS,
         )
+
         KP, Ops, SC = get_bls_backend(real=False)
         assert KP is BLSKeyPair
         assert Ops is BLS12381
@@ -813,6 +787,7 @@ class TestCrossCompatibility:
 # TestConstants
 # ===================================================================
 
+
 class TestConstants:
     """Verify cryptographic constants match Ethereum spec."""
 
@@ -845,6 +820,7 @@ class TestConstants:
 # TestEth2SpecVectors — Known test vectors
 # ===================================================================
 
+
 class TestEth2SpecVectors:
     """Test against known Ethereum 2.0 BLS test vectors.
 
@@ -856,6 +832,7 @@ class TestEth2SpecVectors:
         """KeyGen with known IKM produces expected key."""
         ikm = b"\x00" * 32
         from py_ecc.bls import G2ProofOfPossession as bls
+
         sk = bls.KeyGen(ikm)
         pk = bls.SkToPk(sk)
         # The secret key should be a valid scalar in [1, CURVE_ORDER)
@@ -882,9 +859,7 @@ class TestEth2SpecVectors:
         sigs = [kps[i].sign(msgs[i]) for i in range(3)]
         agg = RealBLS12381.aggregate_signatures(sigs)
 
-        assert RealBLS12381.verify_aggregate(
-            [kp.public_key for kp in kps], msgs, agg
-        ) is True
+        assert RealBLS12381.verify_aggregate([kp.public_key for kp in kps], msgs, agg) is True
 
     def test_fast_aggregate_verify_four_signers(self):
         """Four signers on same message → FastAggregateVerify."""
@@ -893,9 +868,7 @@ class TestEth2SpecVectors:
         sigs = [kp.sign(msg) for kp in kps]
         agg = RealBLS12381.aggregate_signatures(sigs)
 
-        assert RealBLS12381.fast_aggregate_verify(
-            [kp.public_key for kp in kps], msg, agg
-        ) is True
+        assert RealBLS12381.fast_aggregate_verify([kp.public_key for kp in kps], msg, agg) is True
 
     def test_pop_prove_and_verify(self):
         """Proof of Possession roundtrip per Ethereum spec."""
@@ -911,6 +884,7 @@ class TestEth2SpecVectors:
 # ===================================================================
 # TestEdgeCases
 # ===================================================================
+
 
 class TestEdgeCases:
     """Edge cases and error scenarios."""
@@ -980,6 +954,4 @@ class TestEdgeCases:
         assert bits[0] is True
         # Verification should FAIL because aggregate includes sig_0 twice
         # but the verifier only accounts for it once
-        assert small_committee.verify_sync_committee_signature(
-            root, agg_sig, bits
-        ) is False
+        assert small_committee.verify_sync_committee_signature(root, agg_sig, bits) is False

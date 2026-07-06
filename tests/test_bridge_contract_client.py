@@ -23,6 +23,7 @@ import web3.middleware as _mw  # noqa: E402
 if not hasattr(_mw, "geth_poa_middleware"):
     _mw.geth_poa_middleware = None  # type: ignore[attr-defined]
 
+from asi_build.blockchain.web3_integration.contract_manager import ContractInterface  # noqa: E402
 from asi_build.rings.bridge.contract_client import (  # noqa: E402
     BRIDGE_ABI,
     TOKEN_ABI,
@@ -31,7 +32,6 @@ from asi_build.rings.bridge.contract_client import (  # noqa: E402
     BridgeDeployer,
     did_to_bytes32,
 )
-from asi_build.blockchain.web3_integration.contract_manager import ContractInterface  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -112,7 +112,8 @@ class TestDeposit:
     async def test_deposit_sends_correct_function_and_args(self, client, mock_cm):
         await client.deposit("did:rings:ed25519:abc", 10**18)
         mock_cm.send_contract_transaction.assert_awaited_once_with(
-            "RingsBridge", "deposit",
+            "RingsBridge",
+            "deposit",
             args=[did_to_bytes32("did:rings:ed25519:abc")],
             value=10**18,
         )
@@ -127,7 +128,8 @@ class TestDeposit:
     async def test_deposit_token_sends_correct_args(self, client, mock_cm):
         await client.deposit_token(TOKEN_ADDR, 500, "did:rings:xyz")
         mock_cm.send_contract_transaction.assert_awaited_once_with(
-            "RingsBridge", "depositToken",
+            "RingsBridge",
+            "depositToken",
             args=[TOKEN_ADDR, 500, did_to_bytes32("did:rings:xyz")],
             value=0,
         )
@@ -157,7 +159,8 @@ class TestWithdraw:
     async def test_withdraw_sends_correct_args(self, client, mock_cm):
         await client.withdraw(RECIPIENT_ADDR, self.DID_BYTES, 10**18, 7, self.PROOF, self.INPUTS)
         mock_cm.send_contract_transaction.assert_awaited_once_with(
-            "RingsBridge", "withdraw",
+            "RingsBridge",
+            "withdraw",
             args=[RECIPIENT_ADDR, self.DID_BYTES, 10**18, 7, self.PROOF, self.INPUTS],
             value=0,
         )
@@ -165,10 +168,17 @@ class TestWithdraw:
     @pytest.mark.asyncio
     async def test_withdraw_token_sends_all_seven_args(self, client, mock_cm):
         await client.withdraw_token(
-            TOKEN_ADDR, RECIPIENT_ADDR, self.DID_BYTES, 200, 3, self.PROOF, self.INPUTS,
+            TOKEN_ADDR,
+            RECIPIENT_ADDR,
+            self.DID_BYTES,
+            200,
+            3,
+            self.PROOF,
+            self.INPUTS,
         )
         mock_cm.send_contract_transaction.assert_awaited_once_with(
-            "RingsBridge", "withdrawToken",
+            "RingsBridge",
+            "withdrawToken",
             args=[TOKEN_ADDR, RECIPIENT_ADDR, self.DID_BYTES, 200, 3, self.PROOF, self.INPUTS],
             value=0,
         )
@@ -206,7 +216,8 @@ class TestSyncCommittee:
     async def test_update_sends_correct_args(self, client, mock_cm):
         await client.update_sync_committee(self.ROOT, 999, self.PROOF, [5, 6])
         mock_cm.send_contract_transaction.assert_awaited_once_with(
-            "RingsBridge", "updateSyncCommittee",
+            "RingsBridge",
+            "updateSyncCommittee",
             args=[self.ROOT, 999, self.PROOF, [5, 6]],
             value=0,
         )
@@ -234,7 +245,12 @@ class TestViewFunctions:
     async def test_get_deposit_info_parses_tuple(self, client, mock_cm):
         did_bytes = did_to_bytes32("did:rings:test")
         mock_cm.call_contract_function.return_value = (
-            "0xsender", did_bytes, 100, "0xToken", 42, 1,
+            "0xsender",
+            did_bytes,
+            100,
+            "0xToken",
+            42,
+            1,
         )
         info = await client.get_deposit_info(1)
         assert info == {
@@ -249,8 +265,12 @@ class TestViewFunctions:
     @pytest.mark.asyncio
     async def test_get_deposit_info_handles_dict_return(self, client, mock_cm):
         expected = {
-            "depositor": "0x1", "ringsDID": b"\x00" * 32,
-            "amount": 1, "token": "0x0", "timestamp": 2, "nonce": 0,
+            "depositor": "0x1",
+            "ringsDID": b"\x00" * 32,
+            "amount": 1,
+            "token": "0x0",
+            "timestamp": 2,
+            "nonce": 0,
         }
         mock_cm.call_contract_function.return_value = expected
         info = await client.get_deposit_info(0)
@@ -260,7 +280,12 @@ class TestViewFunctions:
     async def test_get_withdrawal_info_parses_tuple(self, client, mock_cm):
         did_bytes = did_to_bytes32("did:rings:recip")
         mock_cm.call_contract_function.return_value = (
-            "0xrecip", did_bytes, 500, "0xToken", 99, 3,
+            "0xrecip",
+            did_bytes,
+            500,
+            "0xToken",
+            99,
+            3,
         )
         info = await client.get_withdrawal_info(3)
         assert info == {
@@ -278,7 +303,9 @@ class TestViewFunctions:
         result = await client.get_remaining_daily_limit()
         assert result == 10**20
         mock_cm.call_contract_function.assert_awaited_with(
-            "RingsBridge", "getRemainingDailyLimit", args=[],
+            "RingsBridge",
+            "getRemainingDailyLimit",
+            args=[],
         )
 
     @pytest.mark.asyncio
@@ -287,7 +314,9 @@ class TestViewFunctions:
         result = await client.get_latest_verified_slot()
         assert result == 8192
         mock_cm.call_contract_function.assert_awaited_with(
-            "RingsBridge", "latestVerifiedSlot", args=[],
+            "RingsBridge",
+            "latestVerifiedSlot",
+            args=[],
         )
 
     @pytest.mark.asyncio
@@ -311,7 +340,9 @@ class TestViewFunctions:
         mock_cm.call_contract_function.return_value = True
         assert await client.is_paused() is True
         mock_cm.call_contract_function.assert_awaited_with(
-            "RingsBridge", "paused", args=[],
+            "RingsBridge",
+            "paused",
+            args=[],
         )
 
     @pytest.mark.asyncio
@@ -335,35 +366,50 @@ class TestEventFetching:
     async def test_get_deposit_events_calls_correct_name(self, client, mock_cm):
         await client.get_deposit_events(100)
         mock_cm.get_contract_events.assert_awaited_once_with(
-            "RingsBridge", "Deposited", from_block=100, to_block="latest",
+            "RingsBridge",
+            "Deposited",
+            from_block=100,
+            to_block="latest",
         )
 
     @pytest.mark.asyncio
     async def test_get_withdrawal_events_calls_correct_name(self, client, mock_cm):
         await client.get_withdrawal_events(0)
         mock_cm.get_contract_events.assert_awaited_once_with(
-            "RingsBridge", "Withdrawn", from_block=0, to_block="latest",
+            "RingsBridge",
+            "Withdrawn",
+            from_block=0,
+            to_block="latest",
         )
 
     @pytest.mark.asyncio
     async def test_get_sync_committee_events_calls_correct_name(self, client, mock_cm):
         await client.get_sync_committee_events(50)
         mock_cm.get_contract_events.assert_awaited_once_with(
-            "RingsBridge", "SyncCommitteeUpdated", from_block=50, to_block="latest",
+            "RingsBridge",
+            "SyncCommitteeUpdated",
+            from_block=50,
+            to_block="latest",
         )
 
     @pytest.mark.asyncio
     async def test_from_and_to_block_passed(self, client, mock_cm):
         await client.get_deposit_events(10, to_block=20)
         mock_cm.get_contract_events.assert_awaited_once_with(
-            "RingsBridge", "Deposited", from_block=10, to_block=20,
+            "RingsBridge",
+            "Deposited",
+            from_block=10,
+            to_block=20,
         )
 
     @pytest.mark.asyncio
     async def test_to_block_defaults_to_latest_when_none(self, client, mock_cm):
         await client.get_withdrawal_events(0, to_block=None)
         mock_cm.get_contract_events.assert_awaited_once_with(
-            "RingsBridge", "Withdrawn", from_block=0, to_block="latest",
+            "RingsBridge",
+            "Withdrawn",
+            from_block=0,
+            to_block="latest",
         )
 
 
@@ -378,7 +424,10 @@ class TestAdmin:
         result = await client.pause()
         assert result == TX_HASH
         mock_cm.send_contract_transaction.assert_awaited_once_with(
-            "RingsBridge", "emergencyPause", args=[], value=0,
+            "RingsBridge",
+            "emergencyPause",
+            args=[],
+            value=0,
         )
 
     @pytest.mark.asyncio
@@ -386,7 +435,10 @@ class TestAdmin:
         result = await client.unpause()
         assert result == TX_HASH
         mock_cm.send_contract_transaction.assert_awaited_once_with(
-            "RingsBridge", "unpause", args=[], value=0,
+            "RingsBridge",
+            "unpause",
+            args=[],
+            value=0,
         )
 
     @pytest.mark.asyncio
@@ -394,7 +446,8 @@ class TestAdmin:
         result = await client.set_rate_limit(10**20, 10**18)
         assert result == TX_HASH
         mock_cm.send_contract_transaction.assert_awaited_once_with(
-            "RingsBridge", "updateRateLimits",
+            "RingsBridge",
+            "updateRateLimits",
             args=[10**20, 10**18],
             value=0,
         )
@@ -428,8 +481,11 @@ class TestDeployer:
     async def test_deploy_verifier(self, deployer, mock_cm):
         mock_cm.deploy_contract.return_value = self._make_ci("Groth16Verifier", VERIFIER_ADDR)
         addr = await deployer.deploy_verifier(
-            self.VK["alpha"], self.VK["beta"],
-            self.VK["gamma"], self.VK["delta"], self.VK["ic"],
+            self.VK["alpha"],
+            self.VK["beta"],
+            self.VK["gamma"],
+            self.VK["delta"],
+            self.VK["ic"],
         )
         assert addr == VERIFIER_ADDR
         mock_cm.deploy_contract.assert_awaited_once()
@@ -437,8 +493,11 @@ class TestDeployer:
         assert call_kwargs["contract_name"] == "Groth16Verifier"
         assert len(call_kwargs["abi"]) > 0  # compiled or inline ABI
         assert call_kwargs["constructor_args"] == [
-            self.VK["alpha"], self.VK["beta"],
-            self.VK["gamma"], self.VK["delta"], self.VK["ic"],
+            self.VK["alpha"],
+            self.VK["beta"],
+            self.VK["gamma"],
+            self.VK["delta"],
+            self.VK["ic"],
         ]
 
     @pytest.mark.asyncio
@@ -451,10 +510,10 @@ class TestDeployer:
         assert len(call_kwargs["abi"]) > 0  # compiled or inline ABI
         # Constructor: (initialAdmin, guardian, dailyLimit, perTxLimit, verifier)
         args = call_kwargs["constructor_args"]
-        assert args[1] == GUARDIAN_ADDR   # guardian
-        assert args[2] == 10**20          # daily limit
-        assert args[3] == 10**18          # per-tx limit
-        assert args[4] == VERIFIER_ADDR   # verifier
+        assert args[1] == GUARDIAN_ADDR  # guardian
+        assert args[2] == 10**20  # daily limit
+        assert args[3] == 10**18  # per-tx limit
+        assert args[4] == VERIFIER_ADDR  # verifier
 
     @pytest.mark.asyncio
     async def test_deploy_bridged_token_deploys_and_grants_role(self, deployer, mock_cm):
@@ -479,8 +538,10 @@ class TestDeployer:
             self._make_ci("BridgedToken_bASI", TOKEN_ADDR),
         ]
         result = await deployer.deploy_full_suite(
-            daily_limit=10**20, per_tx_limit=10**18,
-            guardian=GUARDIAN_ADDR, vk_params=self.VK,
+            daily_limit=10**20,
+            per_tx_limit=10**18,
+            guardian=GUARDIAN_ADDR,
+            vk_params=self.VK,
         )
         assert mock_cm.deploy_contract.await_count == 3
 
@@ -492,8 +553,10 @@ class TestDeployer:
             self._make_ci("BridgedToken_bASI", TOKEN_ADDR),
         ]
         result = await deployer.deploy_full_suite(
-            daily_limit=10**20, per_tx_limit=10**18,
-            guardian=GUARDIAN_ADDR, vk_params=self.VK,
+            daily_limit=10**20,
+            per_tx_limit=10**18,
+            guardian=GUARDIAN_ADDR,
+            vk_params=self.VK,
         )
         assert result == {
             "verifier": VERIFIER_ADDR,
@@ -523,11 +586,21 @@ class TestABIValidation:
     def test_bridge_abi_has_all_expected_functions(self):
         fn_names = {e["name"] for e in BRIDGE_ABI if e["type"] == "function"}
         expected = {
-            "deposit", "depositToken", "withdraw", "withdrawToken",
-            "updateSyncCommittee", "emergencyPause", "unpause",
-            "updateRateLimits", "getDepositInfo", "getWithdrawalInfo",
-            "getRemainingDailyLimit", "latestVerifiedSlot",
-            "syncCommitteeRoot", "paused", "depositNonce",
+            "deposit",
+            "depositToken",
+            "withdraw",
+            "withdrawToken",
+            "updateSyncCommittee",
+            "emergencyPause",
+            "unpause",
+            "updateRateLimits",
+            "getDepositInfo",
+            "getWithdrawalInfo",
+            "getRemainingDailyLimit",
+            "latestVerifiedSlot",
+            "syncCommitteeRoot",
+            "paused",
+            "depositNonce",
             "withdrawalNonce",
         }
         assert expected.issubset(fn_names)

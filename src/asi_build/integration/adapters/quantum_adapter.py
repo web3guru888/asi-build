@@ -187,9 +187,7 @@ class QuantumBlackboardAdapter:
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
             capabilities=(
-                ModuleCapability.PRODUCER
-                | ModuleCapability.CONSUMER
-                | ModuleCapability.TRANSFORMER
+                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.TRANSFORMER
             ),
             description=(
                 "Quantum computing module: circuit simulation (QuantumSimulator), "
@@ -453,16 +451,21 @@ class QuantumBlackboardAdapter:
             opt_params = getattr(self._qaoa, "optimal_params", None)
             if opt_params is not None:
                 try:
-                    energy = float(
-                        getattr(self._qaoa, "optimization_history", [{}])[-1].get(
-                            "cost", None
+                    energy = (
+                        float(
+                            getattr(self._qaoa, "optimization_history", [{}])[-1].get("cost", None)
                         )
-                    ) if getattr(self._qaoa, "optimization_history", []) else None
+                        if getattr(self._qaoa, "optimization_history", [])
+                        else None
+                    )
                 except (IndexError, TypeError, ValueError):
                     energy = None
                 try:
                     import numpy as np
-                    params = opt_params.tolist() if hasattr(opt_params, "tolist") else list(opt_params)
+
+                    params = (
+                        opt_params.tolist() if hasattr(opt_params, "tolist") else list(opt_params)
+                    )
                 except Exception:
                     params = list(opt_params)
                 history = getattr(self._qaoa, "optimization_history", None)
@@ -473,7 +476,10 @@ class QuantumBlackboardAdapter:
             if opt_params is not None:
                 try:
                     import numpy as np
-                    params = opt_params.tolist() if hasattr(opt_params, "tolist") else list(opt_params)
+
+                    params = (
+                        opt_params.tolist() if hasattr(opt_params, "tolist") else list(opt_params)
+                    )
                 except Exception:
                     params = list(opt_params)
                 source_name = "vqe"
@@ -499,9 +505,7 @@ class QuantumBlackboardAdapter:
         }
         if history:
             data["iterations"] = len(history)
-            data["convergence_trace"] = [
-                h.get("cost") for h in history[-10:]  # last 10 steps
-            ]
+            data["convergence_trace"] = [h.get("cost") for h in history[-10:]]  # last 10 steps
 
         entry = BlackboardEntry(
             topic="quantum.optimization.result",
@@ -564,9 +568,7 @@ class QuantumBlackboardAdapter:
             data=data,
             source_module=self.MODULE_NAME,
             confidence=min(1.0, latest_advantage / 2.0),
-            priority=(
-                EntryPriority.HIGH if latest_advantage > 1.5 else EntryPriority.NORMAL
-            ),
+            priority=(EntryPriority.HIGH if latest_advantage > 1.5 else EntryPriority.NORMAL),
             ttl_seconds=self._ml_ttl,
             tags=frozenset({"hybrid_ml", "prediction", "quantum_advantage"}),
             metadata={"prediction_hash": pred_hash},
@@ -851,9 +853,7 @@ class QuantumBlackboardAdapter:
 
         if self._qaoa is not None:
             snap["qaoa_has_solution"] = getattr(self._qaoa, "optimal_params", None) is not None
-            snap["qaoa_history_len"] = len(
-                getattr(self._qaoa, "optimization_history", [])
-            )
+            snap["qaoa_history_len"] = len(getattr(self._qaoa, "optimization_history", []))
 
         if self._vqe is not None:
             snap["vqe_has_solution"] = getattr(self._vqe, "optimal_params", None) is not None

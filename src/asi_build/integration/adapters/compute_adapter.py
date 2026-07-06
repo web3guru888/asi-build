@@ -135,9 +135,7 @@ class ComputeBlackboardAdapter:
         return ModuleInfo(
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
-            capabilities=(
-                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER
-            ),
+            capabilities=(ModuleCapability.PRODUCER | ModuleCapability.CONSUMER),
             description=(
                 "Compute resource pooling: job scheduling, resource allocation, "
                 "and compute metrics collection."
@@ -291,12 +289,15 @@ class ComputeBlackboardAdapter:
         last_key = None
         if self._last_queue_status is not None:
             last_key = (
-                self._last_queue_status.get("pending_jobs",
-                                            self._last_queue_status.get("pending", None)),
-                self._last_queue_status.get("running_jobs",
-                                            self._last_queue_status.get("running", None)),
-                self._last_queue_status.get("completed_jobs",
-                                            self._last_queue_status.get("completed", None)),
+                self._last_queue_status.get(
+                    "pending_jobs", self._last_queue_status.get("pending", None)
+                ),
+                self._last_queue_status.get(
+                    "running_jobs", self._last_queue_status.get("running", None)
+                ),
+                self._last_queue_status.get(
+                    "completed_jobs", self._last_queue_status.get("completed", None)
+                ),
             )
         if queue_key == last_key:
             return None
@@ -521,11 +522,13 @@ class ComputeBlackboardAdapter:
             submit_fn = getattr(self._scheduler, "submit_job", None)
             if submit_fn is not None:
                 try:
-                    submit_fn({
-                        "name": f"followup_{event.event_id[:8]}",
-                        "source": f"event:{event.event_id}",
-                        "payload": payload,
-                    })
+                    submit_fn(
+                        {
+                            "name": f"followup_{event.event_id[:8]}",
+                            "source": f"event:{event.event_id}",
+                            "payload": payload,
+                        }
+                    )
                 except (TypeError, Exception):
                     pass
 
@@ -538,10 +541,12 @@ class ComputeBlackboardAdapter:
             release_fn = getattr(self._allocator, "deallocate_resources", None)
             if release_fn is not None:
                 try:
-                    release_fn({
-                        "round_id": payload["round_id"],
-                        "source": f"event:{event.event_id}",
-                    })
+                    release_fn(
+                        {
+                            "round_id": payload["round_id"],
+                            "source": f"event:{event.event_id}",
+                        }
+                    )
                 except Exception:
                     pass
 

@@ -13,10 +13,10 @@ from typing import Protocol, Sequence, runtime_checkable
 
 from .types import TemporalEdge, TemporalGraphConfig, TemporalNode
 
-
 # ---------------------------------------------------------------------------
 # Protocol
 # ---------------------------------------------------------------------------
+
 
 @runtime_checkable
 class TemporalGraph(Protocol):
@@ -35,6 +35,7 @@ class TemporalGraph(Protocol):
 # Primary implementation
 # ---------------------------------------------------------------------------
 
+
 class DictTemporalGraph:
     """In-memory directed acyclic graph with Allen interval relations.
 
@@ -43,9 +44,7 @@ class DictTemporalGraph:
     single event-loop.
     """
 
-    def __init__(
-        self, config: TemporalGraphConfig = TemporalGraphConfig()
-    ) -> None:
+    def __init__(self, config: TemporalGraphConfig = TemporalGraphConfig()) -> None:
         self._config = config
         self._lock = asyncio.Lock()
 
@@ -80,9 +79,7 @@ class DictTemporalGraph:
     async def add_edge(self, edge: TemporalEdge) -> None:
         async with self._lock:
             if edge.from_id not in self._nodes or edge.to_id not in self._nodes:
-                raise KeyError(
-                    f"Unknown node(s): {edge.from_id!r}, {edge.to_id!r}"
-                )
+                raise KeyError(f"Unknown node(s): {edge.from_id!r}, {edge.to_id!r}")
             if self._config.consistency_check:
                 # Temporarily add the forward link and test for a cycle.
                 self._successors[edge.from_id].append(edge.to_id)
@@ -104,9 +101,7 @@ class DictTemporalGraph:
     async def get_successors(self, node_id: str) -> Sequence[TemporalNode]:
         async with self._lock:
             return [
-                self._nodes[nid]
-                for nid in self._successors.get(node_id, [])
-                if nid in self._nodes
+                self._nodes[nid] for nid in self._successors.get(node_id, []) if nid in self._nodes
             ]
 
     async def get_predecessors(self, node_id: str) -> Sequence[TemporalNode]:
@@ -149,22 +144,14 @@ class DictTemporalGraph:
         Returns the number of nodes removed.
         """
         async with self._lock:
-            stale = {
-                nid
-                for nid, n in self._nodes.items()
-                if n.timestamp_ns < horizon_ns
-            }
+            stale = {nid for nid, n in self._nodes.items() if n.timestamp_ns < horizon_ns}
             for nid in stale:
                 self._nodes.pop(nid)
                 self._successors.pop(nid, None)
                 self._predecessors.pop(nid, None)
-            self._insertion_order = deque(
-                x for x in self._insertion_order if x not in stale
-            )
+            self._insertion_order = deque(x for x in self._insertion_order if x not in stale)
             self._edges = [
-                e
-                for e in self._edges
-                if e.from_id not in stale and e.to_id not in stale
+                e for e in self._edges if e.from_id not in stale and e.to_id not in stale
             ]
             self._prune_count += len(stale)
             return len(stale)
@@ -206,6 +193,7 @@ class DictTemporalGraph:
 # ---------------------------------------------------------------------------
 # Null-object sentinel
 # ---------------------------------------------------------------------------
+
 
 class NullTemporalGraph:
     """No-op implementation for when temporal reasoning is disabled."""

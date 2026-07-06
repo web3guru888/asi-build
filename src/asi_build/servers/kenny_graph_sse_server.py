@@ -28,10 +28,10 @@ import sqlite3
 
 from neo4j import GraphDatabase
 
-
 # ---------------------------------------------------------------------------
 # Lifespan handler (replaces deprecated @app.on_event("startup")) — fix #1246
 # ---------------------------------------------------------------------------
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -272,7 +272,9 @@ async def generate_kenny_graph_stream():
             yield f"data: {data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
         except Exception as e:
-            error_data = json.dumps({"error": str(e), "timestamp": datetime.now(tz=timezone.utc).isoformat()})
+            error_data = json.dumps(
+                {"error": str(e), "timestamp": datetime.now(tz=timezone.utc).isoformat()}
+            )
             yield f"data: {error_data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
 
@@ -286,7 +288,9 @@ async def generate_supervisor_stream():
             yield f"data: {data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
         except Exception as e:
-            error_data = json.dumps({"error": str(e), "timestamp": datetime.now(tz=timezone.utc).isoformat()})
+            error_data = json.dumps(
+                {"error": str(e), "timestamp": datetime.now(tz=timezone.utc).isoformat()}
+            )
             yield f"data: {error_data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
 
@@ -305,7 +309,9 @@ async def generate_combined_stream():
             yield f"data: {data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
         except Exception as e:
-            error_data = json.dumps({"error": str(e), "timestamp": datetime.now(tz=timezone.utc).isoformat()})
+            error_data = json.dumps(
+                {"error": str(e), "timestamp": datetime.now(tz=timezone.utc).isoformat()}
+            )
             yield f"data: {error_data}\n\n"
             await asyncio.sleep(UPDATE_INTERVAL)
 

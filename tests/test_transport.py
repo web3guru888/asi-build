@@ -11,18 +11,19 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import pytest
 import time
 from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
+import pytest
+
+from asi_build.rings.client import InMemoryTransport, RingsClient
 from asi_build.rings.transport import (
     HTTPTransport,
     MultiNodeTransport,
     WebSocketTransport,
     create_transport,
 )
-from asi_build.rings.client import InMemoryTransport, RingsClient
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Helpers — mock WebSocket connection
 # ---------------------------------------------------------------------------
+
 
 class MockWebSocket:
     """Simulates a websockets.ClientConnection for testing."""
@@ -79,6 +81,7 @@ class MockWebSocket:
 # Helpers — mock aiohttp session
 # ---------------------------------------------------------------------------
 
+
 class MockHTTPResponse:
     def __init__(self, body: dict, status: int = 200):
         self._body = body
@@ -114,6 +117,7 @@ class MockHTTPSession:
 # ===================================================================
 # WebSocketTransport tests
 # ===================================================================
+
 
 class TestWebSocketTransport:
     """WebSocketTransport — 17 tests."""
@@ -162,11 +166,13 @@ class TestWebSocketTransport:
     async def test_jsonrpc_id_correlation(self):
         """Multiple concurrent requests get correctly matched to responses."""
         t = WebSocketTransport("ws://localhost:50000")
-        mock_ws = MockWebSocket(responses={
-            1: "first",
-            2: "second",
-            3: "third",
-        })
+        mock_ws = MockWebSocket(
+            responses={
+                1: "first",
+                2: "second",
+                3: "third",
+            }
+        )
 
         with patch("websockets.connect", new_callable=lambda: _async_factory(mock_ws)):
             await t.connect()
@@ -257,7 +263,9 @@ class TestWebSocketTransport:
             await asyncio.sleep(0.01)
 
             # Inject an unsolicited event
-            mock_ws.inject_message({"method": "broadcast", "params": {"topic": "test", "data": "hello"}})
+            mock_ws.inject_message(
+                {"method": "broadcast", "params": {"topic": "test", "data": "hello"}}
+            )
 
             event = await asyncio.wait_for(t.receive_event(), timeout=1.0)
             assert event["method"] == "broadcast"
@@ -389,6 +397,7 @@ class TestWebSocketTransport:
 # HTTPTransport tests
 # ===================================================================
 
+
 class TestHTTPTransport:
     """HTTPTransport — 10 tests."""
 
@@ -422,9 +431,7 @@ class TestHTTPTransport:
     @pytest.mark.asyncio
     async def test_send_makes_post_request(self):
         t = HTTPTransport("http://node:50000")
-        mock_session = MockHTTPSession([
-            {"jsonrpc": "2.0", "id": 1, "result": {"value": 42}}
-        ])
+        mock_session = MockHTTPSession([{"jsonrpc": "2.0", "id": 1, "result": {"value": 42}}])
 
         with patch("aiohttp.ClientSession", return_value=mock_session):
             await t.connect()
@@ -445,9 +452,9 @@ class TestHTTPTransport:
     @pytest.mark.asyncio
     async def test_error_response(self):
         t = HTTPTransport("http://node:50000")
-        mock_session = MockHTTPSession([
-            {"jsonrpc": "2.0", "id": 1, "error": {"code": -32601, "message": "Method not found"}}
-        ])
+        mock_session = MockHTTPSession(
+            [{"jsonrpc": "2.0", "id": 1, "error": {"code": -32601, "message": "Method not found"}}]
+        )
 
         with patch("aiohttp.ClientSession", return_value=mock_session):
             await t.connect()
@@ -467,10 +474,12 @@ class TestHTTPTransport:
     @pytest.mark.asyncio
     async def test_stats_tracking(self):
         t = HTTPTransport("http://node:50000")
-        mock_session = MockHTTPSession([
-            {"jsonrpc": "2.0", "id": 1, "result": "a"},
-            {"jsonrpc": "2.0", "id": 2, "result": "b"},
-        ])
+        mock_session = MockHTTPSession(
+            [
+                {"jsonrpc": "2.0", "id": 1, "result": "a"},
+                {"jsonrpc": "2.0", "id": 2, "result": "b"},
+            ]
+        )
 
         with patch("aiohttp.ClientSession", return_value=mock_session):
             await t.connect()
@@ -483,10 +492,12 @@ class TestHTTPTransport:
     @pytest.mark.asyncio
     async def test_multiple_calls_increment_id(self):
         t = HTTPTransport("http://node:50000")
-        mock_session = MockHTTPSession([
-            {"jsonrpc": "2.0", "id": 1, "result": "a"},
-            {"jsonrpc": "2.0", "id": 2, "result": "b"},
-        ])
+        mock_session = MockHTTPSession(
+            [
+                {"jsonrpc": "2.0", "id": 1, "result": "a"},
+                {"jsonrpc": "2.0", "id": 2, "result": "b"},
+            ]
+        )
 
         with patch("aiohttp.ClientSession", return_value=mock_session):
             await t.connect()
@@ -511,6 +522,7 @@ class TestHTTPTransport:
 # ===================================================================
 # MultiNodeTransport tests
 # ===================================================================
+
 
 class TestMultiNodeTransport:
     """MultiNodeTransport — 12 tests."""
@@ -673,6 +685,7 @@ class TestMultiNodeTransport:
 # create_transport factory tests
 # ===================================================================
 
+
 class TestCreateTransport:
     """create_transport factory — 6 tests."""
 
@@ -712,6 +725,7 @@ class TestCreateTransport:
 # RingsClient.from_url integration tests
 # ===================================================================
 
+
 class TestRingsClientFromUrl:
     """RingsClient.from_url — 5 tests."""
 
@@ -726,9 +740,17 @@ class TestRingsClientFromUrl:
     @pytest.mark.asyncio
     async def test_from_url_ws(self):
         """ws:// creates a WebSocketTransport."""
-        mock_ws = MockWebSocket(responses={
-            1: {"did": "did:rings:test", "position": 0, "version": "0.1.0", "uptime": 0, "peer_count": 0}
-        })
+        mock_ws = MockWebSocket(
+            responses={
+                1: {
+                    "did": "did:rings:test",
+                    "position": 0,
+                    "version": "0.1.0",
+                    "uptime": 0,
+                    "peer_count": 0,
+                }
+            }
+        )
 
         with patch("websockets.connect", new_callable=lambda: _async_factory(mock_ws)):
             client = await RingsClient.from_url("ws://node:50000")
@@ -739,12 +761,21 @@ class TestRingsClientFromUrl:
     @pytest.mark.asyncio
     async def test_from_url_http(self):
         """http:// creates an HTTPTransport."""
-        mock_session = MockHTTPSession([
-            {"jsonrpc": "2.0", "id": 1, "result": {
-                "did": "did:rings:test", "position": 0, "version": "0.1.0",
-                "uptime": 0, "peer_count": 0,
-            }}
-        ])
+        mock_session = MockHTTPSession(
+            [
+                {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "result": {
+                        "did": "did:rings:test",
+                        "position": 0,
+                        "version": "0.1.0",
+                        "uptime": 0,
+                        "peer_count": 0,
+                    },
+                }
+            ]
+        )
 
         with patch("aiohttp.ClientSession", return_value=mock_session):
             client = await RingsClient.from_url("http://node:50000")
@@ -764,9 +795,17 @@ class TestRingsClientFromUrl:
     @pytest.mark.asyncio
     async def test_from_url_kwargs_forwarded(self):
         """Transport kwargs are forwarded to the transport constructor."""
-        mock_ws = MockWebSocket(responses={
-            1: {"did": "did:rings:test", "position": 0, "version": "0.1.0", "uptime": 0, "peer_count": 0}
-        })
+        mock_ws = MockWebSocket(
+            responses={
+                1: {
+                    "did": "did:rings:test",
+                    "position": 0,
+                    "version": "0.1.0",
+                    "uptime": 0,
+                    "peer_count": 0,
+                }
+            }
+        )
 
         with patch("websockets.connect", new_callable=lambda: _async_factory(mock_ws)):
             client = await RingsClient.from_url(
@@ -784,6 +823,7 @@ class TestRingsClientFromUrl:
 # ===================================================================
 # Helpers
 # ===================================================================
+
 
 class _MockTransportForMulti:
     """Minimal mock transport for MultiNodeTransport tests."""
@@ -818,15 +858,20 @@ class _MockTransportForMulti:
 
 def _async_factory(mock_ws: MockWebSocket):
     """Create an AsyncMock class that returns mock_ws when awaited.
-    
+
     Works with ``patch("websockets.connect", new_callable=...)``."""
+
     class _Factory:
         def __init__(self, *a, **kw):
             pass
+
         def __call__(self, *args, **kwargs):
             return self
+
         def __await__(self):
             async def _ret():
                 return mock_ws
+
             return _ret().__await__()
+
     return _Factory

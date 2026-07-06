@@ -76,9 +76,7 @@ class _JSONFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         entry: Dict[str, Any] = {
-            "timestamp": datetime.fromtimestamp(
-                record.created, tz=timezone.utc
-            ).isoformat(),
+            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
         }
@@ -130,7 +128,9 @@ class AuditLogger:
         self._ensure_file_handler(
             self._ops_logger,
             self._log_dir / "operations.log",
-            formatter, max_bytes, backup_count,
+            formatter,
+            max_bytes,
+            backup_count,
         )
 
         # ── Errors logger ───────────────────────────────────────────────
@@ -140,7 +140,9 @@ class AuditLogger:
         self._ensure_file_handler(
             self._err_logger,
             self._log_dir / "errors.log",
-            formatter, max_bytes, backup_count,
+            formatter,
+            max_bytes,
+            backup_count,
         )
 
         # ── Audit logger (all events) ──────────────────────────────────
@@ -150,7 +152,9 @@ class AuditLogger:
         self._ensure_file_handler(
             self._audit_logger,
             self._log_dir / "audit.log",
-            formatter, max_bytes, backup_count,
+            formatter,
+            max_bytes,
+            backup_count,
         )
 
     @staticmethod
@@ -178,10 +182,7 @@ class AuditLogger:
         """
         target = str(Path(path).resolve())
         for h in lgr.handlers:
-            if (
-                isinstance(h, RotatingFileHandler)
-                and getattr(h, "baseFilename", None) == target
-            ):
+            if isinstance(h, RotatingFileHandler) and getattr(h, "baseFilename", None) == target:
                 return
         handler = RotatingFileHandler(
             target,

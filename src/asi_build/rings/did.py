@@ -95,7 +95,9 @@ def _derive_seed_bytes(seed: str) -> bytes:
     ).derive(seed.encode())
 
 
-def _generate_secp256k1(seed_bytes: Optional[bytes] = None) -> Tuple[ec.EllipticCurvePrivateKey, ec.EllipticCurvePublicKey]:
+def _generate_secp256k1(
+    seed_bytes: Optional[bytes] = None,
+) -> Tuple[ec.EllipticCurvePrivateKey, ec.EllipticCurvePublicKey]:
     """Generate or derive a secp256k1 key pair."""
     if seed_bytes is not None:
         # Derive private key from seed bytes (interpret as big-endian integer)
@@ -110,7 +112,9 @@ def _generate_secp256k1(seed_bytes: Optional[bytes] = None) -> Tuple[ec.Elliptic
     return private_key, private_key.public_key()
 
 
-def _generate_ed25519(seed_bytes: Optional[bytes] = None) -> Tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]:
+def _generate_ed25519(
+    seed_bytes: Optional[bytes] = None,
+) -> Tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]:
     """Generate or derive an Ed25519 key pair."""
     if seed_bytes is not None:
         private_key = ed25519.Ed25519PrivateKey.from_private_bytes(seed_bytes)

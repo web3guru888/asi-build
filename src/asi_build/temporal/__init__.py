@@ -7,8 +7,8 @@ PredictiveEngine, SchedulerCortex) query the TemporalGraph for causal
 and temporal context.
 """
 
-from .types import AllenRelation, TemporalEdge, TemporalGraphConfig, TemporalNode
 from .temporal_graph import DictTemporalGraph, NullTemporalGraph, TemporalGraph
+from .types import AllenRelation, TemporalEdge, TemporalGraphConfig, TemporalNode
 
 __all__ = [
     "AllenRelation",

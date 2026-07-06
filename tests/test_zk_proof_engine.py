@@ -23,26 +23,25 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.asi_build.rings.bridge.zk.prover import (
-    ZKProof,
-    ZKProofEngine,
-    SimulatedProver,
-    SP1ProverInterface,
-    DistributedProver,
-    ProvingTask,
-    ProofGenerationError,
-    ProofVerificationError,
-    PROOF_SIZE,
-    GAS_ESTIMATE_SIMULATED,
-    GAS_ESTIMATE_NOVA,
-)
 from src.asi_build.rings.bridge.zk.circuits import (
     BLSVerificationCircuit,
-    MerklePatriciaCircuit,
     BridgeWithdrawalCircuit,
+    MerklePatriciaCircuit,
     SyncCommitteeRotationCircuit,
 )
-
+from src.asi_build.rings.bridge.zk.prover import (
+    GAS_ESTIMATE_NOVA,
+    GAS_ESTIMATE_SIMULATED,
+    PROOF_SIZE,
+    DistributedProver,
+    ProofGenerationError,
+    ProofVerificationError,
+    ProvingTask,
+    SimulatedProver,
+    SP1ProverInterface,
+    ZKProof,
+    ZKProofEngine,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers — build valid witnesses for each circuit
@@ -127,7 +126,8 @@ def _make_mpt_witness():
 def _make_withdrawal_witness():
     """Build a valid bridge withdrawal witness."""
     circuit = BridgeWithdrawalCircuit(
-        committee_size=COMMITTEE_SIZE, committee_threshold=THRESHOLD,
+        committee_size=COMMITTEE_SIZE,
+        committee_threshold=THRESHOLD,
     )
     _, bls_w, _ = _make_bls_witness()
     _, mpt_w, _ = _make_mpt_witness()
@@ -408,14 +408,17 @@ class TestSimulatedProver:
         pubkeys = [os.urandom(48) for _ in range(4)]
         bitmap = [True, True, False, False]  # only 2
         hf = {
-            "slot": 1, "proposer_index": 1,
+            "slot": 1,
+            "proposer_index": 1,
             "parent_root": os.urandom(32),
             "state_root": os.urandom(32),
             "body_root": os.urandom(32),
         }
         witness = circuit.generate_witness(
-            committee_pubkeys=pubkeys, signature=os.urandom(96),
-            header_fields=hf, bitmap=bitmap,
+            committee_pubkeys=pubkeys,
+            signature=os.urandom(96),
+            header_fields=hf,
+            bitmap=bitmap,
         )
         pi = circuit.public_inputs_from_witness(witness)
         prover = SimulatedProver()
@@ -429,14 +432,17 @@ class TestSimulatedProver:
         pubkeys = [os.urandom(48) for _ in range(4)]
         bitmap = [True, False, False, False]  # only 1
         hf = {
-            "slot": 1, "proposer_index": 1,
+            "slot": 1,
+            "proposer_index": 1,
             "parent_root": os.urandom(32),
             "state_root": os.urandom(32),
             "body_root": os.urandom(32),
         }
         witness = circuit.generate_witness(
-            committee_pubkeys=pubkeys, signature=os.urandom(96),
-            header_fields=hf, bitmap=bitmap,
+            committee_pubkeys=pubkeys,
+            signature=os.urandom(96),
+            header_fields=hf,
+            bitmap=bitmap,
         )
         pi = circuit.public_inputs_from_witness(witness)
         with pytest.raises(ProofGenerationError) as exc_info:
@@ -501,8 +507,12 @@ class TestSimulatedProver:
     def test_all_four_circuits_generate_and_verify(self):
         """End-to-end generate+verify for all four circuit types."""
         prover = SimulatedProver(commitment_key=b"\xcc" * 32)
-        for make_fn in (_make_bls_witness, _make_mpt_witness,
-                        _make_withdrawal_witness, _make_rotation_witness):
+        for make_fn in (
+            _make_bls_witness,
+            _make_mpt_witness,
+            _make_withdrawal_witness,
+            _make_rotation_witness,
+        ):
             circuit, witness, pi = make_fn()
             proof = _run(prover.generate_proof(circuit, witness, pi))
             assert _run(prover.verify_proof(circuit, proof, pi)) is True
@@ -533,8 +543,12 @@ class TestSP1ProverInterface:
         circuit, witness, pi = _make_bls_witness()
         sp1 = SP1ProverInterface()
         proof = ZKProof(
-            proof_bytes=os.urandom(256), public_inputs=[], proof_type="sp1",
-            circuit_id="test", generation_time_ms=0, proof_size_bytes=256,
+            proof_bytes=os.urandom(256),
+            public_inputs=[],
+            proof_type="sp1",
+            circuit_id="test",
+            generation_time_ms=0,
+            proof_size_bytes=256,
             estimated_verify_gas=0,
         )
         with pytest.raises(NotImplementedError):
@@ -692,9 +706,13 @@ class TestDistributedProver:
     def test_discover_provers_with_client(self):
         """Mock client returns prover list."""
         mock_client = AsyncMock()
-        mock_client.dht_get = AsyncMock(return_value=[
-            "did:rings:prover1", "did:rings:prover2", "did:rings:prover3",
-        ])
+        mock_client.dht_get = AsyncMock(
+            return_value=[
+                "did:rings:prover1",
+                "did:rings:prover2",
+                "did:rings:prover3",
+            ]
+        )
         dp = DistributedProver(rings_client=mock_client)
         provers = _run(dp.discover_provers())
         assert len(provers) == 3
@@ -751,7 +769,8 @@ class TestDistributedProver:
 
     def test_stats(self):
         dp = DistributedProver(
-            min_provers=5, segment_size=20_000,
+            min_provers=5,
+            segment_size=20_000,
             bridge_subring="test:provers",
         )
         s = dp.stats

@@ -27,10 +27,10 @@ from src.asi_build.rings.bridge.zk.circuits import (
     _to_bytes32,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers — reusable fixture builders
 # ---------------------------------------------------------------------------
+
 
 def _make_pubkeys(n: int = 512) -> list[bytes]:
     """Generate *n* deterministic 48-byte 'public keys'."""
@@ -75,7 +75,7 @@ def _make_mpt_witness_kwargs(chained: bool = True) -> dict:
     address = os.urandom(20)
     account_state = {
         "nonce": 5,
-        "balance": 10 ** 18,
+        "balance": 10**18,
         "storage_root": os.urandom(32),
         "code_hash": os.urandom(32),
     }
@@ -104,7 +104,7 @@ def _make_bridge_withdrawal_kwargs(
     participation: int = 400,
     validator_count: int = 6,
     threshold: int = 4,
-    amount: int = 10 ** 18,
+    amount: int = 10**18,
     nonce: int = 1,
 ) -> dict:
     """Build kwargs suitable for BridgeWithdrawalCircuit.generate_witness."""
@@ -130,7 +130,10 @@ def _make_rotation_kwargs(
     slot: int = 256_000,
 ) -> dict:
     current = _make_pubkeys(committee_size)
-    new = [hashlib.sha256(b"new" + i.to_bytes(4, "big")).digest() + b"\xbb" * 16 for i in range(committee_size)]
+    new = [
+        hashlib.sha256(b"new" + i.to_bytes(4, "big")).digest() + b"\xbb" * 16
+        for i in range(committee_size)
+    ]
     bitmap = [True] * attestation_count + [False] * (committee_size - attestation_count)
     return {
         "current_pubkeys": current,
@@ -144,6 +147,7 @@ def _make_rotation_kwargs(
 # ===================================================================
 # BLSVerificationCircuit
 # ===================================================================
+
 
 class TestBLSVerificationCircuit:
 
@@ -262,7 +266,11 @@ class TestBLSVerificationCircuit:
         kw = _make_bls_witness(participation=400)
         w = c.generate_witness(**kw)
         pub = c.public_inputs_from_witness(w)
-        assert set(pub.keys()) == {"sync_committee_root", "block_header_hash", "participation_count"}
+        assert set(pub.keys()) == {
+            "sync_committee_root",
+            "block_header_hash",
+            "participation_count",
+        }
         assert pub["sync_committee_root"] == w["pub_sync_committee_root"]
         assert pub["block_header_hash"] == w["pub_block_header_hash"]
         assert pub["participation_count"] == 400
@@ -277,8 +285,10 @@ class TestBLSVerificationCircuit:
         bitmap = [True] * 86 + [False] * 42
         hf = _make_header_fields()
         w = c.generate_witness(
-            committee_pubkeys=pubkeys, signature=os.urandom(96),
-            header_fields=hf, bitmap=bitmap,
+            committee_pubkeys=pubkeys,
+            signature=os.urandom(96),
+            header_fields=hf,
+            bitmap=bitmap,
         )
         pub = c.public_inputs_from_witness(w)
         ok, violations = c.verify_constraints(w, pub)
@@ -300,6 +310,7 @@ class TestBLSVerificationCircuit:
 # ===================================================================
 # MerklePatriciaCircuit
 # ===================================================================
+
 
 class TestMerklePatriciaCircuit:
 
@@ -414,6 +425,7 @@ class TestMerklePatriciaCircuit:
 # BridgeWithdrawalCircuit
 # ===================================================================
 
+
 class TestBridgeWithdrawalCircuit:
 
     def test_metadata(self):
@@ -429,10 +441,17 @@ class TestBridgeWithdrawalCircuit:
         kw = _make_bridge_withdrawal_kwargs()
         w = c.generate_witness(**kw)
         expected_keys = {
-            "pub_recipient", "pub_amount", "pub_nonce", "pub_rings_did_hash",
-            "pub_block_header_hash", "pub_state_root",
-            "bls_witness", "mpt_witness",
-            "validator_signatures", "validator_threshold", "deposit_log_data",
+            "pub_recipient",
+            "pub_amount",
+            "pub_nonce",
+            "pub_rings_did_hash",
+            "pub_block_header_hash",
+            "pub_state_root",
+            "bls_witness",
+            "mpt_witness",
+            "validator_signatures",
+            "validator_threshold",
+            "deposit_log_data",
         }
         assert expected_keys.issubset(set(w.keys()))
 
@@ -485,7 +504,7 @@ class TestBridgeWithdrawalCircuit:
     def test_public_inputs_hash_deterministic(self):
         c = BridgeWithdrawalCircuit()
         recipient = b"\x11" * 20
-        amount = 10 ** 18
+        amount = 10**18
         nonce = 42
         did = "did:rings:alice"
         h1 = c.public_inputs_hash(recipient, amount, nonce, did)
@@ -511,8 +530,12 @@ class TestBridgeWithdrawalCircuit:
         w = c.generate_witness(**kw)
         pub = c.public_inputs_from_witness(w)
         assert set(pub.keys()) == {
-            "recipient", "amount", "nonce", "rings_did_hash",
-            "block_header_hash", "state_root",
+            "recipient",
+            "amount",
+            "nonce",
+            "rings_did_hash",
+            "block_header_hash",
+            "state_root",
         }
         assert pub["amount"] == kw["amount"]
 
@@ -594,6 +617,7 @@ class TestBridgeWithdrawalCircuit:
 # ===================================================================
 # SyncCommitteeRotationCircuit
 # ===================================================================
+
 
 class TestSyncCommitteeRotationCircuit:
 
@@ -716,11 +740,16 @@ class TestSyncCommitteeRotationCircuit:
     def test_custom_committee_size(self):
         c = SyncCommitteeRotationCircuit(committee_size=64, supermajority_threshold=43)
         current = [hashlib.sha256(i.to_bytes(4, "big")).digest() + b"\xcc" * 16 for i in range(64)]
-        new = [hashlib.sha256(b"n" + i.to_bytes(4, "big")).digest() + b"\xdd" * 16 for i in range(64)]
+        new = [
+            hashlib.sha256(b"n" + i.to_bytes(4, "big")).digest() + b"\xdd" * 16 for i in range(64)
+        ]
         bitmap = [True] * 43 + [False] * 21
         w = c.generate_witness(
-            current_pubkeys=current, new_pubkeys=new,
-            attestation_sig=os.urandom(96), attestation_bitmap=bitmap, slot=100,
+            current_pubkeys=current,
+            new_pubkeys=new,
+            attestation_sig=os.urandom(96),
+            attestation_bitmap=bitmap,
+            slot=100,
         )
         pub = c.public_inputs_from_witness(w)
         ok, violations = c.verify_constraints(w, pub)
@@ -730,6 +759,7 @@ class TestSyncCommitteeRotationCircuit:
 # ===================================================================
 # General / ABC / ALL_CIRCUITS
 # ===================================================================
+
 
 class TestGeneral:
 
@@ -760,8 +790,12 @@ class TestGeneral:
 
     def test_circuit_metadata_fields(self):
         m = CircuitMetadata(
-            name="Test", version="1.0.0", estimated_constraints=100,
-            num_public_inputs=2, num_witness_fields=3, description="A test circuit.",
+            name="Test",
+            version="1.0.0",
+            estimated_constraints=100,
+            num_public_inputs=2,
+            num_witness_fields=3,
+            description="A test circuit.",
         )
         assert m.name == "Test"
         assert m.version == "1.0.0"
@@ -780,6 +814,7 @@ class TestGeneral:
 # ===================================================================
 # Helper function edge cases
 # ===================================================================
+
 
 class TestHelpers:
 

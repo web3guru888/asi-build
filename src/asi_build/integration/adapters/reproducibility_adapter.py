@@ -130,9 +130,7 @@ class ReproducibilityBlackboardAdapter:
         return ModuleInfo(
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
-            capabilities=(
-                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER
-            ),
+            capabilities=(ModuleCapability.PRODUCER | ModuleCapability.CONSUMER),
             description=(
                 "AGI reproducibility: experiment tracking, versioning, "
                 "and verification for reproducible research."
@@ -207,10 +205,12 @@ class ReproducibilityBlackboardAdapter:
     def add_verification_result(self, result: Dict[str, Any]) -> None:
         """Queue a verification result for the next production sweep."""
         with self._lock:
-            self._pending_verifications.append({
-                **result,
-                "timestamp": time.time(),
-            })
+            self._pending_verifications.append(
+                {
+                    **result,
+                    "timestamp": time.time(),
+                }
+            )
 
     # ── BlackboardProducer protocol ───────────────────────────────────
 
@@ -282,6 +282,7 @@ class ReproducibilityBlackboardAdapter:
                 elif hasattr(experiment, "__dict__"):
                     try:
                         from dataclasses import asdict
+
                         exp_data = asdict(experiment)
                     except (TypeError, Exception):
                         exp_data = vars(experiment)
@@ -299,7 +300,11 @@ class ReproducibilityBlackboardAdapter:
                 self._last_experiment_statuses[exp_id] = status
 
                 is_completed = status.lower() in (
-                    "completed", "finished", "success", "failed", "error"
+                    "completed",
+                    "finished",
+                    "success",
+                    "failed",
+                    "error",
                 )
                 priority = EntryPriority.HIGH if is_completed else EntryPriority.NORMAL
 
@@ -329,9 +334,7 @@ class ReproducibilityBlackboardAdapter:
                     )
 
             except Exception:
-                logger.debug(
-                    "Failed to check experiment %s", exp_id, exc_info=True
-                )
+                logger.debug("Failed to check experiment %s", exp_id, exc_info=True)
 
         return entries
 
@@ -353,7 +356,7 @@ class ReproducibilityBlackboardAdapter:
                 if not history:
                     continue
 
-                version_count = len(history) if hasattr(history, '__len__') else 0
+                version_count = len(history) if hasattr(history, "__len__") else 0
                 prev_count = self._last_version_counts.get(exp_id, 0)
 
                 # Change detection: only post if new versions appeared
@@ -368,6 +371,7 @@ class ReproducibilityBlackboardAdapter:
                 elif hasattr(latest, "__dict__"):
                     try:
                         from dataclasses import asdict
+
                         version_data = asdict(latest)
                     except (TypeError, Exception):
                         version_data = vars(latest)
@@ -404,9 +408,7 @@ class ReproducibilityBlackboardAdapter:
                 )
 
             except Exception:
-                logger.debug(
-                    "Failed to get version info for %s", exp_id, exc_info=True
-                )
+                logger.debug("Failed to get version info for %s", exp_id, exc_info=True)
 
         return entries
 
@@ -435,10 +437,13 @@ class ReproducibilityBlackboardAdapter:
                     confidence=0.95 if passed is True else 0.7,
                     priority=priority,
                     ttl_seconds=self._verification_ttl,
-                    tags=frozenset({
-                        "reproducibility", "verification",
-                        "passed" if passed else "failed" if passed is False else "pending",
-                    }),
+                    tags=frozenset(
+                        {
+                            "reproducibility",
+                            "verification",
+                            "passed" if passed else "failed" if passed is False else "pending",
+                        }
+                    ),
                     metadata={
                         "experiment_id": verification.get("experiment_id", ""),
                         "passed": passed,

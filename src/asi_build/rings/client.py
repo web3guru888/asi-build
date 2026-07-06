@@ -505,11 +505,14 @@ class RingsClient:
         dict
             Confirmation with the key and status.
         """
-        return await self._rpc("dht_put", {
-            "key": key,
-            "value": value,
-            "operator": operator.value,
-        })
+        return await self._rpc(
+            "dht_put",
+            {
+                "key": key,
+                "value": value,
+                "operator": operator.value,
+            },
+        )
 
     async def dht_get(self, key: str) -> Any:
         """Retrieve a value from the Chord DHT.
@@ -617,10 +620,13 @@ class RingsClient:
 
     async def join_sub_ring(self, topic: str) -> SubRingInfo:
         """Join an existing Sub-Ring."""
-        result = await self._rpc("subring_join", {
-            "topic": topic,
-            "did": self._local_did or "",
-        })
+        result = await self._rpc(
+            "subring_join",
+            {
+                "topic": topic,
+                "did": self._local_did or "",
+            },
+        )
         info = SubRingInfo(
             topic=topic,
             vid=_compute_vid(topic),
@@ -632,10 +638,13 @@ class RingsClient:
 
     async def leave_sub_ring(self, topic: str) -> None:
         """Leave a Sub-Ring."""
-        await self._rpc("subring_leave", {
-            "topic": topic,
-            "did": self._local_did or "",
-        })
+        await self._rpc(
+            "subring_leave",
+            {
+                "topic": topic,
+                "did": self._local_did or "",
+            },
+        )
         self._sub_rings.pop(topic, None)
 
     async def get_sub_ring_members(self, topic: str) -> List[str]:
@@ -657,10 +666,13 @@ class RingsClient:
         dict
             Delivery report with recipient count.
         """
-        return await self._rpc("subring_broadcast", {
-            "topic": topic,
-            "message": message,
-        })
+        return await self._rpc(
+            "subring_broadcast",
+            {
+                "topic": topic,
+                "message": message,
+            },
+        )
 
     # ── Session management ────────────────────────────────────────────────
 
@@ -732,9 +744,7 @@ class RingsClient:
                 self._state = ConnectionState.CONNECTED
             except Exception:
                 self._state = ConnectionState.ERROR
-                raise ConnectionError(
-                    f"Rings node unavailable at {self._endpoint}"
-                )
+                raise ConnectionError(f"Rings node unavailable at {self._endpoint}")
 
         try:
             result = await asyncio.wait_for(

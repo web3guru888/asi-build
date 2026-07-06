@@ -22,7 +22,6 @@ from asi_build.rings.bridge.protocol import (
 )
 from asi_build.rings.client import InMemoryTransport, RingsClient
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -98,6 +97,7 @@ class TestMultiValidatorDeposit:
             # All should have the deposit locally
             for v in vs:
                 assert "0xdep1" in v.deposits
+
         run(_test())
 
     def test_three_validators_attest_same_deposit(self):
@@ -112,6 +112,7 @@ class TestMultiValidatorDeposit:
                 sigs.append(sig)
             # All signatures should be unique (different identity seeds)
             assert len(set(s.hex() for s in sigs)) == 3
+
         run(_test())
 
     def test_attestations_accumulate_in_dht(self):
@@ -124,6 +125,7 @@ class TestMultiValidatorDeposit:
                 # After each attestation, DHT should have i+1 attestations
                 raw = await v.client.dht_get(BridgeProtocol.bridge_deposit_key("0xdep3"))
                 assert len(raw["attestations"]) == i + 1
+
         run(_test())
 
     def test_threshold_not_met_below(self):
@@ -137,6 +139,7 @@ class TestMultiValidatorDeposit:
             met, sigs = await vs[0].collect_attestations("0xdep4")
             assert met is False
             assert len(sigs) == 3
+
         run(_test())
 
     def test_deposit_finalized_at_threshold(self):
@@ -150,6 +153,7 @@ class TestMultiValidatorDeposit:
             assert met is True
             assert len(sigs) == 4
             assert vs[0].deposits["0xdep5"].finalized is True
+
         run(_test())
 
 
@@ -171,6 +175,7 @@ class TestMultiValidatorWithdrawal:
             # Should be in DHT
             raw = await vs[0].client.dht_get(BridgeProtocol.bridge_withdrawal_key(rec.nonce))
             assert raw is not None
+
         run(_test())
 
     def test_other_validators_approve(self):
@@ -182,6 +187,7 @@ class TestMultiValidatorWithdrawal:
             sig2 = await vs[2].approve_withdrawal(rec.nonce)
             assert isinstance(sig1, bytes) and isinstance(sig2, bytes)
             assert sig1 != sig2  # different identities
+
         run(_test())
 
     def test_approvals_accumulate(self):
@@ -193,6 +199,7 @@ class TestMultiValidatorWithdrawal:
                 await v.approve_withdrawal(rec.nonce)
                 raw = await v.client.dht_get(BridgeProtocol.bridge_withdrawal_key(rec.nonce))
                 assert len(raw["approvals"]) == i + 1
+
         run(_test())
 
     def test_withdrawal_threshold_check(self):
@@ -206,6 +213,7 @@ class TestMultiValidatorWithdrawal:
             met, sigs = await vs[0].collect_approvals(rec.nonce)
             assert met is False
             assert len(sigs) == 2
+
         run(_test())
 
     def test_withdrawal_executed_at_threshold(self):
@@ -219,6 +227,7 @@ class TestMultiValidatorWithdrawal:
             assert met is True
             assert len(sigs) == 3
             assert vs[0].withdrawals[rec.nonce].executed is True
+
         run(_test())
 
 
@@ -232,6 +241,7 @@ class TestBridgeErrorScenarios:
 
     def test_double_attestation_by_same_validator(self):
         """Same validator attesting twice overwrites — should not double-count."""
+
         async def _test():
             transport = InMemoryTransport()
             vs = await _make_validator_pool(2, threshold=2, transport=transport)
@@ -242,6 +252,7 @@ class TestBridgeErrorScenarios:
             # Only 1 unique attestation (same DID key overwrites)
             assert len(sigs) == 1
             assert met is False
+
         run(_test())
 
     def test_attestation_after_emergency_halt(self):
@@ -252,33 +263,40 @@ class TestBridgeErrorScenarios:
             await vs[0].emergency_halt("suspicious activity")
             with pytest.raises(RuntimeError, match="halted"):
                 await vs[0].attest_deposit("0xhalt")
+
         run(_test())
 
     def test_withdrawal_after_halt(self):
         """Cannot request withdrawal when halted."""
+
         async def _test():
             transport = InMemoryTransport()
             vs = await _make_validator_pool(2, threshold=2, transport=transport)
             await vs[0].emergency_halt("test")
             with pytest.raises(RuntimeError, match="halted"):
                 await vs[0].request_withdrawal(100, "0xeth")
+
         run(_test())
 
     def test_approve_nonexistent_nonce(self):
         """Approving a withdrawal that doesn't exist raises KeyError."""
+
         async def _test():
             transport = InMemoryTransport()
             vs = await _make_validator_pool(2, threshold=2, transport=transport)
             with pytest.raises(KeyError, match="Unknown withdrawal"):
                 await vs[0].approve_withdrawal(12345)
+
         run(_test())
 
     def test_collect_attestations_unknown_deposit(self):
         """Collecting attestations for a non-existent deposit → (False, [])."""
+
         async def _test():
             transport = InMemoryTransport()
             vs = await _make_validator_pool(2, threshold=2, transport=transport)
             met, sigs = await vs[0].collect_attestations("0xghost")
             assert met is False
             assert sigs == []
+
         run(_test())

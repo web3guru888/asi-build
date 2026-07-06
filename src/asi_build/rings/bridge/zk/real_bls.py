@@ -121,6 +121,7 @@ DEFAULT_SYNC_THRESHOLD: int = 342
 # RealBLSKeyPair
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class RealBLSKeyPair:
     """A real BLS12-381 key pair backed by ``py_ecc``.
@@ -147,15 +148,9 @@ class RealBLSKeyPair:
 
     def __post_init__(self) -> None:
         if not (1 <= self.secret_key < CURVE_ORDER):
-            raise ValueError(
-                f"Secret key must be in [1, CURVE_ORDER), "
-                f"got {self.secret_key}"
-            )
+            raise ValueError(f"Secret key must be in [1, CURVE_ORDER), " f"got {self.secret_key}")
         if len(self.public_key) != G1_SIZE:
-            raise ValueError(
-                f"Public key must be {G1_SIZE} bytes, "
-                f"got {len(self.public_key)}"
-            )
+            raise ValueError(f"Public key must be {G1_SIZE} bytes, " f"got {len(self.public_key)}")
 
     # ---- Constructors -------------------------------------------------------
 
@@ -187,9 +182,7 @@ class RealBLSKeyPair:
         sk = bls_pop.KeyGen(ikm)
         pk = bls_pop.SkToPk(sk)
 
-        logger.debug(
-            "RealBLSKeyPair.generate: pk=%s…", pk[:8].hex()
-        )
+        logger.debug("RealBLSKeyPair.generate: pk=%s…", pk[:8].hex())
         return cls(secret_key=sk, public_key=pk)
 
     # ---- Backward compatibility aliases ------------------------------------
@@ -289,6 +282,7 @@ class RealBLSKeyPair:
 # RealBLS12381 — static utility class
 # ---------------------------------------------------------------------------
 
+
 class RealBLS12381:
     """Real BLS12-381 operations using ``py_ecc``.
 
@@ -345,8 +339,7 @@ class RealBLS12381:
         """
         if len(pubkeys) != len(messages):
             raise ValueError(
-                f"pubkeys length ({len(pubkeys)}) != "
-                f"messages length ({len(messages)})"
+                f"pubkeys length ({len(pubkeys)}) != " f"messages length ({len(messages)})"
             )
         if not pubkeys:
             return False
@@ -417,8 +410,7 @@ class RealBLS12381:
         if bitmap is not None:
             if len(bitmap) != len(pubkeys):
                 raise ValueError(
-                    f"Bitmap length ({len(bitmap)}) != "
-                    f"pubkey count ({len(pubkeys)})"
+                    f"Bitmap length ({len(bitmap)}) != " f"pubkey count ({len(pubkeys)})"
                 )
             selected = [pk for pk, b in zip(pubkeys, bitmap) if b]
         else:
@@ -481,19 +473,12 @@ class RealBLS12381:
             return False
 
         # Select participating pubkeys
-        participating = [
-            pk for pk, bit in zip(committee_pubkeys, participation_bitmap)
-            if bit
-        ]
+        participating = [pk for pk, bit in zip(committee_pubkeys, participation_bitmap) if bit]
 
-        return RealBLS12381.fast_aggregate_verify(
-            participating, header_root, signature
-        )
+        return RealBLS12381.fast_aggregate_verify(participating, header_root, signature)
 
     @staticmethod
-    def hash_to_g1(
-        message: bytes, dst: bytes = DOMAIN_SEPARATOR
-    ) -> bytes:
+    def hash_to_g1(message: bytes, dst: bytes = DOMAIN_SEPARATOR) -> bytes:
         """Hash a message to a G1 point (48-byte compressed).
 
         Note: py_ecc's PoP scheme hashes to G2, not G1.  For G1 hashing
@@ -515,6 +500,7 @@ class RealBLS12381:
 # ---------------------------------------------------------------------------
 # RealSyncCommitteeBLS
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class RealSyncCommitteeBLS:
@@ -558,17 +544,10 @@ class RealSyncCommitteeBLS:
         """
         if seeds is not None:
             if len(seeds) != self.committee_size:
-                raise ValueError(
-                    f"Expected {self.committee_size} seeds, "
-                    f"got {len(seeds)}"
-                )
-            self.members = [
-                RealBLSKeyPair.generate(seed=s) for s in seeds
-            ]
+                raise ValueError(f"Expected {self.committee_size} seeds, " f"got {len(seeds)}")
+            self.members = [RealBLSKeyPair.generate(seed=s) for s in seeds]
         else:
-            self.members = [
-                RealBLSKeyPair.generate() for _ in range(self.committee_size)
-            ]
+            self.members = [RealBLSKeyPair.generate() for _ in range(self.committee_size)]
 
         logger.info(
             "RealSyncCommitteeBLS: committee of %d set up (period %d)",
@@ -629,8 +608,7 @@ class RealSyncCommitteeBLS:
         for idx in participant_indices:
             if idx < 0 or idx >= self.committee_size:
                 raise ValueError(
-                    f"Participant index {idx} out of range "
-                    f"[0, {self.committee_size})"
+                    f"Participant index {idx} out of range " f"[0, {self.committee_size})"
                 )
 
         # Build participation bitvector
@@ -700,8 +678,7 @@ class RealSyncCommitteeBLS:
         """Return pubkeys where ``bitmap[i]`` is ``True``."""
         if len(bitmap) != len(self.pubkeys):
             raise ValueError(
-                f"Bitmap length ({len(bitmap)}) != "
-                f"committee size ({self.committee_size})"
+                f"Bitmap length ({len(bitmap)}) != " f"committee size ({self.committee_size})"
             )
         return [pk for pk, b in zip(self.pubkeys, bitmap) if b]
 
@@ -709,8 +686,7 @@ class RealSyncCommitteeBLS:
         """Count how many members are flagged in *bitmap*."""
         if len(bitmap) != len(self.pubkeys):
             raise ValueError(
-                f"Bitmap length ({len(bitmap)}) != "
-                f"committee size ({self.committee_size})"
+                f"Bitmap length ({len(bitmap)}) != " f"committee size ({self.committee_size})"
             )
         return sum(bitmap)
 
@@ -746,6 +722,7 @@ class RealSyncCommitteeBLS:
 # Factory — select between simulated and real backend
 # ---------------------------------------------------------------------------
 
+
 def get_bls_backend(
     real: bool = False,
 ) -> Tuple[type, type, type]:
@@ -773,5 +750,6 @@ def get_bls_backend(
     if real:
         return RealBLSKeyPair, RealBLS12381, RealSyncCommitteeBLS
     else:
-        from .bls import BLSKeyPair, BLS12381, SyncCommitteeBLS
+        from .bls import BLS12381, BLSKeyPair, SyncCommitteeBLS
+
         return BLSKeyPair, BLS12381, SyncCommitteeBLS

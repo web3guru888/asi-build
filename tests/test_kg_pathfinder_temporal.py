@@ -15,9 +15,8 @@ from typing import Optional
 
 import pytest
 
-from asi_build.knowledge_graph.temporal_kg import TemporalKnowledgeGraph
 from asi_build.knowledge_graph.pathfinder import KGPathfinder
-
+from asi_build.knowledge_graph.temporal_kg import TemporalKnowledgeGraph
 
 # ── Helpers ────────────────────────────────────────────────────────────
 
@@ -29,8 +28,9 @@ def _iso(dt: Optional[datetime] = None) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _make_time(year: int = 2025, month: int = 1, day: int = 1,
-               hour: int = 0, minute: int = 0) -> datetime:
+def _make_time(
+    year: int = 2025, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0
+) -> datetime:
     return datetime(year, month, day, hour, minute, tzinfo=timezone.utc)
 
 
@@ -56,9 +56,9 @@ def pf(kg):
     return KGPathfinder(kg)
 
 
-def _add_triple(kg, subj, pred, obj, *,
-                valid_at=None, invalid_at=None,
-                confidence=0.9, source="test"):
+def _add_triple(
+    kg, subj, pred, obj, *, valid_at=None, invalid_at=None, confidence=0.9, source="test"
+):
     """Low-level triple insert bypassing some TemporalKG sugar."""
     triple_id = str(uuid.uuid4())[:8]
     now = _iso()
@@ -67,8 +67,7 @@ def _add_triple(kg, subj, pred, obj, *,
            (id, subject, predicate, object, source, confidence,
             valid_at, created_at, invalid_at, statement_type, temporal_type)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'fact', 'dynamic')""",
-        (triple_id, subj.lower(), pred, obj.lower(), source,
-         confidence, valid_at, now, invalid_at),
+        (triple_id, subj.lower(), pred, obj.lower(), source, confidence, valid_at, now, invalid_at),
     )
     kg._conn.commit()
     return triple_id
@@ -102,8 +101,7 @@ class TestTemporalFilterBasics:
 
     def test_filter_excludes_expired_edge(self, kg, pf):
         """Edge whose invalid_at is BEFORE query time is NOT traversed."""
-        _add_triple(kg, "a", "causes", "b",
-                    valid_at=T_2024, invalid_at=T_2025_JAN)
+        _add_triple(kg, "a", "causes", "b", valid_at=T_2024, invalid_at=T_2025_JAN)
         result = pf.find_path("a", "b", valid_at=T_2025_JUN)
         assert result["complete"] is False
 
@@ -115,8 +113,7 @@ class TestTemporalFilterBasics:
 
     def test_filter_excludes_edge_at_invalidation_boundary(self, kg, pf):
         """Edge where invalid_at == query time is excluded (strict <, not <=)."""
-        _add_triple(kg, "a", "causes", "b",
-                    valid_at=T_2024, invalid_at=T_2025_JUN)
+        _add_triple(kg, "a", "causes", "b", valid_at=T_2024, invalid_at=T_2025_JUN)
         result = pf.find_path("a", "b", valid_at=T_2025_JUN)
         assert result["complete"] is False
 
@@ -128,8 +125,7 @@ class TestTemporalFilterBasics:
 
     def test_null_invalid_at_means_still_valid(self, kg, pf):
         """Triple with NULL invalid_at (never expired) is still valid."""
-        _add_triple(kg, "a", "causes", "b",
-                    valid_at=T_2024, invalid_at=None)
+        _add_triple(kg, "a", "causes", "b", valid_at=T_2024, invalid_at=None)
         result = pf.find_path("a", "b", valid_at=T_2027)
         assert result["complete"] is True
 
@@ -161,24 +157,24 @@ class TestTemporalMultiEdge:
         At 2024-06-01: only A→B→D available
         At 2025-06-01: both routes available (A→B→D and A→C→D)
         """
-        _add_triple(kg, "a", "causes", "b",
-                    valid_at=_iso(_make_time(2024, 1, 1)),
-                    invalid_at=_iso(_make_time(2025, 1, 1)))
-        _add_triple(kg, "b", "causes", "d",
-                    valid_at=_iso(_make_time(2024, 1, 1)))
-        _add_triple(kg, "a", "causes", "c",
-                    valid_at=_iso(_make_time(2025, 1, 1)))
-        _add_triple(kg, "c", "causes", "d",
-                    valid_at=_iso(_make_time(2025, 1, 1)))
+        _add_triple(
+            kg,
+            "a",
+            "causes",
+            "b",
+            valid_at=_iso(_make_time(2024, 1, 1)),
+            invalid_at=_iso(_make_time(2025, 1, 1)),
+        )
+        _add_triple(kg, "b", "causes", "d", valid_at=_iso(_make_time(2024, 1, 1)))
+        _add_triple(kg, "a", "causes", "c", valid_at=_iso(_make_time(2025, 1, 1)))
+        _add_triple(kg, "c", "causes", "d", valid_at=_iso(_make_time(2025, 1, 1)))
 
-        early = pf.find_path("a", "d",
-                             valid_at=_iso(_make_time(2024, 6, 1)))
+        early = pf.find_path("a", "d", valid_at=_iso(_make_time(2024, 6, 1)))
         assert early["complete"] is True
         assert "b" in early["path"]  # must go through B
         assert "c" not in early["path"]
 
-        late = pf.find_path("a", "d",
-                            valid_at=_iso(_make_time(2025, 6, 1)))
+        late = pf.find_path("a", "d", valid_at=_iso(_make_time(2025, 6, 1)))
         assert late["complete"] is True
         # A→B no longer valid, so must go through C
         assert "c" in late["path"]
@@ -186,12 +182,9 @@ class TestTemporalMultiEdge:
 
     def test_mixed_valid_and_invalid_neighbours(self, kg, pf):
         """Some neighbours are valid, some expired — only valid ones appear."""
-        _add_triple(kg, "hub", "causes", "alive",
-                    valid_at=T_2024)
-        _add_triple(kg, "hub", "causes", "expired",
-                    valid_at=T_2024, invalid_at=T_2025_JAN)
-        _add_triple(kg, "hub", "causes", "future",
-                    valid_at=T_2026)
+        _add_triple(kg, "hub", "causes", "alive", valid_at=T_2024)
+        _add_triple(kg, "hub", "causes", "expired", valid_at=T_2024, invalid_at=T_2025_JAN)
+        _add_triple(kg, "hub", "causes", "future", valid_at=T_2026)
 
         result = pf.find_path("hub", "alive", valid_at=T_2025_JUN)
         assert result["complete"] is True
@@ -215,8 +208,7 @@ class TestTemporalMultiEdge:
     def test_three_hop_path_middle_expired(self, kg, pf):
         """A→B→C→D — B→C expired → no path."""
         _add_triple(kg, "a", "causes", "b", valid_at=T_2024)
-        _add_triple(kg, "b", "causes", "c",
-                    valid_at=T_2024, invalid_at=T_2025_JAN)
+        _add_triple(kg, "b", "causes", "c", valid_at=T_2024, invalid_at=T_2025_JAN)
         _add_triple(kg, "c", "causes", "d", valid_at=T_2024)
 
         result = pf.find_path("a", "d", valid_at=T_2025_JUN)
@@ -231,15 +223,13 @@ class TestTemporalEntityExists:
 
     def test_entity_not_exist_if_all_triples_expired(self, kg, pf):
         """If every triple mentioning an entity is expired, entity 'does not exist'."""
-        _add_triple(kg, "ghost", "causes", "something",
-                    valid_at=T_2024, invalid_at=T_2025_JAN)
+        _add_triple(kg, "ghost", "causes", "something", valid_at=T_2024, invalid_at=T_2025_JAN)
         result = pf.find_path("ghost", "something", valid_at=T_2025_JUN)
         assert result["complete"] is False
 
     def test_entity_exists_without_filter_even_if_expired(self, kg, pf):
         """Without filter, expired entities still show up (backward compat)."""
-        _add_triple(kg, "ghost", "causes", "something",
-                    valid_at=T_2024, invalid_at=T_2025_JAN)
+        _add_triple(kg, "ghost", "causes", "something", valid_at=T_2024, invalid_at=T_2025_JAN)
         # No valid_at filter — entity_exists should still find it
         # (the old behaviour: no invalid_at filter in _entity_exists)
         result = pf.find_path("ghost", "something")
@@ -278,13 +268,9 @@ class TestTemporalBestEdge:
         """When the highest-confidence edge is expired, the pathfinder
         uses the lower-confidence but temporally-valid edge."""
         # High-confidence but expired
-        _add_triple(kg, "x", "causes", "y",
-                    valid_at=T_2024, invalid_at=T_2025_JAN,
-                    confidence=0.99)
+        _add_triple(kg, "x", "causes", "y", valid_at=T_2024, invalid_at=T_2025_JAN, confidence=0.99)
         # Lower confidence but still valid
-        _add_triple(kg, "x", "related_to", "y",
-                    valid_at=T_2024,
-                    confidence=0.5)
+        _add_triple(kg, "x", "related_to", "y", valid_at=T_2024, confidence=0.5)
 
         result = pf.find_path("x", "y", valid_at=T_2025_JUN)
         assert result["complete"] is True
@@ -293,10 +279,8 @@ class TestTemporalBestEdge:
 
     def test_no_valid_edge_between_connected_nodes(self, kg, pf):
         """Nodes are connected but all edges expired → no path."""
-        _add_triple(kg, "x", "causes", "y",
-                    valid_at=T_2024, invalid_at=T_2025_JAN)
-        _add_triple(kg, "x", "related_to", "y",
-                    valid_at=T_2024, invalid_at=T_2025_JAN)
+        _add_triple(kg, "x", "causes", "y", valid_at=T_2024, invalid_at=T_2025_JAN)
+        _add_triple(kg, "x", "related_to", "y", valid_at=T_2024, invalid_at=T_2025_JAN)
         result = pf.find_path("x", "y", valid_at=T_2025_JUN)
         assert result["complete"] is False
 
@@ -350,15 +334,13 @@ class TestTemporalWindows:
 
     def test_edge_valid_window_before_query(self, kg, pf):
         """Edge was valid 2024-01 to 2025-01 but query is 2025-06 → expired."""
-        _add_triple(kg, "a", "causes", "b",
-                    valid_at=T_2024, invalid_at=T_2025_JAN)
+        _add_triple(kg, "a", "causes", "b", valid_at=T_2024, invalid_at=T_2025_JAN)
         result = pf.find_path("a", "b", valid_at=T_2025_JUN)
         assert result["complete"] is False
 
     def test_edge_valid_window_containing_query(self, kg, pf):
         """Edge valid 2024-01 to 2026-01, query 2025-06 → valid."""
-        _add_triple(kg, "a", "causes", "b",
-                    valid_at=T_2024, invalid_at=T_2026)
+        _add_triple(kg, "a", "causes", "b", valid_at=T_2024, invalid_at=T_2026)
         result = pf.find_path("a", "b", valid_at=T_2025_JUN)
         assert result["complete"] is True
 
@@ -374,22 +356,18 @@ class TestTemporalWindows:
         Edge 1: A→B valid 2024-01 to 2025-01 (predicate: caused_by)
         Edge 2: A→B valid 2025-06 onward      (predicate: causes)
         """
-        _add_triple(kg, "a", "caused_by", "b",
-                    valid_at=T_2024, invalid_at=T_2025_JAN,
-                    confidence=0.8)
-        _add_triple(kg, "a", "causes", "b",
-                    valid_at=T_2025_JUN,
-                    confidence=0.9)
+        _add_triple(
+            kg, "a", "caused_by", "b", valid_at=T_2024, invalid_at=T_2025_JAN, confidence=0.8
+        )
+        _add_triple(kg, "a", "causes", "b", valid_at=T_2025_JUN, confidence=0.9)
 
         # At 2024-06: only first edge
-        r1 = pf.find_path("a", "b",
-                          valid_at=_iso(_make_time(2024, 6, 1)))
+        r1 = pf.find_path("a", "b", valid_at=_iso(_make_time(2024, 6, 1)))
         assert r1["complete"] is True
         assert r1["edges"][0]["predicate"] == "caused_by"
 
         # At 2025-03: gap — neither edge valid
-        r2 = pf.find_path("a", "b",
-                          valid_at=_iso(_make_time(2025, 3, 1)))
+        r2 = pf.find_path("a", "b", valid_at=_iso(_make_time(2025, 3, 1)))
         assert r2["complete"] is False
 
         # At 2025-12: only second edge

@@ -62,13 +62,13 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 try:
     from py_ecc.bn128 import (
+        FQ,
+        FQ2,
+        FQ12,
         G1,
         G2,
         Z1,
         Z2,
-        FQ,
-        FQ2,
-        FQ12,
         add,
         curve_order,
         field_modulus,
@@ -77,8 +77,9 @@ try:
         neg,
     )
     from py_ecc.bn128 import pairing as miller_loop_pairing
+    from py_ecc.bn128.bn128_curve import b as B_COEFF
+    from py_ecc.bn128.bn128_curve import b2 as B2_COEFF
     from py_ecc.bn128.bn128_pairing import final_exponentiate
-    from py_ecc.bn128.bn128_curve import b as B_COEFF, b2 as B2_COEFF
 
     _HAS_PY_ECC = True
 except ImportError:  # pragma: no cover
@@ -106,6 +107,7 @@ G2Point = Optional[Tuple[FQ2, FQ2]]
 # Scalar utilities
 # ---------------------------------------------------------------------------
 
+
 def random_scalar() -> int:
     """Generate a cryptographically random scalar in ``[1, curve_order-1]``."""
     return secrets.randbelow(curve_order - 1) + 1
@@ -127,6 +129,7 @@ def hash_to_scalar(*data: bytes) -> int:
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class VerificationKey:
@@ -256,6 +259,7 @@ class Groth16Proof:
 # Trusted Setup
 # ---------------------------------------------------------------------------
 
+
 class TrustedSetup:
     """Generate proving and verification keys for a Groth16 circuit.
 
@@ -330,11 +334,7 @@ class TrustedSetup:
         # IC[i] = (β·u_i + α·v_i + w_i) / γ · G₁  for public indices [0..n_pub]
         ic: List[G1Point] = []
         for i in range(self.n_pub + 1):
-            val = (
-                self._beta * self._u[i]
-                + self._alpha * self._v[i]
-                + self._w[i]
-            ) % curve_order
+            val = (self._beta * self._u[i] + self._alpha * self._v[i] + self._w[i]) % curve_order
             val = (val * gamma_inv) % curve_order
             ic.append(multiply(G1, val))
 
@@ -358,11 +358,7 @@ class TrustedSetup:
         # Witness combined: (β·u_i + α·v_i + w_i)/δ · G₁ for witness indices
         wit_combined: List[G1Point] = []
         for i in range(self.n_pub + 1, self.n_total):
-            val = (
-                self._beta * self._u[i]
-                + self._alpha * self._v[i]
-                + self._w[i]
-            ) % curve_order
+            val = (self._beta * self._u[i] + self._alpha * self._v[i] + self._w[i]) % curve_order
             val = (val * delta_inv) % curve_order
             wit_combined.append(multiply(G1, val))
 
@@ -396,9 +392,7 @@ class TrustedSetup:
         """Yield deterministic scalars from a seed (for testing only)."""
         state = seed
         while True:
-            h = hashlib.sha256(
-                b"groth16_keygen" + state.to_bytes(32, "big")
-            )
+            h = hashlib.sha256(b"groth16_keygen" + state.to_bytes(32, "big"))
             state = int.from_bytes(h.digest(), "big")
             val = state % curve_order
             if val == 0:
@@ -414,6 +408,7 @@ class TrustedSetup:
 # ---------------------------------------------------------------------------
 # Groth16 Prover
 # ---------------------------------------------------------------------------
+
 
 class Groth16Prover:
     """Generate Groth16 proofs using a proving key.
@@ -469,9 +464,7 @@ class Groth16Prover:
         pk = self.pk
 
         if len(public_inputs) != pk.n_pub:
-            raise ValueError(
-                f"Expected {pk.n_pub} public inputs, got {len(public_inputs)}"
-            )
+            raise ValueError(f"Expected {pk.n_pub} public inputs, got {len(public_inputs)}")
 
         n_wit_expected = pk.n_total - pk.n_pub - 1
         if len(witness) < n_wit_expected:
@@ -483,9 +476,7 @@ class Groth16Prover:
 
         # Full assignment: [1, pub_0, ..., pub_{n-1}, wit_0, ..., wit_{m-1}]
         assignment = (
-            [1]
-            + [x % curve_order for x in public_inputs]
-            + [w % curve_order for w in witness]
+            [1] + [x % curve_order for x in public_inputs] + [w % curve_order for w in witness]
         )
 
         # Random blinding factors
@@ -525,11 +516,7 @@ class Groth16Prover:
 
         # Witness combined contributions
         for j, i in enumerate(range(pk.n_pub + 1, pk.n_total)):
-            combined_i = (
-                pk.beta * pk.u[i]
-                + pk.alpha * pk.v[i]
-                + pk.w[i]
-            ) % curve_order
+            combined_i = (pk.beta * pk.u[i] + pk.alpha * pk.v[i] + pk.w[i]) % curve_order
             combined_i = (combined_i * pk.delta_inv) % curve_order
             C_scalar = (C_scalar + assignment[i] * combined_i) % curve_order
 
@@ -625,6 +612,7 @@ class Groth16Prover:
 # Groth16 Verifier
 # ---------------------------------------------------------------------------
 
+
 class Groth16Verifier:
     """Verify Groth16 proofs using a verification key.
 
@@ -670,7 +658,9 @@ class Groth16Verifier:
         n = self.vk.num_public_inputs
         if len(public_inputs) != n:
             logger.warning(
-                "Expected %d public inputs, got %d", n, len(public_inputs),
+                "Expected %d public inputs, got %d",
+                n,
+                len(public_inputs),
             )
             return False
 
@@ -712,7 +702,9 @@ class Groth16Verifier:
             return False
 
     def verify_from_bytes(
-        self, proof_bytes: bytes, public_inputs: List[int],
+        self,
+        proof_bytes: bytes,
+        public_inputs: List[int],
     ) -> bool:
         """Verify a serialised proof (256-byte format).
 
@@ -725,6 +717,7 @@ class Groth16Verifier:
 # ---------------------------------------------------------------------------
 # Bridge-Specific Circuits
 # ---------------------------------------------------------------------------
+
 
 class BridgeWithdrawalCircuit:
     """Circuit that proves a valid Rings network withdrawal.
@@ -782,9 +775,13 @@ class BridgeWithdrawalCircuit:
         nonce_mod = nonce % curve_order
         addr_clean = recipient.lower().replace("0x", "").ljust(40, "0")[:40]
         addr_bytes = bytes.fromhex(addr_clean)
-        recipient_hash = int.from_bytes(
-            hashlib.sha256(addr_bytes).digest(), "big",
-        ) % curve_order
+        recipient_hash = (
+            int.from_bytes(
+                hashlib.sha256(addr_bytes).digest(),
+                "big",
+            )
+            % curve_order
+        )
         return [amount_mod, nonce_mod, recipient_hash]
 
     def prove_withdrawal(
@@ -826,7 +823,9 @@ class BridgeWithdrawalCircuit:
         return proof_bytes, public_inputs
 
     def verify_withdrawal(
-        self, proof_bytes: bytes, public_inputs: List[int],
+        self,
+        proof_bytes: bytes,
+        public_inputs: List[int],
     ) -> bool:
         """Verify a withdrawal proof.
 
@@ -845,7 +844,8 @@ class BridgeWithdrawalCircuit:
 
     @staticmethod
     def _build_witness(
-        signatures: List[bytes], state_root: bytes,
+        signatures: List[bytes],
+        state_root: bytes,
     ) -> List[int]:
         """Derive the private witness from signatures and state root."""
         witness: List[int] = []
@@ -855,9 +855,7 @@ class BridgeWithdrawalCircuit:
         # State root commitment
         witness.append(hash_to_scalar(b"state_root", state_root))
         # Threshold proof
-        witness.append(
-            hash_to_scalar(b"threshold", len(signatures).to_bytes(4, "big"))
-        )
+        witness.append(hash_to_scalar(b"threshold", len(signatures).to_bytes(4, "big")))
         # Authorisation nonce
         witness.append(random_scalar())
         return witness
@@ -941,7 +939,9 @@ class SyncCommitteeCircuit:
         return proof_bytes, public_inputs
 
     def verify_rotation(
-        self, proof_bytes: bytes, public_inputs: List[int],
+        self,
+        proof_bytes: bytes,
+        public_inputs: List[int],
     ) -> bool:
         """Verify a sync committee rotation proof."""
         return self.verifier.verify_from_bytes(proof_bytes, public_inputs)
@@ -966,6 +966,7 @@ class SyncCommitteeCircuit:
 # ---------------------------------------------------------------------------
 # Coordinate serialisation helpers
 # ---------------------------------------------------------------------------
+
 
 def g1_to_uint256(point: G1Point) -> Tuple[int, int]:
     """Convert a G1 point to ``(x, y)`` as uint256 values.
@@ -1062,6 +1063,7 @@ def vk_to_solidity_args(vk: VerificationKey) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Helpers (internal)
 # ---------------------------------------------------------------------------
+
 
 def _is_valid_g1(point: G1Point) -> bool:
     """Check that a G1 point is on the curve and not at infinity."""

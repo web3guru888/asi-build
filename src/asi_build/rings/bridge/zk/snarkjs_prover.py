@@ -57,9 +57,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_CIRCUITS_DIR = Path(__file__).resolve().parents[5] / "circuits"
 
 #: BN254 scalar field order
-BN254_FIELD_ORDER = (
-    21888242871839275222246405745257275088548364400416034343698204186575808495617
-)
+BN254_FIELD_ORDER = 21888242871839275222246405745257275088548364400416034343698204186575808495617
 
 #: Estimated gas for Groth16 on-chain verification (~230K for BN254 pairing)
 GROTH16_VERIFY_GAS = 230_000
@@ -100,16 +98,10 @@ class SnarkJSProver(ZKProofEngine):
         self._build_dir = self._circuits_dir / "build"
 
         # Key paths
-        self._wasm_path = (
-            self._build_dir
-            / f"{circuit_name}_js"
-            / f"{circuit_name}.wasm"
-        )
+        self._wasm_path = self._build_dir / f"{circuit_name}_js" / f"{circuit_name}.wasm"
         self._zkey_path = self._build_dir / f"{circuit_name}_final.zkey"
         self._vkey_path = self._build_dir / "verification_key.json"
-        self._witness_gen = (
-            self._build_dir / f"{circuit_name}_js" / "generate_witness.js"
-        )
+        self._witness_gen = self._build_dir / f"{circuit_name}_js" / "generate_witness.js"
 
         # Statistics
         self._proofs_generated = 0
@@ -170,9 +162,7 @@ class SnarkJSProver(ZKProofEngine):
             submission.
         """
         if not self.is_available:
-            raise ProofGenerationError(
-                "snarkjs prover not available: check circuit artifacts"
-            )
+            raise ProofGenerationError("snarkjs prover not available: check circuit artifacts")
 
         start_ms = time.monotonic_ns() // 1_000_000
 
@@ -182,9 +172,7 @@ class SnarkJSProver(ZKProofEngine):
         input_json = _stringify_inputs(all_inputs)
 
         try:
-            with tempfile.TemporaryDirectory(
-                prefix="snarkjs_"
-            ) as tmpdir:
+            with tempfile.TemporaryDirectory(prefix="snarkjs_") as tmpdir:
                 tmpdir = Path(tmpdir)
                 input_path = tmpdir / "input.json"
                 witness_path = tmpdir / "witness.wtns"
@@ -227,9 +215,7 @@ class SnarkJSProver(ZKProofEngine):
         except ProofGenerationError:
             raise
         except Exception as exc:
-            raise ProofGenerationError(
-                f"snarkjs proof generation failed: {exc}"
-            ) from exc
+            raise ProofGenerationError(f"snarkjs proof generation failed: {exc}") from exc
 
         elapsed_ms = (time.monotonic_ns() // 1_000_000) - start_ms
 
@@ -237,9 +223,7 @@ class SnarkJSProver(ZKProofEngine):
         proof_bytes = self._encode_proof(proof_data)
 
         # Format public inputs as bytes32
-        public_bytes = [
-            int(s).to_bytes(32, "big") for s in public_data
-        ]
+        public_bytes = [int(s).to_bytes(32, "big") for s in public_data]
 
         self._proofs_generated += 1
         self._total_gen_time_ms += elapsed_ms
@@ -288,9 +272,7 @@ class SnarkJSProver(ZKProofEngine):
             True if the proof is valid.
         """
         if not self.is_available:
-            raise ProofVerificationError(
-                "snarkjs prover not available"
-            )
+            raise ProofVerificationError("snarkjs prover not available")
 
         start_ms = time.monotonic_ns() // 1_000_000
 
@@ -302,14 +284,9 @@ class SnarkJSProver(ZKProofEngine):
             if raw_proof is None or raw_public is None:
                 # Decode from proof_bytes
                 raw_proof = self._decode_proof(proof.proof_bytes)
-                raw_public = [
-                    str(int.from_bytes(pi, "big"))
-                    for pi in proof.public_inputs
-                ]
+                raw_public = [str(int.from_bytes(pi, "big")) for pi in proof.public_inputs]
 
-            with tempfile.TemporaryDirectory(
-                prefix="snarkjs_verify_"
-            ) as tmpdir:
+            with tempfile.TemporaryDirectory(prefix="snarkjs_verify_") as tmpdir:
                 tmpdir = Path(tmpdir)
                 proof_path = tmpdir / "proof.json"
                 public_path = tmpdir / "public.json"
@@ -335,9 +312,7 @@ class SnarkJSProver(ZKProofEngine):
         except ProofVerificationError:
             raise
         except Exception as exc:
-            raise ProofVerificationError(
-                f"snarkjs verification failed: {exc}"
-            ) from exc
+            raise ProofVerificationError(f"snarkjs verification failed: {exc}") from exc
 
         elapsed_ms = (time.monotonic_ns() // 1_000_000) - start_ms
         self._proofs_verified += 1
@@ -427,10 +402,7 @@ class SnarkJSProver(ZKProofEngine):
         if raw is None:
             raw = SnarkJSProver._decode_proof(proof.proof_bytes)
         if raw_pub is None:
-            raw_pub = [
-                str(int.from_bytes(pi, "big"))
-                for pi in proof.public_inputs
-            ]
+            raw_pub = [str(int.from_bytes(pi, "big")) for pi in proof.public_inputs]
 
         def _hex(val: str) -> str:
             return hex(int(val))
@@ -508,18 +480,13 @@ class SnarkJSProver(ZKProofEngine):
                 timeout=timeout + 5,
             )
         except asyncio.TimeoutError:
-            raise ProofGenerationError(
-                f"{description} timed out after {timeout}s"
-            )
+            raise ProofGenerationError(f"{description} timed out after {timeout}s")
         except subprocess.TimeoutExpired:
-            raise ProofGenerationError(
-                f"{description} timed out after {timeout}s"
-            )
+            raise ProofGenerationError(f"{description} timed out after {timeout}s")
 
         if check and result.returncode != 0:
             raise ProofGenerationError(
-                f"{description} failed (exit {result.returncode}): "
-                f"{result.stderr[:500]}"
+                f"{description} failed (exit {result.returncode}): " f"{result.stderr[:500]}"
             )
 
         return result
@@ -599,9 +566,7 @@ class WithdrawalWitness:
         """
         errors: List[str] = []
         if self.amount > self.balance:
-            errors.append(
-                f"amount ({self.amount}) exceeds balance ({self.balance})"
-            )
+            errors.append(f"amount ({self.amount}) exceeds balance ({self.balance})")
         if self.amount < 0:
             errors.append(f"negative amount: {self.amount}")
         if self.balance < 0:
@@ -716,14 +681,10 @@ async def compute_withdrawal_witness(
     cdir = circuits_dir or DEFAULT_CIRCUITS_DIR
 
     # Compute account leaf: Poseidon(secret, balance, nonce)
-    leaf = await poseidon_hash(
-        [secret, balance, nonce], node_bin, cdir
-    )
+    leaf = await poseidon_hash([secret, balance, nonce], node_bin, cdir)
 
     # Compute recipient hash: Poseidon(address, 0)
-    recipient_hash = await poseidon_hash(
-        [recipient_address, 0], node_bin, cdir
-    )
+    recipient_hash = await poseidon_hash([recipient_address, 0], node_bin, cdir)
 
     if merkle_siblings is None:
         # Generate test Merkle tree
@@ -738,14 +699,10 @@ async def compute_withdrawal_witness(
     for i in range(tree_depth):
         if merkle_indices[i] == 0:
             # Current on left, sibling on right
-            current = await poseidon_hash(
-                [current, merkle_siblings[i]], node_bin, cdir
-            )
+            current = await poseidon_hash([current, merkle_siblings[i]], node_bin, cdir)
         else:
             # Current on right, sibling on left
-            current = await poseidon_hash(
-                [merkle_siblings[i], current], node_bin, cdir
-            )
+            current = await poseidon_hash([merkle_siblings[i], current], node_bin, cdir)
 
     return WithdrawalWitness(
         amount=amount,
@@ -769,9 +726,7 @@ def _stringify_inputs(inputs: dict) -> dict:
     result = {}
     for k, v in inputs.items():
         if isinstance(v, list):
-            result[k] = [
-                str(x) if isinstance(x, int) else x for x in v
-            ]
+            result[k] = [str(x) if isinstance(x, int) else x for x in v]
         elif isinstance(v, int):
             result[k] = str(v)
         else:

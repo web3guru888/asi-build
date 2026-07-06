@@ -113,7 +113,7 @@ class WithdrawalProposal:
     recipient: str
     proposer: str
     timestamp: float = field(default_factory=time.time)
-    approvals: Dict[str, str] = field(default_factory=dict)   # validator_id → sig hex
+    approvals: Dict[str, str] = field(default_factory=dict)  # validator_id → sig hex
     rejected: Set[str] = field(default_factory=set)
     status: ProposalStatus = ProposalStatus.PROPOSED
 
@@ -193,9 +193,7 @@ class ValidatorConsensus:
         validator_id: Optional[str] = None,
     ) -> None:
         if threshold > total:
-            raise ValueError(
-                f"threshold ({threshold}) cannot exceed total ({total})"
-            )
+            raise ValueError(f"threshold ({threshold}) cannot exceed total ({total})")
         if threshold < 1:
             raise ValueError("threshold must be ≥ 1")
 
@@ -231,8 +229,12 @@ class ValidatorConsensus:
         logger.info(
             "ValidatorConsensus initialised: id=%s, threshold=%d/%d, "
             "nodes=%d, timeout=%.1fs, ttl=%.0fs",
-            self.validator_id, self.threshold, self.total,
-            len(self.node_urls), self.timeout, self.proposal_ttl,
+            self.validator_id,
+            self.threshold,
+            self.total,
+            len(self.node_urls),
+            self.timeout,
+            self.proposal_ttl,
         )
 
     # ------------------------------------------------------------------
@@ -262,7 +264,8 @@ class ValidatorConsensus:
         self._account = Account.from_key(key_hex)
         self._private_key = key_hex
         logger.info(
-            "Signing key loaded: address=%s", self._account.address,
+            "Signing key loaded: address=%s",
+            self._account.address,
         )
 
     # ==================================================================
@@ -309,7 +312,9 @@ class ValidatorConsensus:
 
         logger.info(
             "Requesting approval: id=%s, amount=%d, recipient=%s",
-            withdrawal_id, amount, recipient,
+            withdrawal_id,
+            amount,
+            recipient,
         )
 
         # 2. Fan out to all validators concurrently
@@ -321,17 +326,15 @@ class ValidatorConsensus:
             "timestamp": proposal.timestamp,
         }
 
-        tasks = [
-            self._send_to_validator(url, payload)
-            for url in self.node_urls
-        ]
+        tasks = [self._send_to_validator(url, payload) for url in self.node_urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # 3. Collect responses
         for result in results:
             if isinstance(result, Exception):
                 logger.debug(
-                    "Validator returned error: %s", result,
+                    "Validator returned error: %s",
+                    result,
                 )
                 continue
             if result is None:
@@ -346,14 +349,17 @@ class ValidatorConsensus:
                     proposal.rejected.add(vid)
                 logger.info(
                     "Validator %s rejected withdrawal %s: %s",
-                    vid, withdrawal_id, result.get("reason", "unknown"),
+                    vid,
+                    withdrawal_id,
+                    result.get("reason", "unknown"),
                 )
             elif sig:
                 async with self._lock:
                     proposal.approvals[vid] = sig
                 logger.info(
                     "Validator %s approved withdrawal %s",
-                    vid, withdrawal_id,
+                    vid,
+                    withdrawal_id,
                 )
 
         # 4. Check threshold
@@ -368,8 +374,10 @@ class ValidatorConsensus:
 
         logger.info(
             "Approval result: id=%s, approved=%s, votes=%d/%d, rejected=%d",
-            withdrawal_id, approved,
-            len(proposal.approvals), self.threshold,
+            withdrawal_id,
+            approved,
+            len(proposal.approvals),
+            self.threshold,
             len(proposal.rejected),
         )
 
@@ -411,19 +419,24 @@ class ValidatorConsensus:
 
         # Validate the withdrawal request
         rejection_reason = self._validate_withdrawal(
-            withdrawal_id, amount, recipient,
+            withdrawal_id,
+            amount,
+            recipient,
         )
         if rejection_reason is not None:
             logger.warning(
-                "Rejecting withdrawal %s: %s", withdrawal_id, rejection_reason,
+                "Rejecting withdrawal %s: %s",
+                withdrawal_id,
+                rejection_reason,
             )
             return None
 
         # Rate limit check
         if not self._check_rate_limit():
             logger.warning(
-                "Rejecting withdrawal %s: rate limit exceeded "
-                "(%d approvals/hour)", withdrawal_id, self._rate_limit,
+                "Rejecting withdrawal %s: rate limit exceeded " "(%d approvals/hour)",
+                withdrawal_id,
+                self._rate_limit,
             )
             return None
 
@@ -439,16 +452,16 @@ class ValidatorConsensus:
                     recipient=recipient,
                     proposer="remote",
                 )
-            self._proposals[withdrawal_id].approvals[self.validator_id] = (
-                signature.hex()
-            )
+            self._proposals[withdrawal_id].approvals[self.validator_id] = signature.hex()
 
         # Record for rate limiting
         self._approval_timestamps.append(time.time())
 
         logger.info(
             "Approved withdrawal %s: amount=%d, recipient=%s",
-            withdrawal_id, amount, recipient,
+            withdrawal_id,
+            amount,
+            recipient,
         )
         return signature
 
@@ -532,20 +545,16 @@ class ValidatorConsensus:
             "total": self.total,
             "node_count": len(self.node_urls),
             "active_proposals": sum(
-                1 for p in proposals.values()
-                if p.status == ProposalStatus.PROPOSED
+                1 for p in proposals.values() if p.status == ProposalStatus.PROPOSED
             ),
             "approved_proposals": sum(
-                1 for p in proposals.values()
-                if p.status == ProposalStatus.APPROVED
+                1 for p in proposals.values() if p.status == ProposalStatus.APPROVED
             ),
             "rejected_proposals": sum(
-                1 for p in proposals.values()
-                if p.status == ProposalStatus.REJECTED
+                1 for p in proposals.values() if p.status == ProposalStatus.REJECTED
             ),
             "expired_proposals": sum(
-                1 for p in proposals.values()
-                if p.status == ProposalStatus.EXPIRED
+                1 for p in proposals.values() if p.status == ProposalStatus.EXPIRED
             ),
             "has_signing_key": self._account is not None,
             "approvals_last_hour": self._count_recent_approvals(),
@@ -597,30 +606,40 @@ class ValidatorConsensus:
                         data: Dict[str, Any] = await resp.json()
                         logger.debug(
                             "Validator %s responded 200: %s",
-                            url, json.dumps(data, default=str)[:200],
+                            url,
+                            json.dumps(data, default=str)[:200],
                         )
                         return data
                     else:
                         body = await resp.text()
                         logger.warning(
                             "Validator %s responded %d: %s",
-                            url, resp.status, body[:200],
+                            url,
+                            resp.status,
+                            body[:200],
                         )
                         return None
 
         except asyncio.TimeoutError:
             logger.warning(
-                "Validator %s timed out after %.1fs", url, self.timeout,
+                "Validator %s timed out after %.1fs",
+                url,
+                self.timeout,
             )
             return None
         except aiohttp.ClientError as exc:
             logger.warning(
-                "Validator %s connection error: %s", url, exc,
+                "Validator %s connection error: %s",
+                url,
+                exc,
             )
             return None
         except Exception as exc:
             logger.error(
-                "Validator %s unexpected error: %s", url, exc, exc_info=True,
+                "Validator %s unexpected error: %s",
+                url,
+                exc,
+                exc_info=True,
             )
             return None
 
@@ -664,7 +683,9 @@ class ValidatorConsensus:
         from eth_account.messages import encode_defunct  # type: ignore[import-untyped]
 
         msg_bytes = self._encode_approval_message(
-            withdrawal_id, amount, recipient,
+            withdrawal_id,
+            amount,
+            recipient,
         )
         signable = encode_defunct(msg_bytes)
         signed = self._account.sign_message(signable)
@@ -824,9 +845,7 @@ class ValidatorConsensus:
         cutoff = now - 3600.0
 
         # Prune old entries
-        self._approval_timestamps = [
-            ts for ts in self._approval_timestamps if ts >= cutoff
-        ]
+        self._approval_timestamps = [ts for ts in self._approval_timestamps if ts >= cutoff]
 
         return len(self._approval_timestamps) < self._rate_limit
 
@@ -844,10 +863,7 @@ class ValidatorConsensus:
     # ==================================================================
 
     def __repr__(self) -> str:
-        active = sum(
-            1 for p in self._proposals.values()
-            if p.status == ProposalStatus.PROPOSED
-        )
+        active = sum(1 for p in self._proposals.values() if p.status == ProposalStatus.PROPOSED)
         return (
             f"ValidatorConsensus("
             f"id={self.validator_id!r}, "

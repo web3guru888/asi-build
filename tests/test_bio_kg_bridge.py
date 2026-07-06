@@ -18,14 +18,13 @@ import pytest
 from asi_build.bio_inspired.core import BioCognitiveArchitecture, CognitiveState
 from asi_build.bio_inspired.kg_bridge import (
     AGENT,
-    SUBJECT,
     SOURCE,
+    SUBJECT,
     CognitiveStateKGBridge,
     TransitionRecord,
     enable_kg_logging,
 )
 from asi_build.knowledge_graph.temporal_kg import TemporalKnowledgeGraph
-
 
 # ── Fixtures ───────────────────────────────────────────────────────────
 
@@ -76,9 +75,7 @@ class TestBridgeConstruction:
 
 class TestRecordStateChange:
     def test_writes_three_core_triples(self, bridge, kg):
-        rec = bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING
-        )
+        rec = bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING)
         assert len(rec.triple_ids) == 3
 
         # Verify each triple exists in KG
@@ -88,70 +85,50 @@ class TestRecordStateChange:
             assert tid in ids
 
     def test_transitioned_from_triple(self, bridge, kg):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.NREM_SLEEP
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.NREM_SLEEP)
         triples = kg.get_triples(subject=SUBJECT, predicate="transitioned_from")
         assert len(triples) >= 1
         assert triples[0]["object"] == "awake_active"
 
     def test_transitioned_to_triple(self, bridge, kg):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.NREM_SLEEP
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.NREM_SLEEP)
         triples = kg.get_triples(subject=SUBJECT, predicate="transitioned_to")
         assert len(triples) >= 1
         assert triples[0]["object"] == "nrem_sleep"
 
     def test_current_state_triple(self, bridge, kg):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING
-        )
-        triples = kg.get_triples(
-            subject=SUBJECT, predicate="current_state", current_only=True
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING)
+        triples = kg.get_triples(subject=SUBJECT, predicate="current_state", current_only=True)
         assert len(triples) == 1
         assert triples[0]["object"] == "learning"
 
     def test_subject_is_correct(self, bridge, kg):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.CONSOLIDATING
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.CONSOLIDATING)
         triples = kg.get_triples(subject=SUBJECT)
         for t in triples:
             # TemporalKG normalises to lowercase+underscores
             assert t["subject"] == SUBJECT.lower().replace(" ", "_")
 
     def test_source_is_bio_inspired(self, bridge, kg):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.ADAPTING
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.ADAPTING)
         triples = kg.get_triples(subject=SUBJECT, predicate="transitioned_to")
         assert triples[0]["source"] == SOURCE
 
     def test_temporal_type_is_dynamic(self, bridge, kg):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.DEVELOPING
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.DEVELOPING)
         triples = kg.get_triples(subject=SUBJECT, predicate="transitioned_from")
         assert triples[0]["temporal_type"] == "dynamic"
 
     def test_returns_transition_record(self, bridge):
-        rec = bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.REM_SLEEP
-        )
+        rec = bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.REM_SLEEP)
         assert isinstance(rec, TransitionRecord)
         assert rec.old_state == CognitiveState.AWAKE_ACTIVE
         assert rec.new_state == CognitiveState.REM_SLEEP
         assert rec.timestamp > 0
 
     def test_history_grows(self, bridge):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING
-        )
-        bridge.record_state_change(
-            CognitiveState.LEARNING, CognitiveState.CONSOLIDATING
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING)
+        bridge.record_state_change(CognitiveState.LEARNING, CognitiveState.CONSOLIDATING)
         assert len(bridge.history) == 2
 
 
@@ -161,28 +138,16 @@ class TestRecordStateChange:
 class TestCurrentStateInvalidation:
     def test_old_current_state_is_invalidated(self, bridge, kg):
         """After two transitions, only the latest current_state is active."""
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING
-        )
-        bridge.record_state_change(
-            CognitiveState.LEARNING, CognitiveState.CONSOLIDATING
-        )
-        active = kg.get_triples(
-            subject=SUBJECT, predicate="current_state", current_only=True
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING)
+        bridge.record_state_change(CognitiveState.LEARNING, CognitiveState.CONSOLIDATING)
+        active = kg.get_triples(subject=SUBJECT, predicate="current_state", current_only=True)
         assert len(active) == 1
         assert active[0]["object"] == "consolidating"
 
     def test_invalidated_triple_still_in_history(self, bridge, kg):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING
-        )
-        bridge.record_state_change(
-            CognitiveState.LEARNING, CognitiveState.NREM_SLEEP
-        )
-        all_triples = kg.get_triples(
-            subject=SUBJECT, predicate="current_state", current_only=False
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING)
+        bridge.record_state_change(CognitiveState.LEARNING, CognitiveState.NREM_SLEEP)
+        all_triples = kg.get_triples(subject=SUBJECT, predicate="current_state", current_only=False)
         assert len(all_triples) == 2  # one invalidated, one active
 
     def test_three_transitions_single_active(self, bridge, kg):
@@ -194,9 +159,7 @@ class TestCurrentStateInvalidation:
             old = CognitiveState.AWAKE_ACTIVE  # simplified
             bridge.record_state_change(old, new_state)
 
-        active = kg.get_triples(
-            subject=SUBJECT, predicate="current_state", current_only=True
-        )
+        active = kg.get_triples(subject=SUBJECT, predicate="current_state", current_only=True)
         assert len(active) == 1
         assert active[0]["object"] == "awake_resting"
 
@@ -263,9 +226,7 @@ class TestEnableKGLogging:
 
 class TestMetricsRecording:
     def test_metrics_triples_created(self, bridge, kg):
-        rec = bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING
-        )
+        rec = bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING)
         # global_metrics defaults are all 0.0 — should still be recorded
         assert len(rec.metric_triple_ids) > 0
 
@@ -276,9 +237,7 @@ class TestMetricsRecording:
         assert len(rec.metric_triple_ids) == 0
 
     def test_metric_predicate_values(self, bridge, kg):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING)
         # energy_efficiency is a known metric predicate
         triples = kg.get_triples(subject=SUBJECT, predicate="energy_efficiency")
         assert len(triples) >= 1
@@ -286,9 +245,7 @@ class TestMetricsRecording:
         float(triples[0]["object"])
 
     def test_metric_confidence_is_0_9(self, bridge, kg):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING)
         triples = kg.get_triples(subject=SUBJECT, predicate="energy_efficiency")
         assert triples[0]["confidence"] == pytest.approx(0.9)
 
@@ -314,16 +271,12 @@ class TestMultiTransition:
         assert len(bridge.history) == 6
 
         # Only one active current_state
-        active = kg.get_triples(
-            subject=SUBJECT, predicate="current_state", current_only=True
-        )
+        active = kg.get_triples(subject=SUBJECT, predicate="current_state", current_only=True)
         assert len(active) == 1
         assert active[0]["object"] == "awake_active"
 
         # 6 transitioned_from triples (all still active — they're not contradicting)
-        from_triples = kg.get_triples(
-            subject=SUBJECT, predicate="transitioned_from"
-        )
+        from_triples = kg.get_triples(subject=SUBJECT, predicate="transitioned_from")
         assert len(from_triples) == 6
 
     def test_all_states_representable(self, bridge, kg):
@@ -332,9 +285,7 @@ class TestMultiTransition:
         for i in range(len(states) - 1):
             bridge.record_state_change(states[i], states[i + 1])
 
-        active = kg.get_triples(
-            subject=SUBJECT, predicate="current_state", current_only=True
-        )
+        active = kg.get_triples(subject=SUBJECT, predicate="current_state", current_only=True)
         assert active[0]["object"] == states[-1].value
 
 
@@ -346,28 +297,20 @@ class TestQueryHelpers:
         assert bridge.get_current_state_triple() is None
 
     def test_get_current_state_triple_after_transition(self, bridge):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING)
         triple = bridge.get_current_state_triple()
         assert triple is not None
         assert triple["object"] == "learning"
 
     def test_get_transition_history(self, bridge):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING
-        )
-        bridge.record_state_change(
-            CognitiveState.LEARNING, CognitiveState.CONSOLIDATING
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING)
+        bridge.record_state_change(CognitiveState.LEARNING, CognitiveState.CONSOLIDATING)
         history = bridge.get_transition_history()
         # Should contain at least 2 entries (all current_state triples, active + invalidated)
         assert len(history) >= 2
 
     def test_current_state_triple_id_tracked(self, bridge):
-        bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.DEVELOPING
-        )
+        bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.DEVELOPING)
         assert bridge._current_state_triple_id is not None
         assert isinstance(bridge._current_state_triple_id, str)
         assert len(bridge._current_state_triple_id) > 0
@@ -378,9 +321,7 @@ class TestQueryHelpers:
 
 class TestTransitionRecord:
     def test_record_fields(self, bridge):
-        rec = bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.ADAPTING
-        )
+        rec = bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.ADAPTING)
         assert rec.old_state == CognitiveState.AWAKE_ACTIVE
         assert rec.new_state == CognitiveState.ADAPTING
         assert isinstance(rec.triple_ids, list)
@@ -388,17 +329,11 @@ class TestTransitionRecord:
         assert rec.timestamp > 0
 
     def test_record_timestamps_increase(self, bridge):
-        rec1 = bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING
-        )
-        rec2 = bridge.record_state_change(
-            CognitiveState.LEARNING, CognitiveState.CONSOLIDATING
-        )
+        rec1 = bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING)
+        rec2 = bridge.record_state_change(CognitiveState.LEARNING, CognitiveState.CONSOLIDATING)
         assert rec2.timestamp >= rec1.timestamp
 
     def test_record_triple_ids_are_unique(self, bridge):
-        rec = bridge.record_state_change(
-            CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING
-        )
+        rec = bridge.record_state_change(CognitiveState.AWAKE_ACTIVE, CognitiveState.LEARNING)
         all_ids = rec.triple_ids + rec.metric_triple_ids
         assert len(all_ids) == len(set(all_ids))

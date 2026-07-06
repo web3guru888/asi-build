@@ -131,9 +131,7 @@ class VectorDBBlackboardAdapter:
             name=self.MODULE_NAME,
             version=self.MODULE_VERSION,
             capabilities=(
-                ModuleCapability.PRODUCER
-                | ModuleCapability.CONSUMER
-                | ModuleCapability.TRANSFORMER
+                ModuleCapability.PRODUCER | ModuleCapability.CONSUMER | ModuleCapability.TRANSFORMER
             ),
             description=(
                 "Vector database: embedding generation, semantic search, "
@@ -260,6 +258,7 @@ class VectorDBBlackboardAdapter:
                 if SearchQuery is None:
                     try:
                         from asi_build.vectordb.core.search import SearchQuery as _SQ
+
                         SearchQuery = _SQ
                     except (ImportError, AttributeError):
                         pass
@@ -437,8 +436,9 @@ class VectorDBBlackboardAdapter:
         stats: Dict[str, Any] = {}
         try:
             stats["model_name"] = getattr(
-                self._embedding_pipeline, "model_name",
-                getattr(self._embedding_pipeline, "config", {})
+                self._embedding_pipeline,
+                "model_name",
+                getattr(self._embedding_pipeline, "config", {}),
             )
             if isinstance(stats["model_name"], dict):
                 stats["model_name"] = stats["model_name"].get("model_name", "unknown")
@@ -456,7 +456,9 @@ class VectorDBBlackboardAdapter:
             pass
 
         try:
-            stats["is_available"] = getattr(self._embedding_pipeline, "is_available", lambda: True)()
+            stats["is_available"] = getattr(
+                self._embedding_pipeline, "is_available", lambda: True
+            )()
         except Exception:
             stats["is_available"] = None
 
@@ -556,9 +558,7 @@ class VectorDBBlackboardAdapter:
 
         if self._embedding_pipeline is not None:
             try:
-                snap["embedding_dimension"] = getattr(
-                    self._embedding_pipeline, "dimension", None
-                )
+                snap["embedding_dimension"] = getattr(self._embedding_pipeline, "dimension", None)
             except Exception:
                 pass
 

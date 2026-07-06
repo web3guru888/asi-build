@@ -76,8 +76,7 @@ FIELD_MODULUS: int = int(
 )
 
 GROUP_ORDER: int = int(
-    "73eda753299d7d483339d80809a1d805"
-    "53bda402fffe5bfeffffffff00000001",
+    "73eda753299d7d483339d80809a1d805" "53bda402fffe5bfeffffffff00000001",
     16,
 )
 
@@ -122,6 +121,7 @@ def _clear_registries() -> None:
 # BLSPublicKey
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class BLSPublicKey:
     """A BLS12-381 public key (compressed G1 point, 48 bytes).
@@ -135,8 +135,7 @@ class BLSPublicKey:
     def __post_init__(self) -> None:
         if len(self.key_bytes) != G1_SIZE:
             raise ValueError(
-                f"BLS public key must be {G1_SIZE} bytes, "
-                f"got {len(self.key_bytes)}"
+                f"BLS public key must be {G1_SIZE} bytes, " f"got {len(self.key_bytes)}"
             )
 
     # -- constructors -------------------------------------------------------
@@ -183,6 +182,7 @@ class BLSPublicKey:
 # BLSSignature
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class BLSSignature:
     """A BLS12-381 signature (compressed G2 point, 96 bytes)."""
@@ -192,8 +192,7 @@ class BLSSignature:
     def __post_init__(self) -> None:
         if len(self.sig_bytes) != G2_SIZE:
             raise ValueError(
-                f"BLS signature must be {G2_SIZE} bytes, "
-                f"got {len(self.sig_bytes)}"
+                f"BLS signature must be {G2_SIZE} bytes, " f"got {len(self.sig_bytes)}"
             )
 
     def hex(self) -> str:
@@ -219,6 +218,7 @@ class BLSSignature:
 # BLSKeyPair
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class BLSKeyPair:
     """A BLS12-381 key pair (secret scalar + public key).
@@ -231,9 +231,7 @@ class BLSKeyPair:
 
     def __post_init__(self) -> None:
         if len(self.secret) != 32:
-            raise ValueError(
-                f"BLS secret key must be 32 bytes, got {len(self.secret)}"
-            )
+            raise ValueError(f"BLS secret key must be 32 bytes, got {len(self.secret)}")
 
     # -- constructors -------------------------------------------------------
 
@@ -267,9 +265,7 @@ class BLSKeyPair:
             self.secret, DOMAIN_SEPARATOR + message, hashlib.sha256
         ).digest()  # 32 bytes
 
-        binding = hashlib.sha256(
-            self.public_key.key_bytes + commitment
-        ).digest()  # 32 bytes
+        binding = hashlib.sha256(self.public_key.key_bytes + commitment).digest()  # 32 bytes
 
         # Third 32 bytes for uniqueness/padding.
         pad = hashlib.sha256(commitment + binding).digest()
@@ -290,9 +286,7 @@ class BLSKeyPair:
     # -- verification -------------------------------------------------------
 
     @staticmethod
-    def verify(
-        message: bytes, signature: BLSSignature, pubkey: BLSPublicKey
-    ) -> bool:
+    def verify(message: bytes, signature: BLSSignature, pubkey: BLSPublicKey) -> bool:
         """Verify a single BLS signature.
 
         Simulation: checks the registry to confirm this (pubkey, message)
@@ -310,6 +304,7 @@ class BLSKeyPair:
 # BLS12381 — static utility class
 # ---------------------------------------------------------------------------
 
+
 class BLS12381:
     """Static utility methods for BLS12-381 operations.
 
@@ -317,9 +312,7 @@ class BLS12381:
     """
 
     @staticmethod
-    def hash_to_g1(
-        message: bytes, dst: bytes = DOMAIN_SEPARATOR
-    ) -> bytes:
+    def hash_to_g1(message: bytes, dst: bytes = DOMAIN_SEPARATOR) -> bytes:
         """Hash an arbitrary message to a 48-byte simulated G1 point.
 
         Follows the structure of ``hash_to_curve`` (RFC 9380) with
@@ -361,9 +354,7 @@ class BLS12381:
 
         # Register aggregate composition — store the raw sig bytes of
         # each component so verify_aggregate can cross-check.
-        _AGGREGATE_REGISTRY[agg_bytes] = [
-            (sig.sig_bytes, b"") for sig in signatures
-        ]
+        _AGGREGATE_REGISTRY[agg_bytes] = [(sig.sig_bytes, b"") for sig in signatures]
 
         return BLSSignature(sig_bytes=agg_bytes)
 
@@ -381,8 +372,7 @@ class BLS12381:
         if bitmap is not None:
             if len(bitmap) != len(pubkeys):
                 raise ValueError(
-                    f"Bitmap length ({len(bitmap)}) != "
-                    f"pubkey count ({len(pubkeys)})"
+                    f"Bitmap length ({len(bitmap)}) != " f"pubkey count ({len(pubkeys)})"
                 )
             selected = [pk for pk, b in zip(pubkeys, bitmap) if b]
         else:
@@ -434,9 +424,7 @@ class BLS12381:
 
         for comp_sig_bytes, _ in components:
             if comp_sig_bytes not in registered_for_msg:
-                logger.debug(
-                    "verify_aggregate: component sig not found in registry"
-                )
+                logger.debug("verify_aggregate: component sig not found in registry")
                 return False
 
         return True
@@ -505,6 +493,7 @@ class BLS12381:
 # SyncCommitteeBLS
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SyncCommitteeBLS:
     """BLS-level sync committee representation.
@@ -531,13 +520,10 @@ class SyncCommitteeBLS:
     def __post_init__(self) -> None:
         for i, pk in enumerate(self.pubkeys):
             if len(pk) != G1_SIZE:
-                raise ValueError(
-                    f"Pubkey {i} is {len(pk)} bytes, expected {G1_SIZE}"
-                )
+                raise ValueError(f"Pubkey {i} is {len(pk)} bytes, expected {G1_SIZE}")
         if len(self.aggregate_pubkey) != G1_SIZE:
             raise ValueError(
-                f"Aggregate pubkey is {len(self.aggregate_pubkey)} bytes, "
-                f"expected {G1_SIZE}"
+                f"Aggregate pubkey is {len(self.aggregate_pubkey)} bytes, " f"expected {G1_SIZE}"
             )
 
     def root(self) -> bytes:
@@ -555,8 +541,7 @@ class SyncCommitteeBLS:
         """Return pubkeys where ``bitmap[i]`` is ``True``."""
         if len(bitmap) != len(self.pubkeys):
             raise ValueError(
-                f"Bitmap length ({len(bitmap)}) != "
-                f"committee size ({len(self.pubkeys)})"
+                f"Bitmap length ({len(bitmap)}) != " f"committee size ({len(self.pubkeys)})"
             )
         return [pk for pk, b in zip(self.pubkeys, bitmap) if b]
 
@@ -564,8 +549,7 @@ class SyncCommitteeBLS:
         """Count how many members are flagged in *bitmap*."""
         if len(bitmap) != len(self.pubkeys):
             raise ValueError(
-                f"Bitmap length ({len(bitmap)}) != "
-                f"committee size ({len(self.pubkeys)})"
+                f"Bitmap length ({len(bitmap)}) != " f"committee size ({len(self.pubkeys)})"
             )
         return sum(bitmap)
 

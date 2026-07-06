@@ -538,9 +538,7 @@ class AGICommunicationBlackboardAdapter:
                 topic="agi_comm.collaboration.status",
                 data={
                     "active_collaborations": collab_stats.get("active_collaborations", 0),
-                    "completed_collaborations": collab_stats.get(
-                        "completed_collaborations", 0
-                    ),
+                    "completed_collaborations": collab_stats.get("completed_collaborations", 0),
                     "total_tasks_assigned": collab_stats.get("total_tasks_assigned", 0),
                     "total_solutions": collab_stats.get("total_solutions", 0),
                     "avg_completion_time": collab_stats.get("avg_completion_time", 0.0),
@@ -605,9 +603,7 @@ class AGICommunicationBlackboardAdapter:
                     "total_merges": total_merges,
                     "total_conflicts": merge_stats.get("total_conflicts", 0),
                     "avg_confidence": merge_stats.get("avg_confidence", 0.0),
-                    "resolution_strategies_used": merge_stats.get(
-                        "resolution_strategies_used", []
-                    ),
+                    "resolution_strategies_used": merge_stats.get("resolution_strategies_used", []),
                     "timestamp": time.time(),
                 },
                 source_module=self.MODULE_NAME,
@@ -750,9 +746,7 @@ class AGICommunicationBlackboardAdapter:
                     solution=solution,
                 )
         except Exception:
-            logger.debug(
-                "Failed to handle reasoning event for collaboration", exc_info=True
-            )
+            logger.debug("Failed to handle reasoning event for collaboration", exc_info=True)
 
     def _handle_kg_event(self, event: CognitiveEvent) -> None:
         """Route KG events to merge evaluation."""
@@ -827,9 +821,7 @@ class AGICommunicationBlackboardAdapter:
 
         if self._collaboration is not None:
             try:
-                snap["collaboration_stats"] = (
-                    self._collaboration.get_collaboration_statistics()
-                )
+                snap["collaboration_stats"] = self._collaboration.get_collaboration_statistics()
             except Exception:
                 snap["collaboration_stats"] = None
 

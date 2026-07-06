@@ -29,7 +29,6 @@ from asi_build.rings.bridge.merkle_patricia import (
     RLPDecoder,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -104,6 +103,7 @@ class TestMockLightClient:
             lc = MockLightClient()
             await lc.sync("0xcheckpoint")
             assert lc.is_synced is True
+
         run(_test())
 
     def test_add_header_then_get(self):
@@ -114,6 +114,7 @@ class TestMockLightClient:
             got = await lc.get_verified_header(200)
             assert got.slot == 200
             assert got.proposer_index == 42
+
         run(_test())
 
     def test_get_header_missing_raises(self):
@@ -121,6 +122,7 @@ class TestMockLightClient:
             lc = MockLightClient()
             with pytest.raises(KeyError, match="No header for slot"):
                 await lc.get_verified_header(999)
+
         run(_test())
 
     def test_add_state_proof_then_verify(self):
@@ -131,6 +133,7 @@ class TestMockLightClient:
             got = await lc.verify_state_proof("0xabc", [], 50)
             assert got.verified is True
             assert got.balance == 10**18
+
         run(_test())
 
     def test_verify_state_proof_missing_raises(self):
@@ -138,6 +141,7 @@ class TestMockLightClient:
             lc = MockLightClient()
             with pytest.raises(KeyError, match="No state proof"):
                 await lc.verify_state_proof("0xmissing", [], 1)
+
         run(_test())
 
     def test_add_event_proof_then_verify(self):
@@ -148,6 +152,7 @@ class TestMockLightClient:
             got = await lc.verify_event("0xtx", 2)
             assert got.verified is True
             assert got.address == "0xcontract"
+
         run(_test())
 
     def test_add_sync_committee_then_get(self):
@@ -158,6 +163,7 @@ class TestMockLightClient:
             got = await lc.get_sync_committee(5)
             assert got.period == 5
             assert len(got.pubkeys) == 4
+
         run(_test())
 
     def test_get_latest_slot(self):
@@ -170,6 +176,7 @@ class TestMockLightClient:
             assert await lc.get_latest_slot() == 10
             lc.add_header(_make_header(20))
             assert await lc.get_latest_slot() == 20
+
         run(_test())
 
     def test_multiple_headers(self):
@@ -181,6 +188,7 @@ class TestMockLightClient:
             assert h3.slot == 3
             h5 = await lc.get_verified_header(5)
             assert h5.slot == 5
+
         run(_test())
 
     def test_state_proof_fields(self):
@@ -233,6 +241,7 @@ class TestHeliosLightClient:
             lc = HeliosLightClient()
             with pytest.raises(NotImplementedError, match="Helios FFI not yet"):
                 await lc.sync("0x")
+
         run(_test())
 
     def test_get_verified_header_raises(self):
@@ -240,6 +249,7 @@ class TestHeliosLightClient:
             lc = HeliosLightClient()
             with pytest.raises(NotImplementedError):
                 await lc.get_verified_header(1)
+
         run(_test())
 
     def test_all_methods_raise(self):
@@ -253,6 +263,7 @@ class TestHeliosLightClient:
                 await lc.get_sync_committee(1)
             with pytest.raises(NotImplementedError):
                 await lc.get_latest_slot()
+
         run(_test())
 
 
@@ -320,7 +331,7 @@ class TestMerklePatriciaVerifier:
 
     def test_nibbles_from_bytes(self):
         result = MerklePatriciaVerifier.nibbles_from_bytes(b"\xab\xcd")
-        assert result == [0xa, 0xb, 0xc, 0xd]
+        assert result == [0xA, 0xB, 0xC, 0xD]
 
     # ── _decode_compact_path ────────────────────────────────────────
 
@@ -329,14 +340,14 @@ class TestMerklePatriciaVerifier:
         # \x35\xab → leaf=True, nibbles=[5, 0xa, 0xb]
         path, is_leaf = MerklePatriciaVerifier._decode_compact_path(b"\x35\xab")
         assert is_leaf is True
-        assert path == [5, 0xa, 0xb]
+        assert path == [5, 0xA, 0xB]
 
     def test_decode_compact_path_extension_even(self):
         # Flag nibble 0x0 → extension, even. First byte = 0x00 (padding).
         # \x00\xab → extension, nibbles=[0xa, 0xb]
         path, is_leaf = MerklePatriciaVerifier._decode_compact_path(b"\x00\xab")
         assert is_leaf is False
-        assert path == [0xa, 0xb]
+        assert path == [0xA, 0xB]
 
     # ── verify_proof (constructed MPT) ──────────────────────────────
 

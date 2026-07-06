@@ -27,12 +27,6 @@ from .bls import (
     BLSSignature,
     SyncCommitteeBLS,
 )
-from .real_bls import (
-    RealBLS12381,
-    RealBLSKeyPair,
-    RealSyncCommitteeBLS,
-    get_bls_backend,
-)
 from .circuits import (
     ALL_CIRCUITS,
     BLSVerificationCircuit,
@@ -57,6 +51,12 @@ from .prover import (
     ZKProof,
     ZKProofEngine,
 )
+from .real_bls import (
+    RealBLS12381,
+    RealBLSKeyPair,
+    RealSyncCommitteeBLS,
+    get_bls_backend,
+)
 from .snarkjs_prover import (
     SnarkJSProver,
     WithdrawalWitness,
@@ -65,7 +65,9 @@ from .snarkjs_prover import (
 )
 from .ssz import (
     SSZ,
-    BeaconBlockHeader as SSZBeaconBlockHeader,
+)
+from .ssz import BeaconBlockHeader as SSZBeaconBlockHeader
+from .ssz import (
     LightClientUpdate,
     SyncCommitteeSSZ,
 )

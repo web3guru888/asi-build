@@ -15,6 +15,24 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from asi_build.integration import CognitiveBlackboard
+from asi_build.integration.adapters import (
+    AsyncAdapterBase,
+    BioInspiredAdapter,
+    BlockchainBlackboardAdapter,
+    CognitiveSynergyAdapter,
+    ComputeBlackboardAdapter,
+    ConsciousnessAdapter,
+    DistributedTrainingAdapter,
+    GraphIntelligenceAdapter,
+    IntegrationsBlackboardBridge,
+    KennyGraphBlackboardAdapter,
+    KnowledgeManagementAdapter,
+    ReproducibilityBlackboardAdapter,
+    VectorDBBlackboardAdapter,
+    VLABlackboardAdapter,
+    production_sweep,
+    wire_all,
+)
 from asi_build.integration.protocols import (
     BlackboardEntry,
     BlackboardQuery,
@@ -25,29 +43,11 @@ from asi_build.integration.protocols import (
     ModuleCapability,
     ModuleInfo,
 )
-from asi_build.integration.adapters import (
-    wire_all,
-    production_sweep,
-    ConsciousnessAdapter,
-    CognitiveSynergyAdapter,
-    BioInspiredAdapter,
-    GraphIntelligenceAdapter,
-    KnowledgeManagementAdapter,
-    ComputeBlackboardAdapter,
-    DistributedTrainingAdapter,
-    VectorDBBlackboardAdapter,
-    BlockchainBlackboardAdapter,
-    ReproducibilityBlackboardAdapter,
-    VLABlackboardAdapter,
-    KennyGraphBlackboardAdapter,
-    IntegrationsBlackboardBridge,
-    AsyncAdapterBase,
-)
-
 
 # ---------------------------------------------------------------------------
 # Mock components for testing adapter wiring
 # ---------------------------------------------------------------------------
+
 
 class MockScheduler:
     """Mock JobScheduler for ComputeBlackboardAdapter."""
@@ -260,6 +260,7 @@ class MockVLATrainer:
 # Tests: Adapter Instantiation and Protocol Compliance
 # ---------------------------------------------------------------------------
 
+
 class TestAdapterProtocols:
     """Test that all adapters implement the required protocol methods."""
 
@@ -363,6 +364,7 @@ class TestAdapterProtocols:
 # ---------------------------------------------------------------------------
 # Tests: Full Pipeline — post → subscribe → receive
 # ---------------------------------------------------------------------------
+
 
 class TestAdapterPipeline:
     """Integration tests for the full adapter pipeline."""
@@ -577,6 +579,7 @@ class TestAdapterPipeline:
 # Tests: Change Detection
 # ---------------------------------------------------------------------------
 
+
 class TestChangeDetection:
     """Test that adapters don't re-post unchanged data."""
 
@@ -609,6 +612,7 @@ class TestChangeDetection:
 # ---------------------------------------------------------------------------
 # Tests: Graceful Degradation
 # ---------------------------------------------------------------------------
+
 
 class TestGracefulDegradation:
     """Test that adapters work with None components."""
@@ -660,6 +664,7 @@ class TestGracefulDegradation:
 # ---------------------------------------------------------------------------
 # Tests: Thread Safety
 # ---------------------------------------------------------------------------
+
 
 class TestThreadSafety:
     """Test adapters are safe under concurrent access."""
@@ -724,6 +729,7 @@ class TestThreadSafety:
 # Tests: AsyncAdapterBase
 # ---------------------------------------------------------------------------
 
+
 class TestAsyncAdapterBase:
     """Test the async adapter base class."""
 
@@ -746,12 +752,14 @@ class TestAsyncAdapterBase:
 # Tests: LZ76 Complexity Fix (Issue #94)
 # ---------------------------------------------------------------------------
 
+
 class TestLZ76Complexity:
     """Test the optimized LZ76 implementation."""
 
     def test_lz76_empty_sequence(self):
         """Empty or single-element sequences return 0."""
         import numpy as np
+
         from asi_build.cognitive_synergy.core.synergy_metrics import SynergyMetrics
 
         sm = SynergyMetrics.__new__(SynergyMetrics)
@@ -761,6 +769,7 @@ class TestLZ76Complexity:
     def test_lz76_constant_sequence(self):
         """Constant sequence has low complexity."""
         import numpy as np
+
         from asi_build.cognitive_synergy.core.synergy_metrics import SynergyMetrics
 
         sm = SynergyMetrics.__new__(SynergyMetrics)
@@ -770,6 +779,7 @@ class TestLZ76Complexity:
     def test_lz76_alternating_sequence(self):
         """Alternating 0/1 has moderate complexity."""
         import numpy as np
+
         from asi_build.cognitive_synergy.core.synergy_metrics import SynergyMetrics
 
         sm = SynergyMetrics.__new__(SynergyMetrics)
@@ -780,6 +790,7 @@ class TestLZ76Complexity:
     def test_lz76_random_sequence(self):
         """Random binary sequence has high complexity."""
         import numpy as np
+
         from asi_build.cognitive_synergy.core.synergy_metrics import SynergyMetrics
 
         rng = np.random.RandomState(42)
@@ -791,6 +802,7 @@ class TestLZ76Complexity:
     def test_lz76_deterministic_output(self):
         """Same input always produces same output."""
         import numpy as np
+
         from asi_build.cognitive_synergy.core.synergy_metrics import SynergyMetrics
 
         sm = SynergyMetrics.__new__(SynergyMetrics)
@@ -804,32 +816,54 @@ class TestLZ76Complexity:
 # Tests: __maturity__ Metadata (Issue #112)
 # ---------------------------------------------------------------------------
 
+
 class TestMaturityMetadata:
     """Test that all modules have __maturity__ metadata."""
 
     VALID_MATURITY_LEVELS = {"experimental", "alpha", "beta", "stable", "mature"}
 
     EXPECTED_MODULES = [
-        "agi_communication", "agi_economics", "agi_reproducibility", "bci",
-        "bio_inspired", "blockchain", "cognitive_synergy", "compute",
-        "consciousness", "deployment", "distributed_training", "federated",
-        "graph_intelligence", "holographic", "homomorphic", "integration",
-        "integrations", "knowledge_graph", "knowledge_management",
-        "memgraph_toolbox", "neuromorphic", "optimization", "pln_accelerator",
-        "quantum", "reasoning", "rings", "safety", "servers", "vectordb",
+        "agi_communication",
+        "agi_economics",
+        "agi_reproducibility",
+        "bci",
+        "bio_inspired",
+        "blockchain",
+        "cognitive_synergy",
+        "compute",
+        "consciousness",
+        "deployment",
+        "distributed_training",
+        "federated",
+        "graph_intelligence",
+        "holographic",
+        "homomorphic",
+        "integration",
+        "integrations",
+        "knowledge_graph",
+        "knowledge_management",
+        "memgraph_toolbox",
+        "neuromorphic",
+        "optimization",
+        "pln_accelerator",
+        "quantum",
+        "reasoning",
+        "rings",
+        "safety",
+        "servers",
+        "vectordb",
     ]
 
     @pytest.mark.parametrize("module_name", EXPECTED_MODULES)
     def test_module_has_maturity(self, module_name):
         """Each module __init__.py should define __maturity__."""
         import importlib
+
         try:
             mod = importlib.import_module(f"asi_build.{module_name}")
         except ImportError:
             pytest.skip(f"Module asi_build.{module_name} not importable")
-        assert hasattr(mod, "__maturity__"), (
-            f"asi_build.{module_name} missing __maturity__"
-        )
+        assert hasattr(mod, "__maturity__"), f"asi_build.{module_name} missing __maturity__"
         assert mod.__maturity__ in self.VALID_MATURITY_LEVELS, (
             f"asi_build.{module_name}.__maturity__ = {mod.__maturity__!r} "
             f"is not in {self.VALID_MATURITY_LEVELS}"

@@ -182,9 +182,7 @@ class SchnorrProofSystem(ZKProofSystem):
         return priv.public_key()
 
     @staticmethod
-    def _affine_add(
-        x1: int, y1: int, x2: int, y2: int, p: int, a: int
-    ) -> Tuple[int, int]:
+    def _affine_add(x1: int, y1: int, x2: int, y2: int, p: int, a: int) -> Tuple[int, int]:
         """Affine point addition / doubling on short-Weierstrass curve"""
         if x1 == x2 and y1 == y2:
             # Point doubling
@@ -198,9 +196,7 @@ class SchnorrProofSystem(ZKProofSystem):
         y3 = (lam * (x1 - x3) - y1) % p
         return x3, y3
 
-    def _scalar_mult_point(
-        self, scalar: int, px: int, py: int
-    ) -> ec.EllipticCurvePublicKey:
+    def _scalar_mult_point(self, scalar: int, px: int, py: int) -> ec.EllipticCurvePublicKey:
         """
         Compute *scalar* · (*px*, *py*) using double-and-add.
         Returns the result as an EC public key object.
@@ -226,9 +222,7 @@ class SchnorrProofSystem(ZKProofSystem):
             qx, qy = self._affine_add(qx, qy, qx, qy, p, a)
             scalar >>= 1
 
-        result_numbers = ec.EllipticCurvePublicNumbers(
-            x=rx, y=ry, curve=self._curve
-        )
+        result_numbers = ec.EllipticCurvePublicNumbers(x=rx, y=ry, curve=self._curve)
         return result_numbers.public_key()
 
     def _point_add(
@@ -242,13 +236,9 @@ class SchnorrProofSystem(ZKProofSystem):
         p = self._field_prime()
         a = self._curve_a()
 
-        x3, y3 = self._affine_add(
-            nums1.x, nums1.y, nums2.x, nums2.y, p, a
-        )
+        x3, y3 = self._affine_add(nums1.x, nums1.y, nums2.x, nums2.y, p, a)
 
-        result_numbers = ec.EllipticCurvePublicNumbers(
-            x=x3, y=y3, curve=self._curve
-        )
+        result_numbers = ec.EllipticCurvePublicNumbers(x=x3, y=y3, curve=self._curve)
         return result_numbers.public_key()
 
     # ------------------------------------------------------------------

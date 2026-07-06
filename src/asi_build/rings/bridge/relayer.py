@@ -342,9 +342,7 @@ class RelayerDB:
     async def get_state(self, key: str, default: str = "") -> str:
         """Read a string value from the ``state`` table."""
         assert self._db is not None
-        async with self._db.execute(
-            "SELECT value FROM state WHERE key = ?", (key,)
-        ) as cur:
+        async with self._db.execute("SELECT value FROM state WHERE key = ?", (key,)) as cur:
             row = await cur.fetchone()
             return row[0] if row else default
 
@@ -511,9 +509,7 @@ class RelayerDB:
                 f"SELECT status, COUNT(*) FROM {table} GROUP BY status"
             ) as cur:
                 stats[table] = dict(await cur.fetchall())
-            async with self._db.execute(
-                f"SELECT COUNT(*) FROM {table}"
-            ) as cur:
+            async with self._db.execute(f"SELECT COUNT(*) FROM {table}") as cur:
                 stats[f"{table}_total"] = (await cur.fetchone())[0]
         return stats
 
@@ -663,9 +659,7 @@ class BridgeRelayer:
         # Launch concurrent tasks
         self._tasks = [
             asyncio.create_task(self._watch_deposits(), name="watch_deposits"),
-            asyncio.create_task(
-                self._process_withdrawal_queue(), name="process_withdrawals"
-            ),
+            asyncio.create_task(self._process_withdrawal_queue(), name="process_withdrawals"),
             asyncio.create_task(self._monitor_health(), name="monitor_health"),
         ]
 
@@ -715,9 +709,9 @@ class BridgeRelayer:
         :mod:`.contract_client` (no Foundry artifacts required).
         """
         try:
+            from eth_account import Account
             from web3 import AsyncWeb3, Web3
             from web3.providers import AsyncHTTPProvider
-            from eth_account import Account
 
             self._web3 = AsyncWeb3(AsyncHTTPProvider(self.config.rpc_url))
 
@@ -750,9 +744,7 @@ class BridgeRelayer:
 
             chain_id = await self._web3.eth.chain_id
             latest = await self._web3.eth.block_number
-            logger.info(
-                "Connected to chain %d, latest block %d", chain_id, latest
-            )
+            logger.info("Connected to chain %d, latest block %d", chain_id, latest)
 
         except Exception as exc:
             logger.error("Failed to initialise web3: %s", exc)
@@ -794,17 +786,13 @@ class BridgeRelayer:
 
                 # Scan in chunks to stay within RPC provider limits
                 scan_to = min(last_block + 2000, safe_block)
-                logger.debug(
-                    "Scanning deposits [%d → %d]", last_block + 1, scan_to
-                )
+                logger.debug("Scanning deposits [%d → %d]", last_block + 1, scan_to)
 
                 events = await self._get_deposit_events(last_block + 1, scan_to)
 
                 for event in events:
                     trace_id = str(uuid.uuid4())
-                    tx_hash = self._normalise_tx_hash(
-                        event.get("transactionHash", "")
-                    )
+                    tx_hash = self._normalise_tx_hash(event.get("transactionHash", ""))
                     block_num = event.get("blockNumber", 0)
                     args = event.get("args", {})
 
@@ -836,9 +824,7 @@ class BridgeRelayer:
                         # Broadcast to Rings DHT
                         await self._broadcast_deposit(tx_hash, event)
 
-                        await self.db.update_deposit_status(
-                            tx_hash, OperationStatus.CONFIRMED
-                        )
+                        await self.db.update_deposit_status(tx_hash, OperationStatus.CONFIRMED)
                         self._metrics["deposits_processed"] += 1
                     else:
                         logger.warning("Deposit verification failed: %s", tx_hash)
@@ -856,9 +842,7 @@ class BridgeRelayer:
                 logger.error("Deposit watcher error: %s", exc, exc_info=True)
                 await self._backoff_sleep(self._metrics["rpc_errors"])
 
-    async def _get_deposit_events(
-        self, from_block: int, to_block: int
-    ) -> List[Dict[str, Any]]:
+    async def _get_deposit_events(self, from_block: int, to_block: int) -> List[Dict[str, Any]]:
         """Fetch ``Deposited`` events in a block range.
 
         Tries the web3.py contract event API first; falls back to raw
@@ -872,9 +856,7 @@ class BridgeRelayer:
             return [dict(e) for e in events]
         except Exception:
             # Fallback: raw log filter
-            topic0 = self._web3.keccak(
-                text="Deposited(uint256,address,string,uint256)"
-            )
+            topic0 = self._web3.keccak(text="Deposited(uint256,address,string,uint256)")
             logs = await self._web3.eth.get_logs(
                 {
                     "address": self.config.bridge_address,
@@ -908,9 +890,7 @@ class BridgeRelayer:
             logger.warning("Verification failed for %s: %s", tx_hash, exc)
             return False
 
-    async def _broadcast_deposit(
-        self, tx_hash: str, event: Dict[str, Any]
-    ) -> None:
+    async def _broadcast_deposit(self, tx_hash: str, event: Dict[str, Any]) -> None:
         """Broadcast a confirmed deposit to the Rings DHT.
 
         When a :class:`~.ledger.RingsTokenLedger` is attached, credits
@@ -943,8 +923,11 @@ class BridgeRelayer:
                 )
                 logger.info(
                     "Ledger credited: %s +%d %s from %s (tx=%s)",
-                    recipient_did, amount, token,
-                    self.config.chain_name, tx_hash,
+                    recipient_did,
+                    amount,
+                    token,
+                    self.config.chain_name,
+                    tx_hash,
                     extra={
                         "event": "ledger_credit",
                         "tx_hash": tx_hash,
@@ -953,7 +936,9 @@ class BridgeRelayer:
             except Exception as exc:
                 logger.error(
                     "Failed to credit ledger for deposit %s: %s",
-                    tx_hash, exc, exc_info=True,
+                    tx_hash,
+                    exc,
+                    exc_info=True,
                 )
 
     # ── Withdrawal processor ────────────────────────────────────────────
@@ -982,21 +967,15 @@ class BridgeRelayer:
                     wid = wd["withdrawal_id"]
 
                     try:
-                        await self.db.update_withdrawal_status(
-                            wid, OperationStatus.PROCESSING
-                        )
+                        await self.db.update_withdrawal_status(wid, OperationStatus.PROCESSING)
 
                         amount = int(wd["amount"])
                         recipient = wd["recipient"]
 
                         # Collect validator approvals
-                        approved, approvals = await self._collect_approvals(
-                            wid, amount, recipient
-                        )
+                        approved, approvals = await self._collect_approvals(wid, amount, recipient)
                         if not approved:
-                            logger.warning(
-                                "Withdrawal %s: insufficient approvals", wid
-                            )
+                            logger.warning("Withdrawal %s: insufficient approvals", wid)
                             # Return to pending; will retry next iteration
                             await self.db.update_withdrawal_status(
                                 wid,
@@ -1007,9 +986,7 @@ class BridgeRelayer:
 
                         # Generate ZK proof
                         nonce = await self._get_next_nonce()
-                        proof, public_inputs = await self._generate_proof(
-                            amount, nonce, recipient
-                        )
+                        proof, public_inputs = await self._generate_proof(amount, nonce, recipient)
 
                         # Submit on-chain
                         tx_hash = await self._submit_withdrawal(
@@ -1078,9 +1055,7 @@ class BridgeRelayer:
                 break
             except Exception as exc:
                 self._metrics["last_error"] = str(exc)
-                logger.error(
-                    "Withdrawal processor error: %s", exc, exc_info=True
-                )
+                logger.error("Withdrawal processor error: %s", exc, exc_info=True)
                 await self._backoff_sleep(1)
 
     async def _collect_approvals(
@@ -1143,20 +1118,14 @@ class BridgeRelayer:
             )
             prover = Groth16Prover(setup)
             proof = prover.prove(circuit, witness)
-            logger.debug(
-                "Generated real Groth16 proof for withdrawal nonce=%d", nonce
-            )
+            logger.debug("Generated real Groth16 proof for withdrawal nonce=%d", nonce)
             return proof.serialize(), list(witness.public_inputs)
 
         except Exception as exc:
-            logger.debug(
-                "ZK prover unavailable (%s), using mock proof", exc
-            )
+            logger.debug("ZK prover unavailable (%s), using mock proof", exc)
             data = f"{amount}:{nonce}:{recipient}".encode()
             mock_proof = hashlib.sha256(data).digest() * 8  # 256 bytes
-            recipient_hash = (
-                int(recipient[:10], 16) if recipient.startswith("0x") else 0
-            )
+            recipient_hash = int(recipient[:10], 16) if recipient.startswith("0x") else 0
             return mock_proof, [amount, nonce, recipient_hash]
 
     async def _submit_withdrawal(
@@ -1192,9 +1161,7 @@ class BridgeRelayer:
         ).build_transaction(
             {
                 "from": self._account.address,
-                "nonce": await self._web3.eth.get_transaction_count(
-                    self._account.address
-                ),
+                "nonce": await self._web3.eth.get_transaction_count(self._account.address),
                 "gas": 500_000,
                 "maxFeePerGas": gas_price * 2,
                 "maxPriorityFeePerGas": max(gas_price // 10, 1),
@@ -1203,14 +1170,10 @@ class BridgeRelayer:
         )
 
         signed = self._account.sign_transaction(tx)
-        tx_hash = await self._web3.eth.send_raw_transaction(
-            signed.raw_transaction
-        )
+        tx_hash = await self._web3.eth.send_raw_transaction(signed.raw_transaction)
         return tx_hash.hex()
 
-    async def _wait_for_confirmation(
-        self, tx_hash: str, timeout: float = 120.0
-    ) -> bool:
+    async def _wait_for_confirmation(self, tx_hash: str, timeout: float = 120.0) -> bool:
         """Poll for a transaction receipt until it confirms or times out.
 
         Parameters
@@ -1282,9 +1245,7 @@ class BridgeRelayer:
         health: Dict[str, Any] = {
             "status": "unknown",
             "timestamp": time.time(),
-            "uptime_seconds": (
-                time.time() - self._start_time if self._start_time else 0
-            ),
+            "uptime_seconds": (time.time() - self._start_time if self._start_time else 0),
         }
 
         # RPC connectivity
@@ -1325,9 +1286,7 @@ class BridgeRelayer:
         health["node_urls"] = len(self.config.node_urls)
 
         # Overall status verdict
-        health["status"] = (
-            "healthy" if health.get("rpc_connected") else "degraded"
-        )
+        health["status"] = "healthy" if health.get("rpc_connected") else "degraded"
 
         return health
 
@@ -1390,9 +1349,7 @@ class BridgeRelayer:
             f'bridge_uptime_seconds {health.get("uptime_seconds", 0):.1f}',
             "",
         ]
-        return web.Response(
-            text="\n".join(lines) + "\n", content_type="text/plain"
-        )
+        return web.Response(text="\n".join(lines) + "\n", content_type="text/plain")
 
     async def _handle_status(self, request: web.Request) -> web.Response:
         """``GET /status`` — Human-readable plain-text status page."""
@@ -1523,9 +1480,7 @@ class MultiChainRelayer:
         tasks = []
         for name, relayer in self.relayers.items():
             logger.info("Launching relayer for %s", name)
-            tasks.append(
-                asyncio.create_task(relayer.start(), name=f"relayer_{name}")
-            )
+            tasks.append(asyncio.create_task(relayer.start(), name=f"relayer_{name}"))
 
         try:
             await self._shutdown_event.wait()

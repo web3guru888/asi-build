@@ -13,17 +13,16 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, ed25519
 
 from asi_build.rings.did import (
+    RING_MODULUS,
     DIDDocument,
     DIDKeyPair,
     DIDProof,
     KeyCurve,
     RingsDID,
-    RING_MODULUS,
     VerificationType,
     _private_key_from_hex,
     _public_key_from_hex,
 )
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 1. Key Generation (10 tests)
@@ -201,14 +200,20 @@ class TestDIDCreation:
     def test_document_serialization_roundtrip(self):
         """DIDDocument.to_dict() → DIDDocument.from_dict() preserves data."""
         mgr = RingsDID()
-        did, doc = mgr.create_did(seed="roundtrip", services=[
-            {"id": "svc-1", "type": "TestService", "serviceEndpoint": "http://example.com"},
-        ])
+        did, doc = mgr.create_did(
+            seed="roundtrip",
+            services=[
+                {"id": "svc-1", "type": "TestService", "serviceEndpoint": "http://example.com"},
+            ],
+        )
         d = doc.to_dict()
         reconstructed = DIDDocument.from_dict(d)
         assert reconstructed.did == doc.did
         assert len(reconstructed.verification_methods) == len(doc.verification_methods)
-        assert reconstructed.verification_methods[0]["publicKeyHex"] == doc.verification_methods[0]["publicKeyHex"]
+        assert (
+            reconstructed.verification_methods[0]["publicKeyHex"]
+            == doc.verification_methods[0]["publicKeyHex"]
+        )
         assert len(reconstructed.services) == 1
 
 

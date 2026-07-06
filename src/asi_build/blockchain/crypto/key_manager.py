@@ -59,9 +59,7 @@ class KeyMetadata:
             algorithm=data["algorithm"],
             created_at=datetime.fromisoformat(data["created_at"]),
             expires_at=(
-                datetime.fromisoformat(data["expires_at"])
-                if data.get("expires_at")
-                else None
+                datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None
             ),
             parent_key_id=data.get("parent_key_id"),
             tags=data.get("tags", {}),
@@ -286,8 +284,7 @@ class KeyManager:
 
         if not child_key_id:
             child_key_id = (
-                f"derived_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                f"_{os.urandom(4).hex()}"
+                f"derived_{datetime.now().strftime('%Y%m%d_%H%M%S')}" f"_{os.urandom(4).hex()}"
             )
 
         metadata = KeyMetadata(
