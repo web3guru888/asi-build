@@ -92,9 +92,11 @@
 <br />
 
 <!-- Badge Row -->
-![Python](https://img.shields.io/badge/python-3.11%2B-3776ab?style=flat-square&logo=python&logoColor=white)
+[![CI](https://github.com/web3guru888/asi-build/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/web3guru888/asi-build/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.10–3.13-3776ab?style=flat-square&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-5%2C049%2B_passing-16a34a?style=flat-square&logo=pytest&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-5%2C078_passing_·_0_failing-16a34a?style=flat-square&logo=pytest&logoColor=white)
+![Coverage](https://img.shields.io/badge/coverage-43%25-eab308?style=flat-square)
 ![Modules](https://img.shields.io/badge/modules-29-8b5cf6?style=flat-square)
 ![LOC](https://img.shields.io/badge/LOC-223K%2B-3b82f6?style=flat-square)
 ![Bridge](https://img.shields.io/badge/bridge-Sepolia_LIVE-f97316?style=flat-square)
@@ -129,7 +131,8 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 
 <table>
 <tr><td>🧠</td><td><strong>Modules</strong></td><td>29 cognitive modules spanning consciousness, reasoning, perception, safety, and infrastructure</td></tr>
-<tr><td>🧪</td><td><strong>Tests</strong></td><td><strong>5,049+</strong> passing · 0 failing</td></tr>
+<tr><td>🧪</td><td><strong>Tests</strong></td><td><strong>5,078</strong> passing · <strong>0</strong> failing · 108 skipped · 43% coverage</td></tr>
+<tr><td>✅</td><td><strong>CI</strong></td><td><strong>Green</strong> on Python 3.10–3.13 — ruff error gate · black + isort · bandit + pip-audit security scans</td></tr>
 <tr><td>📏</td><td><strong>Source</strong></td><td>590+ files · 223K+ lines of code</td></tr>
 <tr><td>🔌</td><td><strong>Integration</strong></td><td>24 Blackboard adapters + CognitiveCycle + AsyncAdapterBase</td></tr>
 <tr><td>🌉</td><td><strong>Bridge</strong></td><td>ZK-verified Rings↔Ethereum — <strong>live on Sepolia</strong> — 22,700+ LOC · 799+ tests · 3 Solidity contracts</td></tr>
@@ -138,6 +141,32 @@ A modular Python research framework for exploring AI consciousness, cognitive ar
 <tr><td>📖</td><td><strong>Community</strong></td><td>875+ discussions · 372 wiki pages · Good First Issues available</td></tr>
 <tr><td>⚖️</td><td><strong>License</strong></td><td>MIT — fully open source</td></tr>
 </table>
+
+---
+
+## 🔨 Recent Improvements — July 2026 Hardening Sprint
+
+**CI is green** — for the first time since April 15. A focused quality sprint (9 commits) took the suite from red to **5,078 passed · 0 failed · 108 skipped** across the full Python 3.10–3.13 matrix, and fixed several real bugs along the way.
+
+**Real bugs fixed**
+
+- 🌉 **RingsBridge ABI drift** — `BridgeContractClient` was building calldata against a stale ABI after `RingsBridge.sol` evolved; client resynced and DID→`bytes32` mapping standardized on keccak-256
+- 📋 **AuditLogger silent-death** ([#1282](https://github.com/web3guru888/asi-build/issues/1282)) — a handler-deduplication bug could silently drop audit log output
+- 🐛 **9 latent `NameError`s** — undefined-name bugs uncovered by a `ruff` F821 sweep across `src/` and `tests/`, all dead-on-arrival code paths now fixed
+
+**Security hardening**
+
+- 🛡️ Shell-injection hardening in dataset download scripts (no more string-interpolated shell commands)
+- 🗜️ Zip/tar-slip (path traversal) prevention when extracting downloaded archives
+
+**CI pipeline upgrades**
+
+- Blocking `ruff` gate for syntax errors & undefined names (E9, F63, F7, F82)
+- `pip-audit` dependency-vulnerability scan + `bandit` static analysis
+- Python **3.10 / 3.11 / 3.12 / 3.13** test matrix with coverage reporting, concurrency cancellation, `fail-fast: off`
+- Tree-wide `black` + `isort` normalization and removal of 1,533 unused imports
+
+Issues [#1282](https://github.com/web3guru888/asi-build/issues/1282) and [#1283](https://github.com/web3guru888/asi-build/issues/1283) are closed. [#1284](https://github.com/web3guru888/asi-build/issues/1284) (sha256 vs keccak DID mapping divergence) remains open — it needs a protocol-level decision, not just a code fix.
 
 ---
 
@@ -1228,7 +1257,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide and [CODE_OF_CONDUCT.m
 pip install -e ".[dev]"
 
 # Run the full test suite
-pytest tests/ -v                        # 4,355+ passing
+pytest tests/ -v                        # 5,078 passing · 0 failing
 
 # Quick run — stop on first failure
 pytest tests/ -x -q
@@ -1240,9 +1269,10 @@ pytest tests/test_integration.py -v
 # Code style
 make format    # black src/ tests/
 make lint      # black --check + mypy
+ruff check src/ tests/ --select E9,F63,F7,F82   # CI-blocking error gate
 ```
 
-**Style requirements:** Python 3.11+ · 100 char line length · Google-style docstrings · Type hints required for public functions
+**Style requirements:** Python 3.10+ · 100 char line length · Google-style docstrings · Type hints required for public functions · `black` + `isort` formatted (CI-enforced)
 
 <details>
 <summary><strong>Project layout</strong></summary>
@@ -1256,7 +1286,7 @@ asi-build/
 │   ├── rings/              # Rings Network P2P SDK + ZK bridge
 │   ├── safety/             # Theorem proving, governance, entity rights
 │   └── ...                 # 24 more modules (see Module table above)
-├── tests/                  # 4,355+ passing tests
+├── tests/                  # 5,078 passing tests
 ├── examples/               # Runnable demo scripts
 ├── docs/                   # Documentation + research notes
 │   └── modules/            # 29 per-module documentation files
@@ -1274,13 +1304,15 @@ ASI:BUILD began in **August 2025** as an ambitious attempt to implement a compre
 
 - All real, tested code moved to `src/asi_build/` with proper packaging
 - Template scaffolding archived to `archive/`
-- Test suite built from the ground up — now **4,936+ passing**
+- Test suite built from the ground up — now **5,078 passing**
 - **Cognitive Blackboard** integration layer introduced, wiring all 29 modules
 - **Rings↔Ethereum ZK Bridge** deployed to Sepolia (22,700+ LOC, 799+ tests, 3 Solidity contracts)
 - **Agent-to-agent payments** — DHT-backed token ledger with 4/6 validator consensus
 - **Multi-chain roadmap** — Sepolia live, BSC + Base + Arc Network planned
 - `__maturity__` metadata added to every module for transparency
 - Public release on GitHub under MIT license
+
+In **July 2026**, a hardening sprint restored CI to green for the first time since April — 5,078 tests passing on Python 3.10–3.13, real bug fixes (RingsBridge ABI drift, AuditLogger handler dedupe, 9 latent `NameError`s), security hardening (shell injection, zip/tar-slip), and an upgraded CI pipeline (ruff gate, pip-audit, coverage). See [Recent Improvements](#-recent-improvements--july-2026-hardening-sprint).
 
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
