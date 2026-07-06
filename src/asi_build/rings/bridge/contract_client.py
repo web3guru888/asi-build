@@ -37,9 +37,44 @@ Typical usage::
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
+
+from Crypto.Hash import keccak as _keccak_mod
 
 logger = logging.getLogger(__name__)
+
+
+def did_to_bytes32(did: Union[str, bytes, bytearray]) -> bytes:
+    """Convert a Rings DID to the ``bytes32`` representation used on-chain.
+
+    ``RingsBridge.sol`` stores DIDs as ``bytes32`` (see the ``ringsDID``
+    parameter of ``deposit``/``withdraw``).  The canonical off-chain
+    mapping is ``keccak256(utf8(did))`` — the same convention used by the
+    Forge test-suite (``keccak256("did:rings:test_user_1")``).
+
+    Accepted inputs:
+
+    * ``str`` DID (e.g. ``"did:rings:ed25519:abc"``) → keccak256 hash.
+    * ``str`` of the form ``0x`` + 64 hex chars → decoded verbatim.
+    * ``bytes``/``bytearray`` of length 32 → passed through unchanged.
+
+    Raises
+    ------
+    ValueError
+        If raw bytes are provided with a length other than 32.
+    """
+    if isinstance(did, (bytes, bytearray)):
+        raw = bytes(did)
+        if len(raw) != 32:
+            raise ValueError(
+                f"Raw DID bytes must be exactly 32 bytes, got {len(raw)}"
+            )
+        return raw
+    if did.startswith("0x") and len(did) == 66:
+        return bytes.fromhex(did[2:])
+    k = _keccak_mod.new(digest_bits=256)
+    k.update(did.encode("utf-8"))
+    return k.digest()
 
 
 # ---------------------------------------------------------------------------
@@ -55,7 +90,7 @@ _BRIDGE_DEPOSIT_FN = {
     "name": "deposit",
     "type": "function",
     "stateMutability": "payable",
-    "inputs": [{"name": "ringsDid", "type": "string"}],
+    "inputs": [{"name": "ringsDID", "type": "bytes32"}],
     "outputs": [],
 }
 
@@ -66,7 +101,7 @@ _BRIDGE_DEPOSIT_TOKEN_FN = {
     "inputs": [
         {"name": "token", "type": "address"},
         {"name": "amount", "type": "uint256"},
-        {"name": "ringsDid", "type": "string"},
+        {"name": "ringsDID", "type": "bytes32"},
     ],
     "outputs": [],
 }
@@ -77,10 +112,11 @@ _BRIDGE_WITHDRAW_FN = {
     "stateMutability": "nonpayable",
     "inputs": [
         {"name": "recipient", "type": "address"},
+        {"name": "ringsDID", "type": "bytes32"},
         {"name": "amount", "type": "uint256"},
-        {"name": "nonce", "type": "uint256"},
+        {"name": "nonce_", "type": "uint256"},
         {"name": "proof", "type": "bytes"},
-        {"name": "publicInputs", "type": "uint256[]"},
+        {"name": "publicInputs", "type": "bytes32[]"},
     ],
     "outputs": [],
 }
@@ -90,12 +126,13 @@ _BRIDGE_WITHDRAW_TOKEN_FN = {
     "type": "function",
     "stateMutability": "nonpayable",
     "inputs": [
-        {"name": "token", "type": "address"},
+        {"name": "bridgedToken", "type": "address"},
         {"name": "recipient", "type": "address"},
+        {"name": "ringsDID", "type": "bytes32"},
         {"name": "amount", "type": "uint256"},
-        {"name": "nonce", "type": "uint256"},
+        {"name": "nonce_", "type": "uint256"},
         {"name": "proof", "type": "bytes"},
-        {"name": "publicInputs", "type": "uint256[]"},
+        {"name": "publicInputs", "type": "bytes32[]"},
     ],
     "outputs": [],
 }
@@ -106,15 +143,15 @@ _BRIDGE_UPDATE_SYNC_COMMITTEE_FN = {
     "stateMutability": "nonpayable",
     "inputs": [
         {"name": "newRoot", "type": "bytes32"},
-        {"name": "slot", "type": "uint256"},
+        {"name": "slot", "type": "uint64"},
         {"name": "proof", "type": "bytes"},
-        {"name": "publicInputs", "type": "uint256[]"},
+        {"name": "publicInputs", "type": "bytes32[]"},
     ],
     "outputs": [],
 }
 
 _BRIDGE_PAUSE_FN = {
-    "name": "pause",
+    "name": "emergencyPause",
     "type": "function",
     "stateMutability": "nonpayable",
     "inputs": [],
@@ -130,12 +167,12 @@ _BRIDGE_UNPAUSE_FN = {
 }
 
 _BRIDGE_SET_RATE_LIMIT_FN = {
-    "name": "setRateLimit",
+    "name": "updateRateLimits",
     "type": "function",
     "stateMutability": "nonpayable",
     "inputs": [
-        {"name": "dailyLimit", "type": "uint256"},
-        {"name": "perTxLimit", "type": "uint256"},
+        {"name": "newDailyLimit", "type": "uint256"},
+        {"name": "newPerTxLimit", "type": "uint256"},
     ],
     "outputs": [],
 }
@@ -146,13 +183,20 @@ _BRIDGE_GET_DEPOSIT_INFO_FN = {
     "name": "getDepositInfo",
     "type": "function",
     "stateMutability": "view",
-    "inputs": [{"name": "nonce", "type": "uint256"}],
+    "inputs": [{"name": "nonce_", "type": "uint256"}],
     "outputs": [
-        {"name": "sender", "type": "address"},
-        {"name": "ringsDid", "type": "string"},
-        {"name": "amount", "type": "uint256"},
-        {"name": "blockNum", "type": "uint256"},
-        {"name": "processed", "type": "bool"},
+        {
+            "name": "info",
+            "type": "tuple",
+            "components": [
+                {"name": "depositor", "type": "address"},
+                {"name": "ringsDID", "type": "bytes32"},
+                {"name": "amount", "type": "uint256"},
+                {"name": "token", "type": "address"},
+                {"name": "timestamp", "type": "uint256"},
+                {"name": "nonce", "type": "uint256"},
+            ],
+        },
     ],
 }
 
@@ -160,16 +204,33 @@ _BRIDGE_GET_WITHDRAWAL_INFO_FN = {
     "name": "getWithdrawalInfo",
     "type": "function",
     "stateMutability": "view",
-    "inputs": [{"name": "nonce", "type": "uint256"}],
+    "inputs": [{"name": "nonce_", "type": "uint256"}],
     "outputs": [
-        {"name": "recipient", "type": "address"},
-        {"name": "amount", "type": "uint256"},
-        {"name": "executed", "type": "bool"},
+        {
+            "name": "info",
+            "type": "tuple",
+            "components": [
+                {"name": "recipient", "type": "address"},
+                {"name": "ringsDID", "type": "bytes32"},
+                {"name": "amount", "type": "uint256"},
+                {"name": "token", "type": "address"},
+                {"name": "timestamp", "type": "uint256"},
+                {"name": "nonce", "type": "uint256"},
+            ],
+        },
     ],
 }
 
+_BRIDGE_IS_DEPOSIT_PROCESSED_FN = {
+    "name": "isDepositProcessed",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [{"name": "nonce_", "type": "uint256"}],
+    "outputs": [{"name": "", "type": "bool"}],
+}
+
 _BRIDGE_REMAINING_DAILY_LIMIT_FN = {
-    "name": "remainingDailyLimit",
+    "name": "getRemainingDailyLimit",
     "type": "function",
     "stateMutability": "view",
     "inputs": [],
@@ -223,9 +284,11 @@ _BRIDGE_DEPOSITED_EVT = {
     "type": "event",
     "inputs": [
         {"name": "nonce", "type": "uint256", "indexed": True},
-        {"name": "sender", "type": "address", "indexed": True},
-        {"name": "ringsDid", "type": "string", "indexed": False},
+        {"name": "depositor", "type": "address", "indexed": True},
+        {"name": "ringsDID", "type": "bytes32", "indexed": True},
         {"name": "amount", "type": "uint256", "indexed": False},
+        {"name": "token", "type": "address", "indexed": False},
+        {"name": "timestamp", "type": "uint256", "indexed": False},
     ],
 }
 
@@ -235,7 +298,10 @@ _BRIDGE_WITHDRAWN_EVT = {
     "inputs": [
         {"name": "nonce", "type": "uint256", "indexed": True},
         {"name": "recipient", "type": "address", "indexed": True},
+        {"name": "ringsDID", "type": "bytes32", "indexed": True},
         {"name": "amount", "type": "uint256", "indexed": False},
+        {"name": "token", "type": "address", "indexed": False},
+        {"name": "timestamp", "type": "uint256", "indexed": False},
     ],
 }
 
@@ -243,9 +309,26 @@ _BRIDGE_SYNC_COMMITTEE_UPDATED_EVT = {
     "name": "SyncCommitteeUpdated",
     "type": "event",
     "inputs": [
-        {"name": "slot", "type": "uint256", "indexed": True},
-        {"name": "newRoot", "type": "bytes32", "indexed": False},
+        {"name": "newRoot", "type": "bytes32", "indexed": True},
+        {"name": "slot", "type": "uint64", "indexed": True},
+        {"name": "updater", "type": "address", "indexed": False},
     ],
+}
+
+_BRIDGE_RATE_LIMIT_UPDATED_EVT = {
+    "name": "RateLimitUpdated",
+    "type": "event",
+    "inputs": [
+        {"name": "newDailyLimit", "type": "uint256", "indexed": False},
+        {"name": "newPerTxLimit", "type": "uint256", "indexed": False},
+        {"name": "updater", "type": "address", "indexed": False},
+    ],
+}
+
+_BRIDGE_EMERGENCY_PAUSED_EVT = {
+    "name": "EmergencyPaused",
+    "type": "event",
+    "inputs": [{"name": "guardian", "type": "address", "indexed": True}],
 }
 
 _BRIDGE_PAUSED_EVT = {
@@ -267,10 +350,8 @@ _VERIFIER_VERIFY_FN = {
     "type": "function",
     "stateMutability": "view",
     "inputs": [
-        {"name": "a", "type": "uint256[2]"},
-        {"name": "b", "type": "uint256[2][2]"},
-        {"name": "c", "type": "uint256[2]"},
-        {"name": "input", "type": "uint256[]"},
+        {"name": "proof", "type": "bytes"},
+        {"name": "publicInputs", "type": "bytes32[]"},
     ],
     "outputs": [{"name": "", "type": "bool"}],
 }
@@ -290,6 +371,17 @@ _TOKEN_MINT_FN = {
 
 _TOKEN_BURN_FN = {
     "name": "burn",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+        {"name": "from", "type": "address"},
+        {"name": "amount", "type": "uint256"},
+    ],
+    "outputs": [],
+}
+
+_TOKEN_BURN_FROM_FN = {
+    "name": "burnFrom",
     "type": "function",
     "stateMutability": "nonpayable",
     "inputs": [
@@ -323,6 +415,7 @@ BRIDGE_ABI: List[Dict[str, Any]] = [
     _BRIDGE_SET_RATE_LIMIT_FN,
     _BRIDGE_GET_DEPOSIT_INFO_FN,
     _BRIDGE_GET_WITHDRAWAL_INFO_FN,
+    _BRIDGE_IS_DEPOSIT_PROCESSED_FN,
     _BRIDGE_REMAINING_DAILY_LIMIT_FN,
     _BRIDGE_LATEST_VERIFIED_SLOT_FN,
     _BRIDGE_SYNC_COMMITTEE_ROOT_FN,
@@ -332,6 +425,8 @@ BRIDGE_ABI: List[Dict[str, Any]] = [
     _BRIDGE_DEPOSITED_EVT,
     _BRIDGE_WITHDRAWN_EVT,
     _BRIDGE_SYNC_COMMITTEE_UPDATED_EVT,
+    _BRIDGE_RATE_LIMIT_UPDATED_EVT,
+    _BRIDGE_EMERGENCY_PAUSED_EVT,
     _BRIDGE_PAUSED_EVT,
     _BRIDGE_UNPAUSED_EVT,
 ]
@@ -341,6 +436,7 @@ VERIFIER_ABI: List[Dict[str, Any]] = [_VERIFIER_VERIFY_FN]
 TOKEN_ABI: List[Dict[str, Any]] = [
     _TOKEN_MINT_FN,
     _TOKEN_BURN_FN,
+    _TOKEN_BURN_FROM_FN,
     _TOKEN_GRANT_ROLE_FN,
 ]
 
@@ -488,7 +584,9 @@ class BridgeContractClient:
             Transaction hash.
         """
         logger.info("Depositing %d wei for %s", amount_wei, rings_did)
-        return await self._send("deposit", [rings_did], value=amount_wei)
+        return await self._send(
+            "deposit", [did_to_bytes32(rings_did)], value=amount_wei,
+        )
 
     async def deposit_token(
         self,
@@ -519,17 +617,21 @@ class BridgeContractClient:
             "Depositing %d of token %s for %s",
             amount, token_address, rings_did,
         )
-        return await self._send("depositToken", [token_address, amount, rings_did])
+        return await self._send(
+            "depositToken",
+            [token_address, amount, did_to_bytes32(rings_did)],
+        )
 
     # ── Withdrawal operations ────────────────────────────────────────────
 
     async def withdraw(
         self,
         recipient: str,
+        rings_did: Union[str, bytes],
         amount: int,
         nonce: int,
         proof: bytes,
-        public_inputs: List[int],
+        public_inputs: List[Any],
     ) -> str:
         """Submit a native-ETH withdrawal with ZK proof.
 
@@ -537,14 +639,19 @@ class BridgeContractClient:
         ----------
         recipient : str
             Ethereum address to receive the ETH.
+        rings_did : str or bytes
+            The Rings DID that initiated the withdrawal (string DIDs are
+            converted with :func:`did_to_bytes32`; 32-byte values pass
+            through unchanged).
         amount : int
             Amount in wei.
         nonce : int
             Monotonic withdrawal nonce.
         proof : bytes
             Serialized Groth16 proof (A||B||C, 256 bytes).
-        public_inputs : list of int
-            Public inputs for the verifier circuit.
+        public_inputs : list
+            Public inputs for the verifier circuit
+            (``publicInputs[4]`` must be the chain ID — see #1242).
 
         Returns
         -------
@@ -555,17 +662,26 @@ class BridgeContractClient:
             "Withdrawing %d wei to %s (nonce=%d)", amount, recipient, nonce,
         )
         return await self._send(
-            "withdraw", [recipient, amount, nonce, proof, public_inputs],
+            "withdraw",
+            [
+                recipient,
+                did_to_bytes32(rings_did),
+                amount,
+                nonce,
+                proof,
+                public_inputs,
+            ],
         )
 
     async def withdraw_token(
         self,
         token_address: str,
         recipient: str,
+        rings_did: Union[str, bytes],
         amount: int,
         nonce: int,
         proof: bytes,
-        public_inputs: List[int],
+        public_inputs: List[Any],
     ) -> str:
         """Submit an ERC-20 withdrawal with ZK proof.
 
@@ -575,13 +691,15 @@ class BridgeContractClient:
             ERC-20 token contract address.
         recipient : str
             Ethereum address to receive the tokens.
+        rings_did : str or bytes
+            The Rings DID that initiated the withdrawal.
         amount : int
             Token amount (smallest unit).
         nonce : int
             Monotonic withdrawal nonce.
         proof : bytes
             Serialized Groth16 proof.
-        public_inputs : list of int
+        public_inputs : list
             Public inputs for the verifier circuit.
 
         Returns
@@ -595,7 +713,15 @@ class BridgeContractClient:
         )
         return await self._send(
             "withdrawToken",
-            [token_address, recipient, amount, nonce, proof, public_inputs],
+            [
+                token_address,
+                recipient,
+                did_to_bytes32(rings_did),
+                amount,
+                nonce,
+                proof,
+                public_inputs,
+            ],
         )
 
     # ── Sync committee ───────────────────────────────────────────────────
@@ -638,18 +764,20 @@ class BridgeContractClient:
         Returns
         -------
         dict
-            Keys: ``sender``, ``ringsDid``, ``amount``, ``blockNum``,
-            ``processed``.
+            Keys: ``depositor``, ``ringsDID``, ``amount``, ``token``,
+            ``timestamp``, ``nonce`` (mirrors the on-chain
+            ``DepositInfo`` struct).
         """
         result = await self._call("getDepositInfo", [nonce])
-        # ContractManager returns a tuple — map to names
+        # ContractManager returns a tuple — map to struct field names
         if isinstance(result, (tuple, list)):
             return {
-                "sender": result[0],
-                "ringsDid": result[1],
+                "depositor": result[0],
+                "ringsDID": result[1],
                 "amount": result[2],
-                "blockNum": result[3],
-                "processed": result[4],
+                "token": result[3],
+                "timestamp": result[4],
+                "nonce": result[5],
             }
         return result  # already a dict if web3 decoded it
 
@@ -659,20 +787,29 @@ class BridgeContractClient:
         Returns
         -------
         dict
-            Keys: ``recipient``, ``amount``, ``executed``.
+            Keys: ``recipient``, ``ringsDID``, ``amount``, ``token``,
+            ``timestamp``, ``nonce`` (mirrors the on-chain
+            ``WithdrawalInfo`` struct).
         """
         result = await self._call("getWithdrawalInfo", [nonce])
         if isinstance(result, (tuple, list)):
             return {
                 "recipient": result[0],
-                "amount": result[1],
-                "executed": result[2],
+                "ringsDID": result[1],
+                "amount": result[2],
+                "token": result[3],
+                "timestamp": result[4],
+                "nonce": result[5],
             }
         return result
 
     async def get_remaining_daily_limit(self) -> int:
         """Return the remaining daily bridge throughput limit (wei)."""
-        return await self._call("remainingDailyLimit")
+        return await self._call("getRemainingDailyLimit")
+
+    async def is_deposit_processed(self, nonce: int) -> bool:
+        """Whether a deposit with the given nonce has been recorded."""
+        return await self._call("isDepositProcessed", [nonce])
 
     async def get_latest_verified_slot(self) -> int:
         """Return the latest verified Beacon slot number."""
@@ -725,9 +862,9 @@ class BridgeContractClient:
     # ── Admin operations ─────────────────────────────────────────────────
 
     async def pause(self) -> str:
-        """Pause the bridge contract (guardian only).  Returns tx hash."""
+        """Emergency-pause the bridge (guardian only).  Returns tx hash."""
         logger.warning("Pausing bridge contract at %s", self.bridge_address)
-        return await self._send("pause")
+        return await self._send("emergencyPause")
 
     async def unpause(self) -> str:
         """Unpause the bridge contract (guardian only).  Returns tx hash."""
@@ -753,7 +890,7 @@ class BridgeContractClient:
             "Setting rate limits: daily=%d, per_tx=%d",
             daily_limit, per_tx_limit,
         )
-        return await self._send("setRateLimit", [daily_limit, per_tx_limit])
+        return await self._send("updateRateLimits", [daily_limit, per_tx_limit])
 
     # ── repr ─────────────────────────────────────────────────────────────
 

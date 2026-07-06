@@ -431,6 +431,7 @@ class BridgeOrchestrator:
         # 4. Submit on-chain
         tx_hash = await self.contract.withdraw(
             recipient=eth_address,
+            rings_did=rings_did,
             amount=amount,
             nonce=nonce,
             proof=proof,
