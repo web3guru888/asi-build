@@ -326,7 +326,7 @@ class TestHealthChecker:
         handler = ErrorHandler({})
         hc = HealthChecker(handler)
         hc.register_health_check("test", lambda: True, interval=0.0)
-        asyncio.get_event_loop().run_until_complete(hc.run_health_checks())
+        asyncio.run(hc.run_health_checks())
         health = hc.get_overall_health()
         assert health["status"] == "healthy"
         assert health["healthy"] == 1
@@ -339,7 +339,7 @@ class TestHealthChecker:
             raise RuntimeError("down")
 
         hc.register_health_check("db", failing_check, interval=0.0, critical=True)
-        asyncio.get_event_loop().run_until_complete(hc.run_health_checks())
+        asyncio.run(hc.run_health_checks())
         health = hc.get_overall_health()
         assert health["status"] == "critical"
         assert health["critical_failures"] == 1
@@ -510,12 +510,12 @@ class TestByzantineTolerantAggregator:
     def test_aggregate_empty_raises(self):
         agg = ByzantineTolerantAggregator({})
         with pytest.raises(ValueError, match="No gradients"):
-            asyncio.get_event_loop().run_until_complete(agg.aggregate({}))
+            asyncio.run(agg.aggregate({}))
 
     def test_weighted_aggregation_basic(self):
         agg = ByzantineTolerantAggregator({"aggregation_method": "weighted"})
         grads = _make_gradients(5)
-        result = asyncio.get_event_loop().run_until_complete(agg.aggregate(grads))
+        result = asyncio.run(agg.aggregate(grads))
         assert isinstance(result, AggregationResult)
         assert "param" in result.aggregated_gradients
         assert result.aggregation_method == "weighted"
@@ -529,7 +529,7 @@ class TestByzantineTolerantAggregator:
             }
         )
         grads = _make_gradients(6)
-        result = asyncio.get_event_loop().run_until_complete(agg.aggregate(grads))
+        result = asyncio.run(agg.aggregate(grads))
         assert "param" in result.aggregated_gradients
         # Krum should select some honest nodes
         assert len(result.honest_participants) > 0
@@ -542,14 +542,14 @@ class TestByzantineTolerantAggregator:
             }
         )
         grads = _make_gradients(6)
-        result = asyncio.get_event_loop().run_until_complete(agg.aggregate(grads))
+        result = asyncio.run(agg.aggregate(grads))
         assert "param" in result.aggregated_gradients
         assert result.aggregation_method == "trimmed_mean"
 
     def test_median_aggregation(self):
         agg = ByzantineTolerantAggregator({"aggregation_method": "median"})
         grads = _make_gradients(5)
-        result = asyncio.get_event_loop().run_until_complete(agg.aggregate(grads))
+        result = asyncio.run(agg.aggregate(grads))
         assert "param" in result.aggregated_gradients
         assert result.aggregation_method == "coordinate_median"
 
@@ -917,18 +917,18 @@ class TestTopKSparsification:
     def test_compress_decompress_roundtrip(self):
         c = TopKSparsification(k_ratio=0.5, error_feedback=False)
         grads = {"layer1": torch.randn(20)}
-        compressed, meta = asyncio.get_event_loop().run_until_complete(c.compress(grads))
+        compressed, meta = asyncio.run(c.compress(grads))
         assert isinstance(compressed, bytes)
         assert meta["algorithm"] == "topk"
 
-        recovered = asyncio.get_event_loop().run_until_complete(c.decompress(compressed, meta))
+        recovered = asyncio.run(c.decompress(compressed, meta))
         assert "layer1" in recovered
         assert recovered["layer1"].shape == (20,)
 
     def test_error_feedback_accumulates(self):
         c = TopKSparsification(k_ratio=0.1, error_feedback=True)
         grads = {"layer1": torch.randn(100)}
-        asyncio.get_event_loop().run_until_complete(c.compress(grads))
+        asyncio.run(c.compress(grads))
         assert "layer1" in c.error_memory
 
 

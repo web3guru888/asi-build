@@ -181,8 +181,15 @@ def _make_rotation_witness():
 
 
 def _run(coro):
-    """Run an async coroutine synchronously."""
-    return asyncio.get_event_loop().run_until_complete(coro)
+    """Run an async coroutine synchronously.
+
+    Uses :func:`asyncio.run` (fresh loop per call) instead of
+    ``asyncio.get_event_loop().run_until_complete(...)`` — the latter
+    raises ``RuntimeError: There is no current event loop`` when an
+    earlier test module in the same session (e.g. test_beacon_client)
+    has closed the main-thread event loop.
+    """
+    return asyncio.run(coro)
 
 
 # ---------------------------------------------------------------------------
