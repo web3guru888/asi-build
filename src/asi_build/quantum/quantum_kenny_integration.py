@@ -246,13 +246,14 @@ class QuantumEnhancedKennyAGI:
         # Compare with classical A* (simplified)
         classical_time = len(obstacles) ** 2 * 0.001  # Simulated
         quantum_time = len(obstacles) * np.log(len(obstacles)) * 0.001
+        speedup = classical_time / quantum_time
 
         result = {
             "path": path,
             "waypoints": len(path),
             "total_distance": path_length,
             "computation_time": quantum_time,
-            "speedup": classical_time / quantum_time,
+            "speedup": speedup,
             "collision_free": True,
             "quantum_optimized": True,
         }

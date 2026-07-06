@@ -5,6 +5,7 @@ Provides high-level contract deployment and interaction functionality
 with support for multiple networks and automated contract verification.
 """
 
+import asyncio
 import json
 import logging
 import os

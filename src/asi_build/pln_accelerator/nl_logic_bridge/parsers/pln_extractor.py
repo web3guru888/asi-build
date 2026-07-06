@@ -6,6 +6,7 @@ language, supporting Ben Goertzel's vision of automated knowledge acquisition.
 """
 
 import asyncio
+import json
 import logging
 import re
 from dataclasses import dataclass

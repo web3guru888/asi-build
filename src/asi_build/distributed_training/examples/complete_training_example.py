@@ -18,7 +18,9 @@ from systems.decentralized_training.blockchain.checkpoint_manager import Blockch
 from systems.decentralized_training.core.byzantine_tolerance import AdaptiveByzantineDefense
 from systems.decentralized_training.core.dataset_sharding import DistributedDatasetManager
 from systems.decentralized_training.core.error_handling import (
+    ErrorCategory,
     ErrorHandler,
+    ErrorSeverity,
     get_global_error_handler,
 )
 

@@ -7,6 +7,7 @@ Run with: uv run main.py
 """
 
 import logging
+import sys
 from typing import Any, Dict
 
 from .core import SQLToMemgraphAgent

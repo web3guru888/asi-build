@@ -9,6 +9,8 @@ import asyncio
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
+
+import numpy as np
 from typing import Any, Callable, Dict, List, Optional
 
 from ..aggregation.byzantine_robust import ByzantineRobustAggregator
