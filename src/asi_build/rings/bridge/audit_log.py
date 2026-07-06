@@ -127,44 +127,70 @@ class AuditLogger:
         self._ops_logger = logging.getLogger("bridge.operations")
         self._ops_logger.setLevel(logging.INFO)
         self._ops_logger.propagate = False
-        ops_handler = RotatingFileHandler(
-            str(self._log_dir / "operations.log"),
-            maxBytes=max_bytes,
-            backupCount=backup_count,
-            encoding="utf-8",
+        self._ensure_file_handler(
+            self._ops_logger,
+            self._log_dir / "operations.log",
+            formatter, max_bytes, backup_count,
         )
-        ops_handler.setFormatter(formatter)
-        # Avoid duplicate handlers on re-initialization
-        if not self._ops_logger.handlers:
-            self._ops_logger.addHandler(ops_handler)
 
         # ── Errors logger ───────────────────────────────────────────────
         self._err_logger = logging.getLogger("bridge.errors")
         self._err_logger.setLevel(logging.ERROR)
         self._err_logger.propagate = False
-        err_handler = RotatingFileHandler(
-            str(self._log_dir / "errors.log"),
-            maxBytes=max_bytes,
-            backupCount=backup_count,
-            encoding="utf-8",
+        self._ensure_file_handler(
+            self._err_logger,
+            self._log_dir / "errors.log",
+            formatter, max_bytes, backup_count,
         )
-        err_handler.setFormatter(formatter)
-        if not self._err_logger.handlers:
-            self._err_logger.addHandler(err_handler)
 
         # ── Audit logger (all events) ──────────────────────────────────
         self._audit_logger = logging.getLogger("bridge.audit")
         self._audit_logger.setLevel(logging.DEBUG)
         self._audit_logger.propagate = False
-        audit_handler = RotatingFileHandler(
-            str(self._log_dir / "audit.log"),
+        self._ensure_file_handler(
+            self._audit_logger,
+            self._log_dir / "audit.log",
+            formatter, max_bytes, backup_count,
+        )
+
+    @staticmethod
+    def _ensure_file_handler(
+        lgr: logging.Logger,
+        path: Path,
+        formatter: logging.Formatter,
+        max_bytes: int,
+        backup_count: int,
+    ) -> None:
+        """Attach a :class:`RotatingFileHandler` for *path* exactly once.
+
+        Deduplicates against handlers *we* attached (same target file)
+        rather than against *any* handler.  The previous
+        ``if not lgr.handlers`` guard had two bugs:
+
+        1. Third-party handlers on the shared named logger (e.g. pytest's
+           ``LogCaptureHandler``) suppressed attachment entirely, so no
+           file was ever written.
+        2. Re-initialising with a *different* ``log_dir`` silently kept
+           logging to the old directory.
+
+        It also constructed the handler (opening the file) before the
+        guard, leaking a file handle whenever attachment was skipped.
+        """
+        target = str(Path(path).resolve())
+        for h in lgr.handlers:
+            if (
+                isinstance(h, RotatingFileHandler)
+                and getattr(h, "baseFilename", None) == target
+            ):
+                return
+        handler = RotatingFileHandler(
+            target,
             maxBytes=max_bytes,
             backupCount=backup_count,
             encoding="utf-8",
         )
-        audit_handler.setFormatter(formatter)
-        if not self._audit_logger.handlers:
-            self._audit_logger.addHandler(audit_handler)
+        handler.setFormatter(formatter)
+        lgr.addHandler(handler)
 
     # ── Internal helpers ───────────────────────────────────────────────
 

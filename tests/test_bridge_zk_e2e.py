@@ -1078,9 +1078,12 @@ class MockContractClient:
     async def get_deposit_events(self, from_block, to_block=None):
         return self._deposits
 
-    async def withdraw(self, recipient, amount, nonce, proof, public_inputs):
+    async def withdraw(
+        self, recipient, rings_did, amount, nonce, proof, public_inputs,
+    ):
         self._withdrawals[nonce] = {
             "recipient": recipient,
+            "rings_did": rings_did,
             "amount": amount,
             "proof": proof,
         }

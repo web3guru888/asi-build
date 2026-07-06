@@ -217,8 +217,13 @@ class TestChainConfig:
         """get_deployed_chains returns only chains with bridge_address."""
         deployed = get_deployed_chains()
         assert "ethereum_sepolia" in deployed
+        # base_sepolia (2026-04-14) and arc_testnet (2026-04-13) gained
+        # deployed bridge addresses in the cross-chain E2E work (b9adfa3);
+        # this test was not updated at the time.
+        assert "base_sepolia" in deployed
+        assert "arc_testnet" in deployed
+        # BSC testnet has no deployed bridge contract.
         assert "bsc_testnet" not in deployed
-        assert "base_sepolia" not in deployed
 
     def test_get_chain_by_id_found(self):
         """get_chain_by_id returns matching chain."""

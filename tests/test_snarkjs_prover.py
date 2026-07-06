@@ -351,6 +351,7 @@ class TestWithdrawalWitness:
             nonce=1,
             recipient_hash=12345,
             state_root=67890,
+            chain_id=11155111,
             secret=42,
             balance=1000,
             path_elements=[100, 101, 102],
@@ -365,6 +366,7 @@ class TestWithdrawalWitness:
             nonce=1,
             recipient_hash=12345,
             state_root=67890,
+            chain_id=11155111,
             secret=42,
             balance=1000,
             path_elements=[100, 101],
@@ -376,6 +378,7 @@ class TestWithdrawalWitness:
         assert public["nonce"] == 1
         assert public["recipientHash"] == 12345
         assert public["stateRoot"] == 67890
+        assert public["chainId"] == 11155111  # binds proof to chain (#1242)
         assert witness["secret"] == 42
         assert witness["balance"] == 1000
         assert witness["pathElements"] == [100, 101]
@@ -387,6 +390,7 @@ class TestWithdrawalWitness:
             nonce=1,
             recipient_hash=12345,
             state_root=67890,
+            chain_id=11155111,
             secret=42,
             balance=1000,
             path_elements=[100, 101],
@@ -401,6 +405,7 @@ class TestWithdrawalWitness:
             nonce=1,
             recipient_hash=12345,
             state_root=67890,
+            chain_id=11155111,
             secret=42,
             balance=1000,
             path_elements=[100],
@@ -415,6 +420,7 @@ class TestWithdrawalWitness:
             nonce=1,
             recipient_hash=12345,
             state_root=67890,
+            chain_id=11155111,
             secret=42,
             balance=1000,
             path_elements=[100],
@@ -429,6 +435,7 @@ class TestWithdrawalWitness:
             nonce=1,
             recipient_hash=12345,
             state_root=67890,
+            chain_id=11155111,
             secret=42,
             balance=1000,
             path_elements=[100, 101, 102],
@@ -443,6 +450,7 @@ class TestWithdrawalWitness:
             nonce=1,
             recipient_hash=12345,
             state_root=67890,
+            chain_id=11155111,
             secret=42,
             balance=1000,
             path_elements=[100],
@@ -457,6 +465,7 @@ class TestWithdrawalWitness:
             nonce=1,
             recipient_hash=12345,
             state_root=67890,
+            chain_id=11155111,
             secret=42,
             balance=2**65,  # Exceeds 64-bit range
             path_elements=[100],
